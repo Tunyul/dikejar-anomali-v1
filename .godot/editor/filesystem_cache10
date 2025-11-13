@@ -1,19 +1,19 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1762999567
+::res://::1763018434
 ::res://assets/::1762940706
 ::res://assets/Background/::1762508382
 ::res://assets/Background/ai/::1762508382
 ::res://assets/Background/eps/::1762508382
 ::res://assets/Background/png/::1762508382
 ::res://assets/Background/png/1920x1080/::1762508382
-::res://assets/Background/png/1920x1080/All/::1762508793
-Hills_1.png::CompressedTexture2D::7349374073499486923::1489236840::1762508793::1::::<><><>0<>0<>430257bac89e09e8b6e603eeb88635fb<>res://.godot/imported/Hills_1.png-4834fc0f2182edc31389fb315317f2f8.ctex::
-Hills_2.png::CompressedTexture2D::733015385747456664::1489236030::1762508793::1::::<><><>0<>0<>d6547b62ded2426a309436828be1bf3c<>res://.godot/imported/Hills_2.png-ea7ebdd2cdb946a355186a8a9c82cc6a.ctex::
-Mountain_1.png::CompressedTexture2D::1113989639267529011::1489236236::1762508793::1::::<><><>0<>0<>de0d037699a70315a6fe06f423825225<>res://.godot/imported/Mountain_1.png-6419c6a0dc26e34f90464d517a0d73cd.ctex::
-Mountain_2.png::CompressedTexture2D::7262928257206206962::1489236236::1762508793::1::::<><><>0<>0<>c50dcafbff6ec295f55161c91ae48914<>res://.godot/imported/Mountain_2.png-348d67448fe6e3981ecb78c352f87436.ctex::
-Mountain_3.png::CompressedTexture2D::4724814800966929153::1489236236::1762508793::1::::<><><>0<>0<>8c880965945a0b6e8d9c27b3822b3f6a<>res://.godot/imported/Mountain_3.png-1f8f648e3c32b313d113752e592857cf.ctex::
-Mountain_4.png::CompressedTexture2D::3424900509269986341::1489236236::1762508793::1::::<><><>0<>0<>c68fda1428dbfc91911b992ce15f00d5<>res://.godot/imported/Mountain_4.png-93db741bf69e73faaec3d3b9f696c23b.ctex::
-Sky.png::CompressedTexture2D::7450781892818401480::1489237084::1762508793::1::::<><><>0<>0<>53ccb337b3b9764c2f136ccfe108b318<>res://.godot/imported/Sky.png-47886a8d85c213771ce2e8db6ce383cf.ctex::
+::res://assets/Background/png/1920x1080/All/::1763018197
+Hills_1.png::CompressedTexture2D::7349374073499486923::1489236840::1763018197::1::::<><><>0<>0<>430257bac89e09e8b6e603eeb88635fb<>res://.godot/imported/Hills_1.png-4834fc0f2182edc31389fb315317f2f8.ctex::
+Hills_2.png::CompressedTexture2D::733015385747456664::1489236030::1763018197::1::::<><><>0<>0<>d6547b62ded2426a309436828be1bf3c<>res://.godot/imported/Hills_2.png-ea7ebdd2cdb946a355186a8a9c82cc6a.ctex::
+Mountain_1.png::CompressedTexture2D::1113989639267529011::1489236236::1763018197::1::::<><><>0<>0<>de0d037699a70315a6fe06f423825225<>res://.godot/imported/Mountain_1.png-6419c6a0dc26e34f90464d517a0d73cd.ctex::
+Mountain_2.png::CompressedTexture2D::7262928257206206962::1489236236::1763018197::1::::<><><>0<>0<>c50dcafbff6ec295f55161c91ae48914<>res://.godot/imported/Mountain_2.png-348d67448fe6e3981ecb78c352f87436.ctex::
+Mountain_3.png::CompressedTexture2D::4724814800966929153::1489236236::1763018197::1::::<><><>0<>0<>8c880965945a0b6e8d9c27b3822b3f6a<>res://.godot/imported/Mountain_3.png-1f8f648e3c32b313d113752e592857cf.ctex::
+Mountain_4.png::CompressedTexture2D::3424900509269986341::1489236236::1763018197::1::::<><><>0<>0<>c68fda1428dbfc91911b992ce15f00d5<>res://.godot/imported/Mountain_4.png-93db741bf69e73faaec3d3b9f696c23b.ctex::
+Sky.png::CompressedTexture2D::7450781892818401480::1489237084::1763018197::1::::<><><>0<>0<>53ccb337b3b9764c2f136ccfe108b318<>res://.godot/imported/Sky.png-47886a8d85c213771ce2e8db6ce383cf.ctex::
 ::res://assets/Background/png/1920x1080/Background/::1762508793
 Background.png::CompressedTexture2D::2989110376014567603::1489236788::1762508793::1::::<><><>0<>0<>8c849f6013dcf46beefe1ac885b9313a<>res://.godot/imported/Background.png-2c1e3f0adaa00a52ff9bf2d0c6430473.ctex::
 ::res://assets/Background/png/2048x1536/::1762508382
@@ -573,7 +573,10 @@ image 16.png::CompressedTexture2D::98722255984188755::1489238274::1762508791::1:
 image 17.png::CompressedTexture2D::8222179478458637501::1489238274::1762508791::1::::<><><>0<>0<>5dcf5c57122ec6e600f758a2b534c775<>res://.godot/imported/image 17.png-4f0d08357d1e8134456faeacad1f1292.ctex::
 ::res://docs/::1762917832
 CHANGELOG.md::TextFile::-1::1762917832::0::1::::<><><>0<>0<><>::
-::res://scenes/::1762943060
-Main.tscn::PackedScene::102025529394890178::1762943060::0::1::::<><><>0<>0<><>::uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://bmro24josuhu4::::res://assets/background v1/png/1920x1080/all/Back.png
-::res://scripts/::1762942556
-parallax_auto_scroll.gd::GDScript::2657809465502524619::1762942556::0::1::::<>ParallaxBackground<><>0<>0<><>::
+::res://scenes/::1763018198
+Main.tscn::PackedScene::102025529394890178::1763016204::0::1::::<><><>0<>0<><>::uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://djdxg7v0el2xi::::res://scenes/Terrain.tscn<>uid://dyjyws51lbuyf::::res://scripts/terrain_scroll.gd
+Terrain.tscn::PackedScene::7798563697010624634::1763018198::0::1::::<><><>0<>0<><>::uid://bvo1ec5xkfqpe::::res://scripts/terrain_generator.gd<>uid://lxw4bv4bhfs8::::res://assets/Tiles/png/128x128/GrassMid.png<>uid://ba7ie5nmm45qx::::res://assets/Tiles/png/128x128/Dirt.png
+::res://scripts/::1763006665
+parallax_auto_scroll.gd::GDScript::2657809465502524619::1763017729::0::1::::<>ParallaxBackground<><>0<>0<><>::
+terrain_generator.gd::GDScript::3890873626085592042::1763016732::0::1::::TerrainGenerator<>TileMapLayer<><>0<>1<><>::
+terrain_scroll.gd::GDScript::8863871186431440253::1763015534::0::1::::<>Node2D<><>0<>0<><>::
