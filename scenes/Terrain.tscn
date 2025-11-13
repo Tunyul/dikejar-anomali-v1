@@ -1,37 +1,65 @@
-[gd_scene load_steps=11 format=4 uid="uid://djdxg7v0el2xi"]
+[gd_scene load_steps=19 format=4 uid="uid://djdxg7v0el2xi"]
 
 [ext_resource type="Script" uid="uid://bvo1ec5xkfqpe" path="res://scripts/terrain_generator.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://lxw4bv4bhfs8" path="res://assets/Tiles/png/128x128/GrassMid.png" id="1_surk7"]
 [ext_resource type="Texture2D" uid="uid://ba7ie5nmm45qx" path="res://assets/Tiles/png/128x128/Dirt.png" id="2_88a1e"]
 [ext_resource type="Texture2D" uid="uid://ba82t8f4v7k8j" path="res://assets/Tiles/png/128x128/GrassLeft.png" id="3_sf6w8"]
 [ext_resource type="Texture2D" uid="uid://bbvrxqmoun81m" path="res://assets/Tiles/png/128x128/GrassRight.png" id="4_y3iwu"]
+[ext_resource type="Texture2D" uid="uid://du81sxef07gy0" path="res://assets/Tiles/png/128x128/GrassHillRight.png" id="5_36psj"]
+[ext_resource type="Texture2D" uid="uid://cfotqp0go6ihd" path="res://assets/Tiles/png/128x128/GrassHillLeft.png" id="6_qabky"]
+[ext_resource type="Texture2D" uid="uid://hbami8p3s6hu" path="res://assets/Tiles/png/128x128/GrassHillRight2.png" id="7_ftvmw"]
+[ext_resource type="Texture2D" uid="uid://f0hpw5emijq8" path="res://assets/Tiles/png/128x128/GrassHillLeft2.png" id="8_0s8cv"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_36psj"]
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ftvmw"]
 texture = ExtResource("1_surk7")
 texture_region_size = Vector2i(128, 128)
 0:0/0 = 0
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qabky"]
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0s8cv"]
 texture = ExtResource("2_88a1e")
 texture_region_size = Vector2i(128, 128)
 0:0/0 = 0
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ftvmw"]
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ra5k0"]
 texture = ExtResource("3_sf6w8")
 texture_region_size = Vector2i(128, 128)
 0:0/0 = 0
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0s8cv"]
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_w3iv5"]
 texture = ExtResource("4_y3iwu")
 texture_region_size = Vector2i(128, 128)
 0:0/0 = 0
 
-[sub_resource type="TileSet" id="TileSet_ra5k0"]
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lfiiu"]
+texture = ExtResource("6_qabky")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_26epj"]
+texture = ExtResource("5_36psj")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_22vcx"]
+texture = ExtResource("8_0s8cv")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0yy5x"]
+texture = ExtResource("7_ftvmw")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_8vadj"]
 tile_size = Vector2i(128, 128)
-sources/0 = SubResource("TileSetAtlasSource_36psj")
-sources/1 = SubResource("TileSetAtlasSource_qabky")
-sources/2 = SubResource("TileSetAtlasSource_ftvmw")
-sources/3 = SubResource("TileSetAtlasSource_0s8cv")
+sources/0 = SubResource("TileSetAtlasSource_ftvmw")
+sources/1 = SubResource("TileSetAtlasSource_0s8cv")
+sources/2 = SubResource("TileSetAtlasSource_ra5k0")
+sources/3 = SubResource("TileSetAtlasSource_w3iv5")
+sources/4 = SubResource("TileSetAtlasSource_lfiiu")
+sources/5 = SubResource("TileSetAtlasSource_26epj")
+sources/6 = SubResource("TileSetAtlasSource_22vcx")
+sources/7 = SubResource("TileSetAtlasSource_0yy5x")
 
 [node name="Terrain" type="Node2D"]
 
@@ -39,12 +67,16 @@ sources/3 = SubResource("TileSetAtlasSource_0s8cv")
 z_index = 5
 position = Vector2(0, 392)
 scale = Vector2(0.5, 0.5)
-tile_map_data = PackedByteArray("AAAAAAIAAAAAAAAAAAABAAIAAAAAAAAAAAACAAIAAAAAAAAAAAADAAIAAAAAAAAAAAAEAAIAAAAAAAAAAAAFAAIAAAAAAAAAAAAGAAIAAAAAAAAAAAAHAAIAAAAAAAAAAAAIAAIAAAAAAAAAAAAJAAIAAAAAAAAAAAAKAAIAAAAAAAAAAAALAAIAAAAAAAAAAAAMAAIAAAAAAAAAAAANAAIAAAAAAAAAAAAOAAIAAAAAAAAAAAAPAAIAAAAAAAAAAAA+AAIAAAAAAAAAAAA/AAIAAAAAAAAAAAA3AAIAAwAAAAAAAAA2AAIAAAAAAAAAAAAqAAIAAAAAAAAAAAAkAAIAAgAAAAAAAAArAAIAAAAAAAAAAAA1AAIAAAAAAAAAAAAeAAIAAAAAAAAAAAAfAAIAAAAAAAAAAAAlAAIAAAAAAAAAAAA8AAIAAAAAAAAAAAA9AAIAAAAAAAAAAAAYAAIAAAAAAAAAAAAdAAIAAAAAAAAAAAAuAAIAAAAAAAAAAAAvAAIAAAAAAAAAAAAzAAIAAgAAAAAAAAA0AAIAAAAAAAAAAAAmAAIAAAAAAAAAAAAnAAIAAAAAAAAAAAAsAAIAAAAAAAAAAAAtAAIAAAAAAAAAAAASAAIAAAAAAAAAAAATAAIAAwAAAAAAAAAZAAIAAAAAAAAAAAAaAAIAAAAAAAAAAAAWAAIAAgAAAAAAAAAXAAIAAAAAAAAAAAAoAAIAAAAAAAAAAAApAAIAAAAAAAAAAAAwAAIAAwAAAAAAAAAQAAIAAAAAAAAAAAARAAIAAAAAAAAAAAAbAAIAAAAAAAAAAAAcAAIAAAAAAAAAAAAgAAIAAAAAAAAAAAAhAAIAAwAAAAAAAAA6AAIAAgAAAAAAAAA7AAIAAAAAAAAAAAA=")
-tile_set = SubResource("TileSet_ra5k0")
+tile_map_data = PackedByteArray("AAAAAAIAAAAAAAAAAAAAAAMAAQAAAAAAAAABAAIAAAAAAAAAAAABAAMAAQAAAAAAAAACAAIAAAAAAAAAAAACAAMAAQAAAAAAAAADAAIAAAAAAAAAAAADAAMAAQAAAAAAAAAEAAIAAAAAAAAAAAAEAAMAAQAAAAAAAAAFAAIAAAAAAAAAAAAFAAMAAQAAAAAAAAAGAAIAAAAAAAAAAAAGAAMAAQAAAAAAAAAHAAIAAAAAAAAAAAAHAAMAAQAAAAAAAAAIAAIAAAAAAAAAAAAIAAMAAQAAAAAAAAAJAAIAAAAAAAAAAAAJAAMAAQAAAAAAAAAKAAIAAAAAAAAAAAAKAAMAAQAAAAAAAAALAAIAAAAAAAAAAAALAAMAAQAAAAAAAAAMAAIAAAAAAAAAAAAMAAMAAQAAAAAAAAANAAIAAAAAAAAAAAANAAMAAQAAAAAAAAAOAAIAAAAAAAAAAAAOAAMAAQAAAAAAAAAPAAIAAAAAAAAAAAAPAAMAAQAAAAAAAAA+AAIAAQAAAAAAAAA/AAIAAQAAAAAAAAASAAIAAQAAAAAAAAAeAAIAAQAAAAAAAAArAAIAAgAAAAAAAAATAAIAAQAAAAAAAAAUAAIAAQAAAAAAAAAiAAIAAAAAAAAAAAAhAAIAAAAAAAAAAAA6AAIAAAAAAAAAAAAXAAIAAQAAAAAAAAAYAAIAAQAAAAAAAAAdAAIAAQAAAAAAAAA1AAIAAwAAAAAAAAAjAAIAAwAAAAAAAAAVAAIAAQAAAAAAAAAWAAIAAQAAAAAAAAAnAAIAAAAAAAAAAAAoAAIAAwAAAAAAAAAzAAIAAAAAAAAAAAA0AAIAAAAAAAAAAAA1AAMAAQAAAAAAAAAmAAIAAgAAAAAAAAAoAAMAAQAAAAAAAAAyAAIAAAAAAAAAAAA4AAIAAgAAAAAAAAA5AAIAAAAAAAAAAAAfAAIABwAAAAAAAAAfAAMAAQAAAAAAAAAgAAIAAAAAAAAAAAAgAAMAAQAAAAAAAAAhAAMAAQAAAAAAAAAiAAMAAQAAAAAAAAAjAAMAAQAAAAAAAAArAAMAAQAAAAAAAAAwAAIAAgAAAAAAAAAwAAMAAQAAAAAAAAAxAAIAAAAAAAAAAAAxAAMAAQAAAAAAAAAyAAMAAQAAAAAAAAAzAAMAAQAAAAAAAAA0AAMAAQAAAAAAAAA7AAEABAAAAAAAAAA7AAIABgAAAAAAAAA+AAEAAAAAAAAAAAA/AAEAAAAAAAAAAAAQAAIAAAAAAAAAAAAQAAMAAQAAAAAAAAARAAIABgAAAAAAAAARAAMAAQAAAAAAAAARAAEABAAAAAAAAAASAAEAAAAAAAAAAAATAAEAAAAAAAAAAAAUAAEAAAAAAAAAAAAVAAEAAAAAAAAAAAAWAAEAAAAAAAAAAAAXAAEAAAAAAAAAAAAYAAEAAwAAAAAAAAAbAAEAAgAAAAAAAAAbAAIAAQAAAAAAAAAcAAEAAAAAAAAAAAAcAAIAAQAAAAAAAAAdAAEAAAAAAAAAAAAeAAEAAAAAAAAAAAAfAAEABQAAAAAAAAAmAAMAAQAAAAAAAAAnAAMAAQAAAAAAAAAsAAIAAAAAAAAAAAAsAAMAAQAAAAAAAAAtAAIAAwAAAAAAAAAtAAMAAQAAAAAAAAA4AAMAAQAAAAAAAAA5AAMAAQAAAAAAAAA6AAMAAQAAAAAAAAA7AAMAAQAAAAAAAAA8AAEAAAAAAAAAAAA8AAIAAQAAAAAAAAA9AAEAAAAAAAAAAAA9AAIAAQAAAAAAAAA=")
+tile_set = SubResource("TileSet_8vadj")
 script = ExtResource("1")
 ground_y_tiles = 2
-fill_depth_tiles = 0
+fill_depth_tiles = 1
 target_baseline_px = 520
 max_gap_tiles = 2
 flat_prefix_tiles = 16
 gap_spacing_tiles = 3
+enable_hills = true
+hill_run_max_tiles = 2
+hill_y_min = 1
+hill_y_max = 1
