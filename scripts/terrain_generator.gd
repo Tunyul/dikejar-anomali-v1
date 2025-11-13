@@ -1,6 +1,6 @@
 @tool
 class_name TerrainGenerator
-extends TileMap
+extends TileMapLayer
 
 @export var tile_size: int = 128
 @export var world_width_tiles: int = 64
@@ -46,6 +46,6 @@ func generate() -> void:
 	tile_set = ts
 
 	for x in range(world_width_tiles):
-		set_cell(0, Vector2i(x, ground_y_tiles), grass_id, Vector2i(0, 0))
+		set_cell(Vector2i(x, ground_y_tiles), grass_id, Vector2i(0, 0))
 		for d in range(1, fill_depth_tiles + 1):
-			set_cell(0, Vector2i(x, ground_y_tiles + d), dirt_id, Vector2i(0, 0))
+			set_cell(Vector2i(x, ground_y_tiles + d), dirt_id, Vector2i(0, 0))

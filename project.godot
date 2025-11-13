@@ -23,5 +23,6 @@ window/stretch/mode="canvas_items"
 [rendering]
 
 renderer/rendering_method="mobile"
+2d/snap/snap_2d_transforms_to_pixel=true
 textures/vram_compression/import_etc=true
 textures/vram_compression/import_s3tc=false
