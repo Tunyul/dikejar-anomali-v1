@@ -1,2 +1,5 @@
 res://scenes/Main.tscn
 res://scripts/parallax_auto_scroll.gd
+res://scripts/terrain_generator.gd
+res://scenes/Terrain.tscn
+res://scripts/terrain_scroll.gd
