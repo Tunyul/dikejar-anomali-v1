@@ -39,15 +39,13 @@ func _process(delta: float) -> void:
 	var speed_px := (speed_tiles_per_s * float(_tile_px) if speed_tiles_per_s > 0.0 else speed)
 	var new_x_a := position.x - speed_px * delta
 	position.x = floor(new_x_a / _snap_units) * _snap_units
+	
+	# Update ground reference if available
 	if _ground and _ground.tile_set:
 		_tile_px = int(float(_ground.tile_set.tile_size.x) * _ground.tile_scale)
 		_width_px = int(_ground.world_width_tiles * _tile_px)
-	if Input.is_key_pressed(KEY_R):
-		if not _regen_block and _ground:
-			_ground.regenerate = true
-			_regen_block = true
-	else:
-		_regen_block = false
+	
+	# Handle peer node movement
 	if _peer_node:
 		var new_x_b := _peer_node.position.x - speed_px * delta
 		_peer_node.position.x = floor(new_x_b / _snap_units) * _snap_units
@@ -62,4 +60,14 @@ func set_movement_enabled(enabled: bool) -> void:
 
 func set_speed(new_speed: float) -> void:
 	speed = new_speed
-	speed_tiles_per_s = 0.0  # Reset tiles per second to use pixel speed
+	speed_tiles_per_s = 0.0
+
+func reset_terrain() -> void:
+	# Reset position to starting position
+	if is_primary:
+		position.x = 0.0
+		if _peer_node:
+			_peer_node.position.x = float(_width_px - join_overlap_px)
+	else:
+		if _peer_node:
+			position.x = float(_peer_node.position.x + _width_px - join_overlap_px)

@@ -7,7 +7,7 @@ extends TileMapLayer
 @export var ground_y_tiles: int = 5
 @export var fill_depth_tiles: int = 3
 @export var grass_texture_path: String = "res://assets/Tiles/png/128x128/GrassMid.png"
-@export var dirt_texture_path: String = "res://assets/Tiles/png/128x128/Dirt.png"
+@export var dirt_texture_path: String = "res://assets/Tiles/png/128x128/Dirt.png" 
 @export var tile_scale: float = 0.5
 @export var auto_generate: bool = true
 @export var regenerate: bool = false: set = _set_regenerate
@@ -101,7 +101,7 @@ func generate() -> void:
 	var baseline := (target_baseline_px if target_baseline_px > 0 else viewport_h - tile_px)
 	position.y = baseline - ground_y_tiles * tile_px
 	
-	# Gunakan deferred call untuk setup TileSet untuk menghindari lag
+	# Use deferred call to avoid lag during initialization
 	call_deferred("_setup_tileset")
 
 func _setup_tileset() -> void:
@@ -113,12 +113,8 @@ func _setup_tileset() -> void:
 	ts.set_physics_layer_collision_layer(0, 1)  # Layer 1 untuk terrain
 	ts.set_physics_layer_collision_mask(0, 2)   # Layer 2 untuk player collision
 	
-	# Pastikan physics layer aktif
-	
-	# Set TileSet ke TileMapLayer DULU sebelum setup tiles
+	# Set TileSet to TileMapLayer first before setup tiles
 	tile_set = ts
-	
-	# Pastikan random seed benar-benar random jika rng_seed = 0
 	if rng_seed == 0:
 		# Gunakan waktu untuk membuat seed yang benar-benar random
 		var time_seed = int(Time.get_ticks_msec())
@@ -238,7 +234,7 @@ func _setup_tileset() -> void:
 	for i in range(world_width_tiles):
 		surface_y_by_x[i] = -1
 
-	# Gunakan chunked generation untuk menghindari lag
+	# Use chunked generation to avoid lag
 	call_deferred("_generate_chunked")
 
 func _generate_chunked() -> void:
@@ -354,7 +350,7 @@ func _generate_chunked() -> void:
 		if x < world_width_tiles:
 			await get_tree().process_frame
 	
-	# Selesaikan border dan spikes setelah terrain selesai
+	# Complete border and spikes after terrain is done
 	if draw_border:
 		call_deferred("_rebuild_border_lines", tile_size)
 	call_deferred("_rebuild_spikes", tile_size)

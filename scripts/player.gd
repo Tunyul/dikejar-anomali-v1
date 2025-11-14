@@ -53,11 +53,6 @@ func _ready() -> void:
 	var main_node = get_tree().get_root().get_node_or_null("Main")
 	if main_node:
 		game_manager = main_node
-	else:
-		# Try to find any parent that might be the game manager
-		var parent = get_parent()
-		if parent:
-			game_manager = parent
 
 func position_player_on_screen() -> void:
 	# Position player at consistent screen position using external camera
@@ -91,21 +86,30 @@ func configure_camera() -> void:
 			# Enable smoothing for smooth following
 			main_camera.position_smoothing_enabled = true
 			main_camera.position_smoothing_speed = 8.0
+			return
+	
+	# Fallback: try to find camera in current scene
+	main_camera = get_node_or_null("Camera2D")
+	if main_camera:
+		var viewport_size = get_viewport().get_visible_rect().size
+		main_camera.limit_left = -1000
+		main_camera.limit_top = 0
+		main_camera.limit_right = 10000
+		main_camera.limit_bottom = viewport_size.y
+		main_camera.position_smoothing_enabled = true
+		main_camera.position_smoothing_speed = 8.0
 
 func find_references() -> void:
-	# Find parallax background
+	# Find parallax background and terrain nodes
 	var main_node = get_tree().get_root().get_node_or_null("Main")
 	if main_node:
 		parallax_background = main_node.get_node_or_null("ParallaxBackground")
 		
 		# Find terrain nodes
-		terrain_nodes.clear()  # Clear existing nodes
-		var terrain_a = main_node.get_node_or_null("Terrain")
-		var terrain_b = main_node.get_node_or_null("TerrainB")
-		if terrain_a:
-			terrain_nodes.append(terrain_a)
-		if terrain_b:
-			terrain_nodes.append(terrain_b)
+		terrain_nodes.clear()
+		for child in main_node.get_children():
+			if child.name.begins_with("Terrain"):
+				terrain_nodes.append(child)
 
 func find_ground_position(target_x: float) -> float:
 	# Find the ground Y position at the target X coordinate
@@ -266,27 +270,17 @@ func handle_full_movement_phase(_delta: float) -> void:
 
 func enable_environment_movement(enable: bool) -> void:
 	# Enable/disable parallax background movement
-	if parallax_background:
-		var parallax_script = parallax_background.get_script()
-		if parallax_script and parallax_script.has_method("set_movement_enabled"):
-			parallax_background.set_movement_enabled(enable)
-		else:
-			# Fallback: try to set speed directly
-			if parallax_script and parallax_script.has_method("set_speed"):
-				parallax_background.set_speed(run_speed if enable else 0.0)
-			else:
-				# Direct property access
-				if parallax_background.has_method("set_speed"):
-					parallax_background.set_speed(run_speed if enable else 0.0)
+	if parallax_background and parallax_background.has_method("set_movement_enabled"):
+		parallax_background.set_movement_enabled(enable)
+		if parallax_background.has_method("set_speed"):
+			parallax_background.set_speed(run_speed if enable else 0.0)
 	
 	# Enable/disable terrain movement
 	for terrain in terrain_nodes:
 		if terrain and terrain.has_method("set_movement_enabled"):
 			terrain.set_movement_enabled(enable)
-		else:
-			# Fallback: try to set speed directly
-			if terrain.has_method("set_speed"):
-				terrain.set_speed(run_speed if enable else 0.0)
+		elif terrain and terrain.has_method("set_speed"):
+			terrain.set_speed(run_speed if enable else 0.0)
 
 func _input(event: InputEvent) -> void:
 	if game_over:

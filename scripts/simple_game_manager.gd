@@ -19,7 +19,7 @@ func _process(delta: float) -> void:
 		return
 	
 	# Update score based on distance - match terrain speed
-	var terrain_speed = 150.0  # Match terrain speed
+	var terrain_speed = 150.0
 	distance += terrain_speed * delta
 	score = int(distance / 10.0)
 
@@ -40,9 +40,11 @@ func restart_game() -> void:
 	# Reset player position if exists
 	if player:
 		player.position = Vector2(200, 600)
+		if player.has_method("reset_player"):
+			player.reset_player()
 	
 	# Notify terrain to reset
-	if terrain:
+	if terrain and terrain.has_method("reset_terrain"):
 		terrain.reset_terrain()
 
 func get_game_state() -> Dictionary:
