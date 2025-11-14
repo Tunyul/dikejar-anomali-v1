@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene load_steps=28 format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -16,8 +16,51 @@
 [ext_resource type="Texture2D" uid="uid://dcydd8r0n5c6f" path="res://assets/Background/png/1920x1080/All/Hills_1.png" id="14"]
 [ext_resource type="PackedScene" uid="uid://djdxg7v0el2xi" path="res://scenes/Terrain.tscn" id="16"]
 [ext_resource type="Script" uid="uid://dyjyws51lbuyf" path="res://scripts/terrain_scroll.gd" id="17"]
+[ext_resource type="Script" uid="uid://dhxfvp7hj5dpl" path="res://scripts/player.gd" id="18"]
+[ext_resource type="Script" uid="uid://bd8ddad53nfd3" path="res://scripts/intro_controller.gd" id="19"]
+[ext_resource type="Texture2D" uid="uid://col8kr5dgeepx" path="res://assets/mc/run/izan_run0000.png" id="20"]
+[ext_resource type="Texture2D" uid="uid://ccg56pvb16irf" path="res://assets/mc/run/izan_run0001.png" id="21"]
+[ext_resource type="Texture2D" uid="uid://cnxulkvunlkkh" path="res://assets/mc/run/izan_run0002.png" id="22"]
+[ext_resource type="Texture2D" uid="uid://mknuyeswxs1t" path="res://assets/mc/run/izan_run0003.png" id="23"]
+[ext_resource type="Texture2D" uid="uid://civsl1bwlpa5w" path="res://assets/mc/run/izan_run0004.png" id="24"]
+[ext_resource type="Texture2D" uid="uid://plfrsoickqtf" path="res://assets/mc/run/izan_run0005.png" id="25"]
+[ext_resource type="Texture2D" uid="uid://7bumuk7csdp4" path="res://assets/mc/run/izan_run0006.png" id="26"]
+[ext_resource type="Texture2D" uid="uid://btc7tp6xhvodi" path="res://assets/mc/run/izan_run0007.png" id="27"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_mc_run"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("20")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27")
+}],
+"loop": true,
+"name": &"run",
+"speed": 12.0
+}]
 
 [node name="Main" type="Node2D"]
+script = ExtResource("19")
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
 script = ExtResource("2")
@@ -240,6 +283,21 @@ centered = false
 script = ExtResource("17")
 speed = 50.0
 peer = NodePath("../TerrainB")
+
+[node name="Player" type="Node2D" parent="Terrain"]
+position = Vector2(320, 0)
+script = ExtResource("18")
+ground_path = NodePath("../Ground")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Terrain/Player"]
+position = Vector2(6.198883e-06, 0)
+scale = Vector2(0.08, 0.08)
+sprite_frames = SubResource("SpriteFrames_mc_run")
+animation = &"run"
+frame_progress = 0.8091794
+
+[node name="Camera2D" type="Camera2D" parent="Terrain/Player"]
+offset = Vector2(200, -80)
 
 [node name="TerrainB" parent="." instance=ExtResource("16")]
 script = ExtResource("17")

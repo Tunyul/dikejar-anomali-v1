@@ -1,3 +1,6 @@
-res://scripts/parallax_auto_scroll.gd
 res://scripts/terrain_generator.gd
+res://scripts/terrain_scroll.gd
+res://scripts/player.gd
+res://scenes/Main.tscn
 res://scenes/Terrain.tscn
+res://scripts/intro_controller.gd

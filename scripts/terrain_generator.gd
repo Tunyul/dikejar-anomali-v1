@@ -36,6 +36,7 @@ extends TileMapLayer
 @export var test_colorize_hills: bool = false
 
 var _last_hill_up: bool = false
+var surface_y_by_x: PackedInt32Array = PackedInt32Array()
 
 func _tinted_texture(src: Texture2D, col: Color) -> Texture2D:
 	var img := src.get_image()
@@ -125,6 +126,10 @@ func generate() -> void:
 
 	tile_set = ts
 
+	surface_y_by_x.resize(world_width_tiles)
+	for i in range(world_width_tiles):
+		surface_y_by_x[i] = -1
+
 	var rng := RandomNumberGenerator.new()
 	if rng_seed != 0:
 		rng.seed = rng_seed
@@ -147,6 +152,7 @@ func generate() -> void:
 				top_id = grass_left_id
 				force_left_cap = false
 			set_cell(Vector2i(x, y), top_id, Vector2i(0, 0))
+			surface_y_by_x[x] = y
 			for d in range(1, max(1, fill_depth_tiles) + 1):
 				set_cell(Vector2i(x, y + d), dirt_id, Vector2i(0, 0))
 		else:
@@ -195,6 +201,7 @@ func generate() -> void:
 								set_cell(Vector2i(x, y + d), dirt_id, Vector2i(0, 0))
 						var end_tid: int = (hill_up_id if dir_up else hill_down2_id)
 						set_cell(Vector2i(x, y + dy), end_tid, Vector2i(0, 0))
+						surface_y_by_x[x] = y + dy
 						if dir_up:
 							for d in range(2, max(1, fill_depth_tiles) + 1):
 								set_cell(Vector2i(x, y + dy + d), dirt_id, Vector2i(0, 0))
@@ -216,6 +223,7 @@ func generate() -> void:
 				top_id2 = grass_left_id
 				force_left_cap = false
 			set_cell(Vector2i(x, y), top_id2, Vector2i(0, 0))
+			surface_y_by_x[x] = y
 			for d in range(1, max(1, fill_depth_tiles) + 1):
 				set_cell(Vector2i(x, y + d), dirt_id, Vector2i(0, 0))
 		x += 1
