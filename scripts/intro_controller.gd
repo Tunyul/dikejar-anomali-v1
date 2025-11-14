@@ -10,12 +10,35 @@ extends Node2D
 
 
 func _ready() -> void:
+	# Randomize terrain sebelum game dimulai
+	var terrain_a := get_node_or_null("Terrain") as Node2D
+	var terrain_b := get_node_or_null("TerrainB") as Node2D
+	
+	# Generate terrain baru dengan seed random (hanya jika belum digenerate)
+	# Cek apakah terrain sudah punya tiles untuk menghindari double generation
+	if terrain_a:
+		var ground_a = terrain_a.get_node_or_null("Ground") as TileMapLayer
+		if ground_a and ground_a.has_method("generate_random"):
+			# Cek apakah sudah ada tiles (sudah digenerate)
+			if ground_a.get_used_cells().size() == 0:
+				ground_a.call("generate_random")
+		elif terrain_a.has_method("generate_random"):
+			if terrain_a.get_used_cells().size() == 0:
+				terrain_a.call("generate_random")
+	
+	if terrain_b:
+		var ground_b = terrain_b.get_node_or_null("Ground") as TileMapLayer
+		if ground_b and ground_b.has_method("generate_random"):
+			if ground_b.get_used_cells().size() == 0:
+				ground_b.call("generate_random")
+		elif terrain_b.has_method("generate_random"):
+			if terrain_b.get_used_cells().size() == 0:
+				terrain_b.call("generate_random")
+	
 	var parallax := get_node_or_null("ParallaxBackground") as ParallaxBackground
 	if parallax:
 		parallax.set("speed", 0.0)
 
-	var terrain_a := get_node_or_null("Terrain") as Node2D
-	var terrain_b := get_node_or_null("TerrainB") as Node2D
 	if terrain_a:
 		terrain_a.set("speed", 0.0)
 	if terrain_b:

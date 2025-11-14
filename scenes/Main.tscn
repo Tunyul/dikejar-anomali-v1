@@ -27,6 +27,9 @@
 [ext_resource type="Texture2D" uid="uid://7bumuk7csdp4" path="res://assets/mc/run/izan_run0006.png" id="26"]
 [ext_resource type="Texture2D" uid="uid://btc7tp6xhvodi" path="res://assets/mc/run/izan_run0007.png" id="27"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(50, 80)
+
 [sub_resource type="SpriteFrames" id="SpriteFrames_mc_run"]
 animations = [{
 "frames": [{
@@ -284,13 +287,13 @@ script = ExtResource("17")
 speed = 120.0
 peer = NodePath("../TerrainB")
 
-[node name="Player" type="Node2D" parent="."]
+[node name="Player" type="CharacterBody2D" parent="."]
 z_index = 10
 position = Vector2(-300, 450)
 script = ExtResource("18")
 ground_path = NodePath("Terrain/Ground")
-follow_ground = false
-smooth_y = false
+follow_ground = true
+smooth_y = true
 manual_control = true
 manual_position = Vector2(250, 450)
 
@@ -300,6 +303,10 @@ scale = Vector2(0.08, 0.08)
 sprite_frames = SubResource("SpriteFrames_mc_run")
 animation = &"run"
 frame_progress = 0.8091794
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+position = Vector2(0, 0)
+shape = SubResource("RectangleShape2D_player")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(510, 284)
