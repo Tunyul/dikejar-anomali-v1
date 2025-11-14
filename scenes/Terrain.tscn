@@ -75,7 +75,6 @@ ground_y_tiles = 2
 fill_depth_tiles = 1
 target_baseline_px = 520
 max_gap_tiles = 2
-rng_seed = 7030269
 flat_prefix_tiles = 16
 gap_spacing_tiles = 3
 enable_hills = true

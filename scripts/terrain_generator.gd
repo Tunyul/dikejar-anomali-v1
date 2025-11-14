@@ -109,6 +109,17 @@ func _setup_tileset() -> void:
 	var ts := TileSet.new()
 	ts.tile_size = Vector2i(tile_size, tile_size)
 	
+	# Setup physics layer untuk collision - PERTAMA SEKALI
+	ts.add_physics_layer()
+	ts.set_physics_layer_collision_layer(0, 1)  # Layer 1 untuk terrain
+	ts.set_physics_layer_collision_mask(0, 2)   # Layer 2 untuk player collision
+	
+	# Pastikan physics layer aktif
+	print("Physics layers count: ", ts.get_physics_layers_count())
+	
+	# Set TileSet ke TileMapLayer DULU sebelum setup tiles
+	tile_set = ts
+	
 	# Pastikan random seed benar-benar random jika rng_seed = 0
 	if rng_seed == 0:
 		# Gunakan waktu untuk membuat seed yang benar-benar random
@@ -116,17 +127,30 @@ func _setup_tileset() -> void:
 		var process_seed = int(Time.get_ticks_usec() % 1000000)
 		rng_seed = time_seed + process_seed
 
+	# Setup semua TileSetAtlasSource DULU tanpa collision
 	var grass_source := TileSetAtlasSource.new()
 	grass_source.texture = load(grass_texture_path)
 	grass_source.texture_region_size = Vector2i(tile_size, tile_size)
 	grass_source.create_tile(Vector2i(0, 0))
 	_grass_id = ts.add_source(grass_source)
+	
+	# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
+	var grass_tile_data = ts.get_source(_grass_id).get_tile_data(Vector2i(0, 0), 0)
+	if grass_tile_data and ts.get_physics_layers_count() > 0:
+		grass_tile_data.set_collision_polygons_count(0, 1)
+		grass_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
 
 	var dirt_source := TileSetAtlasSource.new()
 	dirt_source.texture = load(dirt_texture_path)
 	dirt_source.texture_region_size = Vector2i(tile_size, tile_size)
 	dirt_source.create_tile(Vector2i(0, 0))
 	_dirt_id = ts.add_source(dirt_source)
+	
+	# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
+	var dirt_tile_data = ts.get_source(_dirt_id).get_tile_data(Vector2i(0, 0), 0)
+	if dirt_tile_data and ts.get_physics_layers_count() > 0:
+		dirt_tile_data.set_collision_polygons_count(0, 1)
+		dirt_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
 
 	# Reset tile IDs
 	_grass_left_id = -1
@@ -141,11 +165,24 @@ func _setup_tileset() -> void:
 		left_src.texture_region_size = Vector2i(tile_size, tile_size)
 		left_src.create_tile(Vector2i(0, 0))
 		_grass_left_id = ts.add_source(left_src)
+		
+		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
+		var grass_left_tile_data = ts.get_source(_grass_left_id).get_tile_data(Vector2i(0, 0), 0)
+		if grass_left_tile_data and ts.get_physics_layers_count() > 0:
+			grass_left_tile_data.set_collision_polygons_count(0, 1)
+			grass_left_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+		
 		var right_src := TileSetAtlasSource.new()
 		right_src.texture = load(grass_right_texture_path)
 		right_src.texture_region_size = Vector2i(tile_size, tile_size)
 		right_src.create_tile(Vector2i(0, 0))
 		_grass_right_id = ts.add_source(right_src)
+		
+		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
+		var grass_right_tile_data = ts.get_source(_grass_right_id).get_tile_data(Vector2i(0, 0), 0)
+		if grass_right_tile_data and ts.get_physics_layers_count() > 0:
+			grass_right_tile_data.set_collision_polygons_count(0, 1)
+			grass_right_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
 	if enable_hills:
 		var up_src := TileSetAtlasSource.new()
 		var _up_tex: Texture2D = load(hill_up_texture_path)
@@ -153,26 +190,51 @@ func _setup_tileset() -> void:
 		up_src.texture_region_size = Vector2i(tile_size, tile_size)
 		up_src.create_tile(Vector2i(0, 0))
 		_hill_up_id = ts.add_source(up_src)
+		
+		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
+		var hill_up_tile_data = ts.get_source(_hill_up_id).get_tile_data(Vector2i(0, 0), 0)
+		if hill_up_tile_data and ts.get_physics_layers_count() > 0:
+			hill_up_tile_data.set_collision_polygons_count(0, 1)
+			hill_up_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+		
 		var down_src := TileSetAtlasSource.new()
 		var _down_tex: Texture2D = load(hill_down_texture_path)
 		down_src.texture = (_tinted_texture(_down_tex, Color(0, 0, 1)) if test_colorize_hills else _down_tex)
 		down_src.texture_region_size = Vector2i(tile_size, tile_size)
 		down_src.create_tile(Vector2i(0, 0))
 		_hill_down_id = ts.add_source(down_src)
+		
+		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
+		var hill_down_tile_data = ts.get_source(_hill_down_id).get_tile_data(Vector2i(0, 0), 0)
+		if hill_down_tile_data and ts.get_physics_layers_count() > 0:
+			hill_down_tile_data.set_collision_polygons_count(0, 1)
+			hill_down_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+		
 		var up2_src := TileSetAtlasSource.new()
 		var _up2_tex: Texture2D = load(hill_up2_texture_path)
 		up2_src.texture = (_tinted_texture(_up2_tex, Color(1, 0, 0)) if test_colorize_hills else _up2_tex)
 		up2_src.texture_region_size = Vector2i(tile_size, tile_size)
 		up2_src.create_tile(Vector2i(0, 0))
 		_hill_up2_id = ts.add_source(up2_src)
+		
+		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
+		var hill_up2_tile_data = ts.get_source(_hill_up2_id).get_tile_data(Vector2i(0, 0), 0)
+		if hill_up2_tile_data and ts.get_physics_layers_count() > 0:
+			hill_up2_tile_data.set_collision_polygons_count(0, 1)
+			hill_up2_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+		
 		var down2_src := TileSetAtlasSource.new()
 		var _down2_tex: Texture2D = load(hill_down2_texture_path)
 		down2_src.texture = (_tinted_texture(_down2_tex, Color(1, 1, 0)) if test_colorize_hills else _down2_tex)
 		down2_src.texture_region_size = Vector2i(tile_size, tile_size)
 		down2_src.create_tile(Vector2i(0, 0))
 		_hill_down2_id = ts.add_source(down2_src)
-
-	tile_set = ts
+		
+		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
+		var hill_down2_tile_data = ts.get_source(_hill_down2_id).get_tile_data(Vector2i(0, 0), 0)
+		if hill_down2_tile_data and ts.get_physics_layers_count() > 0:
+			hill_down2_tile_data.set_collision_polygons_count(0, 1)
+			hill_down2_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
 
 	surface_y_by_x.resize(world_width_tiles)
 	for i in range(world_width_tiles):

@@ -28,11 +28,15 @@ var _intro_tween: Tween
 var _raycast: RayCast2D
 
 func _ready() -> void:
+	# Setup player collision - player on layer 2, collides with layer 1 (terrain)
+	collision_layer = 2   # Player on layer 2
+	collision_mask = 1   # Player collides with layer 1 (terrain)
+	
 	# Setup RayCast2D untuk collision detection
 	_raycast = RayCast2D.new()
 	_raycast.position = Vector2(0, 0)
 	_raycast.target_position = Vector2(0, 100)  # Ray ke bawah
-	_raycast.collision_mask = 1  # Collision layer 1
+	_raycast.collision_mask = 1  # Collision layer 1 (terrain)
 	_raycast.enabled = true
 	add_child(_raycast)
 	
@@ -110,7 +114,11 @@ func _physics_process(delta: float) -> void:
 		return
 		
 	var tile_y := _ground.surface_y_by_x[tile_x]
+	var gap_detected: bool = false
+	
+	# Cek apakah ini adalah gap (tile kosong)
 	if tile_y < 0:
+		gap_detected = true
 		var found: bool = false
 		for r in [0, 1, 2, 3]:
 			var tx1: int = clamp(tile_x - r, 0, _ground.world_width_tiles - 1)
@@ -118,12 +126,14 @@ func _physics_process(delta: float) -> void:
 			if ty1 >= 0:
 				tile_y = ty1
 				found = true
+				gap_detected = false
 				break
 			var tx2: int = clamp(tile_x + r, 0, _ground.world_width_tiles - 1)
 			var ty2: int = _ground.surface_y_by_x[tx2]
 			if ty2 >= 0:
 				tile_y = ty2
 				found = true
+				gap_detected = false
 				break
 		if not found:
 			if _last_target_y != 0.0:
@@ -149,7 +159,17 @@ func _physics_process(delta: float) -> void:
 	if terrain_speed > 0:
 		predicted_position.y += terrain_speed * delta * 0.5  # Prediksi terrain naik
 	
-	_raycast.global_position = predicted_position
+	# Cek gap di depan untuk prediksi jatuh
+	var tiles_ahead_check := 3
+	var gap_ahead_detected := false
+	for i in range(1, tiles_ahead_check + 1):
+		var future_tile_x: int = clamp(tile_x + i, 0, _ground.world_width_tiles - 1)
+		if _ground.surface_y_by_x[future_tile_x] < 0:
+			gap_ahead_detected = true
+			break
+	
+	# Setup raycast dengan posisi yang lebih akurat
+	_raycast.global_position = global_position
 	_raycast.target_position = Vector2(0, 120)  # Ray lebih panjang untuk terrain naik
 	
 	# Cek collision dengan raycast
@@ -175,9 +195,12 @@ func _physics_process(delta: float) -> void:
 	if collision_detected:
 		# Ada collision, snap ke posisi collision
 		if collision_normal.y < -0.5:  # Normal ke atas (ground)
-			position.y = collision_point.y - y_offset_px
-			velocity.y = 0.0
-			_grounded = true
+			# Snap ke posisi ground dengan offset yang tepat
+			var target_pos_y = collision_point.y - y_offset_px
+			if position.y > target_pos_y or velocity.y > 0:  # Hanya snap jika di bawah ground atau sedang jatuh
+				position.y = target_pos_y
+				velocity.y = 0.0
+				_grounded = true
 		elif collision_normal.y > 0.5:  # Normal ke bawah (ceiling)
 			velocity.y = 0.0  # Hentikan velocity ke atas
 			_grounded = false
@@ -193,8 +216,13 @@ func _physics_process(delta: float) -> void:
 			velocity.y = max(velocity.y, 0)  # Hentikan velocity ke bawah
 			position.y = collision_point.y - y_offset_px
 	else:
-		# Tidak ada collision, gunakan terrain data
-		if follow_ground:
+		# Tidak ada collision, cek apakah ada gap atau terrain data
+		if gap_detected or gap_ahead_detected:
+			# Ada gap, jatuh dengan gravity
+			velocity.y += gravity_px * delta
+			_grounded = false
+		elif follow_ground:
+			# Ikuti terrain data
 			if smooth_y:
 				position.y = move_toward(position.y, target_y, smooth_speed_px * delta)
 			else:
@@ -232,12 +260,22 @@ func _physics_process(delta: float) -> void:
 		_raycast.global_position = global_position
 		_raycast.target_position = Vector2(0, 20)  # Ray pendek tapi cukup untuk ground check
 		if _raycast.is_colliding():
-			var hit_point = _raycast.get_collision_point()
+			var _hit_point = _raycast.get_collision_point()
 			var hit_normal = _raycast.get_collision_normal()
-			if hit_normal.y < -0.5 and global_position.y > hit_point.y - y_offset_px:
-				position.y = hit_point.y - y_offset_px
+			if hit_normal.y < -0.5 and global_position.y > _hit_point.y - y_offset_px:
+				position.y = _hit_point.y - y_offset_px
 				velocity.y = 0.0
 				_grounded = true
+	
+	# Tambahan: Cek collision dari samping untuk mencegah tembus
+	if velocity.x != 0:
+		_raycast.global_position = global_position
+		_raycast.target_position = Vector2(10 * sign(velocity.x), 0)  # Ray ke samping
+		if _raycast.is_colliding():
+			var _hit_point = _raycast.get_collision_point()
+			var hit_normal = _raycast.get_collision_normal()
+			if abs(hit_normal.x) > 0.5:  # Normal horizontal
+				velocity.x = 0  # Hentikan movement horizontal
 
 func set_intro_mode(intro_enabled: bool) -> void:
 	_intro_mode = intro_enabled
