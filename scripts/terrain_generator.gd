@@ -34,6 +34,15 @@ extends TileMapLayer
 @export var hill_down2_texture_path: String = "res://assets/Tiles/png/128x128/GrassHillRight2.png"
 
 @export var test_colorize_hills: bool = false
+@export var draw_border: bool = true
+@export var border_color: Color = Color(1, 0, 0, 0.9)
+@export var border_width_px: float = 2.0
+
+@export var enable_spikes: bool = true
+@export var spike_texture_path: String = "res://assets/Enemies/png/128x128/Spike_Up.png"
+@export var spike_chance: float = 0.15
+@export var spike_spacing_tiles: int = 3
+@export var spike_z_index: int = 6
 
 var _last_hill_up: bool = false
 var surface_y_by_x: PackedInt32Array = PackedInt32Array()
@@ -227,3 +236,99 @@ func generate() -> void:
 			for d in range(1, max(1, fill_depth_tiles) + 1):
 				set_cell(Vector2i(x, y + d), dirt_id, Vector2i(0, 0))
 		x += 1
+	if draw_border:
+		_rebuild_border_lines(tile_size)
+
+	_rebuild_spikes(tile_size)
+
+func _clear_border_lines() -> void:
+	for c in get_children():
+		if c is Line2D:
+			c.queue_free()
+
+func _add_border_line(points: PackedVector2Array) -> void:
+	var ln := Line2D.new()
+	ln.default_color = border_color
+	ln.width = border_width_px / max(tile_scale, 0.0001)
+	ln.z_index = 6
+	ln.points = points
+	add_child(ln)
+
+func _rebuild_border_lines(tile_sz: int) -> void:
+	_clear_border_lines()
+	var in_seg := false
+	var current_y := 0
+	var points := PackedVector2Array()
+	for x in range(world_width_tiles):
+		var y := surface_y_by_x[x]
+		if y >= 0:
+			if not in_seg:
+				in_seg = true
+				current_y = y
+				points.append(Vector2(float(x * tile_sz), float(y * tile_sz)))
+			else:
+				if y != current_y:
+					points.append(Vector2(float(x * tile_sz), float(current_y * tile_sz)))
+					points.append(Vector2(float(x * tile_sz), float(y * tile_sz)))
+					current_y = y
+		else:
+			if in_seg:
+				points.append(Vector2(float(x * tile_sz), float(current_y * tile_sz)))
+				_add_border_line(points)
+				points = PackedVector2Array()
+				in_seg = false
+	if in_seg:
+		points.append(Vector2(float(world_width_tiles * tile_sz), float(current_y * tile_sz)))
+		_add_border_line(points)
+
+func _ensure_obstacles_container() -> Node2D:
+	var cont := get_node_or_null("Obstacles") as Node2D
+	if not cont:
+		cont = Node2D.new()
+		cont.name = "Obstacles"
+		add_child(cont)
+	return cont
+
+func _clear_obstacles() -> void:
+	var cont := _ensure_obstacles_container()
+	for c in cont.get_children():
+		c.queue_free()
+
+func _rebuild_spikes(tile_sz: int) -> void:
+	if not enable_spikes:
+		return
+	_clear_obstacles()
+	var cont := _ensure_obstacles_container()
+	var tex := load(spike_texture_path) as Texture2D
+	if not tex:
+		return
+	var rng := RandomNumberGenerator.new()
+	if rng_seed != 0:
+		rng.seed = rng_seed
+	else:
+		rng.randomize()
+	var right_guard := world_width_tiles - edge_guard_tiles
+	var start_x: int = max(flat_prefix_tiles, edge_guard_tiles)
+	var spacing_left: int = 0
+	for x in range(start_x, right_guard):
+		if spacing_left > 0:
+			spacing_left -= 1
+			continue
+		var y: int = surface_y_by_x[x]
+		if y < 0:
+			continue
+		if x <= edge_guard_tiles or x >= right_guard - 1:
+			continue
+		var y_prev: int = surface_y_by_x[x - 1]
+		var y_next: int = surface_y_by_x[x + 1]
+		if y_prev < 0 or y_next < 0:
+			continue
+		if rng.randf() >= spike_chance:
+			continue
+		var spr := Sprite2D.new()
+		spr.texture = tex
+		spr.centered = false
+		spr.z_index = spike_z_index
+		spr.position = Vector2(float(x * tile_sz), float(y * tile_sz) - float(tile_sz))
+		cont.add_child(spr)
+		spacing_left = spike_spacing_tiles

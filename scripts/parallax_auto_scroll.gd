@@ -1,6 +1,6 @@
 extends ParallaxBackground
 
-@export var speed: float = 600.0 # pixels per second
+@export var speed: float = 300.0 # pixels per second
 @export var snap_px: float = 1.0
 @export var wrap_width: float = 0.0
 
