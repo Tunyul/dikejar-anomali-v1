@@ -22,7 +22,7 @@ extends TileMapLayer
 @export var use_caps: bool = true
 @export var grass_left_texture_path: String = "res://assets/Tiles/png/128x128/GrassLeft.png"
 @export var grass_right_texture_path: String = "res://assets/Tiles/png/128x128/GrassRight.png"
-@export var enable_hills: bool = false
+@export var enable_hills: bool = true
 @export var hill_chance: float = 0.2
 @export var hill_run_min_tiles: int = 2
 @export var hill_run_max_tiles: int = 6
@@ -88,7 +88,6 @@ func generate_random() -> void:
 	# Generate terrain dengan seed random baru
 	reset_random_seed() 
 	generate()
-	print("Terrain generated with random seed: ", rng_seed)
 
 func _set_regenerate(value: bool) -> void:
 	if value:
@@ -115,7 +114,6 @@ func _setup_tileset() -> void:
 	ts.set_physics_layer_collision_mask(0, 2)   # Layer 2 untuk player collision
 	
 	# Pastikan physics layer aktif
-	print("Physics layers count: ", ts.get_physics_layers_count())
 	
 	# Set TileSet ke TileMapLayer DULU sebelum setup tiles
 	tile_set = ts
@@ -248,11 +246,9 @@ func _generate_chunked() -> void:
 	if rng_seed == 0:
 		# Jika rng_seed 0, generate seed random berdasarkan waktu
 		rng.randomize()
-		print("Terrain: Using random seed (rng_seed = 0)")
 	else:
 		# Jika rng_seed diset, gunakan seed yang sudah ditentukan
 		rng.seed = rng_seed
-		print("Terrain: Using fixed seed: ", rng_seed)
 
 	var x: int = 0
 	var right_guard: int = world_width_tiles - edge_guard_tiles
