@@ -1,324 +1,514 @@
 extends CharacterBody2D
+class_name Player
 
-# Movement parameters
+# ===== MOVEMENT PARAMETERS =====
 @export var run_speed: float = 200.0
 @export var jump_velocity: float = -400.0
 @export var gravity: float = 1200.0
 @export var fall_death_y: float = 1000.0
 
-# Animation phases
-enum AnimationPhase {
+# ===== PERFORMANCE SETTINGS =====
+@export var position_adjustment_speed: float = 3.0
+@export var max_physics_iterations: int = 10
+@export var enable_debug_logging: bool = false
+
+# ===== VISUAL SETTINGS =====
+@export var sprite_scale: Vector2 = Vector2(1.0, 1.0)  # Default 1:1 scale
+@export var match_sprite_to_collision: bool = true
+@export var collision_size: Vector2 = Vector2(48, 72)  # Optimized collision size (smaller = better gameplay feel)
+
+# ===== POSITION SETTINGS (BISA DIUBAH DI INSPECTOR) =====
+@export var screen_position_x: float = 0.3  # 0.0-1.0 (0%=kiri, 100%=kanan)
+@export var screen_position_y: float = 0.75  # 0.0-1.0 (0%=atas, 100%=bawah)
+@export var freeze_x_on_jump: bool = true  # Player tidak maju saat loncat
+@export var jump_horizontal_damping: float = 0.1  # Redupsi kecepatan horizontal saat loncat (0.0-1.0)
+@export var entry_stop_x: float = 280.0
+@export var entry_stop_y: float = 444.0
+@export var entry_duration_sec: float = 1.5
+@export var entry_start_offset_x: float = -800.0
+
+# ===== STATE MANAGEMENT =====
+enum PlayerState {
 	HIDDEN,
 	APPEARING,
 	RUNNING_IN_PLACE,
-	FULL_MOVEMENT
+	FULL_MOVEMENT,
+	GAME_OVER
 }
-var current_phase: AnimationPhase = AnimationPhase.HIDDEN
-var appear_speed: float = 400.0
-var appear_target_x: float = 150.0
-var animation_timer: float = 0.0
 
-# Game state
-var game_over: bool = false
+var current_state: PlayerState = PlayerState.HIDDEN
+var state_timer: float = 0.0
+var state_data: Dictionary = {}
+
+# ===== MOVEMENT STATE =====
 var is_grounded: bool = false
-var start_delay: float = 0.5
-var can_move: bool = false
+var can_jump: bool = true
 
-# Signals
-signal game_over_signal(cause: String)
+# ===== POSITION MANAGEMENT =====
+var target_screen_position: Vector2 = Vector2.ZERO
+var appear_start_position: Vector2 = Vector2.ZERO
+var appear_target_position: Vector2 = Vector2.ZERO
 
-# References
+# ===== REFERENCES =====
 var game_manager: Node
 var parallax_background: Node
 var terrain_nodes: Array = []
 var main_camera: Camera2D
+var animated_sprite: AnimatedSprite2D
+var title_screen: Control
+
+# ===== SIGNALS =====
+signal game_over_signal(cause: String)
+signal state_changed(new_state: PlayerState, old_state: PlayerState)
+
+func match_sprite_to_collision_size() -> void:
+	# Get collision shape size
+	var collision_shape = $CollisionShape2D
+	if not collision_shape or not collision_shape.shape:
+		return
+	
+	var shape_size = collision_shape.shape.size  # Vector2(64, 96)
+	
+	# Get first frame texture to determine original sprite size
+	var sprite_frames = animated_sprite.sprite_frames
+	if not sprite_frames or sprite_frames.get_frame_count("run") == 0:
+		return
+	
+	var first_frame_texture = sprite_frames.get_frame_texture("run", 0)
+	if not first_frame_texture:
+		return
+	
+	var original_sprite_size = Vector2(first_frame_texture.get_width(), first_frame_texture.get_height())
+	
+	# Calculate exact scale to match collision size
+	# Use 90% of collision size for better visual proportions and gameplay feel
+	var target_scale_x = (shape_size.x * 0.9) / original_sprite_size.x
+	var target_scale_y = (shape_size.y * 0.9) / original_sprite_size.y
+	
+	# Apply calculated scale
+	var final_scale = Vector2(target_scale_x, target_scale_y)
+	animated_sprite.scale = final_scale
+	
+	if enable_debug_logging and OS.is_debug_build():
+		print("Sprite resized: original=", original_sprite_size, " collision=", shape_size, " scale=", final_scale)
 
 func _ready() -> void:
-	# Player enabled by default for gameplay
+	initialize_player()
+	setup_collision_layers()
+	find_and_cache_references()
+	calculate_screen_positions()
+	start_initial_state_sequence()
+
+func initialize_player() -> void:
 	visible = true
 	set_process(true)
 	set_physics_process(true)
 	
-	# Set up collision layers - Player on layer 2, collides with terrain on layer 1
-	collision_layer = 2
-	collision_mask = 1
+	# Initialize collision shape size and position
+	var collision_shape = get_node_or_null("CollisionShape2D")
+	if collision_shape and collision_shape.shape is RectangleShape2D:
+		var rect_shape = collision_shape.shape as RectangleShape2D
+		rect_shape.size = collision_size
+		# Position collision shape to align with AnimatedSprite2D at (0,0)
+		# AnimatedSprite2D sekarang di posisi (0, 0) dengan scale (0.1, 0.1)
+		# Collision diposisikan di tengah sprite untuk alignment yang tepat
+		collision_shape.position = Vector2(0, 0)
+		if enable_debug_logging and OS.is_debug_build():
+			print("Player collision initialized: size=", collision_size, " position=", collision_shape.position)
 	
-	# Find references
-	find_references()
-	
-	# Start animation sequence
-	start_appearance_animation()
-	
-	# Find game manager
+	# Initialize sprite - AnimatedSprite2D sudah di-set manual di editor
+	animated_sprite = get_node_or_null("AnimatedSprite2D")
+	if animated_sprite:
+		animated_sprite.play("run")
+		animated_sprite.speed_scale = 1.0
+		# Pastikan animasi berjalan otomatis
+		if not animated_sprite.is_playing():
+			animated_sprite.play("run")
+		# Tidak perlu auto-scale karena sudah di-set manual di editor
+		if enable_debug_logging and OS.is_debug_build():
+			print("AnimatedSprite2D initialized: position=", animated_sprite.position, " scale=", animated_sprite.scale, " playing=", animated_sprite.is_playing())
+
+func setup_collision_layers() -> void:
+	collision_layer = 2  # Player layer
+	collision_mask = 1   # Terrain layer
+
+func find_and_cache_references() -> void:
 	var main_node = get_tree().get_root().get_node_or_null("Main")
-	if main_node:
-		game_manager = main_node
-
-func position_player_on_screen() -> void:
-	# Position player at consistent screen position using external camera
-	if main_camera:
-		# Use fixed camera position (360, 360) from Main scene
-		var camera_pos = Vector2(360, 360)
-		var viewport_size = get_viewport().get_visible_rect().size
-		
-		# Player should appear 30% from left edge, 25% from bottom of screen
-		var target_screen_x = viewport_size.x * 0.3  # 30% from left edge
-		var target_screen_y = viewport_size.y * 0.75  # 25% from bottom
-		
-		# Calculate world position based on fixed camera position
-		var world_pos = camera_pos + Vector2(target_screen_x - viewport_size.x * 0.5, target_screen_y - viewport_size.y * 0.5)
-		position = Vector2(world_pos.x, position.y)  # Keep Y position, set X
-
-func configure_camera() -> void:
-	# Configure external camera from Main scene
-	var main_node = get_tree().get_root().get_node_or_null("Main")
-	if main_node:
-		main_camera = main_node.get_node_or_null("Camera2D")
-		if main_camera:
-			var viewport_size = get_viewport().get_visible_rect().size
-			
-			# Set camera limits based on viewport
-			main_camera.limit_left = -1000
-			main_camera.limit_top = 0
-			main_camera.limit_right = 10000
-			main_camera.limit_bottom = viewport_size.y
-			
-			# Enable smoothing for smooth following
-			main_camera.position_smoothing_enabled = true
-			main_camera.position_smoothing_speed = 8.0
-			return
-	
-	# Fallback: try to find camera in current scene
-	main_camera = get_node_or_null("Camera2D")
-	if main_camera:
-		var viewport_size = get_viewport().get_visible_rect().size
-		main_camera.limit_left = -1000
-		main_camera.limit_top = 0
-		main_camera.limit_right = 10000
-		main_camera.limit_bottom = viewport_size.y
-		main_camera.position_smoothing_enabled = true
-		main_camera.position_smoothing_speed = 8.0
-
-func find_references() -> void:
-	# Find parallax background and terrain nodes
-	var main_node = get_tree().get_root().get_node_or_null("Main")
-	if main_node:
-		parallax_background = main_node.get_node_or_null("ParallaxBackground")
-		
-		# Find terrain nodes
-		terrain_nodes.clear()
-		for child in main_node.get_children():
-			if child.name.begins_with("Terrain"):
-				terrain_nodes.append(child)
-
-func find_ground_position(target_x: float) -> float:
-	# Find the ground Y position at the target X coordinate
-	var ground_y = 400.0  # Default fallback position
-	
-	for terrain in terrain_nodes:
-		if terrain and terrain.has_node("Ground"):
-			var ground = terrain.get_node("Ground")
-			if ground and ground is TileMapLayer:
-				# Get tile at position - convert world position to tile position
-				var tile_pos = ground.local_to_map(Vector2(target_x - terrain.position.x, 0))
-				# Check for ground tiles at this position (assuming ground tiles are at lower Y values)
-				for y in range(-10, 10):  # Check vertical range
-					var offset = Vector2i(0, y)
-					var check_pos = Vector2i(tile_pos.x + offset.x, tile_pos.y + offset.y)
-					var cell_data = ground.get_cell_tile_data(check_pos)
-					if cell_data:
-						# Found a tile, calculate ground surface position
-						var tile_world_pos = ground.map_to_local(check_pos)
-						ground_y = terrain.position.y + tile_world_pos.y - 96  # Adjust for player height (96px)
-						break
-				break
-	
-	return ground_y
-
-func find_optimal_spawn_position() -> Vector2:
-	# Use position from scene editor instead of hardcoded values
-	var spawn_x = position.x  # Use X position set in scene
-	var spawn_y = position.y  # Use Y position set in scene
-	return Vector2(spawn_x, spawn_y)
-
-func start_appearance_animation() -> void:
-	# Phase 1: Hidden - player starts off-screen to the left of scene position
-	current_phase = AnimationPhase.HIDDEN
-	
-	# Calculate appearing target from scene position
-	appear_target_x = position.x
-	position.x = position.x - 500  # Start 300px left of scene position for "dikejar" effect
-	
-	# Start appearing after a short delay for dramatic entrance
-	await get_tree().create_timer(1.0).timeout
-	current_phase = AnimationPhase.APPEARING
-
-func start_running_in_place() -> void:
-	# Phase 3: Running in place while environment starts moving
-	current_phase = AnimationPhase.RUNNING_IN_PLACE
-	can_move = true  # Enable running animation
-	
-	# Keep player at target position from appearing phase
-	position.x = appear_target_x
-	
-	# Start environment movement after running in place
-	await get_tree().create_timer(1.2).timeout
-	start_full_movement()
-
-func start_full_movement() -> void:
-	# Phase 4: Full movement - environment moves, player runs in place
-	current_phase = AnimationPhase.FULL_MOVEMENT
-	enable_environment_movement(true)
-
-func _physics_process(delta: float) -> void:
-	if game_over:
+	if not main_node:
+		push_error("Main node not found! Player references cannot be initialized.")
 		return
 	
-	# Handle different animation phases
-	match current_phase:
-		AnimationPhase.HIDDEN:
-			# Player is hidden off-screen
-			velocity = Vector2.ZERO
-			return
-			
-		AnimationPhase.APPEARING:
-			# Player runs in from left side
-			handle_appearing_phase(delta)
-			return
-			
-		AnimationPhase.RUNNING_IN_PLACE:
-			# Player runs in place while environment prepares to move
-			handle_running_in_place_phase(delta)
-			
-		AnimationPhase.FULL_MOVEMENT:
-			# Normal gameplay - player runs in place, environment moves
-			handle_full_movement_phase(delta)
+	game_manager = main_node
+	main_camera = main_node.get_node_or_null("Camera2D")
+	parallax_background = main_node.get_node_or_null("ParallaxBackground")
+	title_screen = main_node.get_node_or_null("CanvasLayer/TitleScreen")
 	
-	# Apply gravity and collision detection for phases that need it
+	# Configure camera if found
+	if main_camera:
+		_setup_camera_limits()
+	
+	# Cache terrain nodes efficiently
+	terrain_nodes.clear()
+	for child in main_node.get_children():
+		if child is Node2D and child.name.begins_with("Terrain"):
+			terrain_nodes.append(child)
+	
+	if enable_debug_logging and OS.is_debug_build():
+		print("Player references cached:", {
+			"camera": main_camera != null,
+			"parallax": parallax_background != null,
+			"title_screen": title_screen != null,
+			"terrain_count": terrain_nodes.size()
+		})
+
+func _setup_camera_limits() -> void:
+	if not main_camera or not is_instance_valid(main_camera):
+		return
+	
+	var viewport_size = get_viewport().get_visible_rect().size
+	main_camera.limit_left = -1000
+	main_camera.limit_top = 0
+	main_camera.limit_right = 10000
+	main_camera.limit_bottom = viewport_size.y
+	main_camera.position_smoothing_enabled = true
+	main_camera.position_smoothing_speed = 8.0
+
+func calculate_screen_positions() -> void:
+	var viewport_size = get_viewport().get_visible_rect().size
+	# POSISI PLAYER DI LAYAR - BISA DIUBAH DI INSPECTOR
+	target_screen_position = Vector2(viewport_size.x * screen_position_x, viewport_size.y * screen_position_y)
+	
+	# Calculate world positions based on camera
+	if main_camera:
+		var camera_pos = main_camera.position
+		var world_offset = Vector2(
+			target_screen_position.x - viewport_size.x * 0.5,
+			target_screen_position.y - viewport_size.y * 0.5
+		)
+		appear_target_position = camera_pos + world_offset
+	else:
+		appear_target_position = Vector2(300, 480)  # Fallback
+	
+	appear_start_position = appear_target_position - Vector2(800, 0)  # Mulai dari lebih jauh kiri
+
+func start_initial_state_sequence() -> void:
+	if title_screen:
+		set_state(PlayerState.HIDDEN)
+		title_screen.show_title()
+	else:
+		set_state(PlayerState.HIDDEN)
+		await get_tree().create_timer(1.0).timeout
+		set_state(PlayerState.APPEARING)
+
+func start_appearance_from_left(target: Vector2) -> void:
+	appear_target_position = target
+	appear_start_position = Vector2(target.x + entry_start_offset_x, target.y)
+	position = appear_start_position
+	set_state(PlayerState.APPEARING)
+
+# ===== REMOVED REDUNDANT FUNCTIONS =====
+# The following functions have been integrated into the new state management system:
+# - position_player_on_screen() -> integrated into calculate_screen_positions()
+# - configure_camera() -> integrated into find_and_cache_references()
+# - find_references() -> renamed to find_and_cache_references()
+# - find_ground_position() -> will be added when terrain collision needed
+# - find_optimal_spawn_position() -> integrated into state system
+# - start_appearance_animation() -> integrated into start_initial_state_sequence()
+# - start_running_in_place() -> integrated into state transitions
+# - start_full_movement() -> integrated into state transitions
+
+func _physics_process(delta: float) -> void:
+	match current_state:
+		PlayerState.HIDDEN:
+			handle_hidden_state(delta)
+		PlayerState.APPEARING:
+			handle_appearing_state(delta)
+		PlayerState.RUNNING_IN_PLACE:
+			handle_running_in_place_state(delta)
+		PlayerState.FULL_MOVEMENT:
+			handle_full_movement_state(delta)
+		PlayerState.GAME_OVER:
+			handle_game_over_state(delta)
+	
+	# Apply physics dan collision detection
+	# Pastikan player tetap di tanah di state tertentu
+	if current_state == PlayerState.APPEARING or current_state == PlayerState.RUNNING_IN_PLACE or current_state == PlayerState.FULL_MOVEMENT:
+		# Force player to stay on ground
+		if is_on_floor() or current_state == PlayerState.APPEARING:
+			velocity.y = 0
+		elif enable_debug_logging and OS.is_debug_build() and state_timer < 0.5:  # Log if player leaves ground unexpectedly
+			print("WARNING: Player left ground in ", current_state, " state! position: ", position, " velocity: ", velocity)
+		
+		# Force Y position lock during critical states
+		if current_state == PlayerState.APPEARING or current_state == PlayerState.RUNNING_IN_PLACE:
+			position.y = entry_stop_y
+	
+		apply_physics(delta)
+		check_game_over_conditions()
+
+func handle_hidden_state(_delta: float) -> void:
+	velocity = Vector2.ZERO
+	visible = false
+	if animated_sprite and animated_sprite.is_playing():
+		animated_sprite.stop()
+		if enable_debug_logging and OS.is_debug_build():
+			print("Animation stopped in HIDDEN state")
+
+func handle_appearing_state(delta: float) -> void:
+	visible = true
+	state_timer += delta
+	
+	if enable_debug_logging and OS.is_debug_build() and state_timer < 0.1:  # Log hanya sekali di awal
+		print("APPEARING state started - position: ", position, " visible: ", visible)
+	
+	# Gerakkan player dari kiri ke posisi entry_stop_x (200px)
+	var target_x = entry_stop_x
+	var progress = clamp(state_timer / max(entry_duration_sec, 0.0001), 0.0, 1.0)
+	position.x = lerp(appear_start_position.x, target_x, progress)
+	
+	# LOCK Y position to prevent upward movement during appearance
+	position.y = entry_stop_y
+	velocity.y = 0  # Prevent any vertical movement
+	
+	# Animation speed based on movement
+	if animated_sprite:
+		if animated_sprite.animation != "run":
+			animated_sprite.play("run")
+		animated_sprite.speed_scale = 1.2
+		# Pastikan animasi tetap berjalan
+		if not animated_sprite.is_playing():
+			animated_sprite.play("run")
+	
+	# Transition to next state when done
+	if progress >= 1.0:
+		if enable_debug_logging and OS.is_debug_build():
+			print("APPEARING completed - final position: ", position)
+		set_state(PlayerState.RUNNING_IN_PLACE)
+
+func handle_running_in_place_state(delta: float) -> void:
+	state_timer += delta
+	
+	# Player diam di posisi entry_stop_x (200px) - PASTIKAN tidak bergerak
+	velocity.x = 0  # Tidak bergerak horizontal
+	velocity.y = 0  # Juga tidak jatuh
+	
+	# LOCK position exactly at entry_stop_x
+	position.x = entry_stop_x
+	position.y = entry_stop_y
+	
+	# Debug log position
+	if enable_debug_logging and OS.is_debug_build() and state_timer < 0.5:  # Log first few frames
+		print("RUNNING_IN_PLACE - position: ", position, " velocity: ", velocity)
+	
+	# Pastikan animasi run berjalan
+	if animated_sprite:
+		if animated_sprite.animation != "run":
+			animated_sprite.play("run")
+		animated_sprite.speed_scale = 1.0
+		if not animated_sprite.is_playing():
+			animated_sprite.play("run")
+	
+	# SKIP maintain_screen_position - ini menyebabkan gerakan!
+	
+	
+	# JANGAN aktifkan parallax/terrain lagi - sudah diaktifkan di APPEARING state
+	# Transition to next state when done
+	if state_timer >= 1.2:
+		if enable_debug_logging and OS.is_debug_build():
+			print("Parallax and terrain movement activated!")
+		
+		set_state(PlayerState.FULL_MOVEMENT)
+
+func handle_full_movement_state(_delta: float) -> void:
+	# Player tetap di posisi X=200, terrain yang bergerak
+	velocity.x = 0  # Player tidak bergerak horizontal
+	
+	# LOCK position at X=200 - jangan biarkan player bergerak
+	position.x = entry_stop_x
+	# Stabilkan posisi Y tepat setelah transisi agar tidak terjadi penyesuaian mendadak
+	if state_timer < 0.2:
+		position.y = entry_stop_y
+		velocity.y = 0
+	
+	# Debug log position and ground status
+	if enable_debug_logging and OS.is_debug_build() and state_timer < 1.0:  # Log first few frames
+		print("FULL_MOVEMENT - position: ", position, " is_on_floor: ", is_on_floor(), " velocity: ", velocity)
+	
+	# Debug log if position changes unexpectedly
+	if enable_debug_logging and OS.is_debug_build() and abs(position.x - entry_stop_x) > 1.0:
+		print("WARNING: Player X position changed! Expected: ", entry_stop_x, " Actual: ", position.x)
+	
+	# Handle horizontal movement - freeze saat loncat jika diaktifkan
+	if freeze_x_on_jump and not is_on_floor():
+		# Saat di udara, kurangi/diamkan gerakan horizontal
+		velocity.x = velocity.x * (1.0 - jump_horizontal_damping)
+	
+	# Handle jump input
+	if Input.is_action_just_pressed("jump") and is_on_floor():
+		velocity.y = jump_velocity
+	
+	# Control animation based on state
+	update_animation_state()
+	# SKIP maintain_screen_position - player harus tetap di X=200
+	
+
+func handle_game_over_state(_delta: float) -> void:
+	velocity = Vector2.ZERO
+	if animated_sprite and animated_sprite.is_playing():
+		animated_sprite.stop()
+
+func apply_physics(delta: float) -> void:
+	# Apply gravity
 	if not is_on_floor():
 		velocity.y += gravity * delta
-		# Add horizontal movement when airborne to keep up with terrain
-		# Use same speed as terrain to prevent player from getting ahead
-		velocity.x = run_speed  # Same speed as terrain movement
 	
-	# Prevent player from going too high (ceiling collision)
-	if position.y < 50:  # Upper boundary
+	# Prevent ceiling collision
+	if position.y < 50:
 		position.y = 50
-		velocity.y = max(velocity.y, 0)  # Stop upward velocity
+		velocity.y = max(velocity.y, 0)
 	
-	# Move and slide with collision detection
+	# Move with collision - use proper floor detection
+	var was_on_floor = is_on_floor()
+	# Use move_and_slide with floor detection parameters
+	# Set up_floor_snap_length to prevent tiny movements
+	set_up_direction(Vector2.UP)
+	set_floor_snap_length(24.0)
 	move_and_slide()
 	
-	# Check if grounded by analyzing collision normal
-	is_grounded = false
-	for i in get_slide_collision_count():
-		var collision = get_slide_collision(i)
-		if collision.get_normal().y < -0.7:  # Floor collision (normal pointing up)
-			is_grounded = true
-			break
 	
-	# Also check if we're on floor using built-in method as backup
-	if not is_grounded:
-		is_grounded = is_on_floor()
+	# Debug log if floor status changes unexpectedly
+	if enable_debug_logging and OS.is_debug_build() and was_on_floor and not is_on_floor() and state_timer < 1.0:
+		print("WARNING: Player left floor unexpectedly! was_on_floor: ", was_on_floor, " now_on_floor: ", is_on_floor(), " position: ", position, " velocity: ", velocity)
 	
-	# Check for fall death
+	# Update grounded state - simplified
+	is_grounded = is_on_floor()
+
+func check_game_over_conditions() -> void:
+	# Cek jatuh ke jurang/bawah layar
 	if position.y > fall_death_y:
 		trigger_game_over("fell")
+		return
 	
-	# Check if player fell off screen
+	# Cek jatuh ke gap/jurang (tidak ada tanah di bawah)
+	if not is_on_floor() and velocity.y > 0:
+		# Cek apakah sudah jatuh terlalu lama/jauh
+		if state_data.has("fall_start_y"):
+			var fall_distance = state_data["fall_start_y"] - position.y
+			if fall_distance > 300:  # Jatuh lebih dari 300px tanpa tanah = game over
+				trigger_game_over("fell_into_gap")
+				return
+		else:
+			# Catat posisi awal jatuh
+			state_data["fall_start_y"] = position.y
+	else:
+		# Reset fall tracking saat di tanah
+		if state_data.has("fall_start_y"):
+			state_data.erase("fall_start_y")
+	
 	var viewport_rect = get_viewport().get_visible_rect()
 	if position.y > viewport_rect.size.y + 200:
 		trigger_game_over("fell_off_screen")
 
-func handle_appearing_phase(delta: float) -> void:
-	# Move player from left side into view with "dikejar" effect
-	if position.x < appear_target_x:
-		position.x += appear_speed * delta
-		velocity.x = appear_speed * 0.8  # Running animation speed (faster for dramatic effect)
-		velocity.y = 0
-		# Add slight camera shake or speed lines effect could go here
+func update_animation_state() -> void:
+	if not animated_sprite:
+		return
+	
+	if is_on_floor():
+		if animated_sprite.animation != "run":
+			animated_sprite.play("run")
+		animated_sprite.speed_scale = 1.0
 	else:
-		# Player has appeared, transition to running in place
-		position.x = appear_target_x
-		velocity.x = 0  # Stop horizontal movement
-		start_running_in_place()
+		animated_sprite.speed_scale = 0.8
 
-func handle_running_in_place_phase(_delta: float) -> void:
-	# Player runs in place at target position
-	velocity.x = run_speed  # Running animation
-	velocity.y = 0  # Stay on ground
+func maintain_screen_position() -> void:
+	if not main_camera or not is_instance_valid(main_camera):
+		return
 	
-	# Keep player at target position from appearing phase - apply to both grounded and airborne
-	var target_x = appear_target_x
-	if main_camera:
-		var viewport_size = get_viewport().get_visible_rect().size
-		var target_screen_x = viewport_size.x * 0.3  # 30% from left edge
-		var camera_pos = Vector2(360, 360)
-		var world_pos = camera_pos + Vector2(target_screen_x - viewport_size.x * 0.5, 0)
-		target_x = world_pos.x
-	
-	# Smooth position adjustment, don't teleport
-	var max_adjustment = 3.0  # Max 3 pixels per frame
-	var diff = target_x - position.x
-	if abs(diff) > max_adjustment:
-		position.x += sign(diff) * max_adjustment
-	else:
-		position.x = target_x
+	# Hanya maintain vertical position, horizontal tetap di X=200
+	# Player tidak boleh bergerak horizontal - terrain yang bergerak
+	pass
 
-func handle_full_movement_phase(_delta: float) -> void:
-	# Normal gameplay - running in place, world moves around player
-	velocity.x = run_speed  # Running animation
+func set_state(new_state: PlayerState) -> void:
+	var old_state = current_state
+	current_state = new_state
+	state_timer = 0.0
 	
-	# Keep player at fixed screen position while world moves - but respect physics
-	var target_x = appear_target_x
-	if main_camera:
-		var viewport_size = get_viewport().get_visible_rect().size
-		var target_screen_x = viewport_size.x * 0.3  # 30% from left edge
-		var camera_pos = Vector2(360, 360)
-		var world_pos = camera_pos + Vector2(target_screen_x - viewport_size.x * 0.5, 0)
-		target_x = world_pos.x
+	if enable_debug_logging and OS.is_debug_build():
+		print("State transition: ", old_state, " -> ", new_state, " position: ", position, " is_on_floor: ", is_on_floor())
 	
-	# Smooth position adjustment, don't teleport - apply to both grounded and airborne
-	var max_adjustment = 3.0  # Max 3 pixels per frame (reduced for smoother airborne adjustment)
-	var diff = target_x - position.x
-	if abs(diff) > max_adjustment:
-		position.x += sign(diff) * max_adjustment
-	else:
-		position.x = target_x
+	# Reset fall tracking data
+	if state_data.has("fall_start_y"):
+		state_data.erase("fall_start_y")
 	
-	# Handle jump input (screen tap/click)
-	if Input.is_action_just_pressed("jump") and is_on_floor():
-		velocity.y = jump_velocity
+	# State-specific initialization
+	match new_state:
+		PlayerState.HIDDEN:
+			position = appear_start_position
+			velocity = Vector2.ZERO
+		PlayerState.FULL_MOVEMENT:
+			if is_on_floor():
+				velocity.y = 0
+				position.y = entry_stop_y
+		PlayerState.APPEARING:
+			visible = true
+			enable_environment_movement(false)
+		PlayerState.RUNNING_IN_PLACE:
+			position.x = entry_stop_x  # Di posisi X=200
+			visible = true
+		PlayerState.FULL_MOVEMENT:
+			visible = true
+		PlayerState.GAME_OVER:
+			velocity = Vector2.ZERO
+			enable_environment_movement(false)  # Stop parallax & terrain saat game over
+	
+	state_changed.emit(new_state, old_state)
 
 func enable_environment_movement(enable: bool) -> void:
-	# Enable/disable parallax background movement
-	if parallax_background and parallax_background.has_method("set_movement_enabled"):
-		parallax_background.set_movement_enabled(enable)
-		if parallax_background.has_method("set_speed"):
-			parallax_background.set_speed(run_speed if enable else 0.0)
+	# Kontrol parallax background movement
+	var parallax_bg = get_tree().get_root().get_node_or_null("Main/ParallaxBackground")
+	if parallax_bg and parallax_bg.has_method("set_movement_enabled"):
+		parallax_bg.set_movement_enabled(enable)
+		if enable_debug_logging and OS.is_debug_build():
+			print("Parallax movement ", "enabled" if enable else "disabled")
 	
-	# Enable/disable terrain movement
-	for terrain in terrain_nodes:
-		if terrain and terrain.has_method("set_movement_enabled"):
-			terrain.set_movement_enabled(enable)
-		elif terrain and terrain.has_method("set_speed"):
-			terrain.set_speed(run_speed if enable else 0.0)
+	# Kontrol terrain scrolling
+	var terrain1 = get_tree().get_root().get_node_or_null("Main/Terrain")
+	if terrain1 and terrain1.has_method("set_movement_enabled"):
+		terrain1.set_movement_enabled(enable)
+		if enable_debug_logging and OS.is_debug_build():
+			print("Terrain1 movement ", "enabled" if enable else "disabled")
+	
+	var terrain2 = get_tree().get_root().get_node_or_null("Main/TerrainB")
+	if terrain2 and terrain2.has_method("set_movement_enabled"):
+		terrain2.set_movement_enabled(enable)
+	if enable_debug_logging and OS.is_debug_build():
+			print("Terrain2 movement ", "enabled" if enable else "disabled")
+	
+	if enable_debug_logging:
+		print("Environment movement ", "enabled" if enable else "disabled")
 
 func _input(event: InputEvent) -> void:
-	if game_over:
+	if current_state != PlayerState.FULL_MOVEMENT:
 		return
 	
-	# Handle screen tap/click for jump
-	if event is InputEventScreenTouch or event is InputEventMouseButton:
-		if event.is_pressed() and is_on_floor():
+	# Validate event and player state
+	if not event or not is_instance_valid(self):
+		return
+	
+	# Handle screen tap/click for jump with proper validation
+	var is_valid_jump_event = (event is InputEventScreenTouch or event is InputEventMouseButton)
+	if is_valid_jump_event and event.is_pressed():
+		if is_on_floor() and can_jump:
 			velocity.y = jump_velocity
+			can_jump = false  # Prevent jump spam
+			# Re-enable jump after brief delay
+			get_tree().create_timer(0.1).timeout.connect(func(): can_jump = true)
 
 func trigger_game_over(cause: String) -> void:
-	if game_over:
+	if current_state == PlayerState.GAME_OVER:
 		return
 	
-	game_over = true
-	velocity = Vector2.ZERO
+	set_state(PlayerState.GAME_OVER)
 	
 	# Notify game manager
 	if game_manager and game_manager.has_method("on_player_game_over"):
@@ -328,14 +518,18 @@ func trigger_game_over(cause: String) -> void:
 	game_over_signal.emit(cause)
 
 func reset_player() -> void:
-	game_over = false
 	velocity = Vector2.ZERO
-	position = Vector2(100, 300)  # Starting position
+	state_timer = 0.0
+	
+	# Reset to initial state sequence
+	set_state(PlayerState.HIDDEN)
+	start_initial_state_sequence()
 
 func get_player_state() -> Dictionary:
 	return {
 		"position": position,
 		"velocity": velocity,
 		"is_grounded": is_grounded,
-		"game_over": game_over
+		"current_state": current_state,
+		"state_timer": state_timer
 	}

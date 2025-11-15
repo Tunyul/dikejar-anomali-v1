@@ -56,6 +56,19 @@ var _hill_up_id: int = -1
 var _hill_down_id: int = -1
 var _hill_up2_id: int = -1
 var _hill_down2_id: int = -1
+signal generation_progress(pct: float)
+
+func _setup_collision_box(ts: TileSet, source_id: int, height_ratio: float) -> void:
+	var tile_data = ts.get_source(source_id).get_tile_data(Vector2i(0, 0), 0)
+	if tile_data and ts.get_physics_layers_count() > 0:
+		tile_data.set_collision_polygons_count(0, 1)
+		var h = tile_size * height_ratio
+		tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
+			Vector2(0, 0),
+			Vector2(tile_size, 0),
+			Vector2(tile_size, h),
+			Vector2(0, h)
+		]))
 
 func _tinted_texture(src: Texture2D, col: Color) -> Texture2D:
 	var img := src.get_image()
@@ -128,18 +141,8 @@ func _setup_tileset() -> void:
 	grass_source.create_tile(Vector2i(0, 0))
 	_grass_id = ts.add_source(grass_source)
 	
-	# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
-	var grass_tile_data = ts.get_source(_grass_id).get_tile_data(Vector2i(0, 0), 0)
-	if grass_tile_data and ts.get_physics_layers_count() > 0:
-		grass_tile_data.set_collision_polygons_count(0, 1)
-		# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
-		var collision_height = tile_size * 0.3  # 30% dari tinggi tile untuk collision
-		grass_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
-			Vector2(0, 0), 
-			Vector2(tile_size, 0), 
-			Vector2(tile_size, collision_height), 
-			Vector2(0, collision_height)
-		]))
+	# Setup collision untuk tile grass (30% tinggi)
+	_setup_collision_box(ts, _grass_id, 0.3)
 
 	var dirt_source := TileSetAtlasSource.new()
 	dirt_source.texture = load(dirt_texture_path)
@@ -147,18 +150,8 @@ func _setup_tileset() -> void:
 	dirt_source.create_tile(Vector2i(0, 0))
 	_dirt_id = ts.add_source(dirt_source)
 	
-	# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
-	var dirt_tile_data = ts.get_source(_dirt_id).get_tile_data(Vector2i(0, 0), 0)
-	if dirt_tile_data and ts.get_physics_layers_count() > 0:
-		dirt_tile_data.set_collision_polygons_count(0, 1)
-		# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
-		var collision_height_dirt = tile_size * 0.3  # 30% dari tinggi tile untuk collision
-		dirt_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
-			Vector2(0, 0), 
-			Vector2(tile_size, 0), 
-			Vector2(tile_size, collision_height_dirt), 
-			Vector2(0, collision_height_dirt)
-		]))
+	# Setup collision untuk tile dirt (30% tinggi)
+	_setup_collision_box(ts, _dirt_id, 0.3)
 
 	# Reset tile IDs
 	_grass_left_id = -1
@@ -174,18 +167,8 @@ func _setup_tileset() -> void:
 		left_src.create_tile(Vector2i(0, 0))
 		_grass_left_id = ts.add_source(left_src)
 		
-		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
-		var grass_left_tile_data = ts.get_source(_grass_left_id).get_tile_data(Vector2i(0, 0), 0)
-		if grass_left_tile_data and ts.get_physics_layers_count() > 0:
-			grass_left_tile_data.set_collision_polygons_count(0, 1)
-			# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
-			var collision_height_left = tile_size * 0.3  # 30% dari tinggi tile untuk collision
-			grass_left_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
-				Vector2(0, 0), 
-				Vector2(tile_size, 0), 
-				Vector2(tile_size, collision_height_left), 
-				Vector2(0, collision_height_left)
-			]))
+		# Setup collision untuk grass left (30% tinggi)
+		_setup_collision_box(ts, _grass_left_id, 0.3)
 		
 		var right_src := TileSetAtlasSource.new()
 		right_src.texture = load(grass_right_texture_path)
@@ -193,18 +176,8 @@ func _setup_tileset() -> void:
 		right_src.create_tile(Vector2i(0, 0))
 		_grass_right_id = ts.add_source(right_src)
 		
-		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
-		var grass_right_tile_data = ts.get_source(_grass_right_id).get_tile_data(Vector2i(0, 0), 0)
-		if grass_right_tile_data and ts.get_physics_layers_count() > 0:
-			grass_right_tile_data.set_collision_polygons_count(0, 1)
-			# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
-			var collision_height_right = tile_size * 0.3  # 30% dari tinggi tile untuk collision
-			grass_right_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
-				Vector2(0, 0), 
-				Vector2(tile_size, 0), 
-				Vector2(tile_size, collision_height_right), 
-				Vector2(0, collision_height_right)
-			]))
+		# Setup collision untuk grass right (30% tinggi)
+		_setup_collision_box(ts, _grass_right_id, 0.3)
 	if enable_hills:
 		var up_src := TileSetAtlasSource.new()
 		var _up_tex: Texture2D = load(hill_up_texture_path)
@@ -213,18 +186,8 @@ func _setup_tileset() -> void:
 		up_src.create_tile(Vector2i(0, 0))
 		_hill_up_id = ts.add_source(up_src)
 		
-		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
-		var hill_up_tile_data = ts.get_source(_hill_up_id).get_tile_data(Vector2i(0, 0), 0)
-		if hill_up_tile_data and ts.get_physics_layers_count() > 0:
-			hill_up_tile_data.set_collision_polygons_count(0, 1)
-			# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
-			var collision_height_hill = tile_size * 0.3  # 30% dari tinggi tile untuk collision
-			hill_up_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
-				Vector2(0, 0), 
-				Vector2(tile_size, 0), 
-				Vector2(tile_size, collision_height_hill), 
-				Vector2(0, collision_height_hill)
-			]))
+		# Setup collision untuk hill up (30% tinggi)
+		_setup_collision_box(ts, _hill_up_id, 0.3)
 		
 		var down_src := TileSetAtlasSource.new()
 		var _down_tex: Texture2D = load(hill_down_texture_path)
@@ -233,18 +196,8 @@ func _setup_tileset() -> void:
 		down_src.create_tile(Vector2i(0, 0))
 		_hill_down_id = ts.add_source(down_src)
 		
-		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
-		var hill_down_tile_data = ts.get_source(_hill_down_id).get_tile_data(Vector2i(0, 0), 0)
-		if hill_down_tile_data and ts.get_physics_layers_count() > 0:
-			hill_down_tile_data.set_collision_polygons_count(0, 1)
-			# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
-			var collision_height_down = tile_size * 0.3  # 30% dari tinggi tile untuk collision
-			hill_down_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
-				Vector2(0, 0), 
-				Vector2(tile_size, 0), 
-				Vector2(tile_size, collision_height_down), 
-				Vector2(0, collision_height_down)
-			]))
+		# Setup collision untuk hill down (30% tinggi)
+		_setup_collision_box(ts, _hill_down_id, 0.3)
 		
 		var up2_src := TileSetAtlasSource.new()
 		var _up2_tex: Texture2D = load(hill_up2_texture_path)
@@ -253,11 +206,8 @@ func _setup_tileset() -> void:
 		up2_src.create_tile(Vector2i(0, 0))
 		_hill_up2_id = ts.add_source(up2_src)
 		
-		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
-		var hill_up2_tile_data = ts.get_source(_hill_up2_id).get_tile_data(Vector2i(0, 0), 0)
-		if hill_up2_tile_data and ts.get_physics_layers_count() > 0:
-			hill_up2_tile_data.set_collision_polygons_count(0, 1)
-			hill_up2_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+		# Setup collision untuk hill up2 (100% tinggi)
+		_setup_collision_box(ts, _hill_up2_id, 1.0)
 		
 		var down2_src := TileSetAtlasSource.new()
 		var _down2_tex: Texture2D = load(hill_down2_texture_path)
@@ -266,11 +216,8 @@ func _setup_tileset() -> void:
 		down2_src.create_tile(Vector2i(0, 0))
 		_hill_down2_id = ts.add_source(down2_src)
 		
-		# Setup collision setelah TileSetAtlasSource ditambahkan ke TileSet
-		var hill_down2_tile_data = ts.get_source(_hill_down2_id).get_tile_data(Vector2i(0, 0), 0)
-		if hill_down2_tile_data and ts.get_physics_layers_count() > 0:
-			hill_down2_tile_data.set_collision_polygons_count(0, 1)
-			hill_down2_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+		# Setup collision untuk hill down2 (100% tinggi)
+		_setup_collision_box(ts, _hill_down2_id, 1.0)
 
 	surface_y_by_x.resize(world_width_tiles)
 	for i in range(world_width_tiles):
@@ -297,6 +244,7 @@ func _generate_chunked() -> void:
 	var force_left_cap: bool = false
 	var y: int = ground_y_tiles
 	_last_hill_up = false
+	var dy: int = 0
 	
 	# Use tile IDs from instance variables that were set in _setup_tileset
 	
@@ -350,7 +298,7 @@ func _generate_chunked() -> void:
 							max_len = remaining
 						run_len = rng.randi_range(run_len, max_len)
 						if run_len >= 2:
-							var dy: int = (-1 if dir_up else 1)
+							dy = (-1 if dir_up else 1)
 							var start_tid: int = (_hill_up2_id if dir_up else _hill_down_id)
 							set_cell(Vector2i(x, y), start_tid, Vector2i(0, 0))
 							if dir_up:
@@ -365,18 +313,17 @@ func _generate_chunked() -> void:
 							if dir_up:
 								for d in range(2, max(1, fill_depth_tiles) + 1):
 									set_cell(Vector2i(x, y + dy + d), _dirt_id, Vector2i(0, 0))
-							else:
-								for d in range(1, max(1, fill_depth_tiles) + 1):
-									set_cell(Vector2i(x, y + dy + d), _dirt_id, Vector2i(0, 0))
+						else:
+							for d in range(1, max(1, fill_depth_tiles) + 1):
+								set_cell(Vector2i(x, y + dy + d), _dirt_id, Vector2i(0, 0))
 							y += dy
 							x += 1
 							gap_spacing_left = gap_spacing_tiles
 							_last_hill_up = dir_up
+							if world_width_tiles > 0:
+								generation_progress.emit(float(x) / float(world_width_tiles))
 							continue
-						force_left_cap = false
-						gap_spacing_left = gap_spacing_tiles
-						_last_hill_up = dir_up
-						continue
+
 			
 			var top_id2: int = _grass_id
 			if force_left_cap and use_caps and _grass_left_id != -1:
@@ -387,6 +334,8 @@ func _generate_chunked() -> void:
 			for d in range(1, max(1, fill_depth_tiles) + 1):
 				set_cell(Vector2i(x, y + d), _dirt_id, Vector2i(0, 0))
 			x += 1
+			if world_width_tiles > 0:
+				generation_progress.emit(float(x) / float(world_width_tiles))
 		
 		# Yield frame untuk menghindari lag
 		if x < world_width_tiles:
@@ -396,6 +345,14 @@ func _generate_chunked() -> void:
 	if draw_border:
 		call_deferred("_rebuild_border_lines", tile_size)
 	call_deferred("_rebuild_spikes", tile_size)
+
+func set_title_mode(title_enabled: bool) -> void:
+	if title_enabled:
+		enable_hills = false
+		gap_chance = 0.0
+		flat_prefix_tiles = world_width_tiles
+	else:
+		enable_hills = true
 
 func _clear_border_lines() -> void:
 	for c in get_children():

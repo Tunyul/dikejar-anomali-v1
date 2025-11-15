@@ -1,5 +1,6 @@
 extends Node2D
 
+@export var enable_debug_logging: bool = false
 @export var speed: float = 300.0
 @export var speed_tiles_per_s: float = 0.0
 @export var use_smooth_movement: bool = true
@@ -12,13 +13,13 @@ var _peer_node: Node2D
 var _snap_units: float = 1.0
 var _tile_px: int = 0
 var _ground: TerrainGenerator
-var _regen_block: bool = false
 var movement_enabled: bool = false
 var is_active: bool = false
+var state_timer: float = 0.0
 
 func _ready() -> void:
-	# Start with movement enabled for proper scrolling
-	movement_enabled = true
+	# DISABLE movement by default - akan diaktifkan saat player mulai bergerak
+	movement_enabled = false
 	
 	_peer_node = get_node_or_null(peer)
 	_ground = $Ground
@@ -34,8 +35,14 @@ func _ready() -> void:
 		_peer_node.position.x = position.x + float(_width_px - join_overlap_px)
 
 func _physics_process(delta: float) -> void:
+	state_timer += delta
+	
 	if not movement_enabled:
 		return
+	
+	# Debug: log first few movements
+	if enable_debug_logging and OS.is_debug_build():
+		print("Terrain ", name, " moving with speed: ", speed, " delta: ", delta)
 		
 	var speed_px := (speed_tiles_per_s * float(_tile_px) if speed_tiles_per_s > 0.0 else speed)
 	var new_x_a := position.x - speed_px * delta
@@ -70,6 +77,9 @@ func _physics_process(delta: float) -> void:
 
 func set_movement_enabled(enabled: bool) -> void:
 	movement_enabled = enabled
+	state_timer = 0.0  # Reset timer when state changes
+	if enable_debug_logging and OS.is_debug_build():
+		print("Terrain movement_enabled set to: ", enabled, " on node: ", name, " speed: ", speed)
 
 func set_speed(new_speed: float) -> void:
 	speed = new_speed

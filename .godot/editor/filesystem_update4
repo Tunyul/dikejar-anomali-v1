@@ -1,5 +1,7 @@
-res://scripts/parallax_auto_scroll.gd
-res://scripts/terrain_generator.gd
-res://scripts/terrain_scroll.gd
+res://scripts/loading_screen.gd
+res://scripts/simple_game_manager.gd
 res://scenes/Main.tscn
+res://scripts/terrain_scroll.gd
+res://scenes/LoadingScreen.tscn
 res://scripts/player.gd
+res://scenes/player.tscn

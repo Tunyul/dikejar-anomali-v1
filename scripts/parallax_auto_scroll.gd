@@ -9,19 +9,18 @@ var movement_enabled: bool = false
 var target_speed: float = 0.0
 
 func _ready() -> void:
-	# Movement enabled by default for proper scrolling
 	movement_enabled = true
 	target_speed = speed
 	
 	# Configure cloud layers for smooth movement
 	for i in range(get_child_count()):
-		var layer = get_child(i)
-		if layer is ParallaxLayer and layer.name.begins_with("Clouds"):
+		var parallax_layer = get_child(i)
+		if parallax_layer is ParallaxLayer and parallax_layer.name.begins_with("Clouds"):
 			# Ensure cloud layers use smooth movement
-			layer.motion_offset = Vector2.ZERO
+			parallax_layer.motion_offset = Vector2.ZERO
 			# Set cloud-specific mirroring for seamless looping
-			if layer.motion_mirroring.x == 0:
-				layer.motion_mirroring.x = 1024
+			if parallax_layer.motion_mirroring.x == 0:
+				parallax_layer.motion_mirroring.x = 1024
 
 func _physics_process(delta: float) -> void:
 	if not movement_enabled:
@@ -45,16 +44,16 @@ func _physics_process(delta: float) -> void:
 	
 	# Apply cloud-specific smoothing
 	for i in range(get_child_count()):
-		var layer = get_child(i)
-		if layer is ParallaxLayer and layer.name.begins_with("Clouds"):
+		var parallax_layer = get_child(i)
+		if parallax_layer is ParallaxLayer and parallax_layer.name.begins_with("Clouds"):
 			# Use direct assignment for cloud layers to prevent stuttering
-			layer.motion_offset.x = scroll_base_offset.x * layer.motion_scale.x
-			layer.motion_offset.y = 0  # Ensure no vertical drift
+			parallax_layer.motion_offset.x = scroll_base_offset.x * parallax_layer.motion_scale.x
+			parallax_layer.motion_offset.y = 0  # Ensure no vertical drift
 			# Handle cloud wrapping for seamless looping
-			if layer.motion_mirroring.x > 0:
-				var wrapped_offset = fposmod(layer.motion_offset.x, layer.motion_mirroring.x)
-				if wrapped_offset != layer.motion_offset.x:
-					layer.motion_offset.x = wrapped_offset
+			if parallax_layer.motion_mirroring.x > 0:
+				var wrapped_offset = fposmod(parallax_layer.motion_offset.x, parallax_layer.motion_mirroring.x)
+				if wrapped_offset != parallax_layer.motion_offset.x:
+					parallax_layer.motion_offset.x = wrapped_offset
 	if wrap_width > 0.0 and abs(scroll_base_offset.x) >= wrap_width:
 		scroll_base_offset.x = -fposmod(-scroll_base_offset.x, wrap_width)
 

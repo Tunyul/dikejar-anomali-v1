@@ -1,0 +1,53 @@
+[gd_scene load_steps=7 format=3 uid="uid://u5m6n7o8qaq2"]
+
+[ext_resource type="Script" path="res://scripts/ui_manager.gd" id="1_ui_manager_script"]
+[ext_resource type="PackedScene" uid="uid://c8a7h3v2q5x4" path="res://scenes/Healthbar.tscn" id="2_healthbar_scene"]
+[ext_resource type="PackedScene" uid="uid://b3n2k5v7q8x9" path="res://scenes/DistanceCounter.tscn" id="3_distance_scene"]
+[ext_resource type="PackedScene" uid="uid://d4e5f6g7h8i9" path="res://scenes/GameTimer.tscn" id="4_timer_scene"]
+
+[node name="UIManager" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_ui_manager_script")
+
+[node name="Healthbar" parent="." instance=ExtResource("2_healthbar_scene")]
+layout_mode = 1
+anchors_preset = 2
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 20.0
+offset_bottom = 20.0
+
+[node name="DistanceCounter" parent="." instance=ExtResource("3_distance_scene")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 20.0
+offset_bottom = 60.0
+
+[node name="GameTimer" parent="." instance=ExtResource("4_timer_scene")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 20.0
+offset_top = 100.0
+offset_right = 20.0
+offset_bottom = 100.0

@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene load_steps=22 format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -18,6 +18,9 @@
 [ext_resource type="Script" uid="uid://dyjyws51lbuyf" path="res://scripts/terrain_scroll.gd" id="17"]
 [ext_resource type="PackedScene" uid="uid://b8il18k1d04wg" path="res://scenes/player.tscn" id="20"]
 [ext_resource type="Script" uid="uid://k78wsp6rc6mv" path="res://scripts/simple_game_manager.gd" id="21"]
+[ext_resource type="PackedScene" path="res://scenes/TitleScreen.tscn" id="22"]
+[ext_resource type="PackedScene" uid="uid://cwj37wyc6s7oe" path="res://scenes/LoadingScreen.tscn" id="23"]
+[ext_resource type="PackedScene" path="res://scenes/GameOverScreen.tscn" id="24"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("21")
@@ -251,10 +254,23 @@ speed = 150.0
 peer = NodePath("../Terrain")
 is_primary = false
 
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="TitleScreen" parent="CanvasLayer" instance=ExtResource("22")]
+
+[node name="LoadingScreen" parent="CanvasLayer" instance=ExtResource("23")]
+
+[node name="GameOverScreen" parent="CanvasLayer" instance=ExtResource("24")]
+visible = true
+
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
-position = Vector2(300, 480)
+position = Vector2(360, 441)
+floor_constant_speed = true
 run_speed = 100.0
 jump_velocity = -800.0
 gravity = 1500.0
 fall_death_y = 800.0
+enable_debug_logging = true
+collision_size = Vector2(130, 200)
