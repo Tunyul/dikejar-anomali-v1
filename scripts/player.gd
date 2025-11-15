@@ -136,21 +136,21 @@ func find_ground_position(target_x: float) -> float:
 	return ground_y
 
 func find_optimal_spawn_position() -> Vector2:
-	# Use manual Y position if set in editor, otherwise find terrain ground
-	var spawn_x = -200.0  # Further left off-screen
-	var spawn_y = 500.0  # Use your manually set Y position
+	# Use position from scene editor instead of hardcoded values
+	var spawn_x = position.x  # Use X position set in scene
+	var spawn_y = position.y  # Use Y position set in scene
 	return Vector2(spawn_x, spawn_y)
 
 func start_appearance_animation() -> void:
-	# Phase 1: Hidden - player starts off-screen to the left, aligned with terrain
+	# Phase 1: Hidden - player starts off-screen to the left of scene position
 	current_phase = AnimationPhase.HIDDEN
 	
-	# Find optimal spawn position aligned with terrain
-	var optimal_spawn = find_optimal_spawn_position()
-	position = optimal_spawn
+	# Calculate appearing target from scene position
+	appear_target_x = position.x
+	position.x = position.x - 500  # Start 300px left of scene position for "dikejar" effect
 	
-	# Start appearing after a short delay
-	await get_tree().create_timer(0.8).timeout
+	# Start appearing after a short delay for dramatic entrance
+	await get_tree().create_timer(1.0).timeout
 	current_phase = AnimationPhase.APPEARING
 
 func start_running_in_place() -> void:
@@ -158,8 +158,8 @@ func start_running_in_place() -> void:
 	current_phase = AnimationPhase.RUNNING_IN_PLACE
 	can_move = true  # Enable running animation
 	
-	# Position player at consistent screen position
-	position_player_on_screen()
+	# Keep player at target position from appearing phase
+	position.x = appear_target_x
 	
 	# Start environment movement after running in place
 	await get_tree().create_timer(1.2).timeout
@@ -197,6 +197,14 @@ func _physics_process(delta: float) -> void:
 	# Apply gravity and collision detection for phases that need it
 	if not is_on_floor():
 		velocity.y += gravity * delta
+		# Add horizontal movement when airborne to keep up with terrain
+		# Use same speed as terrain to prevent player from getting ahead
+		velocity.x = run_speed  # Same speed as terrain movement
+	
+	# Prevent player from going too high (ceiling collision)
+	if position.y < 50:  # Upper boundary
+		position.y = 50
+		velocity.y = max(velocity.y, 0)  # Stop upward velocity
 	
 	# Move and slide with collision detection
 	move_and_slide()
@@ -223,14 +231,16 @@ func _physics_process(delta: float) -> void:
 		trigger_game_over("fell_off_screen")
 
 func handle_appearing_phase(delta: float) -> void:
-	# Move player from left side into view
+	# Move player from left side into view with "dikejar" effect
 	if position.x < appear_target_x:
 		position.x += appear_speed * delta
-		velocity.x = appear_speed * 0.7  # Running animation speed
+		velocity.x = appear_speed * 0.8  # Running animation speed (faster for dramatic effect)
 		velocity.y = 0
+		# Add slight camera shake or speed lines effect could go here
 	else:
 		# Player has appeared, transition to running in place
 		position.x = appear_target_x
+		velocity.x = 0  # Stop horizontal movement
 		start_running_in_place()
 
 func handle_running_in_place_phase(_delta: float) -> void:
@@ -238,31 +248,43 @@ func handle_running_in_place_phase(_delta: float) -> void:
 	velocity.x = run_speed  # Running animation
 	velocity.y = 0  # Stay on ground
 	
-	# Keep player at fixed position while running
-	position.x = appear_target_x
-	
-	# Ensure player stays at screen position using camera reference
+	# Keep player at target position from appearing phase - apply to both grounded and airborne
+	var target_x = appear_target_x
 	if main_camera:
 		var viewport_size = get_viewport().get_visible_rect().size
 		var target_screen_x = viewport_size.x * 0.3  # 30% from left edge
 		var camera_pos = Vector2(360, 360)
 		var world_pos = camera_pos + Vector2(target_screen_x - viewport_size.x * 0.5, 0)
-		position.x = world_pos.x
+		target_x = world_pos.x
+	
+	# Smooth position adjustment, don't teleport
+	var max_adjustment = 3.0  # Max 3 pixels per frame
+	var diff = target_x - position.x
+	if abs(diff) > max_adjustment:
+		position.x += sign(diff) * max_adjustment
+	else:
+		position.x = target_x
 
 func handle_full_movement_phase(_delta: float) -> void:
 	# Normal gameplay - running in place, world moves around player
 	velocity.x = run_speed  # Running animation
 	
-	# Keep player at fixed screen position while world moves
-	position.x = appear_target_x
-	
-	# Ensure player stays at screen position using camera reference
+	# Keep player at fixed screen position while world moves - but respect physics
+	var target_x = appear_target_x
 	if main_camera:
 		var viewport_size = get_viewport().get_visible_rect().size
 		var target_screen_x = viewport_size.x * 0.3  # 30% from left edge
 		var camera_pos = Vector2(360, 360)
 		var world_pos = camera_pos + Vector2(target_screen_x - viewport_size.x * 0.5, 0)
-		position.x = world_pos.x
+		target_x = world_pos.x
+	
+	# Smooth position adjustment, don't teleport - apply to both grounded and airborne
+	var max_adjustment = 3.0  # Max 3 pixels per frame (reduced for smoother airborne adjustment)
+	var diff = target_x - position.x
+	if abs(diff) > max_adjustment:
+		position.x += sign(diff) * max_adjustment
+	else:
+		position.x = target_x
 	
 	# Handle jump input (screen tap/click)
 	if Input.is_action_just_pressed("jump") and is_on_floor():

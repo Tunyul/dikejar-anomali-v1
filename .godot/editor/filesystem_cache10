@@ -1,6 +1,6 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1763120822
-test_collision.gd::GDScript::7205911864058683582::1763108957::0::1::::<>Node<><>0<>0<><>::
+::res://::1763175248
+PLAYER_IMPLEMENTATION.md::TextFile::-1::1763123810::0::1::::<><><>0<>0<><>::
 ::res://assets/::1762940706
 ::res://assets/Background/::1762508382
 ::res://assets/Background/ai/::1762508382
@@ -574,13 +574,13 @@ image 16.png::CompressedTexture2D::98722255984188755::1489238274::1762508791::1:
 image 17.png::CompressedTexture2D::8222179478458637501::1489238274::1762508791::1::::<><><>0<>0<>5dcf5c57122ec6e600f758a2b534c775<>res://.godot/imported/image 17.png-4f0d08357d1e8134456faeacad1f1292.ctex::
 ::res://docs/::1762917832
 CHANGELOG.md::TextFile::-1::1762917832::0::1::::<><><>0<>0<><>::
-::res://scenes/::1763120308
-Main.tscn::PackedScene::102025529394890178::1763120566::0::1::::<><><>0<>0<><>::uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://djdxg7v0el2xi::::res://scenes/Terrain.tscn<>uid://dyjyws51lbuyf::::res://scripts/terrain_scroll.gd<>uid://dhxfvp7hj5dpl::::res://scripts/player.gd<>uid://bd8ddad53nfd3::::res://scripts/intro_controller.gd<>res://scenes/player.tscn
-player.tscn::PackedScene::-1::1763120340::0::1::::<><><>0<>0<><>::uid://dhxfvp7hj5dpl::::res://scripts/player.gd<>uid://col8kr5dgeepx::::res://assets/mc/run/izan_run0000.png<>uid://ccg56pvb16irf::::res://assets/mc/run/izan_run0001.png<>uid://cnxulkvunlkkh::::res://assets/mc/run/izan_run0002.png<>uid://mknuyeswxs1t::::res://assets/mc/run/izan_run0003.png<>uid://civsl1bwlpa5w::::res://assets/mc/run/izan_run0004.png<>uid://plfrsoickqtf::::res://assets/mc/run/izan_run0005.png<>uid://7bumuk7csdp4::::res://assets/mc/run/izan_run0006.png<>uid://btc7tp6xhvodi::::res://assets/mc/run/izan_run0007.png
+::res://scenes/::1763148085
+Main.tscn::PackedScene::102025529394890178::1763148085::0::1::::<><><>0<>0<><>::uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://djdxg7v0el2xi::::res://scenes/Terrain.tscn<>uid://dyjyws51lbuyf::::res://scripts/terrain_scroll.gd<>uid://b8il18k1d04wg::::res://scenes/player.tscn<>uid://k78wsp6rc6mv::::res://scripts/simple_game_manager.gd
+player.tscn::PackedScene::4719883613247552158::1763147277::0::1::::<><><>0<>0<><>::uid://ckj0xodrxp5ve::::res://scripts/player.gd
 Terrain.tscn::PackedScene::7798563697010624634::1763117044::0::1::::<><><>0<>0<><>::uid://bvo1ec5xkfqpe::::res://scripts/terrain_generator.gd<>uid://lxw4bv4bhfs8::::res://assets/Tiles/png/128x128/GrassMid.png<>uid://ba7ie5nmm45qx::::res://assets/Tiles/png/128x128/Dirt.png<>uid://ba82t8f4v7k8j::::res://assets/Tiles/png/128x128/GrassLeft.png<>uid://bbvrxqmoun81m::::res://assets/Tiles/png/128x128/GrassRight.png<>uid://cfotqp0go6ihd::::res://assets/Tiles/png/128x128/GrassHillLeft.png<>uid://du81sxef07gy0::::res://assets/Tiles/png/128x128/GrassHillRight.png<>uid://f0hpw5emijq8::::res://assets/Tiles/png/128x128/GrassHillLeft2.png<>uid://hbami8p3s6hu::::res://assets/Tiles/png/128x128/GrassHillRight2.png
-::res://scripts/::1763103610
-intro_controller.gd::GDScript::2665299194886595134::1763109770::0::1::::<>Node2D<><>0<>0<><>::
-parallax_auto_scroll.gd::GDScript::2657809465502524619::1763107030::0::1::::<>ParallaxBackground<><>0<>0<><>::
-player.gd::GDScript::7698406569139991413::1763120600::0::1::::<>CharacterBody2D<><>0<>0<><>::
-terrain_generator.gd::GDScript::3890873626085592042::1763117881::0::1::::TerrainGenerator<>TileMapLayer<><>0<>1<><>::
-terrain_scroll.gd::GDScript::8863871186431440253::1763087029::0::1::::<>Node2D<><>0<>0<><>::
+::res://scripts/::1763148085
+parallax_auto_scroll.gd::GDScript::2657809465502524619::1763147616::0::1::::<>ParallaxBackground<><>0<>0<><>::
+player.gd::GDScript::5494868942397116302::1763174632::0::1::::<>CharacterBody2D<><>0<>0<><>::
+simple_game_manager.gd::GDScript::769992442761137257::1763174632::0::1::::<>Node2D<><>0<>0<><>::
+terrain_generator.gd::GDScript::3890873626085592042::1763174633::0::1::::TerrainGenerator<>TileMapLayer<><>0<>1<><>::
+terrain_scroll.gd::GDScript::8863871186431440253::1763174634::0::1::::<>Node2D<><>0<>0<><>::

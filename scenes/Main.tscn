@@ -253,4 +253,8 @@ is_primary = false
 
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
-position = Vector2(200, 480)
+position = Vector2(300, 480)
+run_speed = 100.0
+jump_velocity = -800.0
+gravity = 1500.0
+fall_death_y = 800.0

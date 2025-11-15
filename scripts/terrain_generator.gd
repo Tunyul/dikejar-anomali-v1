@@ -132,7 +132,14 @@ func _setup_tileset() -> void:
 	var grass_tile_data = ts.get_source(_grass_id).get_tile_data(Vector2i(0, 0), 0)
 	if grass_tile_data and ts.get_physics_layers_count() > 0:
 		grass_tile_data.set_collision_polygons_count(0, 1)
-		grass_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+		# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
+		var collision_height = tile_size * 0.3  # 30% dari tinggi tile untuk collision
+		grass_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
+			Vector2(0, 0), 
+			Vector2(tile_size, 0), 
+			Vector2(tile_size, collision_height), 
+			Vector2(0, collision_height)
+		]))
 
 	var dirt_source := TileSetAtlasSource.new()
 	dirt_source.texture = load(dirt_texture_path)
@@ -144,7 +151,14 @@ func _setup_tileset() -> void:
 	var dirt_tile_data = ts.get_source(_dirt_id).get_tile_data(Vector2i(0, 0), 0)
 	if dirt_tile_data and ts.get_physics_layers_count() > 0:
 		dirt_tile_data.set_collision_polygons_count(0, 1)
-		dirt_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+		# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
+		var collision_height_dirt = tile_size * 0.3  # 30% dari tinggi tile untuk collision
+		dirt_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
+			Vector2(0, 0), 
+			Vector2(tile_size, 0), 
+			Vector2(tile_size, collision_height_dirt), 
+			Vector2(0, collision_height_dirt)
+		]))
 
 	# Reset tile IDs
 	_grass_left_id = -1
@@ -164,7 +178,14 @@ func _setup_tileset() -> void:
 		var grass_left_tile_data = ts.get_source(_grass_left_id).get_tile_data(Vector2i(0, 0), 0)
 		if grass_left_tile_data and ts.get_physics_layers_count() > 0:
 			grass_left_tile_data.set_collision_polygons_count(0, 1)
-			grass_left_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+			# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
+			var collision_height_left = tile_size * 0.3  # 30% dari tinggi tile untuk collision
+			grass_left_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
+				Vector2(0, 0), 
+				Vector2(tile_size, 0), 
+				Vector2(tile_size, collision_height_left), 
+				Vector2(0, collision_height_left)
+			]))
 		
 		var right_src := TileSetAtlasSource.new()
 		right_src.texture = load(grass_right_texture_path)
@@ -176,7 +197,14 @@ func _setup_tileset() -> void:
 		var grass_right_tile_data = ts.get_source(_grass_right_id).get_tile_data(Vector2i(0, 0), 0)
 		if grass_right_tile_data and ts.get_physics_layers_count() > 0:
 			grass_right_tile_data.set_collision_polygons_count(0, 1)
-			grass_right_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+			# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
+			var collision_height_right = tile_size * 0.3  # 30% dari tinggi tile untuk collision
+			grass_right_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
+				Vector2(0, 0), 
+				Vector2(tile_size, 0), 
+				Vector2(tile_size, collision_height_right), 
+				Vector2(0, collision_height_right)
+			]))
 	if enable_hills:
 		var up_src := TileSetAtlasSource.new()
 		var _up_tex: Texture2D = load(hill_up_texture_path)
@@ -189,7 +217,14 @@ func _setup_tileset() -> void:
 		var hill_up_tile_data = ts.get_source(_hill_up_id).get_tile_data(Vector2i(0, 0), 0)
 		if hill_up_tile_data and ts.get_physics_layers_count() > 0:
 			hill_up_tile_data.set_collision_polygons_count(0, 1)
-			hill_up_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+			# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
+			var collision_height_hill = tile_size * 0.3  # 30% dari tinggi tile untuk collision
+			hill_up_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
+				Vector2(0, 0), 
+				Vector2(tile_size, 0), 
+				Vector2(tile_size, collision_height_hill), 
+				Vector2(0, collision_height_hill)
+			]))
 		
 		var down_src := TileSetAtlasSource.new()
 		var _down_tex: Texture2D = load(hill_down_texture_path)
@@ -202,7 +237,14 @@ func _setup_tileset() -> void:
 		var hill_down_tile_data = ts.get_source(_hill_down_id).get_tile_data(Vector2i(0, 0), 0)
 		if hill_down_tile_data and ts.get_physics_layers_count() > 0:
 			hill_down_tile_data.set_collision_polygons_count(0, 1)
-			hill_down_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([Vector2(0, 0), Vector2(tile_size, 0), Vector2(tile_size, tile_size), Vector2(0, tile_size)]))
+			# Collision untuk bagian atas tile (30% tinggi untuk mencegah tembus dari bawah)
+			var collision_height_down = tile_size * 0.3  # 30% dari tinggi tile untuk collision
+			hill_down_tile_data.set_collision_polygon_points(0, 0, PackedVector2Array([
+				Vector2(0, 0), 
+				Vector2(tile_size, 0), 
+				Vector2(tile_size, collision_height_down), 
+				Vector2(0, collision_height_down)
+			]))
 		
 		var up2_src := TileSetAtlasSource.new()
 		var _up2_tex: Texture2D = load(hill_up2_texture_path)
