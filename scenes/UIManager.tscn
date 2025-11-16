@@ -1,4 +1,7 @@
-[gd_scene load_steps=7 format=3 uid="uid://u5m6n7o8qaq2"]
+[gd_scene load_steps=8 format=3 uid="uid://u5m6n7o8qaq2"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_jump"]
+radius = 48.0
 
 [ext_resource type="Script" path="res://scripts/ui_manager.gd" id="1_ui_manager_script"]
 [ext_resource type="PackedScene" uid="uid://c8a7h3v2q5x4" path="res://scenes/Healthbar.tscn" id="2_healthbar_scene"]
@@ -51,3 +54,28 @@ offset_left = 20.0
 offset_top = 100.0
 offset_right = 20.0
 offset_bottom = 100.0
+
+[node name="JumpButton" type="TouchScreenButton" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 0.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_bottom = -24.0
+offset_right = 120.0
+offset_top = -120.0
+action = "jump"
+shape = SubResource("CircleShape2D_jump")
+visibility_mode = 0
+
+[node name="Label" type="Label" parent="JumpButton"]
+layout_mode = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "Jump"
+theme_override_colors/font_color = Color(1, 1, 1, 1)

@@ -63,6 +63,13 @@ func _process(delta: float) -> void:
 		score = int(distance / 10.0)
 		if ui_distance and ui_distance.has_method("set_distance"):
 			ui_distance.set_distance(distance)
+		if player and ground_a and ground_a.has_method("is_gap_below_world_pos"):
+			var feet: Vector2 = player.global_position + Vector2(0, 8)
+			var falling: bool = (not player.is_on_floor()) and player.velocity.y > 0.0
+			var gap: bool = bool(ground_a.call("is_gap_below_world_pos", feet, 2))
+			var in_play: bool = player.current_state == player.PlayerState.FULL_MOVEMENT and player.state_timer > 0.2
+			if in_play and falling and gap:
+				on_player_game_over("gap")
 	elif phase == Phase.LOADING:
 		var elapsed = Time.get_ticks_msec() - loading_start_ms
 		var loading_ready := (done_a and done_b) or loading_pct >= 0.999
@@ -85,8 +92,12 @@ func set_title_phase() -> void:
 			terrain_b.set_speed(150.0)
 	if ground_a and ground_a.has_method("set_title_mode"):
 		ground_a.set_title_mode(true)
+	if ground_a and ground_a.has_method("set_movement_enabled"):
+		ground_a.set_movement_enabled(false)
 	if ground_b and ground_b.has_method("set_title_mode"):
 		ground_b.set_title_mode(true)
+	if ground_b and ground_b.has_method("set_movement_enabled"):
+		ground_b.set_movement_enabled(false)
 	if player:
 		player.visible = false
 	if title:
@@ -174,6 +185,10 @@ func set_entry_phase() -> void:
 		ground_a.set_title_mode(false)
 	if ground_b and ground_b.has_method("set_title_mode"):
 		ground_b.set_title_mode(false)
+	if ground_a and ground_a.has_method("set_movement_enabled"):
+		ground_a.set_movement_enabled(false)
+	if ground_b and ground_b.has_method("set_movement_enabled"):
+		ground_b.set_movement_enabled(false)
 	if player and player.has_method("start_appearance_from_left"):
 		call_deferred("trigger_player_entry")
 
@@ -191,6 +206,14 @@ func set_playing_phase() -> void:
 		terrain.set_movement_enabled(true)
 	if terrain_b and terrain_b.has_method("set_movement_enabled"):
 		terrain_b.set_movement_enabled(true)
+	if ground_a and ground_a.has_method("set_movement_enabled"):
+		ground_a.set_movement_enabled(true)
+		if ground_a.has_method("set_speed"):
+			ground_a.set_speed(150.0)
+	if ground_b and ground_b.has_method("set_movement_enabled"):
+		ground_b.set_movement_enabled(true)
+		if ground_b.has_method("set_speed"):
+			ground_b.set_speed(150.0)
 	if ui_manager:
 		ui_manager.show()
 	if ui_timer and ui_timer.has_method("start"):
@@ -280,10 +303,6 @@ func regenerate_gameplay_ground() -> void:
 	load_progress_b = 0.0
 	done_a = false
 	done_b = false
-	if ground_a and ground_a.has_method("generate_random"):
-		ground_a.generate_random()
-	if ground_b and ground_b.has_method("generate_random"):
-		ground_b.generate_random()
 	var started_ms := Time.get_ticks_msec()
 	while true:
 		var avg := (load_progress_a + load_progress_b) * 0.5

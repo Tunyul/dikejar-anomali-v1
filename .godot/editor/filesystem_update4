@@ -1,3 +1,6 @@
+res://scripts/simple_game_manager.gd
+res://scenes/Main.tscn
 res://scenes/Ground.tscn
 res://scripts/TileMapGenerator.gd
-res://scenes/Main.tscn
+res://scripts/player.gd
+res://scenes/UIManager.tscn

@@ -55,6 +55,7 @@ var parallax_background: Node
 var terrain_nodes: Array = []
 var main_camera: Camera2D
 var animated_sprite: AnimatedSprite2D
+var ground_ray: RayCast2D
 var title_screen: Control
 
 # ===== SIGNALS =====
@@ -127,6 +128,8 @@ func initialize_player() -> void:
 		# Tidak perlu auto-scale karena sudah di-set manual di editor
 		if enable_debug_logging and OS.is_debug_build():
 			print("AnimatedSprite2D initialized: position=", animated_sprite.position, " scale=", animated_sprite.scale, " playing=", animated_sprite.is_playing())
+
+	ground_ray = get_node_or_null("GroundRay")
 
 func setup_collision_layers() -> void:
 	collision_layer = 2  # Player layer
@@ -375,7 +378,7 @@ func apply_physics(delta: float) -> void:
 	# Use move_and_slide with floor detection parameters
 	# Set up_floor_snap_length to prevent tiny movements
 	set_up_direction(Vector2.UP)
-	set_floor_snap_length(24.0)
+	set_floor_snap_length(6.0 if is_on_floor() else 0.0)
 	move_and_slide()
 	
 	
@@ -393,7 +396,8 @@ func check_game_over_conditions() -> void:
 		return
 	
 	# Cek jatuh ke gap/jurang (tidak ada tanah di bawah)
-	if not is_on_floor() and velocity.y > 0:
+	var ray_gap := ground_ray != null and not ground_ray.is_colliding()
+	if not is_on_floor() and velocity.y > 0 and ray_gap:
 		# Cek apakah sudah jatuh terlalu lama/jauh
 		if state_data.has("fall_start_y"):
 			var fall_distance = state_data["fall_start_y"] - position.y

@@ -257,7 +257,7 @@ visible = true
 
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
-position = Vector2(360, 441)
+position = Vector2(360, 400)
 floor_constant_speed = true
 run_speed = 100.0
 jump_velocity = -800.0
@@ -265,6 +265,7 @@ gravity = 1500.0
 fall_death_y = 800.0
 enable_debug_logging = true
 collision_size = Vector2(100, 140)
+entry_stop_y = 400.0
 
 [node name="Ground" parent="." instance=ExtResource("25")]
 z_index = 5
