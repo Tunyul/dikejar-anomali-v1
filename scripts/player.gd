@@ -346,6 +346,9 @@ func handle_full_movement_state(_delta: float) -> void:
 	# Handle jump input
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = jump_velocity
+		var sfx := get_tree().get_root().get_node_or_null("Main/SFXJump")
+		if sfx and sfx is AudioStreamPlayer and sfx.stream != null:
+			(sfx as AudioStreamPlayer).play()
 	
 	# Control animation based on state
 	update_animation_state()

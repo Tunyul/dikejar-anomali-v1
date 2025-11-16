@@ -5,6 +5,7 @@ var phase: Phase = Phase.TITLE
 var game_active: bool = false
 var score: int = 0
 var distance: float = 0.0
+var best_score: int = 0
 var loading_start_ms: int = 0
 var min_loading_ms: int = 500
 var loading_pct: float = 0.0
@@ -16,16 +17,19 @@ var countdown_remaining: int = 0
 var countdown_running: bool = false
 
 @onready var player = $Player
-@onready var terrain = $Terrain
-@onready var terrain_b = $TerrainB
-@onready var ground_a: Node2D = $Terrain/Ground
-@onready var ground_b: Node2D = $TerrainB/Ground
+@onready var terrain = get_node_or_null("Terrain")
+@onready var terrain_b = get_node_or_null("TerrainB")
+@onready var ground_a: Node2D = get_node_or_null("Ground")
+@onready var ground_b: Node2D = get_node_or_null("TerrainB/Ground")
 @onready var parallax = $ParallaxBackground
 @onready var canvas = $CanvasLayer
 @onready var title = canvas.get_node_or_null("TitleScreen")
 @onready var loading = canvas.get_node_or_null("LoadingScreen")
 @onready var game_over = canvas.get_node_or_null("GameOverScreen")
 @onready var countdown_label: Label = canvas.get_node_or_null("CountdownLabel")
+@onready var ui_manager: Control = canvas.get_node_or_null("UIManager")
+@onready var ui_distance: Node = ui_manager.get_node_or_null("DistanceCounter") if ui_manager != null else null
+@onready var ui_timer: Node = ui_manager.get_node_or_null("GameTimer") if ui_manager != null else null
 
 func _ready() -> void:
 	if player:
@@ -49,6 +53,7 @@ func _ready() -> void:
 		lbl.offset_bottom = 0
 		canvas.add_child(lbl)
 		countdown_label = lbl
+	_load_best_score()
 	set_title_phase()
 
 func _process(delta: float) -> void:
@@ -56,6 +61,8 @@ func _process(delta: float) -> void:
 		var terrain_speed = 150.0
 		distance += terrain_speed * delta
 		score = int(distance / 10.0)
+		if ui_distance and ui_distance.has_method("set_distance"):
+			ui_distance.set_distance(distance)
 	elif phase == Phase.LOADING:
 		var elapsed = Time.get_ticks_msec() - loading_start_ms
 		var loading_ready := (done_a and done_b) or loading_pct >= 0.999
@@ -88,6 +95,13 @@ func set_title_phase() -> void:
 		loading.hide()
 	if game_over:
 		game_over.hide()
+	if ui_manager:
+		ui_manager.hide()
+	if ui_timer and ui_timer.has_method("reset"):
+		ui_timer.reset()
+	var bgm := get_node_or_null("BGM")
+	if bgm and bgm is AudioStreamPlayer:
+		(bgm as AudioStreamPlayer).stop()
 
 func on_start_game() -> void:
 	set_loading_phase()
@@ -109,9 +123,16 @@ func set_loading_phase() -> void:
 		load_progress_b = 0.0
 		done_a = false
 		done_b = false
-		if ground_a and ground_a.has_signal("generation_progress"):
+		if not ground_b:
+			load_progress_b = 1.0
+			done_b = true
+		if not ground_a and not ground_b:
+			loading_pct = 1.0
+			done_a = true
+			done_b = true
+		if ground_a and ground_a.has_signal("generation_progress") and not ground_a.is_connected("generation_progress", Callable(self, "on_generation_progress")):
 			ground_a.connect("generation_progress", Callable(self, "on_generation_progress").bind("A"))
-		if ground_b and ground_b.has_signal("generation_progress"):
+		if ground_b and ground_b.has_signal("generation_progress") and not ground_b.is_connected("generation_progress", Callable(self, "on_generation_progress")):
 			ground_b.connect("generation_progress", Callable(self, "on_generation_progress").bind("B"))
 	if ground_a and ground_a.has_method("generate_random"):
 		ground_a.generate_random()
@@ -170,6 +191,13 @@ func set_playing_phase() -> void:
 		terrain.set_movement_enabled(true)
 	if terrain_b and terrain_b.has_method("set_movement_enabled"):
 		terrain_b.set_movement_enabled(true)
+	if ui_manager:
+		ui_manager.show()
+	if ui_timer and ui_timer.has_method("start"):
+		ui_timer.start()
+	var bgm2 := get_node_or_null("BGM")
+	if bgm2 and bgm2 is AudioStreamPlayer and (bgm2 as AudioStreamPlayer).stream != null:
+		(bgm2 as AudioStreamPlayer).play()
 
 func on_player_game_over(_cause: String) -> void:
 	phase = Phase.GAME_OVER
@@ -182,7 +210,16 @@ func on_player_game_over(_cause: String) -> void:
 		terrain_b.set_movement_enabled(false)
 	if game_over and game_over.has_method("show_screen"):
 		game_over.show_screen()
-		game_over.connect("restart_requested", Callable(self, "restart_game"))
+		if not game_over.is_connected("restart_requested", Callable(self, "restart_game")):
+			game_over.connect("restart_requested", Callable(self, "restart_game"))
+	if ui_timer and ui_timer.has_method("stop"):
+		ui_timer.stop()
+	if score > best_score:
+		best_score = score
+		_save_best_score()
+	var bgm3 := get_node_or_null("BGM")
+	if bgm3 and bgm3 is AudioStreamPlayer:
+		(bgm3 as AudioStreamPlayer).stop()
 
 func restart_game() -> void:
 	set_title_phase()
@@ -192,7 +229,8 @@ func get_game_state() -> Dictionary:
 		"phase": phase,
 		"game_active": game_active,
 		"score": score,
-		"distance": distance
+		"distance": distance,
+		"best_score": best_score
 	}
 func on_player_state_changed(new_state, _old_state) -> void:
 	if new_state == player.PlayerState.FULL_MOVEMENT:
@@ -212,13 +250,14 @@ func start_countdown() -> void:
 	if countdown_label:
 		countdown_label.visible = true
 		countdown_label.text = str(countdown_remaining)
-	_run_countdown_step()
+		_run_countdown_step()
 
 func _run_countdown_step() -> void:
 	if countdown_remaining <= 0:
 		if countdown_label:
 			countdown_label.visible = false
 		countdown_running = false
+		await regenerate_gameplay_ground()
 		set_playing_phase()
 		return
 	if countdown_label:
@@ -226,3 +265,55 @@ func _run_countdown_step() -> void:
 	countdown_remaining -= 1
 	var t := get_tree().create_timer(1.0)
 	t.timeout.connect(Callable(self, "_run_countdown_step"))
+
+func regenerate_gameplay_ground() -> void:
+	if ground_a and ground_a.has_method("set_title_mode"):
+		ground_a.set_title_mode(false)
+	if ground_b and ground_b.has_method("set_title_mode"):
+		ground_b.set_title_mode(false)
+	# Hubungkan progres untuk pemantauan ringan
+	if ground_a and ground_a.has_signal("generation_progress") and not ground_a.is_connected("generation_progress", Callable(self, "on_gameplay_generation_progress")):
+		ground_a.connect("generation_progress", Callable(self, "on_gameplay_generation_progress").bind("A"))
+	if ground_b and ground_b.has_signal("generation_progress") and not ground_b.is_connected("generation_progress", Callable(self, "on_gameplay_generation_progress")):
+		ground_b.connect("generation_progress", Callable(self, "on_gameplay_generation_progress").bind("B"))
+	load_progress_a = 0.0
+	load_progress_b = 0.0
+	done_a = false
+	done_b = false
+	if ground_a and ground_a.has_method("generate_random"):
+		ground_a.generate_random()
+	if ground_b and ground_b.has_method("generate_random"):
+		ground_b.generate_random()
+	var started_ms := Time.get_ticks_msec()
+	while true:
+		var avg := (load_progress_a + load_progress_b) * 0.5
+		var elapsed := Time.get_ticks_msec() - started_ms
+		if (done_a and done_b) or avg >= 0.99 or elapsed > 1000:
+			break
+		await get_tree().process_frame
+	# Putuskan koneksi pemantauan untuk kebersihan
+	if ground_a and ground_a.is_connected("generation_progress", Callable(self, "on_gameplay_generation_progress")):
+		ground_a.disconnect("generation_progress", Callable(self, "on_gameplay_generation_progress"))
+	if ground_b and ground_b.is_connected("generation_progress", Callable(self, "on_gameplay_generation_progress")):
+		ground_b.disconnect("generation_progress", Callable(self, "on_gameplay_generation_progress"))
+
+func on_gameplay_generation_progress(pct: float, src: String) -> void:
+	if src == "A":
+		load_progress_a = pct
+		if pct >= 0.999:
+			done_a = true
+	elif src == "B":
+		load_progress_b = pct
+		if pct >= 0.999:
+			done_b = true
+
+func _load_best_score() -> void:
+	var cfg := ConfigFile.new()
+	var err := cfg.load("user://save.cfg")
+	if err == OK:
+		best_score = int(cfg.get_value("progress", "best_score", 0))
+
+func _save_best_score() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("progress", "best_score", best_score)
+	cfg.save("user://save.cfg")

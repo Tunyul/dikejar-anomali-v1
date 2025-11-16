@@ -14,13 +14,13 @@
 [ext_resource type="Texture2D" uid="uid://ba2hjmnmppick" path="res://assets/Background/png/Clouds/256x256/Cloud_2.png" id="12"]
 [ext_resource type="Texture2D" uid="uid://kpcwkxsrgbgi" path="res://assets/Background/png/1920x1080/All/Hills_2.png" id="13"]
 [ext_resource type="Texture2D" uid="uid://dcydd8r0n5c6f" path="res://assets/Background/png/1920x1080/All/Hills_1.png" id="14"]
-[ext_resource type="PackedScene" uid="uid://djdxg7v0el2xi" path="res://scenes/Terrain.tscn" id="16"]
-[ext_resource type="Script" uid="uid://dyjyws51lbuyf" path="res://scripts/terrain_scroll.gd" id="17"]
 [ext_resource type="PackedScene" uid="uid://b8il18k1d04wg" path="res://scenes/player.tscn" id="20"]
 [ext_resource type="Script" uid="uid://k78wsp6rc6mv" path="res://scripts/simple_game_manager.gd" id="21"]
-[ext_resource type="PackedScene" path="res://scenes/TitleScreen.tscn" id="22"]
+[ext_resource type="PackedScene" uid="uid://b32oy441m6073" path="res://scenes/TitleScreen.tscn" id="22"]
 [ext_resource type="PackedScene" uid="uid://cwj37wyc6s7oe" path="res://scenes/LoadingScreen.tscn" id="23"]
 [ext_resource type="PackedScene" path="res://scenes/GameOverScreen.tscn" id="24"]
+[ext_resource type="PackedScene" uid="uid://vwgvkrfenbcg" path="res://scenes/Ground.tscn" id="25"]
+[ext_resource type="PackedScene" uid="uid://u5m6n7o8qaq2" path="res://scenes/UIManager.tscn" id="26"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("21")
@@ -243,17 +243,6 @@ scale = Vector2(0.53333336, 0.53333336)
 texture = ExtResource("14")
 centered = false
 
-[node name="Terrain" parent="." instance=ExtResource("16")]
-script = ExtResource("17")
-speed = 100.0
-peer = NodePath("../TerrainB")
-
-[node name="TerrainB" parent="." instance=ExtResource("16")]
-script = ExtResource("17")
-speed = 150.0
-peer = NodePath("../Terrain")
-is_primary = false
-
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = 100
 
@@ -264,6 +253,8 @@ layer = 100
 [node name="GameOverScreen" parent="CanvasLayer" instance=ExtResource("24")]
 visible = true
 
+[node name="UIManager" parent="CanvasLayer" instance=ExtResource("26")]
+
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
 position = Vector2(360, 441)
@@ -273,4 +264,20 @@ jump_velocity = -800.0
 gravity = 1500.0
 fall_death_y = 800.0
 enable_debug_logging = true
-collision_size = Vector2(130, 200)
+collision_size = Vector2(100, 140)
+
+[node name="Ground" parent="." instance=ExtResource("25")]
+z_index = 5
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(512, 288)
+limit_left = -1000
+limit_top = 0
+limit_right = 10000
+limit_bottom = 576
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+
+[node name="BGM" type="AudioStreamPlayer" parent="."]
+
+[node name="SFXJump" type="AudioStreamPlayer" parent="."]

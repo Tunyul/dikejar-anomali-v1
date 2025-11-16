@@ -1,13 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://b32oy441m6073"]
 
-[ext_resource type="Script" path="res://scripts/title_screen.gd" id="1_title_script"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu_bg"]
-bg_color = Color(0.1, 0.1, 0.2, 0.9)
-corner_radius_top_left = 20
-corner_radius_top_right = 20
-corner_radius_bottom_right = 20
-corner_radius_bottom_left = 20
+[ext_resource type="Script" uid="uid://b0kjp1a14sq15" path="res://scripts/title_screen.gd" id="1_title_script"]
 
 [node name="TitleScreen" type="Control"]
 layout_mode = 3
@@ -47,7 +40,7 @@ custom_minimum_size = Vector2(500, 100)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 72
-text = "DIKEJAR ANOMALI"
+text = "DIKEJAR ANOMALI!!"
 horizontal_alignment = 1
 vertical_alignment = 1
 
