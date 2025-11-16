@@ -71,6 +71,13 @@ func generate():
                     var coords: Vector2i = atlas_coords_grass_mid if use_mid else atlas_coords_grass
                     var alt: int = alternative_grass_mid if use_mid else alternative_grass
                     set_cell(pos, sid, coords, alt)
+                    if has_dirt:
+                        if y + 1 < height:
+                            var below1: Vector2i = Vector2i(origin.x + x, origin.y + y + 1)
+                            set_cell(below1, dirt_source_id, atlas_coords_dirt, alternative_dirt)
+                        if y + 2 < height:
+                            var below2: Vector2i = Vector2i(origin.x + x, origin.y + y + 2)
+                            set_cell(below2, dirt_source_id, atlas_coords_dirt, alternative_dirt)
                 elif v >= dirt_threshold and has_dirt:
                     set_cell(pos, dirt_source_id, atlas_coords_dirt, alternative_dirt)
     if add_dirt_band:
