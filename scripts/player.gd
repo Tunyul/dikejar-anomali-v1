@@ -4,8 +4,14 @@ class_name Player
 # ===== MOVEMENT PARAMETERS =====
 @export var run_speed: float = 200.0
 @export var jump_velocity: float = -400.0
+@export var jump_enabled: bool = true
+@export var air_jumps: int = 0
+@export var coyote_time: float = 0.1
+@export var jump_buffer_time: float = 0.15
 @export var gravity: float = 1200.0
 @export var fall_death_y: float = 1000.0
+@export var gap_fall_threshold: float = 300.0
+@export var gap_fall_grace_time: float = 0.25
 
 # ===== PERFORMANCE SETTINGS =====
 @export var position_adjustment_speed: float = 3.0
@@ -43,6 +49,10 @@ var state_data: Dictionary = {}
 # ===== MOVEMENT STATE =====
 var is_grounded: bool = false
 var can_jump: bool = true
+var remaining_air_jumps: int = 0
+var coyote_timer: float = 0.0
+var jump_buffer_timer: float = 0.0
+var jump_requested: bool = false
 
 # ===== POSITION MANAGEMENT =====
 var target_screen_position: Vector2 = Vector2.ZERO
@@ -94,11 +104,20 @@ func match_sprite_to_collision_size() -> void:
 		print("Sprite resized: original=", original_sprite_size, " collision=", shape_size, " scale=", final_scale)
 
 func _ready() -> void:
+	if not InputMap.has_action("jump"):
+		InputMap.add_action("jump")
+		var ev := InputEventKey.new()
+		ev.physical_keycode = KEY_SPACE
+		InputMap.action_add_event("jump", ev)
+		var mev := InputEventMouseButton.new()
+		mev.button_index = MOUSE_BUTTON_LEFT
+		InputMap.action_add_event("jump", mev)
 	initialize_player()
 	setup_collision_layers()
 	find_and_cache_references()
 	calculate_screen_positions()
 	start_initial_state_sequence()
+	remaining_air_jumps = air_jumps
 
 func initialize_player() -> void:
 	visible = true
@@ -234,18 +253,19 @@ func _physics_process(delta: float) -> void:
 			handle_game_over_state(delta)
 	
 	# Apply physics dan collision detection
-	# Pastikan player tetap di tanah di state tertentu
-	if current_state == PlayerState.APPEARING or current_state == PlayerState.RUNNING_IN_PLACE or current_state == PlayerState.FULL_MOVEMENT:
-		# Force player to stay on ground
+	# Pastikan player tetap di tanah di state tertentu (kecuali FULL_MOVEMENT)
+	if current_state == PlayerState.APPEARING or current_state == PlayerState.RUNNING_IN_PLACE:
+		# Force player to stay on ground pada fase awal
 		if is_on_floor() or current_state == PlayerState.APPEARING:
 			velocity.y = 0
-		elif enable_debug_logging and OS.is_debug_build() and state_timer < 0.5:  # Log if player leaves ground unexpectedly
+		elif enable_debug_logging and OS.is_debug_build() and state_timer < 0.5:
 			print("WARNING: Player left ground in ", current_state, " state! position: ", position, " velocity: ", velocity)
-		
-		# Force Y position lock during critical states
-		if current_state == PlayerState.APPEARING or current_state == PlayerState.RUNNING_IN_PLACE:
-			position.y = entry_stop_y
+		# Kunci posisi Y saat muncul/diam
+		position.y = entry_stop_y
 	
+		apply_physics(delta)
+		check_game_over_conditions()
+	elif current_state == PlayerState.FULL_MOVEMENT:
 		apply_physics(delta)
 		check_game_over_conditions()
 
@@ -323,6 +343,7 @@ func handle_running_in_place_state(delta: float) -> void:
 		set_state(PlayerState.FULL_MOVEMENT)
 
 func handle_full_movement_state(_delta: float) -> void:
+	state_timer += _delta
 	# Player tetap di posisi X=200, terrain yang bergerak
 	velocity.x = 0  # Player tidak bergerak horizontal
 	
@@ -333,9 +354,9 @@ func handle_full_movement_state(_delta: float) -> void:
 		position.y = entry_stop_y
 		velocity.y = 0
 	
-	# Debug log position and ground status
-	if enable_debug_logging and OS.is_debug_build() and state_timer < 1.0:  # Log first few frames
-		print("FULL_MOVEMENT - position: ", position, " is_on_floor: ", is_on_floor(), " velocity: ", velocity)
+		# Debug log position and ground status
+		if enable_debug_logging and OS.is_debug_build() and state_timer < 1.0:  # Log first few frames
+			pass
 	
 	# Debug log if position changes unexpectedly
 	if enable_debug_logging and OS.is_debug_build() and abs(position.x - entry_stop_x) > 1.0:
@@ -347,11 +368,9 @@ func handle_full_movement_state(_delta: float) -> void:
 		velocity.x = velocity.x * (1.0 - jump_horizontal_damping)
 	
 	# Handle jump input
-	if Input.is_action_just_pressed("jump") and is_on_floor():
-		velocity.y = jump_velocity
-		var sfx := get_tree().get_root().get_node_or_null("Main/SFXJump")
-		if sfx and sfx is AudioStreamPlayer and sfx.stream != null:
-			(sfx as AudioStreamPlayer).play()
+	if Input.is_action_just_pressed("jump"):
+		jump_buffer_timer = jump_buffer_time
+		jump_requested = true
 	
 	# Control animation based on state
 	update_animation_state()
@@ -379,6 +398,25 @@ func apply_physics(delta: float) -> void:
 	# Set up_floor_snap_length to prevent tiny movements
 	set_up_direction(Vector2.UP)
 	set_floor_snap_length(6.0 if is_on_floor() else 0.0)
+	if was_on_floor:
+		coyote_timer = coyote_time
+		remaining_air_jumps = air_jumps
+	else:
+		coyote_timer = max(coyote_timer - delta, 0.0)
+	if jump_buffer_timer > 0.0:
+		jump_buffer_timer = max(jump_buffer_timer - delta, 0.0)
+	if jump_enabled and jump_requested and jump_buffer_timer > 0.0:
+		var can_use_air := remaining_air_jumps > 0
+		var can_perform := is_on_floor() or coyote_timer > 0.0 or can_use_air
+		if can_perform:
+			velocity.y = jump_velocity
+			if not is_on_floor() and coyote_timer <= 0.0 and can_use_air:
+				remaining_air_jumps -= 1
+			var sfx2 := get_tree().get_root().get_node_or_null("Main/SFXJump")
+			if sfx2 and sfx2 is AudioStreamPlayer and sfx2.stream != null:
+				(sfx2 as AudioStreamPlayer).play()
+			jump_requested = false
+			jump_buffer_timer = 0.0
 	move_and_slide()
 	
 	
@@ -390,28 +428,6 @@ func apply_physics(delta: float) -> void:
 	is_grounded = is_on_floor()
 
 func check_game_over_conditions() -> void:
-	# Cek jatuh ke jurang/bawah layar
-	if position.y > fall_death_y:
-		trigger_game_over("fell")
-		return
-	
-	# Cek jatuh ke gap/jurang (tidak ada tanah di bawah)
-	var ray_gap := ground_ray != null and not ground_ray.is_colliding()
-	if not is_on_floor() and velocity.y > 0 and ray_gap:
-		# Cek apakah sudah jatuh terlalu lama/jauh
-		if state_data.has("fall_start_y"):
-			var fall_distance = state_data["fall_start_y"] - position.y
-			if fall_distance > 300:  # Jatuh lebih dari 300px tanpa tanah = game over
-				trigger_game_over("fell_into_gap")
-				return
-		else:
-			# Catat posisi awal jatuh
-			state_data["fall_start_y"] = position.y
-	else:
-		# Reset fall tracking saat di tanah
-		if state_data.has("fall_start_y"):
-			state_data.erase("fall_start_y")
-	
 	var viewport_rect = get_viewport().get_visible_rect()
 	if position.y > viewport_rect.size.y + 200:
 		trigger_game_over("fell_off_screen")
@@ -421,10 +437,12 @@ func update_animation_state() -> void:
 		return
 	
 	if is_on_floor():
-		if animated_sprite.animation != "run":
+		if animated_sprite.animation != "run" and animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("run"):
 			animated_sprite.play("run")
 		animated_sprite.speed_scale = 1.0
 	else:
+		if animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("run") and animated_sprite.animation != "run":
+			animated_sprite.play("run")
 		animated_sprite.speed_scale = 0.8
 
 func maintain_screen_position() -> void:
@@ -505,11 +523,8 @@ func _input(event: InputEvent) -> void:
 	# Handle screen tap/click for jump with proper validation
 	var is_valid_jump_event = (event is InputEventScreenTouch or event is InputEventMouseButton)
 	if is_valid_jump_event and event.is_pressed():
-		if is_on_floor() and can_jump:
-			velocity.y = jump_velocity
-			can_jump = false  # Prevent jump spam
-			# Re-enable jump after brief delay
-			get_tree().create_timer(0.1).timeout.connect(func(): can_jump = true)
+		jump_buffer_timer = jump_buffer_time
+		jump_requested = true
 
 func trigger_game_over(cause: String) -> void:
 	if current_state == PlayerState.GAME_OVER:

@@ -55,6 +55,7 @@ func _ready():
 	_configure_noise()
 	if auto_generate_on_ready:
 		generate()
+	_build_colliders()
 
 func _configure_noise():
 	_rng.randomize()
@@ -63,15 +64,22 @@ func _configure_noise():
 
 func clear_map():
 	clear()
+	var cc := get_node_or_null("TileColliders")
+	if cc:
+		cc.queue_free()
 
 func generate():
 	if tile_set == null:
 		return
 	if clear_before_generate:
 		clear()
+		var cc := get_node_or_null("TileColliders")
+		if cc:
+			cc.queue_free()
 	_configure_noise()
 	if runner_mode:
 		_generate_flat_runner()
+		_build_colliders()
 	else:
 		var has_top: bool = tile_set.has_source(grass_source_id) or (use_grass_mid and tile_set.has_source(grass_mid_source_id))
 		var has_dirt := tile_set.has_source(dirt_source_id)
@@ -116,6 +124,7 @@ func generate():
 					set_cell(pos, dirt_source_id, atlas_coords_dirt, alternative_dirt)
 		if add_dirt_band:
 			_draw_dirt_band()
+		_build_colliders()
 		queue_redraw()
 
 func _generate_flat_runner():
@@ -160,6 +169,30 @@ func _generate_flat_runner():
 		if add_dirt_band:
 			_draw_dirt_band()
 
+func _build_colliders():
+	if tile_set == null:
+		return
+	var cell := tile_set.tile_size if tile_set != null else Vector2i(128, 128)
+	var root := StaticBody2D.new()
+	root.name = "TileColliders"
+	root.collision_layer = 1
+	add_child(root)
+	for x in range(width):
+		for y in range(height):
+			var mp := Vector2i(origin.x + x, origin.y + y)
+			var sid := get_cell_source_id(mp)
+			var is_grass := sid == grass_source_id or sid == grass_mid_source_id
+			var is_dirt := sid == dirt_source_id
+			if not is_grass and not is_dirt:
+				continue
+			var rect := RectangleShape2D.new()
+			rect.size = Vector2(cell.x, cell.y)
+			var col := CollisionShape2D.new()
+			col.shape = rect
+			var center: Vector2 = map_to_local(mp)
+			col.position = center
+			root.add_child(col)
+
 func _draw_dirt_band():
 	if tile_set == null:
 		return
@@ -200,7 +233,6 @@ func _draw() -> void:
 				if td != null and has_phys_layers:
 					has_col = td.get_collision_polygons_count(0) > 0
 				elif td != null and not has_phys_layers:
-					# Fallback: treat any placed tile as solid when no physics layer exists
 					has_col = get_cell_source_id(mp) != -1
 				var sid := get_cell_source_id(mp)
 				var is_grass := overlay_include_grass and (sid == grass_source_id or sid == grass_mid_source_id)

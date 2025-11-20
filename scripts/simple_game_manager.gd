@@ -63,13 +63,6 @@ func _process(delta: float) -> void:
 		score = int(distance / 10.0)
 		if ui_distance and ui_distance.has_method("set_distance"):
 			ui_distance.set_distance(distance)
-		if player and ground_a and ground_a.has_method("is_gap_below_world_pos"):
-			var feet: Vector2 = player.global_position + Vector2(0, 8)
-			var falling: bool = (not player.is_on_floor()) and player.velocity.y > 0.0
-			var gap: bool = bool(ground_a.call("is_gap_below_world_pos", feet, 2))
-			var in_play: bool = player.current_state == player.PlayerState.FULL_MOVEMENT and player.state_timer > 0.2
-			if in_play and falling and gap:
-				on_player_game_over("gap")
 	elif phase == Phase.LOADING:
 		var elapsed = Time.get_ticks_msec() - loading_start_ms
 		var loading_ready := (done_a and done_b) or loading_pct >= 0.999
@@ -80,6 +73,10 @@ func _process(delta: float) -> void:
 func set_title_phase() -> void:
 	phase = Phase.TITLE
 	game_active = false
+	score = 0
+	distance = 0.0
+	countdown_running = false
+	countdown_remaining = 0
 	if parallax and parallax.has_method("set_movement_enabled"):
 		parallax.set_movement_enabled(true)
 	if terrain and terrain.has_method("set_movement_enabled"):
@@ -100,6 +97,8 @@ func set_title_phase() -> void:
 		ground_b.set_movement_enabled(false)
 	if player:
 		player.visible = false
+		if player.has_method("reset_player"):
+			player.reset_player()
 	if title:
 		title.show()
 	if loading:
