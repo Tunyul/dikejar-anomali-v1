@@ -7,6 +7,11 @@ signal generation_progress(pct: float)
 var _title_mode: bool = true
 @export var movement_enabled: bool = false
 @export var scroll_speed: float = 150.0
+@export var speed_multiplier: float = 1.0
+@export var acceleration: float = 0.0
+@export var use_acceleration: bool = false
+@export var max_scroll_speed: float = 300.0
+@export var min_scroll_speed: float = 0.0
 
 func set_title_mode(enable: bool) -> void:
 	_title_mode = enable
@@ -25,11 +30,34 @@ func set_movement_enabled(enable: bool) -> void:
 	movement_enabled = enable
 
 func set_speed(s: float) -> void:
-	scroll_speed = s
+	scroll_speed = clamp(s, min_scroll_speed, max_scroll_speed)
+
+func add_speed(ds: float) -> void:
+	scroll_speed = clamp(scroll_speed + ds, min_scroll_speed, max_scroll_speed)
+
+func set_multiplier(m: float) -> void:
+	speed_multiplier = m
+
+func set_acceleration(a: float) -> void:
+	acceleration = a
+
+func set_acceleration_enabled(enable: bool) -> void:
+	use_acceleration = enable
+
+func set_speed_limits(min_s: float, max_s: float) -> void:
+	min_scroll_speed = min_s
+	max_scroll_speed = max_s
+	scroll_speed = clamp(scroll_speed, min_scroll_speed, max_scroll_speed)
+
+func get_speed() -> float:
+	return clamp(scroll_speed, min_scroll_speed, max_scroll_speed) * speed_multiplier
 
 func _process(delta: float) -> void:
 	if movement_enabled and tile_layer != null:
-		tile_layer.position.x -= scroll_speed * delta
+		if use_acceleration:
+			scroll_speed = clamp(scroll_speed + acceleration * delta, min_scroll_speed, max_scroll_speed)
+		var s: float = clamp(scroll_speed, min_scroll_speed, max_scroll_speed) * speed_multiplier
+		tile_layer.position.x -= s * delta
 
 func is_solid_at_world_pos(pos: Vector2) -> bool:
 	if tile_layer == null:

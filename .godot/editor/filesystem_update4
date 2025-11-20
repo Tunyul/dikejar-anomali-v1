@@ -3,3 +3,4 @@ res://scripts/TileMapGenerator.gd
 res://scenes/Ground.tscn
 res://scenes/Main.tscn
 res://scripts/player.gd
+res://scripts/GroundController.gd

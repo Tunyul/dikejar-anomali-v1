@@ -498,6 +498,8 @@ func set_environment_speed(speed: float) -> void:
 	for n in nodes:
 		if n and n.has_method("set_speed"):
 			n.set_speed(speed)
+	if parallax_background and parallax_background.has_method("set_speed"):
+		parallax_background.set_speed(speed)
 
 func sync_environment_speed_if_needed() -> void:
 	if not lock_environment_speed_to_player:
