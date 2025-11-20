@@ -259,7 +259,6 @@ visible = true
 z_index = 10
 position = Vector2(360, 400)
 floor_constant_speed = true
-run_speed = 100.0
 jump_velocity = -800.0
 gravity = 1500.0
 fall_death_y = 800.0
@@ -269,6 +268,8 @@ entry_stop_y = 400.0
 
 [node name="Ground" parent="." instance=ExtResource("25")]
 z_index = 5
+movement_enabled = true
+scroll_speed = 80.0
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(512, 288)

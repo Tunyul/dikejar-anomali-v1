@@ -12,6 +12,8 @@ class_name Player
 @export var fall_death_y: float = 1000.0
 @export var gap_fall_threshold: float = 300.0
 @export var gap_fall_grace_time: float = 0.25
+@export var lock_environment_speed_to_player: bool = true
+@export var terrain_paths: Array[NodePath] = []
 
 # ===== PERFORMANCE SETTINGS =====
 @export var position_adjustment_speed: float = 3.0
@@ -71,6 +73,8 @@ var title_screen: Control
 # ===== SIGNALS =====
 signal game_over_signal(cause: String)
 signal state_changed(new_state: PlayerState, old_state: PlayerState)
+
+var _last_env_speed: float = -1.0
 
 func match_sprite_to_collision_size() -> void:
 	# Get collision shape size
@@ -268,6 +272,7 @@ func _physics_process(delta: float) -> void:
 	elif current_state == PlayerState.FULL_MOVEMENT:
 		apply_physics(delta)
 		check_game_over_conditions()
+		sync_environment_speed_if_needed()
 
 func handle_hidden_state(_delta: float) -> void:
 	velocity = Vector2.ZERO
@@ -461,32 +466,46 @@ func set_state(new_state: PlayerState) -> void:
 	if enable_debug_logging and OS.is_debug_build():
 		print("State transition: ", old_state, " -> ", new_state, " position: ", position, " is_on_floor: ", is_on_floor())
 	
-	# Reset fall tracking data
 	if state_data.has("fall_start_y"):
 		state_data.erase("fall_start_y")
 	
-	# State-specific initialization
 	match new_state:
 		PlayerState.HIDDEN:
 			position = appear_start_position
 			velocity = Vector2.ZERO
-		PlayerState.FULL_MOVEMENT:
-			if is_on_floor():
-				velocity.y = 0
-				position.y = entry_stop_y
 		PlayerState.APPEARING:
 			visible = true
 			enable_environment_movement(false)
 		PlayerState.RUNNING_IN_PLACE:
-			position.x = entry_stop_x  # Di posisi X=200
+			position.x = entry_stop_x
 			visible = true
 		PlayerState.FULL_MOVEMENT:
 			visible = true
+			if is_on_floor():
+				velocity.y = 0
+				position.y = entry_stop_y
+			enable_environment_movement(true)
+			if lock_environment_speed_to_player:
+				set_environment_speed(run_speed)
 		PlayerState.GAME_OVER:
 			velocity = Vector2.ZERO
-			enable_environment_movement(false)  # Stop parallax & terrain saat game over
+			enable_environment_movement(false)
 	
 	state_changed.emit(new_state, old_state)
+
+func set_environment_speed(speed: float) -> void:
+	var nodes := _get_terrain_nodes()
+	for n in nodes:
+		if n and n.has_method("set_speed"):
+			n.set_speed(speed)
+
+func sync_environment_speed_if_needed() -> void:
+	if not lock_environment_speed_to_player:
+		return
+	if current_state == PlayerState.FULL_MOVEMENT:
+		if _last_env_speed != run_speed:
+			set_environment_speed(run_speed)
+			_last_env_speed = run_speed
 
 func enable_environment_movement(enable: bool) -> void:
 	# Kontrol parallax background movement
@@ -497,17 +516,12 @@ func enable_environment_movement(enable: bool) -> void:
 			print("Parallax movement ", "enabled" if enable else "disabled")
 	
 	# Kontrol terrain scrolling
-	var terrain1 = get_tree().get_root().get_node_or_null("Main/Terrain")
-	if terrain1 and terrain1.has_method("set_movement_enabled"):
-		terrain1.set_movement_enabled(enable)
-		if enable_debug_logging and OS.is_debug_build():
-			print("Terrain1 movement ", "enabled" if enable else "disabled")
-	
-	var terrain2 = get_tree().get_root().get_node_or_null("Main/TerrainB")
-	if terrain2 and terrain2.has_method("set_movement_enabled"):
-		terrain2.set_movement_enabled(enable)
-	if enable_debug_logging and OS.is_debug_build():
-			print("Terrain2 movement ", "enabled" if enable else "disabled")
+	var nodes := _get_terrain_nodes()
+	for n in nodes:
+		if n and n.has_method("set_movement_enabled"):
+			n.set_movement_enabled(enable)
+			if enable_debug_logging and OS.is_debug_build():
+				print(str(n.name), " movement ", "enabled" if enable else "disabled")
 	
 	if enable_debug_logging:
 		print("Environment movement ", "enabled" if enable else "disabled")
@@ -555,3 +569,20 @@ func get_player_state() -> Dictionary:
 		"current_state": current_state,
 		"state_timer": state_timer
 	}
+
+func _get_terrain_nodes() -> Array:
+	var nodes: Array = []
+	if terrain_paths.size() > 0:
+		for p in terrain_paths:
+			var n := get_tree().get_root().get_node_or_null(p)
+			if n:
+				nodes.append(n)
+	elif terrain_nodes.size() > 0:
+		nodes = terrain_nodes.duplicate()
+	else:
+		var main_node := get_tree().get_root().get_node_or_null("Main")
+		if main_node:
+			for child in main_node.get_children():
+				if child is Node2D and child.name.begins_with("Terrain"):
+					nodes.append(child)
+	return nodes

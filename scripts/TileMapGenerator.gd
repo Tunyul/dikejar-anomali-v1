@@ -55,7 +55,6 @@ func _ready():
 	_configure_noise()
 	if auto_generate_on_ready:
 		generate()
-	_build_colliders()
 
 func _configure_noise():
 	_rng.randomize()
@@ -80,6 +79,7 @@ func generate():
 	if runner_mode:
 		_generate_flat_runner()
 		_build_colliders()
+		queue_redraw()
 	else:
 		var has_top: bool = tile_set.has_source(grass_source_id) or (use_grass_mid and tile_set.has_source(grass_mid_source_id))
 		var has_dirt := tile_set.has_source(dirt_source_id)
@@ -173,6 +173,10 @@ func _build_colliders():
 	if tile_set == null:
 		return
 	var cell := tile_set.tile_size if tile_set != null else Vector2i(128, 128)
+	var prev := get_node_or_null("TileColliders")
+	if prev:
+		remove_child(prev)
+		prev.queue_free()
 	var root := StaticBody2D.new()
 	root.name = "TileColliders"
 	root.collision_layer = 1
