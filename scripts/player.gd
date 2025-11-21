@@ -9,6 +9,10 @@ class_name Player
 @export var coyote_time: float = 0.1
 @export var jump_buffer_time: float = 0.15
 @export var gravity: float = 1200.0
+@export var fall_multiplier: float = 1.5
+@export var max_fall_speed: float = 2000.0
+@export var jump_hold_gravity_scale: float = 0.6
+@export var low_jump_multiplier: float = 2.0
 @export var fall_death_y: float = 1000.0
 @export var gap_fall_threshold: float = 300.0
 @export var gap_fall_grace_time: float = 0.25
@@ -390,7 +394,15 @@ func handle_game_over_state(_delta: float) -> void:
 func apply_physics(delta: float) -> void:
 	# Apply gravity
 	if not is_on_floor():
-		velocity.y += gravity * delta
+		var g := gravity
+		if velocity.y < 0.0:
+			var hold := Input.is_action_pressed("jump")
+			g = gravity * (jump_hold_gravity_scale if hold else low_jump_multiplier)
+		else:
+			g = gravity * fall_multiplier
+		velocity.y += g * delta
+		if max_fall_speed > 0.0 and velocity.y > max_fall_speed:
+			velocity.y = max_fall_speed
 	
 	# Prevent ceiling collision
 	if position.y < 50:

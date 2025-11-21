@@ -15,6 +15,7 @@ var done_a: bool = false
 var done_b: bool = false
 var countdown_remaining: int = 0
 var countdown_running: bool = false
+@export var debug_info_enabled: bool = true
 
 @onready var player = $Player
 @onready var terrain = get_node_or_null("Terrain")
@@ -30,6 +31,7 @@ var countdown_running: bool = false
 @onready var ui_manager: Control = canvas.get_node_or_null("UIManager")
 @onready var ui_distance: Node = ui_manager.get_node_or_null("DistanceCounter") if ui_manager != null else null
 @onready var ui_timer: Node = ui_manager.get_node_or_null("GameTimer") if ui_manager != null else null
+@onready var debug_label: Label = canvas.get_node_or_null("DebugInfoLabel")
 
 func _ready() -> void:
 	if player:
@@ -53,10 +55,51 @@ func _ready() -> void:
 		lbl.offset_bottom = 0
 		canvas.add_child(lbl)
 		countdown_label = lbl
+	if canvas and debug_label == null:
+		var dl := Label.new()
+		dl.name = "DebugInfoLabel"
+		dl.visible = debug_info_enabled
+		dl.z_index = 999
+		dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		dl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		dl.add_theme_font_size_override("font_size", 22)
+		dl.add_theme_color_override("font_color", Color(0, 0, 0, 1))
+		dl.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		# Tempatkan di bawah DistanceCounter (yang ber-offset 90,40)
+		dl.offset_left = 90
+		dl.offset_top = 80
+		if ui_manager != null:
+			ui_manager.add_child(dl)
+		else:
+			canvas.add_child(dl)
+		debug_label = dl
 	_load_best_score()
 	set_title_phase()
 
 func _process(delta: float) -> void:
+	if debug_info_enabled and debug_label != null:
+		var sa := "-"
+		var sb := "-"
+		if ground_a and ground_a.has_method("get_speed"):
+			sa = str(int(round(ground_a.get_speed())))
+		if ground_b and ground_b.has_method("get_speed"):
+			sb = str(int(round(ground_b.get_speed())))
+		var phase_name := "TITLE"
+		if phase == Phase.LOADING:
+			phase_name = "LOADING"
+		elif phase == Phase.ENTRY:
+			phase_name = "ENTRY"
+		elif phase == Phase.PLAYING:
+			phase_name = "PLAYING"
+		elif phase == Phase.GAME_OVER:
+			phase_name = "GAME_OVER"
+		var tint_enabled := false
+		if ground_a:
+			tint_enabled = bool(ground_a.get("debug_tint_enabled"))
+		debug_label.visible = true
+		debug_label.text = "Phase: %s\nGround A speed: %s\nGround B speed: %s\nDebug tint: %s" % [phase_name, sa, sb, str(tint_enabled)]
+	elif debug_label != null:
+		debug_label.visible = false
 	if phase == Phase.PLAYING:
 		var terrain_speed = 150.0
 		distance += terrain_speed * delta
@@ -209,6 +252,8 @@ func set_playing_phase() -> void:
 		ground_a.set_movement_enabled(true)
 		if ground_a.has_method("set_speed"):
 			ground_a.set_speed(150.0)
+		if ground_a.has_method("ensure_second_segment_ready"):
+			ground_a.ensure_second_segment_ready()
 	if ground_b and ground_b.has_method("set_movement_enabled"):
 		ground_b.set_movement_enabled(true)
 		if ground_b.has_method("set_speed"):
@@ -302,6 +347,10 @@ func regenerate_gameplay_ground() -> void:
 	load_progress_b = 0.0
 	done_a = false
 	done_b = false
+	if ground_a and ground_a.has_method("prepare_gameplay_preserve_flat_start"):
+		ground_a.prepare_gameplay_preserve_flat_start()
+	elif ground_a and ground_a.has_method("generate_random"):
+		ground_a.generate_random()
 	var started_ms := Time.get_ticks_msec()
 	while true:
 		var avg := (load_progress_a + load_progress_b) * 0.5
@@ -335,3 +384,8 @@ func _save_best_score() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("progress", "best_score", best_score)
 	cfg.save("user://save.cfg")
+func _unhandled_input(event) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3:
+		debug_info_enabled = not debug_info_enabled
+		if debug_label != null:
+			debug_label.visible = debug_info_enabled

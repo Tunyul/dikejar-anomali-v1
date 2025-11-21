@@ -256,7 +256,25 @@ func _set_generate_now(value: bool) -> void:
 	_generate_now = value
 	if value:
 		generate()
+		_generate_pair_if_exists()
 		_generate_now = false
 
 func _get_generate_now() -> bool:
 	return _generate_now
+
+func _generate_pair_if_exists() -> void:
+	var p := get_parent()
+	if p == null:
+		return
+	var layer_a: TileMapLayer = p.get_node_or_null("TileMapLayer") as TileMapLayer
+	var layer_b: TileMapLayer = p.get_node_or_null("TileMapLayerB") as TileMapLayer
+	if layer_a == null or layer_b == null:
+		return
+	if layer_a.has_method("generate"):
+		layer_a.generate()
+	layer_b.flat_start_enabled = false
+	if layer_b.has_method("generate"):
+		layer_b.generate()
+	var cell: Vector2i = layer_a.tile_set.tile_size if layer_a.tile_set != null else Vector2i(128, 128)
+	var seg: float = float(layer_a.width) * float(cell.x) * layer_a.scale.x
+	layer_b.position.x = layer_a.position.x + seg

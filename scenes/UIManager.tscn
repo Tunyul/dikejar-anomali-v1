@@ -54,6 +54,7 @@ offset_right = 60.0
 offset_bottom = 20.0
 grow_horizontal = 0
 grow_vertical = 1
+running = true
 
 [node name="JumpButton" type="TouchScreenButton" parent="."]
 position = Vector2(100, 480)
@@ -66,7 +67,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Jump"
 horizontal_alignment = 1
 vertical_alignment = 1
