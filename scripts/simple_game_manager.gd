@@ -107,8 +107,14 @@ func _process(delta: float) -> void:
 			active_a = ground_a.get_active_segment_name()
 		if ground_b and ground_b.has_method("get_active_segment_name"):
 			active_b = ground_b.get_active_segment_name()
+		var px := "-"
+		var py := "-"
+		if player:
+			var ppos: Vector2 = player.global_position
+			px = str(int(round(ppos.x)))
+			py = str(int(round(ppos.y)))
 		debug_label.visible = true
-		debug_label.text = "Phase: %s\nGround A speed: %s\nGround B speed: %s\nGenerating: %s\nActive: A=%s B=%s\nDebug tint: %s" % [phase_name, sa, sb, gen, active_a, active_b, str(tint_enabled)]
+		debug_label.text = "Phase: %s\nGround A speed: %s\nGround B speed: %s\nGenerating: %s\nActive: A=%s B=%s\nPlayer pos: x=%s y=%s\nDebug tint: %s" % [phase_name, sa, sb, gen, active_a, active_b, px, py, str(tint_enabled)]
 	elif debug_label != null:
 		debug_label.visible = false
 	if phase == Phase.PLAYING:

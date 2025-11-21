@@ -2,3 +2,5 @@ res://scripts/TileMapGenerator.gd
 res://scenes/Ground.tscn
 res://scripts/simple_game_manager.gd
 res://scripts/GroundController.gd
+res://scripts/player.gd
+res://scenes/Main.tscn

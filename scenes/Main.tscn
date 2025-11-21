@@ -263,6 +263,13 @@ jump_velocity = -600.0
 enable_debug_logging = true
 collision_size = Vector2(100, 140)
 entry_stop_y = 400.0
+front_check_distance = 8.0
+pushback_rate = 280.0
+pushback_recovery_rate = 10.0
+left_game_over_margin = 2.0
+max_pushback_offset = 280.0
+pushback_lock_x = -20.0
+air_recovery_rate = 60.0
 
 [node name="Ground" parent="." instance=ExtResource("25")]
 z_index = 5
