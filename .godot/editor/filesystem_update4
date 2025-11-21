@@ -1,5 +1,4 @@
-res://scripts/GroundController.gd
-res://scenes/Main.tscn
+res://scripts/TileMapGenerator.gd
 res://scenes/Ground.tscn
 res://scripts/simple_game_manager.gd
-res://scripts/player.gd
+res://scripts/GroundController.gd

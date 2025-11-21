@@ -11,8 +11,8 @@ class_name Player
 @export var gravity: float = 1200.0
 @export var fall_multiplier: float = 1.5
 @export var max_fall_speed: float = 2000.0
-@export var jump_hold_gravity_scale: float = 0.6
-@export var low_jump_multiplier: float = 2.0
+@export var low_jump_multiplier: float = 1.0
+@export var jump_hold_gravity_scale: float = 1.0
 @export var fall_death_y: float = 1000.0
 @export var gap_fall_threshold: float = 300.0
 @export var gap_fall_grace_time: float = 0.25
@@ -27,6 +27,7 @@ class_name Player
 # ===== VISUAL SETTINGS =====
 @export var sprite_scale: Vector2 = Vector2(1.0, 1.0)  # Default 1:1 scale
 @export var match_sprite_to_collision: bool = true
+@export var preserve_editor_transform: bool = true
 @export var collision_size: Vector2 = Vector2(48, 72)  # Optimized collision size (smaller = better gameplay feel)
 
 # ===== POSITION SETTINGS (BISA DIUBAH DI INSPECTOR) =====
@@ -105,7 +106,8 @@ func match_sprite_to_collision_size() -> void:
 	var target_scale_y = (shape_size.y * 0.9) / original_sprite_size.y
 	
 	# Apply calculated scale
-	var final_scale = Vector2(target_scale_x, target_scale_y)
+	var uniform_scale = min(target_scale_x, target_scale_y)
+	var final_scale = Vector2(uniform_scale, uniform_scale)
 	animated_sprite.scale = final_scale
 	
 	if enable_debug_logging and OS.is_debug_build():
@@ -136,13 +138,11 @@ func initialize_player() -> void:
 	var collision_shape = get_node_or_null("CollisionShape2D")
 	if collision_shape and collision_shape.shape is RectangleShape2D:
 		var rect_shape = collision_shape.shape as RectangleShape2D
-		rect_shape.size = collision_size
-		# Position collision shape to align with AnimatedSprite2D at (0,0)
-		# AnimatedSprite2D sekarang di posisi (0, 0) dengan scale (0.1, 0.1)
-		# Collision diposisikan di tengah sprite untuk alignment yang tepat
-		collision_shape.position = Vector2(0, 0)
+		if not preserve_editor_transform:
+			rect_shape.size = collision_size
+			collision_shape.position = Vector2(0, 0)
 		if enable_debug_logging and OS.is_debug_build():
-			print("Player collision initialized: size=", collision_size, " position=", collision_shape.position)
+			print("Player collision initialized: size=", rect_shape.size, " position=", collision_shape.position)
 	
 	# Initialize sprite - AnimatedSprite2D sudah di-set manual di editor
 	animated_sprite = get_node_or_null("AnimatedSprite2D")
@@ -155,8 +155,13 @@ func initialize_player() -> void:
 		# Tidak perlu auto-scale karena sudah di-set manual di editor
 		if enable_debug_logging and OS.is_debug_build():
 			print("AnimatedSprite2D initialized: position=", animated_sprite.position, " scale=", animated_sprite.scale, " playing=", animated_sprite.is_playing())
+		if match_sprite_to_collision and not preserve_editor_transform:
+			match_sprite_to_collision_size()
 
 	ground_ray = get_node_or_null("GroundRay")
+	if ground_ray:
+		ground_ray.collision_mask = 1
+		ground_ray.enabled = true
 
 func setup_collision_layers() -> void:
 	collision_layer = 2  # Player layer
@@ -414,7 +419,10 @@ func apply_physics(delta: float) -> void:
 	# Use move_and_slide with floor detection parameters
 	# Set up_floor_snap_length to prevent tiny movements
 	set_up_direction(Vector2.UP)
-	set_floor_snap_length(6.0 if is_on_floor() else 0.0)
+	var ray_ok := ground_ray != null and ground_ray.is_enabled() and ground_ray.is_colliding()
+	var should_snap := is_on_floor() and ray_ok and not _has_gap_below(gap_fall_threshold)
+	var snap_len := 6.0 if should_snap else 0.0
+	set_floor_snap_length(snap_len)
 	if was_on_floor:
 		coyote_timer = coyote_time
 		remaining_air_jumps = air_jumps
@@ -444,10 +452,23 @@ func apply_physics(delta: float) -> void:
 	# Update grounded state - simplified
 	is_grounded = is_on_floor()
 
+func _has_gap_below(ray_len: float) -> bool:
+	var from := global_position + Vector2(0, 1)
+	var to := from + Vector2(0, max(ray_len, 1.0))
+	var space := get_world_2d().direct_space_state
+	var res := space.intersect_ray(PhysicsRayQueryParameters2D.create(from, to, 1, [self]))
+	return res.is_empty()
+
 func check_game_over_conditions() -> void:
 	var viewport_rect = get_viewport().get_visible_rect()
-	if position.y > viewport_rect.size.y + 200:
-		trigger_game_over("fell_off_screen")
+	var off_screen_threshold: float = float(viewport_rect.size.y) + 200.0
+	var threshold := fall_death_y
+	if threshold > 0.0:
+		if position.y > threshold or position.y > off_screen_threshold:
+			trigger_game_over("fell_off_screen")
+	else:
+		if position.y > off_screen_threshold:
+			trigger_game_over("fell_off_screen")
 
 func update_animation_state() -> void:
 	if not animated_sprite:

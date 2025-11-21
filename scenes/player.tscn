@@ -43,7 +43,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
-size = Vector2(100, 140)
+size = Vector2(90, 120)
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
@@ -55,12 +55,8 @@ sprite_frames = SubResource("SpriteFrames_run")
 animation = &"run"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 1)
+position = Vector2(-4, 9)
 shape = SubResource("RectangleShape2D_player")
 
 [node name="GroundRay" type="RayCast2D" parent="."]
-enabled = true
 target_position = Vector2(0, 200)
-collision_mask = 1
-collide_with_areas = false
-collide_with_bodies = true

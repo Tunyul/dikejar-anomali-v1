@@ -259,6 +259,7 @@ visible = true
 z_index = 10
 position = Vector2(360, 400)
 floor_constant_speed = true
+jump_velocity = -600.0
 enable_debug_logging = true
 collision_size = Vector2(100, 140)
 entry_stop_y = 400.0
@@ -269,7 +270,7 @@ movement_enabled = true
 scroll_speed = 34.0
 acceleration = 6.0
 use_acceleration = true
-min_scroll_speed = 100.0
+min_scroll_speed = 250.0
 debug_color_a = Color(0.7088994, 0, 0.12489515, 1)
 debug_color_b = Color(1, 0.95, 0, 1)
 

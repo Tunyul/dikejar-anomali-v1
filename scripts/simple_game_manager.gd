@@ -96,8 +96,19 @@ func _process(delta: float) -> void:
 		var tint_enabled := false
 		if ground_a:
 			tint_enabled = bool(ground_a.get("debug_tint_enabled"))
+		var gen := "-"
+		if not done_a and load_progress_a > 0.0 and load_progress_a < 0.999:
+			gen = "A"
+		elif not done_b and load_progress_b > 0.0 and load_progress_b < 0.999:
+			gen = "B"
+		var active_a := "-"
+		var active_b := "-"
+		if ground_a and ground_a.has_method("get_active_segment_name"):
+			active_a = ground_a.get_active_segment_name()
+		if ground_b and ground_b.has_method("get_active_segment_name"):
+			active_b = ground_b.get_active_segment_name()
 		debug_label.visible = true
-		debug_label.text = "Phase: %s\nGround A speed: %s\nGround B speed: %s\nDebug tint: %s" % [phase_name, sa, sb, str(tint_enabled)]
+		debug_label.text = "Phase: %s\nGround A speed: %s\nGround B speed: %s\nGenerating: %s\nActive: A=%s B=%s\nDebug tint: %s" % [phase_name, sa, sb, gen, active_a, active_b, str(tint_enabled)]
 	elif debug_label != null:
 		debug_label.visible = false
 	if phase == Phase.PLAYING:

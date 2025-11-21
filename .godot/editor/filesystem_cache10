@@ -1,5 +1,5 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1763695455
+::res://::1763714368
 PLAYER_IMPLEMENTATION.md::TextFile::-1::1763123810::0::1::::<><><>0<>0<><>::
 ::res://assets/::1762940706
 ::res://assets/Background/::1762508382
@@ -795,29 +795,29 @@ image 16.png::CompressedTexture2D::98722255984188755::1489238274::1762508791::1:
 image 17.png::CompressedTexture2D::8222179478458637501::1489238274::1762508791::1::::<><><>0<>0<>5dcf5c57122ec6e600f758a2b534c775<>res://.godot/imported/image 17.png-4f0d08357d1e8134456faeacad1f1292.ctex::
 ::res://docs/::1762917832
 CHANGELOG.md::TextFile::-1::1762917832::0::1::::<><><>0<>0<><>::
-::res://scenes/::1763634492
+::res://scenes/::1763713378
 DistanceCounter.tscn::PackedScene::128829530668310740::1763624694::0::1::::<><><>0<>0<><>::res://scripts/distance_counter.gd
 GameOverScreen.tscn::PackedScene::-1::1763192419::0::1::::<><><>0<>0<><>::res://scripts/game_over_screen.gd
 GameTimer.tscn::PackedScene::270730238391419886::1763624094::0::1::::<><><>0<>0<><>::res://scripts/game_timer.gd
-Ground.tscn::PackedScene::1519784382344807894::1763634491::0::1::::<><><>0<>0<><>::uid://dthntxgdb4ycj::::res://assets/Tiles/png/tiles 2d/Spring/128x128/GrassMid.png<>uid://blpxq3xkivtob::::res://assets/Tiles/png/tiles 2d/Spring/128x128/Dirt.png<>uid://da53uy6kadly::::res://scripts/TileMapGenerator.gd<>uid://c3dsgiqokpecq::::res://scripts/GroundController.gd
+Ground.tscn::PackedScene::1519784382344807894::1763713378::0::1::::<><><>0<>0<><>::uid://dthntxgdb4ycj::::res://assets/Tiles/png/tiles 2d/Spring/128x128/GrassMid.png<>uid://blpxq3xkivtob::::res://assets/Tiles/png/tiles 2d/Spring/128x128/Dirt.png<>uid://da53uy6kadly::::res://scripts/TileMapGenerator.gd<>uid://c3dsgiqokpecq::::res://scripts/GroundController.gd
 Healthbar.tscn::PackedScene::208559710473858035::1763624611::0::1::::<><><>0<>0<><>::res://scripts/healthbar.gd
 LoadingScreen.tscn::PackedScene::6337333741133921568::1763197468::0::1::::<><><>0<>0<><>::uid://cnhuugg2tncs::::res://scripts/loading_screen.gd
-Main.tscn::PackedScene::102025529394890178::1763633924::0::1::::<><><>0<>0<><>::uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://b8il18k1d04wg::::res://scenes/player.tscn<>uid://k78wsp6rc6mv::::res://scripts/simple_game_manager.gd<>uid://b32oy441m6073::::res://scenes/TitleScreen.tscn<>uid://cwj37wyc6s7oe::::res://scenes/LoadingScreen.tscn<>res://scenes/GameOverScreen.tscn<>uid://vwgvkrfenbcg::::res://scenes/Ground.tscn<>uid://u5m6n7o8qaq2::::res://scenes/UIManager.tscn
+Main.tscn::PackedScene::102025529394890178::1763711333::0::1::::<><><>0<>0<><>::uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://b8il18k1d04wg::::res://scenes/player.tscn<>uid://k78wsp6rc6mv::::res://scripts/simple_game_manager.gd<>uid://b32oy441m6073::::res://scenes/TitleScreen.tscn<>uid://cwj37wyc6s7oe::::res://scenes/LoadingScreen.tscn<>res://scenes/GameOverScreen.tscn<>uid://vwgvkrfenbcg::::res://scenes/Ground.tscn<>uid://u5m6n7o8qaq2::::res://scenes/UIManager.tscn
 Obstacle.tscn::PackedScene::-1::1763288375::0::1::::<><><>0<>0<><>::res://scripts/obstacle.gd<>res://assets/enemy/4x/Mace.png
-player.tscn::PackedScene::4719883613247552158::1763310794::0::1::::<><><>0<>0<><>::uid://ckj0xodrxp5ve::::res://scripts/player.gd<>uid://col8kr5dgeepx::::res://assets/mc/run/izan_run0000.png<>uid://ccg56pvb16irf::::res://assets/mc/run/izan_run0001.png<>uid://cnxulkvunlkkh::::res://assets/mc/run/izan_run0002.png<>uid://mknuyeswxs1t::::res://assets/mc/run/izan_run0003.png<>uid://civsl1bwlpa5w::::res://assets/mc/run/izan_run0004.png<>uid://plfrsoickqtf::::res://assets/mc/run/izan_run0005.png<>uid://7bumuk7csdp4::::res://assets/mc/run/izan_run0006.png<>uid://btc7tp6xhvodi::::res://assets/mc/run/izan_run0007.png
+player.tscn::PackedScene::4719883613247552158::1763711517::0::1::::<><><>0<>0<><>::uid://ckj0xodrxp5ve::::res://scripts/player.gd<>uid://col8kr5dgeepx::::res://assets/mc/run/izan_run0000.png<>uid://ccg56pvb16irf::::res://assets/mc/run/izan_run0001.png<>uid://cnxulkvunlkkh::::res://assets/mc/run/izan_run0002.png<>uid://mknuyeswxs1t::::res://assets/mc/run/izan_run0003.png<>uid://civsl1bwlpa5w::::res://assets/mc/run/izan_run0004.png<>uid://plfrsoickqtf::::res://assets/mc/run/izan_run0005.png<>uid://7bumuk7csdp4::::res://assets/mc/run/izan_run0006.png<>uid://btc7tp6xhvodi::::res://assets/mc/run/izan_run0007.png
 TitleScreen.tscn::PackedScene::4408340971045157496::1763284179::0::1::::<><><>0<>0<><>::uid://b0kjp1a14sq15::::res://scripts/title_screen.gd
 UIManager.tscn::PackedScene::1466492901824807947::1763624722::0::1::::<><><>0<>0<><>::uid://btwkgl0swfj0f::::res://scripts/ui_manager.gd<>uid://c8a7h3v2q5x4::::res://scenes/Healthbar.tscn<>uid://b3n2k5v7q8ya::::res://scenes/DistanceCounter.tscn<>uid://d4e5f6g7h8ja::::res://scenes/GameTimer.tscn
 ::res://scripts/::1763630699
 distance_counter.gd::GDScript::1607576580182498124::1763180054::0::1::::<>Control<><>0<>0<><>::
 game_over_screen.gd::GDScript::8802931457025131486::1763194834::0::1::::<>Control<><>0<>0<><>::
 game_timer.gd::GDScript::3387658183534242026::1763180086::0::1::::<>Control<><>0<>0<><>::
-GroundController.gd::GDScript::6745426188700239292::1763635998::0::1::::<>Node2D<><>0<>0<><>::
+GroundController.gd::GDScript::6745426188700239292::1763696818::0::1::::<>Node2D<><>0<>0<><>::
 healthbar.gd::GDScript::783397083006245811::1763180015::0::1::::<>Control<><>0<>0<><>::
 loading_screen.gd::GDScript::167676392951589906::1763197005::0::1::::<>Control<><>0<>0<><>::
 obstacle.gd::GDScript::955592497033360665::1763288370::0::1::::<>Area2D<><>0<>0<><>::
 parallax_auto_scroll.gd::GDScript::2657809465502524619::1763194341::0::1::::<>ParallaxBackground<><>0<>0<><>::
-player.gd::GDScript::5494868942397116302::1763615318::0::1::::Player<>CharacterBody2D<><>0<>0<><>::
-simple_game_manager.gd::GDScript::769992442761137257::1763635067::0::1::::<>Node2D<><>0<>0<><>::
+player.gd::GDScript::5494868942397116302::1763713014::0::1::::Player<>CharacterBody2D<><>0<>0<><>::
+simple_game_manager.gd::GDScript::769992442761137257::1763698243::0::1::::<>Node2D<><>0<>0<><>::
 TileMapGenerator.gd::GDScript::212439131890602394::1763631955::0::1::::<>TileMapLayer<><>0<>1<><>::
 title_screen.gd::GDScript::4162360158855885426::1763283396::0::1::::<>Control<><>0<>0<><>::
 ui_manager.gd::GDScript::3766043525320532227::1763180114::0::1::::<>Control<><>0<>0<><>::

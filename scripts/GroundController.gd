@@ -240,6 +240,24 @@ func _segment_width_px() -> float:
 	var cell := tile_layer.tile_set.tile_size if tile_layer.tile_set != null else Vector2i(128, 128)
 	return float(tile_layer.width) * float(cell.x) * tile_layer.scale.x
 
+func get_active_segment_name() -> String:
+	var seg := _segment_width_px()
+	if seg <= 0.0:
+		return "-"
+	var ax := tile_layer.position.x if tile_layer != null else 1e9
+	var bx := tile_layer_b.position.x if tile_layer_b != null else 1e9
+	var in_a := tile_layer != null and ax <= 0.0 and (ax + seg) >= 0.0
+	var in_b := tile_layer_b != null and bx <= 0.0 and (bx + seg) >= 0.0
+	if in_a and in_b:
+		return "A+B"
+	if in_a:
+		return "TileMapLayer"
+	if in_b:
+		return "TileMapLayerB"
+	var ac := ax + seg * 0.5
+	var bc := bx + seg * 0.5
+	return "TileMapLayer" if ac < bc else "TileMapLayerB"
+
 func _apply_debug_tint() -> void:
 	if tile_layer != null:
 		tile_layer.modulate = debug_color_a if debug_tint_enabled else Color(1, 1, 1, 1)
