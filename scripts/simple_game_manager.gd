@@ -6,6 +6,8 @@ var game_active: bool = false
 var score: int = 0
 var distance: float = 0.0
 var best_score: int = 0
+var coin_collected_a: int = 0
+var coin_collected_b: int = 0
 var loading_start_ms: int = 0
 var min_loading_ms: int = 500
 var loading_pct: float = 0.0
@@ -18,6 +20,7 @@ var countdown_running: bool = false
 @export var debug_info_enabled: bool = true
 
 @onready var player = $Player
+@onready var anomaly: Node2D = get_node_or_null("AnomalyChaser")
 @onready var terrain = get_node_or_null("Terrain")
 @onready var terrain_b = get_node_or_null("TerrainB")
 @onready var ground_a: Node2D = get_node_or_null("Ground")
@@ -62,22 +65,29 @@ func _ready() -> void:
 		dl.z_index = 999
 		dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		dl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-		dl.add_theme_font_size_override("font_size", 22)
+		dl.add_theme_font_size_override("font_size", 14)
 		dl.add_theme_color_override("font_color", Color(0, 0, 0, 1))
 		dl.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		# Tempatkan di bawah DistanceCounter (yang ber-offset 90,40)
-		dl.offset_left = 90
-		dl.offset_top = 80
+		dl.offset_left = 8
+		dl.offset_top = 8
 		if ui_manager != null:
 			ui_manager.add_child(dl)
 		else:
 			canvas.add_child(dl)
 		debug_label = dl
+		if ui_manager != null and ui_timer != null and ui_timer is Control:
+			var gt := ui_timer as Control
+			debug_label.offset_left = gt.position.x + 60
+			debug_label.offset_top = gt.position.y + 20
 	_load_best_score()
 	set_title_phase()
 
 func _process(delta: float) -> void:
 	if debug_info_enabled and debug_label != null:
+		if ui_manager != null and ui_timer != null and ui_timer is Control and debug_label.get_parent() == ui_manager:
+			var gt := ui_timer as Control
+			debug_label.offset_left = gt.position.x + 60
+			debug_label.offset_top = gt.position.y + 20
 		var sa := "-"
 		var sb := "-"
 		if ground_a and ground_a.has_method("get_speed"):
@@ -113,8 +123,70 @@ func _process(delta: float) -> void:
 			var ppos: Vector2 = player.global_position
 			px = str(int(round(ppos.x)))
 			py = str(int(round(ppos.y)))
+		var fps := int(round(Engine.get_frames_per_second()))
+		var cam_x := 0
+		var cam := get_viewport().get_camera_2d()
+		if cam != null:
+			cam_x = int(round(cam.get_screen_center_position().x))
+		var seg_w := 0
+		if ground_a and ground_a.has_method("_segment_width_px"):
+			seg_w = int(round(float(ground_a.call("_segment_width_px"))))
+		var tla_x := "-"
+		var tlb_x := "-"
+		var coins_a := 0
+		var coins_b := 0
+		var coin_follow := false
+		var cymin := 0
+		var cymax := 0
+		var cgmin := 0
+		var cgmax := 0
+		var ccmin := 0
+		var ccmax := 0
+		var csmin := 0
+		var csmax := 0
+		var cgsmin := 0
+		var cgsmax := 0
+		var cscale := 1.0
+		var cfps := 12.0
+		var coamp := 0.0
+		var cofreq := 0.0
+		if ground_a:
+			var tla := ground_a.get_node_or_null("TileMapLayer")
+			var tlb := ground_a.get_node_or_null("TileMapLayerB")
+			if tla and tla is Node2D:
+				tla_x = str(int(round((tla as Node2D).position.x)))
+			if tlb and tlb is Node2D:
+				tlb_x = str(int(round((tlb as Node2D).position.x)))
+			var ca := ground_a.get_node_or_null("CoinsA")
+			var cb := ground_a.get_node_or_null("CoinsB")
+			if ca:
+				coins_a = ca.get_child_count()
+				for c in ca.get_children():
+					if c.has_signal("collected") and not c.is_connected("collected", Callable(self, "on_coin_collected")):
+						c.connect("collected", Callable(self, "on_coin_collected"))
+			if cb:
+				coins_b = cb.get_child_count()
+				for c2 in cb.get_children():
+					if c2.has_signal("collected") and not c2.is_connected("collected", Callable(self, "on_coin_collected")):
+						c2.connect("collected", Callable(self, "on_coin_collected"))
+			if tla:
+				coin_follow = bool(tla.get("coin_spawn_follow_player"))
+				cymin = int(tla.get("coin_y_tiles_min"))
+				cymax = int(tla.get("coin_y_tiles_max"))
+				cgmin = int(tla.get("coin_groups_min"))
+				cgmax = int(tla.get("coin_groups_max"))
+				ccmin = int(tla.get("coins_per_group_min"))
+				ccmax = int(tla.get("coins_per_group_max"))
+				csmin = int(tla.get("coin_spacing_tiles_min"))
+				csmax = int(tla.get("coin_spacing_tiles_max"))
+				cgsmin = int(tla.get("coin_group_spacing_tiles_min"))
+				cgsmax = int(tla.get("coin_group_spacing_tiles_max"))
+				cscale = float(tla.get("coin_scale"))
+				cfps = float(tla.get("coin_anim_fps"))
+				coamp = float(tla.get("coin_osc_amplitude"))
+				cofreq = float(tla.get("coin_osc_frequency"))
 		debug_label.visible = true
-		debug_label.text = "Phase: %s\nGround A speed: %s\nGround B speed: %s\nGenerating: %s\nActive: A=%s B=%s\nPlayer pos: x=%s y=%s\nDebug tint: %s" % [phase_name, sa, sb, gen, active_a, active_b, px, py, str(tint_enabled)]
+		debug_label.text = "FPS: %d\nPhase: %s\nCoin A : %d / Coin B : %d\nSpeed A/B: %s/%s\nGen: %s Active: %s|%s\nCamX: %d SegW: %d\nTA/TB X: %s/%s\nCoins A/B: %d/%d | F:%s Y:%d-%d G:%d-%d C:%d-%d S:%d-%d GS:%d-%d Sc:%.1f CFPS:%.1f Osc:%.1f/%.1f\nPlayer: x=%s y=%s\nTint: %s" % [fps, phase_name, coin_collected_a, coin_collected_b, sa, sb, gen, active_a, active_b, cam_x, seg_w, tla_x, tlb_x, coins_a, coins_b, str(coin_follow), cymin, cymax, cgmin, cgmax, ccmin, ccmax, csmin, csmax, cgsmin, cgsmax, cscale, cfps, coamp, cofreq, px, py, str(tint_enabled)]
 	elif debug_label != null:
 		debug_label.visible = false
 	if phase == Phase.PLAYING:
@@ -135,6 +207,8 @@ func set_title_phase() -> void:
 	game_active = false
 	score = 0
 	distance = 0.0
+	coin_collected_a = 0
+	coin_collected_b = 0
 	countdown_running = false
 	countdown_remaining = 0
 	if parallax and parallax.has_method("set_movement_enabled"):
@@ -149,10 +223,30 @@ func set_title_phase() -> void:
 			terrain_b.set_speed(150.0)
 	if ground_a and ground_a.has_method("set_title_mode"):
 		ground_a.set_title_mode(true)
+		var pa := ground_a.get_parent()
+		if pa != null:
+			var ca := pa.get_node_or_null("CoinsA")
+			var cb := pa.get_node_or_null("CoinsB")
+			if ca:
+				for c in ca.get_children():
+					c.queue_free()
+			if cb:
+				for c in cb.get_children():
+					c.queue_free()
 	if ground_a and ground_a.has_method("set_movement_enabled"):
 		ground_a.set_movement_enabled(false)
 	if ground_b and ground_b.has_method("set_title_mode"):
 		ground_b.set_title_mode(true)
+		var pb := ground_b.get_parent()
+		if pb != null:
+			var ca2 := pb.get_node_or_null("CoinsA")
+			var cb2 := pb.get_node_or_null("CoinsB")
+			if ca2:
+				for c2 in ca2.get_children():
+					c2.queue_free()
+			if cb2:
+				for c2 in cb2.get_children():
+					c2.queue_free()
 	if ground_b and ground_b.has_method("set_movement_enabled"):
 		ground_b.set_movement_enabled(false)
 	if player:
@@ -172,6 +266,8 @@ func set_title_phase() -> void:
 	var bgm := get_node_or_null("BGM")
 	if bgm and bgm is AudioStreamPlayer:
 		(bgm as AudioStreamPlayer).stop()
+	if anomaly:
+		anomaly.hide()
 
 func on_start_game() -> void:
 	set_loading_phase()
@@ -208,6 +304,8 @@ func set_loading_phase() -> void:
 		ground_a.generate_random()
 	if ground_b and ground_b.has_method("generate_random"):
 		ground_b.generate_random()
+	if anomaly:
+		anomaly.hide()
 
 func on_generation_progress(pct: float, src: String) -> void:
 	if src == "A":
@@ -250,6 +348,8 @@ func set_entry_phase() -> void:
 		ground_b.set_movement_enabled(false)
 	if player and player.has_method("start_appearance_from_left"):
 		call_deferred("trigger_player_entry")
+	if anomaly:
+		anomaly.hide()
 
 func trigger_player_entry() -> void:
 	if player and player.has_method("start_appearance_from_left"):
@@ -259,6 +359,10 @@ func trigger_player_entry() -> void:
 func set_playing_phase() -> void:
 	phase = Phase.PLAYING
 	game_active = true
+	if ground_a and ground_a.has_method("set_speed_limits"):
+		ground_a.set_speed_limits(0.0, 300.0)
+	if ground_b and ground_b.has_method("set_speed_limits"):
+		ground_b.set_speed_limits(0.0, 300.0)
 	if parallax and parallax.has_method("set_movement_enabled"):
 		parallax.set_movement_enabled(true)
 	if terrain and terrain.has_method("set_movement_enabled"):
@@ -269,8 +373,6 @@ func set_playing_phase() -> void:
 		ground_a.set_movement_enabled(true)
 		if ground_a.has_method("set_speed"):
 			ground_a.set_speed(150.0)
-		if ground_a.has_method("ensure_second_segment_ready"):
-			ground_a.ensure_second_segment_ready()
 	if ground_b and ground_b.has_method("set_movement_enabled"):
 		ground_b.set_movement_enabled(true)
 		if ground_b.has_method("set_speed"):
@@ -282,6 +384,11 @@ func set_playing_phase() -> void:
 	var bgm2 := get_node_or_null("BGM")
 	if bgm2 and bgm2 is AudioStreamPlayer and (bgm2 as AudioStreamPlayer).stream != null:
 		(bgm2 as AudioStreamPlayer).play()
+	if anomaly:
+		if anomaly.has_method("start_appear"):
+			anomaly.start_appear()
+		anomaly.show()
+
 
 func on_player_game_over(_cause: String) -> void:
 	phase = Phase.GAME_OVER
@@ -292,21 +399,33 @@ func on_player_game_over(_cause: String) -> void:
 		terrain.set_movement_enabled(false)
 	if terrain_b and terrain_b.has_method("set_movement_enabled"):
 		terrain_b.set_movement_enabled(false)
+	if ground_a and ground_a.has_method("set_movement_enabled"):
+		ground_a.set_movement_enabled(false)
+	if ground_b and ground_b.has_method("set_movement_enabled"):
+		ground_b.set_movement_enabled(false)
 	if game_over and game_over.has_method("show_screen"):
 		game_over.show_screen()
 		if not game_over.is_connected("restart_requested", Callable(self, "restart_game")):
 			game_over.connect("restart_requested", Callable(self, "restart_game"))
 	if ui_timer and ui_timer.has_method("stop"):
 		ui_timer.stop()
+	if ui_manager:
+		ui_manager.hide()
 	if score > best_score:
 		best_score = score
 		_save_best_score()
 	var bgm3 := get_node_or_null("BGM")
 	if bgm3 and bgm3 is AudioStreamPlayer:
 		(bgm3 as AudioStreamPlayer).stop()
+	if anomaly:
+		anomaly.hide()
 
 func restart_game() -> void:
 	set_title_phase()
+	if ground_a and ground_a.has_method("set_movement_enabled"):
+		ground_a.set_movement_enabled(false)
+	if ground_b and ground_b.has_method("set_movement_enabled"):
+		ground_b.set_movement_enabled(false)
 
 func get_game_state() -> Dictionary:
 	return {
@@ -342,6 +461,8 @@ func _run_countdown_step() -> void:
 			countdown_label.visible = false
 		countdown_running = false
 		await regenerate_gameplay_ground()
+		if ground_a and ground_a.has_method("spawn_initial_coins"):
+			ground_a.spawn_initial_coins()
 		set_playing_phase()
 		return
 	if countdown_label:
@@ -406,3 +527,8 @@ func _unhandled_input(event) -> void:
 		debug_info_enabled = not debug_info_enabled
 		if debug_label != null:
 			debug_label.visible = debug_info_enabled
+func on_coin_collected(segment: String) -> void:
+	if segment == "A":
+		coin_collected_a += 1
+	else:
+		coin_collected_b += 1

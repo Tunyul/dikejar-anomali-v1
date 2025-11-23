@@ -64,14 +64,83 @@ extends TileMapLayer
 @export var step_flat_len2_min: int = 2
 @export var step_flat_len2_max: int = 6
 
+@export var coin_vertical_offset_px: float = 48.0
+@export var coin_y_tiles_min: int = 0
+@export var coin_y_tiles_max: int = 1
+@export var coin_spawn_margin_tiles: int = 2
+@export var coin_groups_min: int = 1
+@export var coin_groups_max: int = 2
+@export var coins_per_group_min: int = 5
+@export var coins_per_group_max: int = 7
+@export var coin_spacing_tiles_min: int = 2
+@export var coin_spacing_tiles_max: int = 3
+@export var coin_group_spacing_tiles_min: int = 12
+@export var coin_group_spacing_tiles_max: int = 24
+@export var coin_scale: float = 1.0
+@export var coin_anim_fps: float = 12.0
+@export var coin_osc_amplitude: float = 8.0
+@export var coin_osc_frequency: float = 1.2
+@export var coin_spawn_x_additional_px: float = 0.0
+@export var coin_spawn_follow_player: bool = false
+@export var coin_spawn_player_offset_min_px: float = 150.0
+@export var coin_spawn_player_offset_max_px: float = 450.0
+@export var coin_min_clearance_px: float = 24.0
+@export var coin_infinite_spawn_enabled: bool = true
+@export var coin_stack_enabled: bool = true
+@export var coin_stack_prob: float = 0.5
+@export var coin_stack_max_per_column: int = 3
+@export var coin_stack_vertical_offset_px: float = 10.0
+@export var coin_stack_horizontal_jitter_px: float = 0.0
+@export var coin_stack_use_tile_height: bool = true
+@export var coin_stack_min_separation_px: float = 48.0
+@export var coin_min_h_spacing_px: float = 24.0
+@export var coin_min_v_spacing_px: float = 24.0
+@export var coin_base_tint: Color = Color(1, 1, 1, 1)
+@export var coin_stack_tint: Color = Color(0.8, 1.0, 0.9, 1.0)
+@export var coin_tint_enabled: bool = true
+@export var coin_allow_over_empty: bool = true
+
 var _noise := FastNoiseLite.new()
 var _rng := RandomNumberGenerator.new()
 var _generate_now: bool = false
+var _coin_scene := preload("res://scenes/Coin.tscn")
+var _next_spawn_x: int = -1
+var _last_tint_enabled: bool = true
+var _last_base_tint: Color = Color(1, 1, 1, 1)
+var _last_stack_tint: Color = Color(1, 1, 1, 1)
+
 
 func _ready():
 	_configure_noise()
 	if auto_generate_on_ready:
 		generate()
+
+func _process(_delta: float) -> void:
+	var p := get_parent()
+	if p == null:
+		return
+	var cont_a: Node2D = p.get_node_or_null("CoinsA")
+	var cont_b: Node2D = p.get_node_or_null("CoinsB")
+	if cont_a != null and name == "TileMapLayer":
+		cont_a.position.x = position.x
+		var parent_movement_enabled := bool(p.get("movement_enabled")) if p != null else false
+		if coin_infinite_spawn_enabled and parent_movement_enabled:
+			_spawn_groups_append_right(cont_a)
+		if coin_tint_enabled != _last_tint_enabled or coin_base_tint != _last_base_tint or coin_stack_tint != _last_stack_tint:
+			_apply_tint(cont_a)
+			_last_tint_enabled = coin_tint_enabled
+			_last_base_tint = coin_base_tint
+			_last_stack_tint = coin_stack_tint
+	if cont_b != null and name == "TileMapLayerB":
+		cont_b.position.x = position.x
+		var parent_movement_enabled_b := bool(p.get("movement_enabled")) if p != null else false
+		if coin_infinite_spawn_enabled and parent_movement_enabled_b:
+			_spawn_groups_append_right(cont_b)
+		if coin_tint_enabled != _last_tint_enabled or coin_base_tint != _last_base_tint or coin_stack_tint != _last_stack_tint:
+			_apply_tint(cont_b)
+			_last_tint_enabled = coin_tint_enabled
+			_last_base_tint = coin_base_tint
+			_last_stack_tint = coin_stack_tint
 
 func _configure_noise():
 	_rng.randomize()
@@ -340,6 +409,11 @@ func _set_generate_now(value: bool) -> void:
 	if value:
 		generate()
 		_generate_pair_if_exists()
+		var gp := get_parent()
+		if gp != null:
+			if has_method("spawn_initial_coins"):
+				call_deferred("spawn_initial_coins")
+
 		_generate_now = false
 
 func _get_generate_now() -> bool:
@@ -353,6 +427,45 @@ func _generate_pair_if_exists() -> void:
 	var layer_b: TileMapLayer = p.get_node_or_null("TileMapLayerB") as TileMapLayer
 	if layer_a == null or layer_b == null:
 		return
+	# Sinkronisasi konfigurasi koin antara kedua layer: ambil dari instance pemanggil (self)
+	var src: TileMapLayer = self
+	var dst: TileMapLayer = layer_b if self == layer_a else layer_a
+	if dst != null:
+		dst.set("coin_tint_enabled", src.get("coin_tint_enabled"))
+		dst.set("coin_base_tint", src.get("coin_base_tint"))
+		dst.set("coin_stack_tint", src.get("coin_stack_tint"))
+		dst.set("coin_vertical_offset_px", src.get("coin_vertical_offset_px"))
+		dst.set("coin_y_tiles_min", src.get("coin_y_tiles_min"))
+		dst.set("coin_y_tiles_max", src.get("coin_y_tiles_max"))
+		dst.set("coin_spawn_margin_tiles", src.get("coin_spawn_margin_tiles"))
+		dst.set("coin_groups_min", src.get("coin_groups_min"))
+		dst.set("coin_groups_max", src.get("coin_groups_max"))
+		dst.set("coins_per_group_min", src.get("coins_per_group_min"))
+		dst.set("coins_per_group_max", src.get("coins_per_group_max"))
+		dst.set("coin_spacing_tiles_min", src.get("coin_spacing_tiles_min"))
+		dst.set("coin_spacing_tiles_max", src.get("coin_spacing_tiles_max"))
+		dst.set("coin_group_spacing_tiles_min", src.get("coin_group_spacing_tiles_min"))
+		dst.set("coin_group_spacing_tiles_max", src.get("coin_group_spacing_tiles_max"))
+		dst.set("coin_scale", src.get("coin_scale"))
+		dst.set("coin_anim_fps", src.get("coin_anim_fps"))
+		dst.set("coin_osc_amplitude", src.get("coin_osc_amplitude"))
+		dst.set("coin_osc_frequency", src.get("coin_osc_frequency"))
+		dst.set("coin_spawn_x_additional_px", src.get("coin_spawn_x_additional_px"))
+		dst.set("coin_spawn_follow_player", src.get("coin_spawn_follow_player"))
+		dst.set("coin_spawn_player_offset_min_px", src.get("coin_spawn_player_offset_min_px"))
+		dst.set("coin_spawn_player_offset_max_px", src.get("coin_spawn_player_offset_max_px"))
+		dst.set("coin_min_clearance_px", src.get("coin_min_clearance_px"))
+		dst.set("coin_infinite_spawn_enabled", src.get("coin_infinite_spawn_enabled"))
+		dst.set("coin_stack_enabled", src.get("coin_stack_enabled"))
+		dst.set("coin_stack_prob", src.get("coin_stack_prob"))
+		dst.set("coin_stack_max_per_column", src.get("coin_stack_max_per_column"))
+		dst.set("coin_stack_vertical_offset_px", src.get("coin_stack_vertical_offset_px"))
+		dst.set("coin_stack_horizontal_jitter_px", src.get("coin_stack_horizontal_jitter_px"))
+		dst.set("coin_stack_use_tile_height", src.get("coin_stack_use_tile_height"))
+		dst.set("coin_stack_min_separation_px", src.get("coin_stack_min_separation_px"))
+		dst.set("coin_min_h_spacing_px", src.get("coin_min_h_spacing_px"))
+		dst.set("coin_min_v_spacing_px", src.get("coin_min_v_spacing_px"))
+		dst.set("coin_allow_over_empty", src.get("coin_allow_over_empty"))
 	if layer_a.has_method("generate"):
 		layer_a.generate()
 	layer_b.flat_start_enabled = false
@@ -361,3 +474,305 @@ func _generate_pair_if_exists() -> void:
 	var cell: Vector2i = layer_a.tile_set.tile_size if layer_a.tile_set != null else Vector2i(128, 128)
 	var seg: float = float(layer_a.width) * float(cell.x) * layer_a.scale.x
 	layer_b.position.x = layer_a.position.x + seg
+	if layer_a.has_method("clear_coins"):
+		layer_a.clear_coins()
+	if layer_a.has_method("spawn_initial_coins"):
+		layer_a.spawn_initial_coins()
+	if layer_b.has_method("clear_coins"):
+		layer_b.clear_coins()
+	if layer_b.has_method("spawn_initial_coins"):
+		layer_b.spawn_initial_coins()
+
+
+func spawn_initial_coins() -> void:
+	var p := get_parent()
+	if p == null:
+		return
+	var container: Node2D = null
+	if name == "TileMapLayer":
+		container = p.get_node_or_null("CoinsA")
+	elif name == "TileMapLayerB":
+		container = p.get_node_or_null("CoinsB")
+	if container == null:
+		return
+	_spawn_groups_in_view_right(container)
+	_next_spawn_x = -1
+
+func reset_coin_spawn_state() -> void:
+	_next_spawn_x = -1
+
+
+func clear_coins() -> void:
+	var p := get_parent()
+	if p == null:
+		return
+	var container: Node = null
+	if name == "TileMapLayer":
+		container = p.get_node_or_null("CoinsA")
+	elif name == "TileMapLayerB":
+		container = p.get_node_or_null("CoinsB")
+	if container == null:
+		return
+	for c in container.get_children():
+		c.queue_free()
+
+func _spawn_groups_in_view_right(container: Node) -> void:
+	if tile_set == null or container == null:
+		return
+	if container is Node2D:
+		(container as Node2D).position.x = position.x
+	for c in container.get_children():
+		c.queue_free()
+	var occupied: Dictionary = {}
+	var sep_h: float = max(1.0, coin_min_h_spacing_px)
+	var sep_v: float = max(1.0, coin_min_v_spacing_px)
+	var w: int = width
+	var cell: Vector2i = tile_set.tile_size if tile_set != null else Vector2i(128, 128)
+	var margin: int = int(max(0, coin_spawn_margin_tiles))
+	var max_x: int = int(max(margin + 1, w - margin))
+	var cam := get_viewport().get_camera_2d()
+	var vw := int(get_viewport_rect().size.x)
+	if vw <= 0:
+		vw = 1024
+	var step_px := int(float(cell.x) * scale.x)
+	var cx := cam.get_screen_center_position().x if cam != null else 0.0
+	var left_x := cx - float(vw) * 0.5
+	var right_x := cx + float(vw) * 0.5
+	var start_world_x := left_x
+	if coin_spawn_follow_player:
+		var p := get_parent()
+		var pl := p.get_node_or_null("Player") if p != null else null
+		if pl != null and pl is Node2D:
+			var px: float = (pl as Node2D).global_position.x
+			var min_off: float = max(0.0, coin_spawn_player_offset_min_px)
+			var max_off: float = max(min_off, coin_spawn_player_offset_max_px)
+			start_world_x = _rng.randf_range(px + min_off, px + max_off)
+		else:
+			start_world_x = _rng.randf_range(left_x, right_x - float(step_px))
+	else:
+		start_world_x = _rng.randf_range(left_x, right_x - float(step_px))
+	var local := to_local(Vector2(start_world_x, 0.0))
+	var map := local_to_map(local)
+	var min_x: int = margin
+	if flat_start_enabled:
+		min_x = max(min_x, flat_start_len)
+	if name == "TileMapLayer":
+		min_x = max(min_x, flat_start_len)
+	var x: int = clamp(map.x - origin.x, min_x, max_x - 1)
+	var groups: int = _rng.randi_range(max(1, coin_groups_min), max(coin_groups_min, coin_groups_max))
+	for g in range(groups):
+		var count: int = _rng.randi_range(max(1, coins_per_group_min), max(coins_per_group_min, coins_per_group_max))
+		var spacing_tiles: int = _rng.randi_range(max(1, coin_spacing_tiles_min), max(coin_spacing_tiles_min, coin_spacing_tiles_max))
+		var vtiles_min: int = max(0, coin_y_tiles_min)
+		var vtiles_max: int = max(vtiles_min, coin_y_tiles_max)
+		var group_vtiles: int = _rng.randi_range(vtiles_min, vtiles_max)
+		var offset_px: float = coin_vertical_offset_px if coin_vertical_offset_px > 0.0 else 32.0
+		var clearance_px: float = max(0.0, float(coin_min_clearance_px)) + max(0.0, float(coin_osc_amplitude))
+		for i in range(count):
+			var mx := x + i * spacing_tiles
+			if mx >= max_x:
+				break
+			var top_y := -1
+			for y in range(height - 1, -1, -1):
+				var mp := Vector2i(origin.x + mx, origin.y + y)
+				var sid := get_cell_source_id(mp)
+				if sid != -1:
+					var above_sid := -1
+					if y - 1 >= 0:
+						above_sid = get_cell_source_id(Vector2i(origin.x + mx, origin.y + y - 1))
+					if above_sid == -1:
+						top_y = y
+						break
+			var local_center: Vector2
+			if top_y == -1:
+				if not coin_allow_over_empty:
+					continue
+				var pseudo_y: int = int(clamp(ground_y, 0, height - 1))
+				local_center = map_to_local(Vector2i(origin.x + mx, origin.y + pseudo_y))
+			else:
+				local_center = map_to_local(Vector2i(origin.x + mx, origin.y + top_y))
+			var world_center: Vector2 = to_global(local_center)
+			var world_cell_h: float = float(cell.y) * scale.y
+			var top_surface_y: float = world_center.y - world_cell_h * 0.5
+			var coin_world: Vector2 = Vector2(world_center.x + coin_spawn_x_additional_px, top_surface_y - offset_px - float(group_vtiles) * world_cell_h - clearance_px)
+			var vstep: float = max(world_cell_h, coin_stack_min_separation_px) + coin_min_clearance_px + coin_osc_amplitude * 2.0
+			var stack_count: int = 1
+			if coin_stack_enabled:
+				var prob: float = clamp(coin_stack_prob, 0.0, 1.0)
+				if _rng.randf() < prob:
+					stack_count = _rng.randi_range(2, max(2, coin_stack_max_per_column))
+			for s in range(stack_count):
+				var jitter_x: float = _rng.randf_range(-coin_stack_horizontal_jitter_px, coin_stack_horizontal_jitter_px)
+				var stacked_world: Vector2 = Vector2(coin_world.x + jitter_x, coin_world.y - float(s) * vstep)
+				var ncoin: Area2D = _coin_scene.instantiate() as Area2D
+				var segment: String = "A" if name == "TileMapLayer" else "B"
+				ncoin.set("source_segment", segment)
+				var tint_color: Color = coin_stack_tint if s > 0 else coin_base_tint
+				ncoin.set("tint", tint_color if coin_tint_enabled else Color(1, 1, 1, 1))
+				ncoin.set("is_stack", s > 0)
+				var lp: Vector2 = container.to_local(stacked_world)
+				var key := str(int(round(lp.x / sep_h))) + ":" + str(int(round(lp.y / sep_v)))
+				if occupied.has(key):
+					continue
+				var too_close: bool = false
+				for c in container.get_children():
+					if c is Node2D:
+						var cp: Vector2 = (c as Node2D).position
+						var dx: float = abs(cp.x - lp.x)
+						var dy: float = abs(cp.y - lp.y)
+						if (coin_min_h_spacing_px > 0.0 or coin_min_v_spacing_px > 0.0):
+							if dx < coin_min_h_spacing_px and dy < coin_min_v_spacing_px:
+								too_close = true
+								break
+						else:
+							if dx <= 0.001 and dy <= 0.001:
+								too_close = true
+								break
+				if too_close:
+					continue
+				if coin_scale > 0.0:
+					ncoin.scale = Vector2(coin_scale, coin_scale)
+				if coin_anim_fps > 0.0:
+					ncoin.set("anim_fps", coin_anim_fps)
+				if coin_osc_amplitude > 0.0:
+					ncoin.set("osc_amplitude", coin_osc_amplitude)
+				if coin_osc_frequency > 0.0:
+					ncoin.set("osc_frequency", coin_osc_frequency)
+				ncoin.position = lp
+				ncoin.z_index = 100
+				container.add_child(ncoin)
+				occupied[key] = true
+		var group_gap: int = _rng.randi_range(max(1, coin_group_spacing_tiles_min), max(coin_group_spacing_tiles_min, coin_group_spacing_tiles_max))
+		x = min(max_x, x + max(1, count) * spacing_tiles + group_gap)
+
+func _spawn_groups_append_right(container: Node) -> void:
+	if not coin_infinite_spawn_enabled or tile_set == null or container == null:
+		return
+	var cell: Vector2i = tile_set.tile_size if tile_set != null else Vector2i(128, 128)
+	var margin: int = int(max(0, coin_spawn_margin_tiles))
+	var max_x: int = int(max(margin + 1, width - margin))
+	var cam := get_viewport().get_camera_2d()
+	var vw := int(get_viewport_rect().size.x)
+	if vw <= 0:
+		vw = 1024
+	var cx := cam.get_screen_center_position().x if cam != null else 0.0
+	var right_x := cx + float(vw) * 0.5
+	var step_px := int(float(cell.x) * scale.x)
+	var min_x: int = margin
+	if flat_start_enabled:
+		min_x = max(min_x, flat_start_len)
+	if name == "TileMapLayer":
+		min_x = max(min_x, flat_start_len)
+	if _next_spawn_x < 0:
+		var start_world_x := right_x - float(step_px) * 2.0
+		var local := to_local(Vector2(start_world_x, 0.0))
+		var map := local_to_map(local)
+		_next_spawn_x = clamp(map.x - origin.x, min_x, max_x - 1)
+	var local_center: Vector2 = map_to_local(Vector2i(origin.x + _next_spawn_x, origin.y))
+	var world_center: Vector2 = to_global(local_center)
+	var occupied2: Dictionary = {}
+	var sep_h2: float = max(1.0, coin_min_h_spacing_px)
+	var sep_v2: float = max(1.0, coin_min_v_spacing_px)
+	for ec in container.get_children():
+		if ec is Node2D:
+			var ep: Vector2 = (ec as Node2D).position
+			var ekey := str(int(round(ep.x / sep_h2))) + ":" + str(int(round(ep.y / sep_v2)))
+			occupied2[ekey] = true
+	while world_center.x <= right_x + float(step_px) * 2.0:
+		var count: int = _rng.randi_range(max(1, coins_per_group_min), max(coins_per_group_min, coins_per_group_max))
+		var spacing_tiles: int = _rng.randi_range(max(1, coin_spacing_tiles_min), max(coin_spacing_tiles_min, coin_spacing_tiles_max))
+		var vtiles_min: int = max(0, coin_y_tiles_min)
+		var vtiles_max: int = max(vtiles_min, coin_y_tiles_max)
+		var group_vtiles: int = _rng.randi_range(vtiles_min, vtiles_max)
+		var offset_px: float = coin_vertical_offset_px if coin_vertical_offset_px > 0.0 else 32.0
+		var clearance_px: float = max(0.0, float(coin_min_clearance_px)) + max(0.0, float(coin_osc_amplitude))
+		for i in range(count):
+			var mx := _next_spawn_x + i * spacing_tiles
+			if mx >= max_x:
+				break
+			var top_y := -1
+			for y in range(height - 1, -1, -1):
+				var mp := Vector2i(origin.x + mx, origin.y + y)
+				var sid := get_cell_source_id(mp)
+				if sid != -1:
+					var above_sid := -1
+					if y - 1 >= 0:
+						above_sid = get_cell_source_id(Vector2i(origin.x + mx, origin.y + y - 1))
+					if above_sid == -1:
+						top_y = y
+						break
+			var lc: Vector2
+			var wc: Vector2
+			if top_y == -1:
+				if not coin_allow_over_empty:
+					continue
+				var pseudo_y2: int = int(clamp(ground_y, 0, height - 1))
+				lc = map_to_local(Vector2i(origin.x + mx, origin.y + pseudo_y2))
+				wc = to_global(lc)
+			else:
+				lc = map_to_local(Vector2i(origin.x + mx, origin.y + top_y))
+				wc = to_global(lc)
+			var world_cell_h: float = float(cell.y) * scale.y
+			var top_surface_y: float = wc.y - world_cell_h * 0.5
+			var coin_world: Vector2 = Vector2(wc.x + coin_spawn_x_additional_px, top_surface_y - offset_px - float(group_vtiles) * world_cell_h - clearance_px)
+			var vstep2: float = max(world_cell_h, coin_stack_min_separation_px) + coin_min_clearance_px + coin_osc_amplitude * 2.0
+			var stack_count: int = 1
+			if coin_stack_enabled:
+				var prob2: float = clamp(coin_stack_prob, 0.0, 1.0)
+				if _rng.randf() < prob2:
+					stack_count = _rng.randi_range(2, max(2, coin_stack_max_per_column))
+			for s in range(stack_count):
+				var jitter_x2: float = _rng.randf_range(-coin_stack_horizontal_jitter_px, coin_stack_horizontal_jitter_px)
+				var stacked_world2: Vector2 = Vector2(coin_world.x + jitter_x2, coin_world.y - float(s) * vstep2)
+				var ncoin2: Area2D = _coin_scene.instantiate() as Area2D
+				var segment2: String = "A" if name == "TileMapLayer" else "B"
+				ncoin2.set("source_segment", segment2)
+				var tint_color2: Color = coin_stack_tint if s > 0 else coin_base_tint
+				ncoin2.set("tint", tint_color2 if coin_tint_enabled else Color(1, 1, 1, 1))
+				ncoin2.set("is_stack", s > 0)
+				var lp2: Vector2 = (container as Node2D).to_local(stacked_world2)
+				var key2 := str(int(round(lp2.x / sep_h2))) + ":" + str(int(round(lp2.y / sep_v2)))
+				if occupied2.has(key2):
+					continue
+				var too_close2: bool = false
+				for c2 in container.get_children():
+					if c2 is Node2D:
+						var cp2: Vector2 = (c2 as Node2D).position
+						var dx2: float = abs(cp2.x - lp2.x)
+						var dy2: float = abs(cp2.y - lp2.y)
+						if (coin_min_h_spacing_px > 0.0 or coin_min_v_spacing_px > 0.0):
+							if dx2 < coin_min_h_spacing_px and dy2 < coin_min_v_spacing_px:
+								too_close2 = true
+								break
+						else:
+							if dx2 <= 0.001 and dy2 <= 0.001:
+								too_close2 = true
+								break
+				if too_close2:
+					continue
+				if coin_scale > 0.0:
+					ncoin2.scale = Vector2(coin_scale, coin_scale)
+				if coin_anim_fps > 0.0:
+					ncoin2.set("anim_fps", coin_anim_fps)
+				if coin_osc_amplitude > 0.0:
+					ncoin2.set("osc_amplitude", coin_osc_amplitude)
+				if coin_osc_frequency > 0.0:
+					ncoin2.set("osc_frequency", coin_osc_frequency)
+				ncoin2.position = lp2
+				ncoin2.z_index = 100
+				container.add_child(ncoin2)
+				occupied2[key2] = true
+		var group_gap: int = _rng.randi_range(max(1, coin_group_spacing_tiles_min), max(coin_group_spacing_tiles_min, coin_group_spacing_tiles_max))
+		_next_spawn_x = min(max_x, _next_spawn_x + max(1, count) * spacing_tiles + group_gap)
+		local_center = map_to_local(Vector2i(origin.x + _next_spawn_x, origin.y))
+		world_center = to_global(local_center)
+func _apply_tint(container: Node) -> void:
+	if container == null:
+		return
+	for c in container.get_children():
+		if c != null and c.has_method("set"):
+			var is_stack := false
+			if c.has_method("get"):
+				is_stack = bool(c.get("is_stack"))
+			var tint_color: Color = coin_stack_tint if is_stack else coin_base_tint
+			c.set("tint", tint_color if coin_tint_enabled else Color(1, 1, 1, 1))

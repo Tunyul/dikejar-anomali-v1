@@ -5,6 +5,7 @@ signal generation_progress(pct: float)
 @onready var tile_layer: TileMapLayer = $TileMapLayer
 @onready var tile_layer_b: TileMapLayer = $TileMapLayerB
 
+
 var _title_mode: bool = true
 @export var movement_enabled: bool = false
 @export var scroll_speed: float = 150.0
@@ -22,13 +23,30 @@ var _title_mode: bool = true
 @export var debug_color_a: Color = Color(0.8, 1.0, 0.8, 1.0)
 @export var debug_color_b: Color = Color(1.0, 0.8, 0.8, 1.0)
 
+
+
 var _target_scroll_speed: float = 150.0
 var _b_ready: bool = false
 var _a_flat_removed: bool = false
-
+var _rng := RandomNumberGenerator.new()
+																																																																																																																																																																																																																																																																																																																																																																																																																												
 func set_title_mode(enable: bool) -> void:
 	_title_mode = enable
 	_apply_debug_tint()
+	var p := get_parent()
+	if enable and p != null:
+		var ca := p.get_node_or_null("CoinsA")
+		var cb := p.get_node_or_null("CoinsB")
+		if ca:
+			for c in ca.get_children():
+				c.queue_free()
+		if cb:
+			for c in cb.get_children():
+				c.queue_free()
+		if tile_layer != null and tile_layer.has_method("reset_coin_spawn_state"):
+			tile_layer.reset_coin_spawn_state()
+		if tile_layer_b != null and tile_layer_b.has_method("reset_coin_spawn_state"):
+			tile_layer_b.reset_coin_spawn_state()
 
 func generate_random() -> void:
 	if tile_layer == null:
@@ -152,6 +170,7 @@ func _process(delta: float) -> void:
 							tile_layer_b.noise_seed = 0
 							if tile_layer_b.has_method("generate"):
 								tile_layer_b.generate()
+						
 					while tile_layer.position.x >= seg:
 						tile_layer.position.x = tile_layer_b.position.x - seg
 						if not _a_flat_removed:
@@ -164,6 +183,7 @@ func _process(delta: float) -> void:
 							tile_layer.noise_seed = 0
 							if tile_layer.has_method("generate"):
 								tile_layer.generate()
+						
 					while tile_layer_b.position.x >= seg:
 						tile_layer_b.position.x = tile_layer.position.x - seg
 						if not _b_ready:
@@ -171,11 +191,20 @@ func _process(delta: float) -> void:
 							tile_layer_b.noise_seed = 0
 							if tile_layer_b.has_method("generate"):
 								tile_layer_b.generate()
+							if tile_layer_b.has_method("clear_coins"):
+								tile_layer_b.clear_coins()
+							if tile_layer_b.has_method("spawn_initial_coins"):
+								tile_layer_b.spawn_initial_coins()
 							_b_ready = true
 						if regenerate_on_wrap:
 							tile_layer_b.noise_seed = 0
 							if tile_layer_b.has_method("generate"):
 								tile_layer_b.generate()
+							if tile_layer_b.has_method("clear_coins"):
+								tile_layer_b.clear_coins()
+							if tile_layer_b.has_method("spawn_initial_coins"):
+								tile_layer_b.spawn_initial_coins()
+						
 				else:
 					while tile_layer.position.x <= -seg:
 						tile_layer.position.x = tile_layer.position.x + seg * 2.0
@@ -183,13 +212,25 @@ func _process(delta: float) -> void:
 							tile_layer.noise_seed = 0
 							if tile_layer.has_method("generate"):
 								tile_layer.generate()
+							if tile_layer.has_method("clear_coins"):
+								tile_layer.clear_coins()
+							if tile_layer.has_method("spawn_initial_coins"):
+								tile_layer.spawn_initial_coins()
+						
 					while tile_layer.position.x >= seg:
 						tile_layer.position.x = tile_layer.position.x - seg * 2.0
 						if regenerate_on_wrap:
 							tile_layer.noise_seed = 0
 							if tile_layer.has_method("generate"):
 								tile_layer.generate()
+							if tile_layer.has_method("clear_coins"):
+								tile_layer.clear_coins()
+							if tile_layer.has_method("spawn_initial_coins"):
+								tile_layer.spawn_initial_coins()
+						
 
+																																																																																																																																																																																																																																																																																																
+		
 func is_solid_at_world_pos(pos: Vector2) -> bool:
 	if tile_layer == null:
 		return false
@@ -233,6 +274,7 @@ func _ready() -> void:
 		_a_flat_removed = false
 		_apply_debug_tint()
 	_target_scroll_speed = clamp(scroll_speed, min_scroll_speed, max_scroll_speed)
+	_rng.randomize()
 
 func _segment_width_px() -> float:
 	if tile_layer == null:
@@ -263,3 +305,26 @@ func _apply_debug_tint() -> void:
 		tile_layer.modulate = debug_color_a if debug_tint_enabled else Color(1, 1, 1, 1)
 	if tile_layer_b != null:
 		tile_layer_b.modulate = debug_color_b if debug_tint_enabled else Color(1, 1, 1, 1)
+
+func spawn_initial_coins() -> void:
+	ensure_second_segment_ready()
+	# Bersihkan kontainer koin terlebih dahulu agar tidak ada sisa dari generate sebelumnya
+	var p := get_parent()
+	if p != null:
+		var ca := p.get_node_or_null("CoinsA")
+		var cb := p.get_node_or_null("CoinsB")
+		if ca:
+			for c in ca.get_children():
+				c.queue_free()
+		if cb:
+			for c in cb.get_children():
+				c.queue_free()
+	if tile_layer != null and tile_layer.has_method("spawn_initial_coins"):
+		tile_layer.spawn_initial_coins()
+	if tile_layer_b != null and tile_layer_b.has_method("spawn_initial_coins"):
+		tile_layer_b.spawn_initial_coins()
+
+
+
+func _get_active_layer() -> TileMapLayer:
+	return tile_layer

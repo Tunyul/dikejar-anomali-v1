@@ -8,6 +8,9 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_jump"]
 radius = 48.0
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
+radius = 48.0
+
 [node name="UIManager" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -57,7 +60,7 @@ grow_vertical = 1
 running = true
 
 [node name="JumpButton" type="TouchScreenButton" parent="."]
-position = Vector2(100, 480)
+position = Vector2(964, 516)
 shape = SubResource("CircleShape2D_jump")
 action = "jump"
 
@@ -69,5 +72,22 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Jump"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+
+[node name="AttackButton" type="TouchScreenButton" parent="."]
+position = Vector2(844, 516)
+shape = SubResource("CircleShape2D_attack")
+action = "attack"
+
+[node name="Label" type="Label" parent="AttackButton"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Atk"
 horizontal_alignment = 1
 vertical_alignment = 1

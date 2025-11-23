@@ -70,6 +70,7 @@ var remaining_air_jumps: int = 0
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
 var jump_requested: bool = false
+var attack_requested: bool = false
 
 # ===== POSITION MANAGEMENT =====
 var target_screen_position: Vector2 = Vector2.ZERO
@@ -142,6 +143,14 @@ func _ready() -> void:
 		var mev := InputEventMouseButton.new()
 		mev.button_index = MOUSE_BUTTON_LEFT
 		InputMap.action_add_event("jump", mev)
+	if not InputMap.has_action("attack"):
+		InputMap.add_action("attack")
+		var kev := InputEventKey.new()
+		kev.physical_keycode = KEY_K
+		InputMap.action_add_event("attack", kev)
+		var rmev := InputEventMouseButton.new()
+		rmev.button_index = MOUSE_BUTTON_RIGHT
+		InputMap.action_add_event("attack", rmev)
 	initialize_player()
 	setup_collision_layers()
 	find_and_cache_references()
@@ -423,6 +432,10 @@ func handle_full_movement_state(_delta: float) -> void:
 	if Input.is_action_just_pressed("jump"):
 		jump_buffer_timer = jump_buffer_time
 		jump_requested = true
+	if Input.is_action_just_pressed("attack"):
+		attack_requested = true
+		if enable_debug_logging and OS.is_debug_build():
+			print("Attack triggered")
 	
 	# Control animation based on state
 	update_animation_state()
