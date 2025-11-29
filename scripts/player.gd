@@ -29,6 +29,8 @@ class_name Player
 @export var match_sprite_to_collision: bool = true
 @export var preserve_editor_transform: bool = true
 @export var collision_size: Vector2 = Vector2(48, 72)  # Optimized collision size (smaller = better gameplay feel)
+@export var run_scale_override: float = 0.0
+@export var jump_scale_override: float = 0.0
 
 # ===== POSITION SETTINGS (BISA DIUBAH DI INSPECTOR) =====
 @export var screen_position_x: float = 0.3  # 0.0-1.0 (0%=kiri, 100%=kanan)
@@ -49,17 +51,16 @@ class_name Player
 @export var pushback_lock_x: float = 190.0
 @export var air_recovery_rate: float = 120.0
 @export var jump_block_grace_time: float = 0.12
+@export var play_start_grace_sec: float = 1.5
+@export var lock_x_during_full_movement: bool = true
 
 # ===== STATE MANAGEMENT =====
 enum PlayerState {
-	HIDDEN,
-	APPEARING,
-	RUNNING_IN_PLACE,
 	FULL_MOVEMENT,
 	GAME_OVER
 }
 
-var current_state: PlayerState = PlayerState.HIDDEN
+var current_state: PlayerState = PlayerState.FULL_MOVEMENT
 var state_timer: float = 0.0
 var state_data: Dictionary = {}
 
@@ -101,38 +102,35 @@ var _stuck_anchor_x: float = 0.0
 var _env_move_enabled: bool = false
 var _jumping_this_frame: bool = false
 var _jump_grace_timer: float = 0.0
+var _play_start_grace_timer: float = 0.0
+var countdown_active: bool = false
+var _anim_scales: Dictionary = {}
+var _anim_offsets: Dictionary = {}
 
 func match_sprite_to_collision_size() -> void:
-	# Get collision shape size
 	var collision_shape = $CollisionShape2D
 	if not collision_shape or not collision_shape.shape:
 		return
-	
-	var shape_size = collision_shape.shape.size  # Vector2(64, 96)
-	
-	# Get first frame texture to determine original sprite size
+	var shape_size = collision_shape.shape.size
 	var sprite_frames = animated_sprite.sprite_frames
-	if not sprite_frames or sprite_frames.get_frame_count("run") == 0:
+	if not sprite_frames:
 		return
-	
-	var first_frame_texture = sprite_frames.get_frame_texture("run", 0)
-	if not first_frame_texture:
+	var run_tex := sprite_frames.get_frame_texture("run", 0) if sprite_frames.has_animation("run") and sprite_frames.get_frame_count("run") > 0 else null
+	var jump_tex := sprite_frames.get_frame_texture("jump", 0) if sprite_frames.has_animation("jump") and sprite_frames.get_frame_count("jump") > 0 else null
+	if run_tex == null and jump_tex == null:
 		return
-	
-	var original_sprite_size = Vector2(first_frame_texture.get_width(), first_frame_texture.get_height())
-	
-	# Calculate exact scale to match collision size
-	# Use 90% of collision size for better visual proportions and gameplay feel
-	var target_scale_x = (shape_size.x * 0.9) / original_sprite_size.x
-	var target_scale_y = (shape_size.y * 0.9) / original_sprite_size.y
-	
-	# Apply calculated scale
+	var run_size := Vector2(run_tex.get_width(), run_tex.get_height()) if run_tex != null else Vector2.ZERO
+	var jump_size := Vector2(jump_tex.get_width(), jump_tex.get_height()) if jump_tex != null else Vector2.ZERO
+	var original_sprite_size := run_size
+	if jump_size.x > original_sprite_size.x or jump_size.y > original_sprite_size.y:
+		original_sprite_size = jump_size
+	var target_scale_x = (shape_size.x * 0.9) / max(original_sprite_size.x, 1.0)
+	var target_scale_y = (shape_size.y * 0.9) / max(original_sprite_size.y, 1.0)
 	var uniform_scale = min(target_scale_x, target_scale_y)
 	var final_scale = Vector2(uniform_scale, uniform_scale)
 	animated_sprite.scale = final_scale
-	
 	if enable_debug_logging and OS.is_debug_build():
-		print("Sprite resized: original=", original_sprite_size, " collision=", shape_size, " scale=", final_scale)
+		print("Sprite resized: orig_run=", run_size, " orig_jump=", jump_size, " collision=", shape_size, " scale=", final_scale)
 
 func _ready() -> void:
 	if not InputMap.has_action("jump"):
@@ -155,6 +153,9 @@ func _ready() -> void:
 	setup_collision_layers()
 	find_and_cache_references()
 	calculate_screen_positions()
+	if entry_stop_x <= 0.0:
+		entry_stop_x = 280.0
+	_set_to_entry_stop()
 	start_initial_state_sequence()
 	remaining_air_jumps = air_jumps
 
@@ -178,19 +179,25 @@ func initialize_player() -> void:
 	if animated_sprite:
 		animated_sprite.play("run")
 		animated_sprite.speed_scale = 1.0
-		# Pastikan animasi berjalan otomatis
 		if not animated_sprite.is_playing():
 			animated_sprite.play("run")
-		# Tidak perlu auto-scale karena sudah di-set manual di editor
+		slice_jump_spritesheet_if_needed()
+		slice_run_spritesheet_if_needed()
 		if enable_debug_logging and OS.is_debug_build():
 			print("AnimatedSprite2D initialized: position=", animated_sprite.position, " scale=", animated_sprite.scale, " playing=", animated_sprite.is_playing())
-		if match_sprite_to_collision and not preserve_editor_transform:
-			match_sprite_to_collision_size()
+		_prepare_animation_scales()
+		_apply_scale_for_anim("run")
+		animated_sprite.centered = true
+		_prepare_animation_offsets()
+		_apply_offset_for_anim("run")
+	_set_to_entry_stop()
 
 	ground_ray = get_node_or_null("GroundRay")
 	if ground_ray:
 		ground_ray.collision_mask = 1
 		ground_ray.enabled = true
+	if animated_sprite:
+		log_animation_scales()
 
 func setup_collision_layers() -> void:
 	collision_layer = 2  # Player layer
@@ -256,19 +263,10 @@ func calculate_screen_positions() -> void:
 	appear_start_position = appear_target_position - Vector2(800, 0)  # Mulai dari lebih jauh kiri
 
 func start_initial_state_sequence() -> void:
-	if title_screen:
-		set_state(PlayerState.HIDDEN)
-		title_screen.show_title()
-	else:
-		set_state(PlayerState.HIDDEN)
-		await get_tree().create_timer(1.0).timeout
-		set_state(PlayerState.APPEARING)
+	set_state(PlayerState.FULL_MOVEMENT)
 
-func start_appearance_from_left(target: Vector2) -> void:
-	appear_target_position = target
-	appear_start_position = Vector2(target.x + entry_start_offset_x, target.y)
-	position = appear_start_position
-	set_state(PlayerState.APPEARING)
+func start_appearance_from_left(_target: Vector2) -> void:
+	_set_to_entry_stop()
 
 # ===== REMOVED REDUNDANT FUNCTIONS =====
 # The following functions have been integrated into the new state management system:
@@ -283,133 +281,64 @@ func start_appearance_from_left(target: Vector2) -> void:
 
 func _physics_process(delta: float) -> void:
 	match current_state:
-		PlayerState.HIDDEN:
-			handle_hidden_state(delta)
-		PlayerState.APPEARING:
-			handle_appearing_state(delta)
-		PlayerState.RUNNING_IN_PLACE:
-			handle_running_in_place_state(delta)
 		PlayerState.FULL_MOVEMENT:
 			handle_full_movement_state(delta)
 		PlayerState.GAME_OVER:
 			handle_game_over_state(delta)
-	
-	# Apply physics dan collision detection
-	# Pastikan player tetap di tanah di state tertentu (kecuali FULL_MOVEMENT)
-	if current_state == PlayerState.APPEARING or current_state == PlayerState.RUNNING_IN_PLACE:
-		# Force player to stay on ground pada fase awal
-		if is_on_floor() or current_state == PlayerState.APPEARING:
-			velocity.y = 0
-		elif enable_debug_logging and OS.is_debug_build() and state_timer < 0.5:
-			print("WARNING: Player left ground in ", current_state, " state! position: ", position, " velocity: ", velocity)
-		# Kunci posisi Y saat muncul/diam
-		position.y = entry_stop_y
-	
-		apply_physics(delta)
-		check_game_over_conditions()
-	elif current_state == PlayerState.FULL_MOVEMENT:
-		apply_physics(delta)
-		check_game_over_conditions()
-		sync_environment_speed_if_needed()
+	apply_physics(delta)
+	check_game_over_conditions()
+	sync_environment_speed_if_needed()
 
 func handle_hidden_state(_delta: float) -> void:
-	velocity = Vector2.ZERO
-	visible = false
-	if animated_sprite and animated_sprite.is_playing():
-		animated_sprite.stop()
-		if enable_debug_logging and OS.is_debug_build():
-			print("Animation stopped in HIDDEN state")
-
-func handle_appearing_state(delta: float) -> void:
 	visible = true
-	state_timer += delta
-	
-	if enable_debug_logging and OS.is_debug_build() and state_timer < 0.1:  # Log hanya sekali di awal
-		print("APPEARING state started - position: ", position, " visible: ", visible)
-	
-	# Gerakkan player dari kiri ke posisi entry_stop_x (200px)
-	var target_x = entry_stop_x
-	var progress = clamp(state_timer / max(entry_duration_sec, 0.0001), 0.0, 1.0)
-	position.x = lerp(appear_start_position.x, target_x, progress)
-	
-	# LOCK Y position to prevent upward movement during appearance
-	position.y = entry_stop_y
-	velocity.y = 0  # Prevent any vertical movement
-	
-	# Animation speed based on movement
-	if animated_sprite:
-		if animated_sprite.animation != "run":
-			animated_sprite.play("run")
-		animated_sprite.speed_scale = 1.2
-		# Pastikan animasi tetap berjalan
-		if not animated_sprite.is_playing():
-			animated_sprite.play("run")
-	
-	# Transition to next state when done
-	if progress >= 1.0:
-		if enable_debug_logging and OS.is_debug_build():
-			print("APPEARING completed - final position: ", position)
-		set_state(PlayerState.RUNNING_IN_PLACE)
 
-func handle_running_in_place_state(delta: float) -> void:
-	state_timer += delta
-	
-	# Player diam di posisi entry_stop_x (200px) - PASTIKAN tidak bergerak
-	velocity.x = 0  # Tidak bergerak horizontal
-	velocity.y = 0  # Juga tidak jatuh
-	
-	# LOCK position exactly at entry_stop_x
-	position.x = entry_stop_x
-	position.y = entry_stop_y
-	
-	# Debug log position
-	if enable_debug_logging and OS.is_debug_build() and state_timer < 0.5:  # Log first few frames
-		print("RUNNING_IN_PLACE - position: ", position, " velocity: ", velocity)
-	
-	# Pastikan animasi run berjalan
-	if animated_sprite:
-		if animated_sprite.animation != "run":
-			animated_sprite.play("run")
-		animated_sprite.speed_scale = 1.0
-		if not animated_sprite.is_playing():
-			animated_sprite.play("run")
-	
-	# SKIP maintain_screen_position - ini menyebabkan gerakan!
-	
-	
-	# JANGAN aktifkan parallax/terrain lagi - sudah diaktifkan di APPEARING state
-	# Transition to next state when done
-	if state_timer >= 1.2:
-		if enable_debug_logging and OS.is_debug_build():
-			print("Parallax and terrain movement activated!")
-		
-		set_state(PlayerState.FULL_MOVEMENT)
+func handle_appearing_state(_delta: float) -> void:
+	_set_to_entry_stop()
+
+func handle_running_in_place_state(_delta: float) -> void:
+	_set_to_entry_stop()
 
 func handle_full_movement_state(_delta: float) -> void:
 	state_timer += _delta
 	# Player tetap di posisi X=200, terrain yang bergerak
 	velocity.x = 0  # Player tidak bergerak horizontal
 
-	var env_moving := _is_environment_moving()
-	if not env_moving:
-		position.x = entry_stop_x
-		_prev_x = position.x
+	if lock_x_during_full_movement:
+		global_position = Vector2(entry_stop_x, global_position.y)
+		position = Vector2(entry_stop_x, position.y)
+		_prev_x = entry_stop_x
+		_pushback_offset = 0.0
 	else:
-		_desired_x = entry_stop_x - _pushback_offset
-		var front_block := _blocked_ahead(front_check_distance) or _block_cooldown > 0.0
-		var allow_forward := (not _stuck_on_block) and (not front_block) and ((_front_clear_timer > 0.2) or not is_on_floor())
-		if allow_forward:
-			position.x = _desired_x
+		var env_moving := _is_environment_moving()
+		if not env_moving:
+			global_position = Vector2(entry_stop_x, global_position.y)
+			_prev_x = global_position.x
+			position = Vector2(entry_stop_x, position.y)
 		else:
-			var anchor_x: float = _stuck_anchor_x if _stuck_on_block else _prev_x
-			position.x = min(anchor_x, _desired_x)
-		position.x = min(entry_stop_x, position.x)
-		if is_on_floor():
-			if position.x < _prev_x:
-				_prev_x = position.x
-		else:
-			_prev_x = max(_prev_x, position.x)
-		_apply_pushback(_delta)
+			if _play_start_grace_timer > 0.0:
+				_play_start_grace_timer = max(_play_start_grace_timer - _delta, 0.0)
+				_pushback_offset = 0.0
+				global_position = Vector2(entry_stop_x, global_position.y)
+				_prev_x = global_position.x
+				position = Vector2(entry_stop_x, position.y)
+				return
+			_desired_x = entry_stop_x - _pushback_offset
+			var front_block := _blocked_ahead(front_check_distance) or _block_cooldown > 0.0
+			var allow_forward := (not _stuck_on_block) and (not front_block) and ((_front_clear_timer > 0.2) or not is_on_floor())
+			if allow_forward:
+				global_position = Vector2(_desired_x, global_position.y)
+				position = Vector2(global_position.x, position.y)
+			else:
+				var anchor_x: float = _stuck_anchor_x if _stuck_on_block else _prev_x
+				global_position = Vector2(min(anchor_x, _desired_x), global_position.y)
+			global_position = Vector2(min(entry_stop_x, global_position.x), global_position.y)
+			position = Vector2(global_position.x, position.y)
+			if is_on_floor():
+				if global_position.x < _prev_x:
+					_prev_x = global_position.x
+			else:
+				_prev_x = max(_prev_x, global_position.x)
+			_apply_pushback(_delta)
 	# Stabilkan posisi Y tepat setelah transisi agar tidak terjadi penyesuaian mendadak
 	if state_timer < 0.2:
 		position.y = entry_stop_y
@@ -420,8 +349,8 @@ func handle_full_movement_state(_delta: float) -> void:
 			pass
 	
 	# Debug log if position changes unexpectedly
-	if enable_debug_logging and OS.is_debug_build() and abs(position.x - entry_stop_x) > 1.0:
-		print("WARNING: Player X position changed! Expected: ", entry_stop_x, " Actual: ", position.x)
+	if enable_debug_logging and OS.is_debug_build() and abs(global_position.x - entry_stop_x) > 1.0:
+		print("WARNING: Player X position changed! Expected: ", entry_stop_x, " Actual: ", global_position.x)
 	
 	# Handle horizontal movement - freeze saat loncat jika diaktifkan
 	if freeze_x_on_jump and not is_on_floor():
@@ -498,10 +427,14 @@ func apply_physics(delta: float) -> void:
 			jump_requested = false
 			jump_buffer_timer = 0.0
 	move_and_slide()
+	if position.x <= 0.0:
+		global_position.x = entry_stop_x
+		position.x = entry_stop_x
 	if current_state == PlayerState.FULL_MOVEMENT and _is_environment_moving() and blocked_front and is_on_floor():
 		var target_x: float = min(entry_stop_x, min(_prev_x, _desired_x))
 		if position.x > target_x:
-			position.x = target_x
+			position = Vector2(target_x, position.y)
+			global_position = Vector2(target_x, global_position.y)
 	if blocked_front and is_on_floor() and not _jumping_this_frame and velocity.y > 0.0:
 		velocity.y = max(velocity.y, 0)
 	
@@ -547,7 +480,7 @@ func check_game_over_conditions() -> void:
 		var left_bound_world: float = 0.0
 		if main_camera:
 			left_bound_world = main_camera.position.x - float(viewport_rect.size.x) * 0.5
-		if _pushback_offset > 0.0 and state_timer > 0.5 and position.x < left_bound_world + left_game_over_margin:
+		if _pushback_offset > 0.0 and state_timer > 0.5 and _play_start_grace_timer <= 0.0 and position.x < left_bound_world + left_game_over_margin:
 			trigger_game_over("left_screen")
 
 func update_animation_state() -> void:
@@ -557,11 +490,22 @@ func update_animation_state() -> void:
 	if is_on_floor():
 		if animated_sprite.animation != "run" and animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("run"):
 			animated_sprite.play("run")
-		animated_sprite.speed_scale = 1.0
+		_apply_scale_for_anim("run")
+		_apply_offset_for_anim("run")
+		animated_sprite.speed_scale = (0.6 if countdown_active else 1.0)
 	else:
-		if animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("run") and animated_sprite.animation != "run":
-			animated_sprite.play("run")
-		animated_sprite.speed_scale = 0.8
+		if animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("jump"):
+			if animated_sprite.animation != "jump" or velocity.y < 0.0:
+				animated_sprite.play("jump")
+				_apply_scale_for_anim("jump")
+				_apply_offset_for_anim("jump")
+			animated_sprite.speed_scale = (0.6 if countdown_active else 0.9)
+		else:
+			if animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("run") and animated_sprite.animation != "run":
+				animated_sprite.play("run")
+				_apply_scale_for_anim("run")
+				_apply_offset_for_anim("run")
+			animated_sprite.speed_scale = (0.6 if countdown_active else 0.8)
 
 func maintain_screen_position() -> void:
 	if not main_camera or not is_instance_valid(main_camera):
@@ -583,20 +527,6 @@ func set_state(new_state: PlayerState) -> void:
 		state_data.erase("fall_start_y")
 	
 	match new_state:
-		PlayerState.HIDDEN:
-			position = appear_start_position
-			velocity = Vector2.ZERO
-			_pushback_offset = 0.0
-		PlayerState.APPEARING:
-			visible = true
-			enable_environment_movement(false)
-			_pushback_offset = 0.0
-		PlayerState.RUNNING_IN_PLACE:
-			position.x = entry_stop_x
-			visible = true
-			_pushback_offset = 0.0
-			_prev_x = position.x
-			_block_cooldown = 0.0
 		PlayerState.FULL_MOVEMENT:
 			visible = true
 			if is_on_floor():
@@ -608,6 +538,10 @@ func set_state(new_state: PlayerState) -> void:
 			_front_clear_timer = 0.0
 			_stuck_on_block = false
 			_stuck_anchor_x = entry_stop_x
+			if entry_stop_x <= 0.0:
+				entry_stop_x = 280.0
+			global_position = Vector2(entry_stop_x, global_position.y)
+			position = Vector2(entry_stop_x, position.y)
 			if lock_environment_speed_to_player:
 				set_environment_speed(run_speed)
 		PlayerState.GAME_OVER:
@@ -655,13 +589,9 @@ func enable_environment_movement(enable: bool) -> void:
 func _is_environment_moving() -> bool:
 	var nodes := _get_terrain_nodes()
 	for n in nodes:
-		if n and n.has_method("get_speed"):
-			var sp := float(n.get_speed())
-			if sp > 0.0:
-				return true
 		var me := false
 		if n and n.has_method("get"):
-			me = bool(n.get("movement_enabled")) if n.has_method("get") else false
+			me = bool(n.get("movement_enabled"))
 		if me:
 			return true
 	if parallax_background and parallax_background.has_method("get"):
@@ -669,6 +599,17 @@ func _is_environment_moving() -> bool:
 		if pm:
 			return true
 	return _env_move_enabled
+
+func prepare_for_playing_phase() -> void:
+	_prev_x = entry_stop_x
+	_pushback_offset = 0.0
+	_block_cooldown = 0.0
+	_front_clear_timer = 0.0
+	_stuck_on_block = false
+	_stuck_anchor_x = entry_stop_x
+	_play_start_grace_timer = play_start_grace_sec
+	if lock_environment_speed_to_player:
+		set_environment_speed(run_speed)
 
 func _input(event: InputEvent) -> void:
 	if current_state != PlayerState.FULL_MOVEMENT:
@@ -683,6 +624,27 @@ func _input(event: InputEvent) -> void:
 	if is_valid_jump_event and event.is_pressed():
 		jump_buffer_timer = jump_buffer_time
 		jump_requested = true
+
+func begin_countdown() -> void:
+	countdown_active = true
+	if animated_sprite:
+		if animated_sprite.animation != "run" and animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("run"):
+			animated_sprite.play("run")
+		animated_sprite.speed_scale = 0.6
+	if entry_stop_x <= 0.0:
+		entry_stop_x = 280.0
+	global_position = Vector2(entry_stop_x, global_position.y)
+	position = Vector2(entry_stop_x, position.y)
+
+func end_countdown() -> void:
+	countdown_active = false
+	if entry_stop_x <= 0.0:
+		entry_stop_x = 280.0
+	global_position = Vector2(entry_stop_x, global_position.y)
+	position = Vector2(entry_stop_x, position.y)
+	_prev_x = entry_stop_x
+	_stuck_anchor_x = entry_stop_x
+	_pushback_offset = 0.0
 
 func trigger_game_over(cause: String) -> void:
 	if current_state == PlayerState.GAME_OVER:
@@ -700,10 +662,8 @@ func trigger_game_over(cause: String) -> void:
 func reset_player() -> void:
 	velocity = Vector2.ZERO
 	state_timer = 0.0
-	
-	# Reset to initial state sequence
-	set_state(PlayerState.HIDDEN)
-	start_initial_state_sequence()
+	_set_to_entry_stop()
+	set_state(PlayerState.FULL_MOVEMENT)
 
 func get_player_state() -> Dictionary:
 	return {
@@ -727,15 +687,25 @@ func _get_terrain_nodes() -> Array:
 		var main_node := get_tree().get_root().get_node_or_null("Main")
 		if main_node:
 			for child in main_node.get_children():
-				if child is Node2D and child.name.begins_with("Terrain"):
+				if child is Node2D and (child.name.begins_with("Terrain") or child.name.begins_with("Ground")):
 					nodes.append(child)
 	return nodes
+
+func _set_to_entry_stop() -> void:
+	if entry_stop_x <= 0.0:
+		entry_stop_x = 280.0
+	global_position = Vector2(entry_stop_x, entry_stop_y)
+	position = Vector2(entry_stop_x, entry_stop_y)
+
+func _validate_initial_position() -> void:
+	if position.x == 0.0 or global_position.x == 0.0:
+		_set_to_entry_stop()
 
 func _blocked_ahead(dist: float) -> bool:
 	var half_w := collision_size.x * 0.5
 	var foot_y := global_position.y + collision_size.y * 0.5 - 2.0
 	var mid_y := global_position.y
-	var d: float = min(dist, front_block_margin)
+	var d: float = max(dist - front_block_margin, 0.5)
 	var from1 := Vector2(global_position.x + half_w, foot_y)
 	var to1 := Vector2(from1.x + max(d, 0.5), foot_y)
 	var from2 := Vector2(global_position.x + half_w, mid_y)
@@ -770,9 +740,9 @@ func _apply_pushback(delta: float) -> void:
 		_front_clear_timer = 0.0
 		if not _stuck_on_block:
 			_stuck_on_block = true
-			_stuck_anchor_x = position.x
+			_stuck_anchor_x = global_position.x
 		else:
-			_stuck_anchor_x = min(_stuck_anchor_x, position.x)
+			_stuck_anchor_x = min(_stuck_anchor_x, global_position.x)
 	else:
 		_block_cooldown = max(0.0, _block_cooldown - delta)
 		_front_clear_timer += delta
@@ -781,3 +751,127 @@ func _apply_pushback(delta: float) -> void:
 			var recover_speed: float = air_recovery_rate if not is_on_floor() else pushback_recovery_rate
 			_pushback_offset = max(0.0, _pushback_offset - recover_speed * delta)
 			_stuck_on_block = false
+
+func _get_anim_frame_size(anim: String) -> Vector2:
+	if not animated_sprite or not animated_sprite.sprite_frames:
+		return Vector2.ZERO
+	if not animated_sprite.sprite_frames.has_animation(anim):
+		return Vector2.ZERO
+	var tex := animated_sprite.sprite_frames.get_frame_texture(anim, 0)
+	if tex == null:
+		return Vector2.ZERO
+	return Vector2(tex.get_width(), tex.get_height())
+
+func _get_scaled_size_for_anim(anim: String) -> Vector2:
+	var s := _get_anim_frame_size(anim)
+	return Vector2(s.x * animated_sprite.scale.x, s.y * animated_sprite.scale.y)
+
+func log_animation_scales() -> void:
+	var run_orig := _get_anim_frame_size("run")
+	var jump_orig := _get_anim_frame_size("jump")
+	var run_scaled := _get_scaled_size_for_anim("run")
+	var jump_scaled := _get_scaled_size_for_anim("jump")
+	print("Player scale=", animated_sprite.scale, " run orig=", run_orig, " run scaled=", run_scaled, " jump orig=", jump_orig, " jump scaled=", jump_scaled)
+
+func _compute_scale_for_anim(anim: String) -> Vector2:
+	var s: Vector2 = _get_anim_frame_size(anim)
+	var collision_shape = $CollisionShape2D
+	if s == Vector2.ZERO or not collision_shape or not collision_shape.shape:
+		return animated_sprite.scale
+	var shape_size: Vector2 = collision_shape.shape.size
+	var target_w: float = shape_size.x * 0.9
+	var target_h: float = shape_size.y * 0.9
+	var uniform: float = min(target_w / max(s.x, 1.0), target_h / max(s.y, 1.0))
+	return Vector2(uniform, uniform)
+
+func _prepare_animation_scales() -> void:
+	_anim_scales.clear()
+	_anim_scales["run"] = Vector2(run_scale_override, run_scale_override) if run_scale_override > 0.0 else _compute_scale_for_anim("run")
+	_anim_scales["jump"] = Vector2(jump_scale_override, jump_scale_override) if jump_scale_override > 0.0 else _compute_scale_for_anim("jump")
+
+func _apply_scale_for_anim(anim: String) -> void:
+	var s: Vector2
+	if anim == "run" and run_scale_override > 0.0:
+		s = Vector2(run_scale_override, run_scale_override)
+	elif anim == "jump" and jump_scale_override > 0.0:
+		s = Vector2(jump_scale_override, jump_scale_override)
+	elif _anim_scales.has(anim):
+		s = _anim_scales[anim] as Vector2
+	else:
+		s = _compute_scale_for_anim(anim)
+		_anim_scales[anim] = s
+	animated_sprite.scale = s
+
+func _compute_offset_for_anim(anim: String) -> Vector2:
+	if not animated_sprite:
+		return Vector2.ZERO
+	var collision_shape = $CollisionShape2D
+	if not collision_shape or not collision_shape.shape:
+		return Vector2.ZERO
+	var shape_size: Vector2 = collision_shape.shape.size
+	var scaled := _get_scaled_size_for_anim(anim)
+	var dx: float = 0.0
+	var dy: float = (shape_size.y - scaled.y) * 0.5
+	return Vector2(dx, dy)
+
+func _prepare_animation_offsets() -> void:
+	_anim_offsets.clear()
+	_anim_offsets["run"] = _compute_offset_for_anim("run")
+	_anim_offsets["jump"] = _compute_offset_for_anim("jump")
+
+func _apply_offset_for_anim(anim: String) -> void:
+	if _anim_offsets.has(anim):
+		animated_sprite.offset = _anim_offsets[anim] as Vector2
+
+func slice_jump_spritesheet_if_needed() -> void:
+	if not animated_sprite or not animated_sprite.sprite_frames:
+		return
+	var sf := animated_sprite.sprite_frames
+	if not sf.has_animation("jump"):
+		return
+	var count := sf.get_frame_count("jump")
+	if count > 1:
+		return
+	var sheet := sf.get_frame_texture("jump", 0)
+	if sheet == null:
+		return
+	var w := sheet.get_width()
+	var h := sheet.get_height()
+	if int(w) == 956 and int(h) == 1668:
+		var cols := 4
+		var rows := 4
+		var cw: int = int(round(float(w) / float(cols)))
+		var ch: int = int(round(float(h) / float(rows)))
+		sf.clear("jump")
+		for r in range(rows):
+			for c in range(cols):
+				var at := AtlasTexture.new()
+				at.atlas = sheet
+				at.region = Rect2(c * cw, r * ch, cw, ch)
+				sf.add_frame("jump", at)
+
+func slice_run_spritesheet_if_needed() -> void:
+	if not animated_sprite or not animated_sprite.sprite_frames:
+		return
+	var sf := animated_sprite.sprite_frames
+	if not sf.has_animation("run"):
+		return
+	var count := sf.get_frame_count("run")
+	if count > 1:
+		return
+	var sheet := sf.get_frame_texture("run", 0)
+	if sheet == null:
+		return
+	var w := sheet.get_width()
+	var h := sheet.get_height()
+	var cols := 4
+	var rows := 4
+	var cw: int = int(round(float(w) / float(cols)))
+	var ch: int = int(round(float(h) / float(rows)))
+	sf.clear("run")
+	for r in range(rows):
+		for c in range(cols):
+			var at := AtlasTexture.new()
+			at.atlas = sheet
+			at.region = Rect2(c * cw, r * ch, cw, ch)
+			sf.add_frame("run", at)

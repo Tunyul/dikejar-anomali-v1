@@ -1,9 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://u5m6n7o8qaq2"]
+[gd_scene load_steps=9 format=3 uid="uid://u5m6n7o8qaq2"]
 
 [ext_resource type="Script" uid="uid://btwkgl0swfj0f" path="res://scripts/ui_manager.gd" id="1_ui_manager_script"]
 [ext_resource type="PackedScene" uid="uid://c8a7h3v2q5x4" path="res://scenes/Healthbar.tscn" id="2_healthbar_scene"]
 [ext_resource type="PackedScene" uid="uid://b3n2k5v7q8ya" path="res://scenes/DistanceCounter.tscn" id="3_distance_scene"]
 [ext_resource type="PackedScene" uid="uid://d4e5f6g7h8ja" path="res://scenes/GameTimer.tscn" id="4_timer_scene"]
+[ext_resource type="Texture2D" uid="uid://488lc5kv6uhg" path="res://assets/tombol/tombol_jump.png" id="5_jump_texture"]
+[ext_resource type="Texture2D" uid="uid://vonvne5tbd6f" path="res://assets/tombol/tombol_atk.png" id="6_atk_texture"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jump"]
 radius = 48.0
@@ -60,34 +62,15 @@ grow_vertical = 1
 running = true
 
 [node name="JumpButton" type="TouchScreenButton" parent="."]
-position = Vector2(964, 516)
+position = Vector2(792, 485)
+scale = Vector2(0.09082029, 0.09082029)
+texture_normal = ExtResource("6_atk_texture")
 shape = SubResource("CircleShape2D_jump")
 action = "jump"
 
-[node name="Label" type="Label" parent="JumpButton"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "Jump"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-
 [node name="AttackButton" type="TouchScreenButton" parent="."]
-position = Vector2(844, 516)
+position = Vector2(880.00006, 426.00003)
+scale = Vector2(0.13867195, 0.13867195)
+texture_normal = ExtResource("5_jump_texture")
 shape = SubResource("CircleShape2D_attack")
 action = "attack"
-
-[node name="Label" type="Label" parent="AttackButton"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "Atk"
-horizontal_alignment = 1
-vertical_alignment = 1

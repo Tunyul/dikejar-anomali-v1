@@ -100,6 +100,17 @@ extends TileMapLayer
 @export var coin_tint_enabled: bool = true
 @export var coin_allow_over_empty: bool = true
 
+@export var enemy_spawn_enabled: bool = true
+@export var enemy_spawn_margin_tiles: int = 2
+@export var enemy_groups_min: int = 1
+@export var enemy_groups_max: int = 2
+@export var enemies_per_group_min: int = 1
+@export var enemies_per_group_max: int = 2
+@export var enemy_spacing_tiles_min: int = 8
+@export var enemy_spacing_tiles_max: int = 16
+@export var enemy_vertical_offset_px: float = 8.0
+@export var enemy_scale: float = 0.5
+
 var _noise := FastNoiseLite.new()
 var _rng := RandomNumberGenerator.new()
 var _generate_now: bool = false
@@ -108,6 +119,11 @@ var _next_spawn_x: int = -1
 var _last_tint_enabled: bool = true
 var _last_base_tint: Color = Color(1, 1, 1, 1)
 var _last_stack_tint: Color = Color(1, 1, 1, 1)
+var _enemy_scene := preload("res://scenes/EnemyCone.tscn")
+var _next_enemy_spawn_x: int = -1
+@export var spawn_update_interval_sec: float = 0.25
+var _spawn_t_accum_coins: float = 0.0
+var _spawn_t_accum_enemies: float = 0.0
 
 
 func _ready():
@@ -115,17 +131,22 @@ func _ready():
 	if auto_generate_on_ready:
 		generate()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var p := get_parent()
 	if p == null:
 		return
 	var cont_a: Node2D = p.get_node_or_null("CoinsA")
 	var cont_b: Node2D = p.get_node_or_null("CoinsB")
+	var enem_a: Node2D = p.get_node_or_null("EnemiesA")
+	var enem_b: Node2D = p.get_node_or_null("EnemiesB")
 	if cont_a != null and name == "TileMapLayer":
 		cont_a.position.x = position.x
 		var parent_movement_enabled := bool(p.get("movement_enabled")) if p != null else false
 		if coin_infinite_spawn_enabled and parent_movement_enabled:
-			_spawn_groups_append_right(cont_a)
+			_spawn_t_accum_coins += delta
+			if _spawn_t_accum_coins >= spawn_update_interval_sec:
+				_spawn_groups_append_right(cont_a)
+				_spawn_t_accum_coins = 0.0
 		if coin_tint_enabled != _last_tint_enabled or coin_base_tint != _last_base_tint or coin_stack_tint != _last_stack_tint:
 			_apply_tint(cont_a)
 			_last_tint_enabled = coin_tint_enabled
@@ -135,12 +156,31 @@ func _process(_delta: float) -> void:
 		cont_b.position.x = position.x
 		var parent_movement_enabled_b := bool(p.get("movement_enabled")) if p != null else false
 		if coin_infinite_spawn_enabled and parent_movement_enabled_b:
-			_spawn_groups_append_right(cont_b)
+			_spawn_t_accum_coins += delta
+			if _spawn_t_accum_coins >= spawn_update_interval_sec:
+				_spawn_groups_append_right(cont_b)
+				_spawn_t_accum_coins = 0.0
 		if coin_tint_enabled != _last_tint_enabled or coin_base_tint != _last_base_tint or coin_stack_tint != _last_stack_tint:
 			_apply_tint(cont_b)
 			_last_tint_enabled = coin_tint_enabled
 			_last_base_tint = coin_base_tint
 			_last_stack_tint = coin_stack_tint
+	if enem_a != null and name == "TileMapLayer":
+		enem_a.position.x = position.x
+		var move_en_a := bool(p.get("movement_enabled")) if p != null else false
+		if enemy_spawn_enabled and move_en_a:
+			_spawn_t_accum_enemies += delta
+			if _spawn_t_accum_enemies >= spawn_update_interval_sec:
+				_spawn_enemy_groups_append_right(enem_a)
+				_spawn_t_accum_enemies = 0.0
+	if enem_b != null and name == "TileMapLayerB":
+		enem_b.position.x = position.x
+		var move_en_b := bool(p.get("movement_enabled")) if p != null else false
+		if enemy_spawn_enabled and move_en_b:
+			_spawn_t_accum_enemies += delta
+			if _spawn_t_accum_enemies >= spawn_update_interval_sec:
+				_spawn_enemy_groups_append_right(enem_b)
+				_spawn_t_accum_enemies = 0.0
 
 func _configure_noise():
 	_rng.randomize()
@@ -334,20 +374,32 @@ func _build_colliders():
 	root.collision_layer = 1
 	add_child(root)
 	for x in range(width):
-		for y in range(height):
+		var y := 0
+		while y < height:
 			var mp := Vector2i(origin.x + x, origin.y + y)
 			var sid := get_cell_source_id(mp)
-			var is_grass := sid == grass_source_id or sid == grass_mid_source_id
-			var is_dirt := sid == dirt_source_id
-			if not is_grass and not is_dirt:
+			var solid := sid == grass_source_id or sid == grass_mid_source_id or sid == dirt_source_id
+			if not solid:
+				y += 1
 				continue
+			var start_y := y
+			var end_y := y
+			while end_y + 1 < height:
+				var mp2 := Vector2i(origin.x + x, origin.y + end_y + 1)
+				var sid2 := get_cell_source_id(mp2)
+				var solid2 := sid2 == grass_source_id or sid2 == grass_mid_source_id or sid2 == dirt_source_id
+				if not solid2:
+					break
+				end_y += 1
+			var top_center: Vector2 = map_to_local(Vector2i(origin.x + x, origin.y + start_y))
+			var bottom_center: Vector2 = map_to_local(Vector2i(origin.x + x, origin.y + end_y))
 			var rect := RectangleShape2D.new()
-			rect.size = Vector2(cell.x, cell.y)
+			rect.size = Vector2(cell.x, float(end_y - start_y + 1) * float(cell.y))
 			var col := CollisionShape2D.new()
 			col.shape = rect
-			var center: Vector2 = map_to_local(mp)
-			col.position = center
+			col.position = Vector2(top_center.x, (top_center.y + bottom_center.y) * 0.5)
 			root.add_child(col)
+			y = end_y + 1
 
 func _draw_dirt_band():
 	if tile_set == null:
@@ -413,6 +465,8 @@ func _set_generate_now(value: bool) -> void:
 		if gp != null:
 			if has_method("spawn_initial_coins"):
 				call_deferred("spawn_initial_coins")
+			if has_method("spawn_initial_enemies"):
+				call_deferred("spawn_initial_enemies")
 
 		_generate_now = false
 
@@ -466,6 +520,16 @@ func _generate_pair_if_exists() -> void:
 		dst.set("coin_min_h_spacing_px", src.get("coin_min_h_spacing_px"))
 		dst.set("coin_min_v_spacing_px", src.get("coin_min_v_spacing_px"))
 		dst.set("coin_allow_over_empty", src.get("coin_allow_over_empty"))
+		dst.set("enemy_spawn_enabled", src.get("enemy_spawn_enabled"))
+		dst.set("enemy_spawn_margin_tiles", src.get("enemy_spawn_margin_tiles"))
+		dst.set("enemy_groups_min", src.get("enemy_groups_min"))
+		dst.set("enemy_groups_max", src.get("enemy_groups_max"))
+		dst.set("enemies_per_group_min", src.get("enemies_per_group_min"))
+		dst.set("enemies_per_group_max", src.get("enemies_per_group_max"))
+		dst.set("enemy_spacing_tiles_min", src.get("enemy_spacing_tiles_min"))
+		dst.set("enemy_spacing_tiles_max", src.get("enemy_spacing_tiles_max"))
+		dst.set("enemy_vertical_offset_px", src.get("enemy_vertical_offset_px"))
+		dst.set("enemy_scale", src.get("enemy_scale"))
 	if layer_a.has_method("generate"):
 		layer_a.generate()
 	layer_b.flat_start_enabled = false
@@ -478,10 +542,19 @@ func _generate_pair_if_exists() -> void:
 		layer_a.clear_coins()
 	if layer_a.has_method("spawn_initial_coins"):
 		layer_a.spawn_initial_coins()
+	if layer_a.has_method("clear_enemies"):
+		layer_a.clear_enemies()
+	if layer_a.has_method("spawn_initial_enemies"):
+		layer_a.spawn_initial_enemies()
 	if layer_b.has_method("clear_coins"):
 		layer_b.clear_coins()
 	if layer_b.has_method("spawn_initial_coins"):
 		layer_b.spawn_initial_coins()
+	if layer_b.has_method("clear_enemies"):
+		layer_b.clear_enemies()
+	if layer_b.has_method("spawn_initial_enemies"):
+		layer_b.spawn_initial_enemies()
+
 
 
 func spawn_initial_coins() -> void:
@@ -498,8 +571,26 @@ func spawn_initial_coins() -> void:
 	_spawn_groups_in_view_right(container)
 	_next_spawn_x = -1
 
+func spawn_initial_enemies() -> void:
+	var p := get_parent()
+	if p == null:
+		return
+	var container: Node2D = null
+	if name == "TileMapLayer":
+		container = p.get_node_or_null("EnemiesA")
+	elif name == "TileMapLayerB":
+		container = p.get_node_or_null("EnemiesB")
+	if container == null:
+		return
+	_spawn_enemy_groups_in_view_right(container)
+	_next_enemy_spawn_x = -1
+
 func reset_coin_spawn_state() -> void:
 	_next_spawn_x = -1
+
+func reset_enemy_spawn_state() -> void:
+	_next_enemy_spawn_x = -1
+
 
 
 func clear_coins() -> void:
@@ -515,6 +606,20 @@ func clear_coins() -> void:
 		return
 	for c in container.get_children():
 		c.queue_free()
+
+func clear_enemies() -> void:
+	var p := get_parent()
+	if p == null:
+		return
+	var container: Node = null
+	if name == "TileMapLayer":
+		container = p.get_node_or_null("EnemiesA")
+	elif name == "TileMapLayerB":
+		container = p.get_node_or_null("EnemiesB")
+	if container == null:
+		return
+	for e in container.get_children():
+		e.queue_free()
 
 func _spawn_groups_in_view_right(container: Node) -> void:
 	if tile_set == null or container == null:
@@ -645,6 +750,75 @@ func _spawn_groups_in_view_right(container: Node) -> void:
 		var group_gap: int = _rng.randi_range(max(1, coin_group_spacing_tiles_min), max(coin_group_spacing_tiles_min, coin_group_spacing_tiles_max))
 		x = min(max_x, x + max(1, count) * spacing_tiles + group_gap)
 
+func _spawn_enemy_groups_in_view_right(container: Node) -> void:
+	if tile_set == null or container == null or not enemy_spawn_enabled:
+		return
+	if container is Node2D:
+		(container as Node2D).position.x = position.x
+	for c in container.get_children():
+		c.queue_free()
+	var w: int = width
+	var cell: Vector2i = tile_set.tile_size if tile_set != null else Vector2i(128, 128)
+	var margin: int = int(max(0, enemy_spawn_margin_tiles))
+	var max_x: int = int(max(margin + 1, w - margin))
+	var cam := get_viewport().get_camera_2d()
+	var vw := int(get_viewport_rect().size.x)
+	if vw <= 0:
+		vw = 1024
+	var step_px := int(float(cell.x) * scale.x)
+	var cx := cam.get_screen_center_position().x if cam != null else 0.0
+	var left_x := cx - float(vw) * 0.5
+	var right_x := cx + float(vw) * 0.5
+	var start_world_x := _rng.randf_range(left_x, right_x - float(step_px))
+	var local := to_local(Vector2(start_world_x, 0.0))
+	var map := local_to_map(local)
+	var min_x: int = margin
+	if flat_start_enabled:
+		min_x = max(min_x, flat_start_len)
+	if name == "TileMapLayer":
+		min_x = max(min_x, flat_start_len)
+	var x: int = clamp(map.x - origin.x, min_x, max_x - 1)
+	var groups: int = _rng.randi_range(max(1, enemy_groups_min), max(enemy_groups_min, enemy_groups_max))
+	for g in range(groups):
+		var count: int = _rng.randi_range(max(1, enemies_per_group_min), max(enemies_per_group_min, enemies_per_group_max))
+		var spacing_tiles: int = _rng.randi_range(max(1, enemy_spacing_tiles_min), max(enemy_spacing_tiles_min, enemy_spacing_tiles_max))
+		for i in range(count):
+			var mx := x + i * spacing_tiles
+			if mx >= max_x:
+				break
+			var top_y := -1
+			for y in range(height - 1, -1, -1):
+				var mp := Vector2i(origin.x + mx, origin.y + y)
+				var sid := get_cell_source_id(mp)
+				if sid != -1:
+					var above_sid := -1
+					if y - 1 >= 0:
+						above_sid = get_cell_source_id(Vector2i(origin.x + mx, origin.y + y - 1))
+					if above_sid == -1:
+						top_y = y
+						break
+			var lc: Vector2
+			var wc: Vector2
+			if top_y == -1:
+				var pseudo_y: int = int(clamp(ground_y, 0, height - 1))
+				lc = map_to_local(Vector2i(origin.x + mx, origin.y + pseudo_y))
+				wc = to_global(lc)
+			else:
+				lc = map_to_local(Vector2i(origin.x + mx, origin.y + top_y))
+				wc = to_global(lc)
+			var world_cell_h: float = float(cell.y) * scale.y
+			var top_surface_y: float = wc.y - world_cell_h * 0.5
+			var enemy_world: Vector2 = Vector2(wc.x, top_surface_y - enemy_vertical_offset_px)
+			var nenemy: Node2D = _enemy_scene.instantiate() as Node2D
+			if enemy_scale > 0.0:
+				nenemy.scale = Vector2(enemy_scale, enemy_scale)
+			var lp: Vector2 = (container as Node2D).to_local(enemy_world)
+			nenemy.position = lp
+			nenemy.z_index = 95
+			container.add_child(nenemy)
+		var group_gap: int = _rng.randi_range(max(1, enemy_spacing_tiles_min), max(enemy_spacing_tiles_min, enemy_spacing_tiles_max))
+		x = min(max_x, x + max(1, count) * spacing_tiles + group_gap)
+
 func _spawn_groups_append_right(container: Node) -> void:
 	if not coin_infinite_spawn_enabled or tile_set == null or container == null:
 		return
@@ -765,6 +939,73 @@ func _spawn_groups_append_right(container: Node) -> void:
 		var group_gap: int = _rng.randi_range(max(1, coin_group_spacing_tiles_min), max(coin_group_spacing_tiles_min, coin_group_spacing_tiles_max))
 		_next_spawn_x = min(max_x, _next_spawn_x + max(1, count) * spacing_tiles + group_gap)
 		local_center = map_to_local(Vector2i(origin.x + _next_spawn_x, origin.y))
+		world_center = to_global(local_center)
+
+func _spawn_enemy_groups_append_right(container: Node) -> void:
+	if not enemy_spawn_enabled or tile_set == null or container == null:
+		return
+	var cell: Vector2i = tile_set.tile_size if tile_set != null else Vector2i(128, 128)
+	var margin: int = int(max(0, enemy_spawn_margin_tiles))
+	var max_x: int = int(max(margin + 1, width - margin))
+	var cam := get_viewport().get_camera_2d()
+	var vw := int(get_viewport_rect().size.x)
+	if vw <= 0:
+		vw = 1024
+	var cx := cam.get_screen_center_position().x if cam != null else 0.0
+	var right_x := cx + float(vw) * 0.5
+	var step_px := int(float(cell.x) * scale.x)
+	var min_x: int = margin
+	if flat_start_enabled:
+		min_x = max(min_x, flat_start_len)
+	if name == "TileMapLayer":
+		min_x = max(min_x, flat_start_len)
+	if _next_enemy_spawn_x < 0:
+		var start_world_x := right_x - float(step_px) * 2.0
+		var local := to_local(Vector2(start_world_x, 0.0))
+		var map := local_to_map(local)
+		_next_enemy_spawn_x = clamp(map.x - origin.x, min_x, max_x - 1)
+	var local_center: Vector2 = map_to_local(Vector2i(origin.x + _next_enemy_spawn_x, origin.y))
+	var world_center: Vector2 = to_global(local_center)
+	while world_center.x <= right_x + float(step_px) * 2.0:
+		var count: int = _rng.randi_range(max(1, enemies_per_group_min), max(enemies_per_group_min, enemies_per_group_max))
+		var spacing_tiles: int = _rng.randi_range(max(1, enemy_spacing_tiles_min), max(enemy_spacing_tiles_min, enemy_spacing_tiles_max))
+		for i in range(count):
+			var mx := _next_enemy_spawn_x + i * spacing_tiles
+			if mx >= max_x:
+				break
+			var top_y := -1
+			for y in range(height - 1, -1, -1):
+				var mp := Vector2i(origin.x + mx, origin.y + y)
+				var sid := get_cell_source_id(mp)
+				if sid != -1:
+					var above_sid := -1
+					if y - 1 >= 0:
+						above_sid = get_cell_source_id(Vector2i(origin.x + mx, origin.y + y - 1))
+					if above_sid == -1:
+						top_y = y
+						break
+			var lc: Vector2
+			var wc: Vector2
+			if top_y == -1:
+				var pseudo_y: int = int(clamp(ground_y, 0, height - 1))
+				lc = map_to_local(Vector2i(origin.x + mx, origin.y + pseudo_y))
+				wc = to_global(lc)
+			else:
+				lc = map_to_local(Vector2i(origin.x + mx, origin.y + top_y))
+				wc = to_global(lc)
+			var world_cell_h: float = float(cell.y) * scale.y
+			var top_surface_y: float = wc.y - world_cell_h * 0.5
+			var enemy_world: Vector2 = Vector2(wc.x, top_surface_y - enemy_vertical_offset_px)
+			var nenemy2: Node2D = _enemy_scene.instantiate() as Node2D
+			if enemy_scale > 0.0:
+				nenemy2.scale = Vector2(enemy_scale, enemy_scale)
+			var lp2: Vector2 = (container as Node2D).to_local(enemy_world)
+			nenemy2.position = lp2
+			nenemy2.z_index = 95
+			container.add_child(nenemy2)
+		var group_gap: int = _rng.randi_range(max(1, enemy_spacing_tiles_min), max(enemy_spacing_tiles_min, enemy_spacing_tiles_max))
+		_next_enemy_spawn_x = min(max_x, _next_enemy_spawn_x + max(1, count) * spacing_tiles + group_gap)
+		local_center = map_to_local(Vector2i(origin.x + _next_enemy_spawn_x, origin.y))
 		world_center = to_global(local_center)
 func _apply_tint(container: Node) -> void:
 	if container == null:

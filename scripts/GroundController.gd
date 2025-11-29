@@ -15,7 +15,7 @@ var _title_mode: bool = true
 @export var max_scroll_speed: float = 300.0
 @export var min_scroll_speed: float = 0.0
 @export var wrap_infinite: bool = true
-@export var regenerate_on_wrap: bool = true
+@export var regenerate_on_wrap: bool = false
 @export var smooth_speed: bool = true
 @export var speed_ramp_per_sec: float = 60.0
 @export var start_with_b: bool = false
@@ -35,18 +35,30 @@ func set_title_mode(enable: bool) -> void:
 	_apply_debug_tint()
 	var p := get_parent()
 	if enable and p != null:
-		var ca := p.get_node_or_null("CoinsA")
-		var cb := p.get_node_or_null("CoinsB")
+		var ca := _find_container_by_prefix(p, "CoinsA")
+		var cb := _find_container_by_prefix(p, "CoinsB")
+		var ea := _find_container_by_prefix(p, "EnemiesA")
+		var eb := _find_container_by_prefix(p, "EnemiesB")
 		if ca:
 			for c in ca.get_children():
 				c.queue_free()
 		if cb:
 			for c in cb.get_children():
 				c.queue_free()
+		if ea:
+			for e in ea.get_children():
+				e.queue_free()
+		if eb:
+			for e2 in eb.get_children():
+				e2.queue_free()
 		if tile_layer != null and tile_layer.has_method("reset_coin_spawn_state"):
 			tile_layer.reset_coin_spawn_state()
 		if tile_layer_b != null and tile_layer_b.has_method("reset_coin_spawn_state"):
 			tile_layer_b.reset_coin_spawn_state()
+		if tile_layer != null and tile_layer.has_method("reset_enemy_spawn_state"):
+			tile_layer.reset_enemy_spawn_state()
+		if tile_layer_b != null and tile_layer_b.has_method("reset_enemy_spawn_state"):
+			tile_layer_b.reset_enemy_spawn_state()
 
 func generate_random() -> void:
 	if tile_layer == null:
@@ -130,7 +142,7 @@ func set_speed_limits(min_s: float, max_s: float) -> void:
 func get_speed() -> float:
 	return clamp(scroll_speed, min_scroll_speed, max_scroll_speed) * speed_multiplier
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if movement_enabled and tile_layer != null:
 		if use_acceleration:
 			_target_scroll_speed = clamp(_target_scroll_speed + acceleration * delta, min_scroll_speed, max_scroll_speed)
@@ -151,82 +163,94 @@ func _process(delta: float) -> void:
 						if not _a_flat_removed:
 							tile_layer.flat_start_enabled = false
 							tile_layer.noise_seed = 0
-							if tile_layer.has_method("generate"):
-								tile_layer.generate()
+							if regenerate_on_wrap and tile_layer.has_method("generate"):
+								tile_layer.call_deferred("generate")
 							_a_flat_removed = true
 						elif regenerate_on_wrap:
 							tile_layer.noise_seed = 0
 							if tile_layer.has_method("generate"):
-								tile_layer.generate()
+								tile_layer.call_deferred("generate")
 					while tile_layer_b.position.x <= -seg:
 						tile_layer_b.position.x = tile_layer.position.x + seg
 						if not _b_ready:
 							tile_layer_b.flat_start_enabled = false
 							tile_layer_b.noise_seed = 0
-							if tile_layer_b.has_method("generate"):
-								tile_layer_b.generate()
+							if regenerate_on_wrap and tile_layer_b.has_method("generate"):
+								tile_layer_b.call_deferred("generate")
 							_b_ready = true
 						if regenerate_on_wrap:
 							tile_layer_b.noise_seed = 0
 							if tile_layer_b.has_method("generate"):
-								tile_layer_b.generate()
-						
+								tile_layer_b.call_deferred("generate")
 					while tile_layer.position.x >= seg:
 						tile_layer.position.x = tile_layer_b.position.x - seg
 						if not _a_flat_removed:
 							tile_layer.flat_start_enabled = false
 							tile_layer.noise_seed = 0
-							if tile_layer.has_method("generate"):
-								tile_layer.generate()
+							if regenerate_on_wrap and tile_layer.has_method("generate"):
+								tile_layer.call_deferred("generate")
 							_a_flat_removed = true
 						elif regenerate_on_wrap:
 							tile_layer.noise_seed = 0
 							if tile_layer.has_method("generate"):
-								tile_layer.generate()
-						
+								tile_layer.call_deferred("generate")
 					while tile_layer_b.position.x >= seg:
 						tile_layer_b.position.x = tile_layer.position.x - seg
 						if not _b_ready:
 							tile_layer_b.flat_start_enabled = false
 							tile_layer_b.noise_seed = 0
-							if tile_layer_b.has_method("generate"):
-								tile_layer_b.generate()
-							if tile_layer_b.has_method("clear_coins"):
-								tile_layer_b.clear_coins()
-							if tile_layer_b.has_method("spawn_initial_coins"):
-								tile_layer_b.spawn_initial_coins()
+							if regenerate_on_wrap and tile_layer_b.has_method("generate"):
+								tile_layer_b.call_deferred("generate")
+							if regenerate_on_wrap and tile_layer_b.has_method("clear_coins"):
+								tile_layer_b.call_deferred("clear_coins")
+							if regenerate_on_wrap and tile_layer_b.has_method("spawn_initial_coins"):
+								tile_layer_b.call_deferred("spawn_initial_coins")
+							if regenerate_on_wrap and tile_layer_b.has_method("clear_enemies"):
+								tile_layer_b.call_deferred("clear_enemies")
+							if regenerate_on_wrap and tile_layer_b.has_method("spawn_initial_enemies"):
+								tile_layer_b.call_deferred("spawn_initial_enemies")
 							_b_ready = true
 						if regenerate_on_wrap:
 							tile_layer_b.noise_seed = 0
 							if tile_layer_b.has_method("generate"):
-								tile_layer_b.generate()
+								tile_layer_b.call_deferred("generate")
 							if tile_layer_b.has_method("clear_coins"):
-								tile_layer_b.clear_coins()
+								tile_layer_b.call_deferred("clear_coins")
 							if tile_layer_b.has_method("spawn_initial_coins"):
-								tile_layer_b.spawn_initial_coins()
-						
+								tile_layer_b.call_deferred("spawn_initial_coins")
+							if tile_layer_b.has_method("clear_enemies"):
+								tile_layer_b.call_deferred("clear_enemies")
+							if tile_layer_b.has_method("spawn_initial_enemies"):
+								tile_layer_b.call_deferred("spawn_initial_enemies")
 				else:
 					while tile_layer.position.x <= -seg:
 						tile_layer.position.x = tile_layer.position.x + seg * 2.0
 						if regenerate_on_wrap:
 							tile_layer.noise_seed = 0
 							if tile_layer.has_method("generate"):
-								tile_layer.generate()
+								tile_layer.call_deferred("generate")
 							if tile_layer.has_method("clear_coins"):
-								tile_layer.clear_coins()
+								tile_layer.call_deferred("clear_coins")
 							if tile_layer.has_method("spawn_initial_coins"):
-								tile_layer.spawn_initial_coins()
-						
+								tile_layer.call_deferred("spawn_initial_coins")
+							if tile_layer.has_method("clear_enemies"):
+								tile_layer.call_deferred("clear_enemies")
+							if tile_layer.has_method("spawn_initial_enemies"):
+								tile_layer.call_deferred("spawn_initial_enemies")
 					while tile_layer.position.x >= seg:
 						tile_layer.position.x = tile_layer.position.x - seg * 2.0
 						if regenerate_on_wrap:
 							tile_layer.noise_seed = 0
 							if tile_layer.has_method("generate"):
-								tile_layer.generate()
+								tile_layer.call_deferred("generate")
 							if tile_layer.has_method("clear_coins"):
-								tile_layer.clear_coins()
+								tile_layer.call_deferred("clear_coins")
 							if tile_layer.has_method("spawn_initial_coins"):
-								tile_layer.spawn_initial_coins()
+								tile_layer.call_deferred("spawn_initial_coins")
+							if tile_layer.has_method("clear_enemies"):
+								tile_layer.call_deferred("clear_enemies")
+							if tile_layer.has_method("spawn_initial_enemies"):
+								tile_layer.call_deferred("spawn_initial_enemies")
 						
 
 																																																																																																																																																																																																																																																																																																
@@ -269,7 +293,6 @@ func _ready() -> void:
 		if tile_layer.has_method("generate"):
 			tile_layer.generate()
 		tile_layer.flat_start_enabled = false
-		# Jangan generate B di awal; siapkan saat wrap pertama
 		_b_ready = false
 		_a_flat_removed = false
 		_apply_debug_tint()
@@ -311,20 +334,42 @@ func spawn_initial_coins() -> void:
 	# Bersihkan kontainer koin terlebih dahulu agar tidak ada sisa dari generate sebelumnya
 	var p := get_parent()
 	if p != null:
-		var ca := p.get_node_or_null("CoinsA")
-		var cb := p.get_node_or_null("CoinsB")
+		var ca := _find_container_by_prefix(p, "CoinsA")
+		var cb := _find_container_by_prefix(p, "CoinsB")
+		var ea := _find_container_by_prefix(p, "EnemiesA")
+		var eb := _find_container_by_prefix(p, "EnemiesB")
 		if ca:
 			for c in ca.get_children():
 				c.queue_free()
 		if cb:
 			for c in cb.get_children():
 				c.queue_free()
+		if ea:
+			for e in ea.get_children():
+				e.queue_free()
+		if eb:
+			for e2 in eb.get_children():
+				e2.queue_free()
 	if tile_layer != null and tile_layer.has_method("spawn_initial_coins"):
 		tile_layer.spawn_initial_coins()
 	if tile_layer_b != null and tile_layer_b.has_method("spawn_initial_coins"):
 		tile_layer_b.spawn_initial_coins()
-
-
+	if tile_layer != null and tile_layer.has_method("spawn_initial_enemies"):
+		tile_layer.spawn_initial_enemies()
+	if tile_layer_b != null and tile_layer_b.has_method("spawn_initial_enemies"):
+		tile_layer_b.spawn_initial_enemies()
 
 func _get_active_layer() -> TileMapLayer:
 	return tile_layer
+
+func _find_container_by_prefix(p: Node, base: String) -> Node:
+	if p == null:
+		return null
+	var n := p.get_node_or_null(base)
+	if n != null:
+		return n
+	for c in p.get_children():
+		var nm := String(c.name)
+		if nm.begins_with(base):
+			return c
+	return null

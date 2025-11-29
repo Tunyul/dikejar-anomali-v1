@@ -1,3 +1,4 @@
+@tool
 extends CharacterBody2D
 
 @export var offset_x: float = 24.0
@@ -10,7 +11,7 @@ extends CharacterBody2D
 var _player: Node2D
 var _camera: Camera2D
 var _entry_timer: float = -1.0
-@onready var sprite: Sprite2D = $Sprite2D
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var collider: CollisionShape2D = $CollisionShape2D
 @onready var ground_ray: RayCast2D = $GroundRay
 
@@ -31,8 +32,12 @@ func _ready() -> void:
 		ground_ray.target_position = Vector2(0, 200)
 	if _player:
 		global_position.y = _player.global_position.y
+	_ensure_sprite_frames()
+	_ensure_playing()
 
 func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if _camera == null:
 		return
 	var vp := get_viewport().get_visible_rect().size
@@ -62,6 +67,8 @@ func _process(delta: float) -> void:
 			global_position.y += sign(dy) * ms
 
 func start_appear() -> void:
+	if Engine.is_editor_hint():
+		return
 	_entry_timer = 0.0
 	if _player != null:
 		global_position.y = _player.global_position.y
@@ -70,3 +77,53 @@ func start_appear() -> void:
 	if _camera != null:
 		left_world = _camera.position.x - vp.x * 0.5
 	global_position.x = left_world + offset_x + entry_offset_extra
+	_ensure_playing()
+
+func _ensure_sprite_frames() -> void:
+	if sprite == null:
+		return
+	var need := sprite.sprite_frames == null or sprite.sprite_frames.get_animation_names().is_empty()
+	if not need:
+		return
+	var tex: Texture2D = ResourceLoader.load(sprite_sheet_path) as Texture2D
+	if tex == null:
+		return
+	var sf := SpriteFrames.new()
+	sf.add_animation(animation_name)
+	sf.set_animation_loop(animation_name, true)
+	var w: int = tex.get_width()
+	var h: int = tex.get_height()
+	var cnt: int = max(frame_count, 1)
+	var fw_exact: float = float(w) / float(cnt)
+	for i in range(cnt):
+		var start_x: int = int(round(float(i) * fw_exact))
+		var end_x: int = int(round(float(i + 1) * fw_exact))
+		var frame_w: int = max(1, end_x - start_x)
+		var at := AtlasTexture.new()
+		at.atlas = tex
+		at.region = Rect2(start_x, 0, frame_w, h)
+		sf.add_frame(animation_name, at)
+	sprite.sprite_frames = sf
+	sprite.play(animation_name)
+	if animation_fps > 0.0:
+		sprite.speed_scale = animation_fps / 12.0
+
+func _ensure_playing() -> void:
+	if sprite == null:
+		return
+	if sprite.sprite_frames == null:
+		return
+	var names := sprite.sprite_frames.get_animation_names()
+	if names.size() == 0:
+		return
+	var anim: String = animation_name
+	if not names.has(animation_name):
+		anim = names[0]
+	if sprite.animation != anim or not sprite.is_playing():
+		sprite.play(anim)
+	if animation_fps > 0.0:
+		sprite.speed_scale = animation_fps / 12.0
+@export var sprite_sheet_path: String = "res://assets/enemy/sprite-256px-36.png"
+@export var frame_count: int = 36
+@export var animation_name: String = "run"
+@export var animation_fps: float = 12.0
