@@ -29,7 +29,7 @@ var _target_scroll_speed: float = 150.0
 var _b_ready: bool = false
 var _a_flat_removed: bool = false
 var _rng := RandomNumberGenerator.new()
-																																																																																																																																																																																																																																																																																																																																																																																																																												
+
 func set_title_mode(enable: bool) -> void:
 	_title_mode = enable
 	_apply_debug_tint()
@@ -59,23 +59,65 @@ func set_title_mode(enable: bool) -> void:
 			tile_layer.reset_enemy_spawn_state()
 		if tile_layer_b != null and tile_layer_b.has_method("reset_enemy_spawn_state"):
 			tile_layer_b.reset_enemy_spawn_state()
+		if tile_layer != null:
+			tile_layer.set("coin_infinite_spawn_enabled", false)
+			tile_layer.set("enemy_spawn_enabled", false)
+			tile_layer.set("random_ascend_enabled", false)
+			tile_layer.set("step_flat_enabled", false)
+			tile_layer.set("min_gap_len", 0)
+			tile_layer.set("max_gap_len", 0)
+			var w := int(tile_layer.get("width")) if tile_layer.has_method("get") else 128
+			tile_layer.set("flat_start_enabled", true)
+			tile_layer.set("flat_start_len", max(1, w))
+		if tile_layer_b != null:
+			tile_layer_b.set("coin_infinite_spawn_enabled", false)
+			tile_layer_b.set("enemy_spawn_enabled", false)
+			tile_layer_b.set("random_ascend_enabled", false)
+			tile_layer_b.set("step_flat_enabled", false)
+			tile_layer_b.set("min_gap_len", 0)
+			tile_layer_b.set("max_gap_len", 0)
+			var wb := int(tile_layer_b.get("width")) if tile_layer_b.has_method("get") else 128
+			tile_layer_b.set("flat_start_enabled", true)
+			tile_layer_b.set("flat_start_len", max(1, wb))
 
 func generate_random() -> void:
 	if tile_layer == null:
 		return
 	emit_signal("generation_progress", 0.0)
 	if _title_mode:
+		tile_layer.set("random_ascend_enabled", false)
+		tile_layer.set("step_flat_enabled", false)
+		tile_layer.set("min_gap_len", 0)
+		tile_layer.set("max_gap_len", 0)
+		tile_layer.set("coin_infinite_spawn_enabled", false)
+		tile_layer.set("enemy_spawn_enabled", false)
 		tile_layer.flat_start_enabled = true
+		var w2 := int(tile_layer.get("width")) if tile_layer.has_method("get") else 128
+		tile_layer.set("flat_start_len", max(1, w2))
 		tile_layer.noise_seed = 0
 		if tile_layer.has_method("generate"):
 			tile_layer.generate()
-		tile_layer.flat_start_enabled = false
 		if tile_layer_b != null:
 			if tile_layer_b.has_method("clear"):
 				tile_layer_b.clear()
 			var seg := _segment_width_px()
 			if seg > 0.0:
 				tile_layer_b.position.x = tile_layer.position.x + seg
+			# Konfigurasi layer B agar flat dan generate segera
+			tile_layer_b.set("random_ascend_enabled", false)
+			tile_layer_b.set("step_flat_enabled", false)
+			tile_layer_b.set("min_gap_len", 0)
+			tile_layer_b.set("max_gap_len", 0)
+			tile_layer_b.set("coin_infinite_spawn_enabled", false)
+			tile_layer_b.set("enemy_spawn_enabled", false)
+			tile_layer_b.flat_start_enabled = true
+			var wb2 := int(tile_layer_b.get("width")) if tile_layer_b.has_method("get") else 128
+			tile_layer_b.set("flat_start_len", max(1, wb2))
+			tile_layer_b.noise_seed = 0
+			if tile_layer_b.has_method("generate"):
+				tile_layer_b.generate()
+			tile_layer_b.flat_start_enabled = false
+			_b_ready = true
 	else:
 		tile_layer.noise_seed = 0
 		if tile_layer.has_method("generate"):
@@ -251,10 +293,10 @@ func _physics_process(delta: float) -> void:
 								tile_layer.call_deferred("clear_enemies")
 							if tile_layer.has_method("spawn_initial_enemies"):
 								tile_layer.call_deferred("spawn_initial_enemies")
-						
 
-																																																																																																																																																																																																																																																																																																
-		
+
+
+
 func is_solid_at_world_pos(pos: Vector2) -> bool:
 	if tile_layer == null:
 		return false

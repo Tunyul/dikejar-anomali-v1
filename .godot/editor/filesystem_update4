@@ -1,1 +1,7 @@
-res://scripts/title_screen.gd
+res://scripts/simple_game_manager.gd
+res://scripts/GroundController.gd
+res://scripts/TileMapGenerator.gd
+res://scripts/player.gd
+res://scenes/player.tscn
+res://scenes/Main.tscn
+res://scripts/game_manager.gd

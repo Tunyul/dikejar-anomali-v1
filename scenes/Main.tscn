@@ -1,4 +1,4 @@
-[gd_scene load_steps=62 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene load_steps=58 format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -15,13 +15,9 @@
 [ext_resource type="Texture2D" uid="uid://kpcwkxsrgbgi" path="res://assets/Background/png/1920x1080/All/Hills_2.png" id="13"]
 [ext_resource type="Texture2D" uid="uid://dcydd8r0n5c6f" path="res://assets/Background/png/1920x1080/All/Hills_1.png" id="14"]
 [ext_resource type="PackedScene" uid="uid://b8il18k1d04wg" path="res://scenes/player.tscn" id="20"]
-[ext_resource type="Script" uid="uid://k78wsp6rc6mv" path="res://scripts/simple_game_manager.gd" id="21"]
-[ext_resource type="PackedScene" uid="uid://b32oy441m6073" path="res://scenes/TitleScreen.tscn" id="22"]
-[ext_resource type="PackedScene" uid="uid://cwj37wyc6s7oe" path="res://scenes/LoadingScreen.tscn" id="23"]
+[ext_resource type="Script" uid="uid://baxidkq4mikew" path="res://scripts/game_manager.gd" id="21"]
 [ext_resource type="Texture2D" uid="uid://dqmmglr4yqrso" path="res://assets/enemy/sprite-256px-36.png" id="23_ebg2g"]
-[ext_resource type="PackedScene" path="res://scenes/GameOverScreen.tscn" id="24"]
 [ext_resource type="PackedScene" uid="uid://vwgvkrfenbcg" path="res://scenes/Ground.tscn" id="25"]
-[ext_resource type="PackedScene" uid="uid://u5m6n7o8qaq2" path="res://scenes/UIManager.tscn" id="26"]
 [ext_resource type="Script" uid="uid://tarkx6h70bep" path="res://scripts/anomaly_chaser.gd" id="27"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2ofn6"]
@@ -289,11 +285,13 @@ animations = [{
 "speed": 12.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ebg2g"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nfivy"]
 size = Vector2(64, 64)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("21")
+base_speed = 250.0
+speed_gain_per_meter = 0.6
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
 script = ExtResource("2")
@@ -516,30 +514,15 @@ centered = false
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = 100
 
-[node name="TitleScreen" parent="CanvasLayer" instance=ExtResource("22")]
-
-[node name="LoadingScreen" parent="CanvasLayer" instance=ExtResource("23")]
-
-[node name="GameOverScreen" parent="CanvasLayer" instance=ExtResource("24")]
-visible = true
-
-[node name="UIManager" parent="CanvasLayer" instance=ExtResource("26")]
-
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
-position = Vector2(360, 400)
-floor_constant_speed = true
-jump_velocity = -600.0
-enable_debug_logging = true
-collision_size = Vector2(100, 140)
-entry_stop_y = 400.0
-front_check_distance = 8.0
-pushback_rate = 280.0
-pushback_recovery_rate = 10.0
-left_game_over_margin = 2.0
-max_pushback_offset = 280.0
-pushback_lock_x = -20.0
-air_recovery_rate = 60.0
+position = Vector2(280, 400)
+run_speed = 400.0
+jump_velocity = -800.0
+jump_buffer_time = 0.9
+gravity = 1600.0
+max_fall_speed = 1000.0
+fall_death_y = 700.0
 
 [node name="Ground" parent="." instance=ExtResource("25")]
 z_index = 5
@@ -571,10 +554,10 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.66314286
+frame_progress = 0.4398332
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser"]
-shape = SubResource("RectangleShape2D_ebg2g")
+shape = SubResource("RectangleShape2D_nfivy")
 
 [node name="GroundRay" type="RayCast2D" parent="AnomalyChaser"]
 target_position = Vector2(0, 200)
