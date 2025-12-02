@@ -23,8 +23,6 @@ var _title_mode: bool = true
 @export var debug_color_a: Color = Color(0.8, 1.0, 0.8, 1.0)
 @export var debug_color_b: Color = Color(1.0, 0.8, 0.8, 1.0)
 
-
-
 var _target_scroll_speed: float = 150.0
 var _b_ready: bool = false
 var _a_flat_removed: bool = false
@@ -293,9 +291,6 @@ func _physics_process(delta: float) -> void:
 								tile_layer.call_deferred("clear_enemies")
 							if tile_layer.has_method("spawn_initial_enemies"):
 								tile_layer.call_deferred("spawn_initial_enemies")
-
-
-
 
 func is_solid_at_world_pos(pos: Vector2) -> bool:
 	if tile_layer == null:

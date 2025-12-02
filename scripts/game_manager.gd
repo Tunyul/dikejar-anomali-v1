@@ -149,10 +149,9 @@ func set_playing_phase() -> void:
             player.prepare_for_playing_phase()
         if player.has_method("enable_environment_movement"):
             player.enable_environment_movement(true)
-        if player.entry_stop_x <= 0.0:
-            player.entry_stop_x = 280.0
-        player.global_position = Vector2(player.entry_stop_x, player.global_position.y)
-        player.position = Vector2(player.entry_stop_x, player.position.y)
+        if player.lock_x_during_full_movement and player.enable_entry_stop:
+            player.global_position = Vector2(player.entry_stop_x, player.global_position.y)
+            player.position = Vector2(player.entry_stop_x, player.position.y)
 
     var bgm2 := get_node_or_null("BGM")
     if bgm2 and bgm2 is AudioStreamPlayer and (bgm2 as AudioStreamPlayer).stream != null:

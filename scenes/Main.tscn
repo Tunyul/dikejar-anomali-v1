@@ -522,7 +522,9 @@ jump_velocity = -800.0
 jump_buffer_time = 0.9
 gravity = 1600.0
 max_fall_speed = 1000.0
-fall_death_y = 700.0
+recenter_speed_x = 50.0
+collision_size = Vector2(42, 72)
+lock_x_during_full_movement = false
 
 [node name="Ground" parent="." instance=ExtResource("25")]
 z_index = 5
@@ -554,7 +556,7 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.4398332
+frame_progress = 0.32720774
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser"]
 shape = SubResource("RectangleShape2D_nfivy")
