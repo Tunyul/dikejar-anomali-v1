@@ -19,6 +19,7 @@
 [ext_resource type="Texture2D" uid="uid://dqmmglr4yqrso" path="res://assets/enemy/sprite-256px-36.png" id="23_ebg2g"]
 [ext_resource type="PackedScene" uid="uid://vwgvkrfenbcg" path="res://scenes/Ground.tscn" id="25"]
 [ext_resource type="Script" uid="uid://tarkx6h70bep" path="res://scripts/anomaly_chaser.gd" id="27"]
+[ext_resource type="Script" path="res://scripts/version_label.gd" id="28"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2ofn6"]
 atlas = ExtResource("23_ebg2g")
@@ -513,6 +514,11 @@ centered = false
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = 100
+
+[node name="VersionLabel" type="Label" parent="CanvasLayer"]
+position = Vector2(900, 10)
+text = ""
+script = ExtResource("28")
 
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
