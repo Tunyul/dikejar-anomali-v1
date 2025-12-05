@@ -1,27 +1,16 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project are documented in this file.
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+
+
 ## [Unreleased]
 
-### Features
 
-### Fixes
 
-### Performance
+## [1.2.5] - 2025-12-05
 
-### Refactor
 
-### Docs
 
-### Tests
-
-### Chore
-
-### Revert
-
-### Style
-
-### Breaking Changes
-
+## [1.2.4] - 2025-12-05

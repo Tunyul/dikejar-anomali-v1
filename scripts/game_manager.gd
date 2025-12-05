@@ -96,6 +96,28 @@ func _process(delta: float) -> void:
                 pvel = player.velocity
                 grounded = player.is_on_floor()
                 pstate = ("PLAYING" if player.current_state == player.PlayerState.FULL_MOVEMENT else "GAME_OVER")
+            var ground_tiles_run: int = 0
+            var ground_tiles_lr: String = "-"
+            if player:
+                var ga := ground_a.get_node_or_null("TileMapLayer") if ground_a != null else null
+                var gb := ground_a.get_node_or_null("TileMapLayerB") if ground_a != null else null
+                var active := ga
+                if ga != null and gb != null:
+                    var cell_a: Vector2i = ga.tile_set.tile_size if ga.tile_set != null else Vector2i(128, 128)
+                    var seg_a: float = float(ga.width) * float(cell_a.x) * ga.scale.x
+                    var cell_b: Vector2i = gb.tile_set.tile_size if gb.tile_set != null else Vector2i(128, 128)
+                    var seg_b: float = float(gb.width) * float(cell_b.x) * gb.scale.x
+                    var px: float = player.global_position.x
+                    var in_a: bool = (px >= ga.position.x) and (px <= ga.position.x + seg_a)
+                    var in_b: bool = (px >= gb.position.x) and (px <= gb.position.x + seg_b)
+                    if in_b and not in_a:
+                        active = gb
+                if active != null:
+                    if active.has_method("get_platform_run_len_at_world_x"):
+                        ground_tiles_run = int(active.call("get_platform_run_len_at_world_x", player.global_position.x))
+                    if active.has_method("get_platform_runs_lr_at_world_x"):
+                        var lr: Vector2i = active.call("get_platform_runs_lr_at_world_x", player.global_position.x)
+                        ground_tiles_lr = str(lr.x) + "/" + str(lr.y)
             var env_move := false
             if ground_a and ground_a.has_method("get"):
                 env_move = bool(ground_a.get("movement_enabled"))
@@ -113,6 +135,7 @@ func _process(delta: float) -> void:
             lines.append("Coins A/B: " + str(coin_collected_a) + "/" + str(coin_collected_b) + " | Last: " + str(last_coins) + " | Best: " + str(best_score))
             lines.append("Player X/Y: " + str(int(round(ppos.x))) + "/" + str(int(round(ppos.y))) + " | Vel X/Y: " + str(int(round(pvel.x))) + "/" + str(int(round(pvel.y))))
             lines.append("Grounded: " + str(grounded) + " | State: " + pstate + " | EnvMove: " + str(env_move))
+            lines.append("Ground Tiles Run: " + str(ground_tiles_run) + " | L/R: " + ground_tiles_lr)
             lines.append("CamCenter X/Y: " + str(cam_x) + "/" + str(cam_y) + " | FPS: " + str(fps))
             debug_label.text = "\n".join(lines)
 

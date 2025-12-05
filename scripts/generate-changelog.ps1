@@ -13,7 +13,8 @@ function GetLatestTag {
 
 function GetCommitObjects($range) {
   $format = "%H%x1f%s%x1f%b%x1e"
-  $raw = git log $range --pretty=format:$format
+  $raw = git log $range --pretty=format:$format 2>$null
+  if ($null -eq $raw -or $raw.Trim() -eq '') { return @() }
   $entries = $raw -split "\x1e" | Where-Object { $_ -ne "" }
   $objs = @()
   foreach ($e in $entries) {
@@ -22,9 +23,14 @@ function GetCommitObjects($range) {
     $subject = $parts[1]
     $body = $parts[2]
     $m = [regex]::Match($subject, '^(?<type>feat|fix|perf|docs|style|refactor|test|chore|revert)(?:\((?<scope>[^)]+)\))?(?<breaking>!)?: (?<msg>.+)$')
-    $type = $m.Success ? $m.Groups['type'].Value : ''
-    $scope = $m.Success ? $m.Groups['scope'].Value : ''
-    $msg = $m.Success ? $m.Groups['msg'].Value : $subject
+    $type = ''
+    $scope = ''
+    $msg = $subject
+    if ($m.Success) {
+      $type = $m.Groups['type'].Value
+      $scope = $m.Groups['scope'].Value
+      $msg = $m.Groups['msg'].Value
+    }
     $breaking = ($m.Success -and $m.Groups['breaking'].Value -ne '') -or ($body -match 'BREAKING CHANGE')
     $objs += [pscustomobject]@{
       Hash = $hash.Substring(0,7)
@@ -67,7 +73,8 @@ function RenderSection($title, $group) {
   if ($group['breaking'].Count -gt 0) {
     $lines += "### Breaking Changes"
     foreach ($c in $group['breaking']) {
-      $scope = $c.Scope -ne '' ? "($($c.Scope))" : ""
+      $scope = ""
+      if ($c.Scope -ne '') { $scope = "($($c.Scope))" }
       $lines += "- $($c.Message) $scope `[$($c.Hash)`]"
     }
   }
@@ -75,7 +82,8 @@ function RenderSection($title, $group) {
     if ($group[$key].Count -gt 0) {
       $lines += "### $label"
       foreach ($c in $group[$key]) {
-        $scope = $c.Scope -ne '' ? "($($c.Scope))" : ""
+        $scope = ""
+        if ($c.Scope -ne '') { $scope = "($($c.Scope))" }
         $lines += "- $($c.Message) $scope `[$($c.Hash)`]"
       }
     }
@@ -141,4 +149,3 @@ if ($Version) {
 }
 
 Set-Content -Path $Output -Value $content -Encoding UTF8
-

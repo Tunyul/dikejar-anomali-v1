@@ -1,7 +1,8 @@
-[gd_scene load_steps=20 format=3 uid="uid://dddfqh8a72i3q"]
+[gd_scene load_steps=22 format=3 uid="uid://dddfqh8a72i3q"]
 
 [ext_resource type="Texture2D" uid="uid://dun051qtppput" path="res://assets/enemy/enemy_cone.png" id="1"]
 [ext_resource type="Script" uid="uid://kyvx8ta7pabe" path="res://scripts/enemy_block.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/enemy_hitbox.gd" id="3"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_f470c"]
 atlas = ExtResource("1")
@@ -123,6 +124,9 @@ animations = [{
 "speed": 6.0
 }]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cone_hitbox"]
+size = Vector2(64, 64)
+
 [node name="EnemyCone" type="Node2D"]
 script = ExtResource("2")
 
@@ -131,3 +135,11 @@ z_index = 95
 scale = Vector2(0.5, 0.5)
 sprite_frames = SubResource("SpriteFrames_cone")
 animation = &"idle"
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("RectangleShape2D_cone_hitbox")

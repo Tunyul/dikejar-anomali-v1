@@ -49,20 +49,20 @@ function UpdateProjectGodot($versionString) {
   if (-not $appMatch) { return }
   $start = $appMatch.LineNumber - 1
   $nextSection = Select-String -InputObject $lines -Pattern '^\[' | Where-Object { $_.LineNumber -gt $appMatch.LineNumber } | Select-Object -First 1
-  $end = $nextSection ? ($nextSection.LineNumber - 2) : ($lines.Length - 1)
+  if ($nextSection) { $end = $nextSection.LineNumber - 2 } else { $end = $lines.Length - 1 }
   $found = $false
   for ($i = $start; $i -le $end; $i++) {
-    if ($lines[$i] -match '^config/version=') { $lines[$i] = "config/version=\"$versionString\""; $found = $true; break }
+    if ($lines[$i] -match '^config/version=') { $lines[$i] = ('config/version="' + $versionString + '"'); $found = $true; break }
   }
   if (-not $found) {
     $nameIndex = -1
     for ($i = $start; $i -le $end; $i++) { if ($lines[$i] -match '^config/name=') { $nameIndex = $i; break } }
-    $insertAt = ($nameIndex -ge 0) ? ($nameIndex + 1) : ($start + 1)
+    if ($nameIndex -ge 0) { $insertAt = $nameIndex + 1 } else { $insertAt = $start + 1 }
     $pre = @()
     if ($insertAt -gt 0) { $pre = $lines[0..($insertAt-1)] }
     $post = @()
     if ($insertAt -lt ($lines.Length)) { $post = $lines[$insertAt..($lines.Length-1)] }
-    $lines = $pre + @("config/version=\"$versionString\"") + $post
+    $lines = $pre + @('config/version="' + $versionString + '"') + $post
   }
   Set-Content -Path $proj -Value ($lines -join "`r`n") -Encoding UTF8
 }
@@ -88,5 +88,3 @@ if ($DoGit) {
 }
 
 Write-Output "Version bumped to $nextStr"
-
-inf

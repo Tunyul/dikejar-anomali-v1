@@ -143,6 +143,11 @@ func _ready() -> void:
         var mev := InputEventMouseButton.new()
         mev.button_index = MOUSE_BUTTON_LEFT
         InputMap.action_add_event("jump", mev)
+    if not InputMap.has_action("attack"):
+        InputMap.add_action("attack")
+        var ev_att := InputEventKey.new()
+        ev_att.physical_keycode = KEY_K
+        InputMap.action_add_event("attack", ev_att)
     if not InputMap.has_action("toggle_lock_x"):
         InputMap.add_action("toggle_lock_x")
         var ev2 := InputEventKey.new()
@@ -309,6 +314,10 @@ func handle_full_movement_state(_delta: float) -> void:
     if Input.is_action_just_pressed("jump"):
         jump_buffer_timer = jump_buffer_time
         jump_requested = true
+
+    if Input.is_action_just_pressed("attack"):
+        if enable_debug_logging:
+            print("Attack pressed")
 
 
     # Control animation based on state
@@ -592,11 +601,7 @@ func _input(event: InputEvent) -> void:
     if not event or not is_instance_valid(self):
         return
 
-    # Handle screen tap/click for jump with proper validation
-    var is_valid_jump_event = (event is InputEventScreenTouch or event is InputEventMouseButton)
-    if is_valid_jump_event and event.is_pressed():
-        jump_buffer_timer = jump_buffer_time
-        jump_requested = true
+
 
 
 func trigger_game_over(cause: String) -> void:
