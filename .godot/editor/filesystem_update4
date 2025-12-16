@@ -1,5 +1,2 @@
-res://scripts/touch_button_circle.gd
-res://scripts/TileMapGenerator.gd
-res://scenes/Main.tscn
 res://scenes/Ground.tscn
-res://scripts/version_label.gd
+res://scripts/GroundController.gd

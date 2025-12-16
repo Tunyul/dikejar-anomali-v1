@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://dv6p2xhswcg0v" path="res://assets/enemy/enemy_block.png" id="1"]
 [ext_resource type="Script" uid="uid://kyvx8ta7pabe" path="res://scripts/enemy_block.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/enemy_hitbox.gd" id="3"]
+[ext_resource type="Script" uid="uid://c7kctfbimhmtu" path="res://scripts/enemy_hitbox.gd" id="3"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_xejm5"]
 atlas = ExtResource("1")
@@ -272,7 +272,7 @@ script = ExtResource("2")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 z_index = 95
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.2583682, 0.2583682)
 sprite_frames = SubResource("SpriteFrames_eb")
 animation = &"idle"
 frame_progress = 0.82353747

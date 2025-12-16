@@ -44,6 +44,8 @@ extends TileMapLayer
 @export var overlay_only_ground: bool = true
 @export var overlay_include_grass: bool = true
 @export var overlay_include_dirt: bool = true
+@export var colliders_flat: bool = true
+@export var colliders_full_thickness: bool = true
 @export var flat_start_enabled: bool = true
 @export var flat_start_len: int = 8
 @export var random_ascend_enabled: bool = true
@@ -64,41 +66,48 @@ extends TileMapLayer
 @export var step_flat_len2_min: int = 2
 @export var step_flat_len2_max: int = 6
 
-@export var coin_vertical_offset_px: float = 48.0
+@export var coin_vertical_offset_px: float = 42.0
 @export var coin_y_tiles_min: int = -1
 @export var coin_y_tiles_max: int = -1
 @export var coin_spawn_margin_tiles: int = 1
 @export var coin_groups_min: int = 0
-@export var coin_groups_max: int = 0
-@export var coins_per_group_min: int = 5
-@export var coins_per_group_max: int = 7
-@export var coin_spacing_tiles_min: int = 1
-@export var coin_spacing_tiles_max: int = 1
-@export var coin_group_spacing_tiles_min: int = 15
-@export var coin_group_spacing_tiles_max: int = 16
-@export var coin_scale: float = 0.7
-@export var coin_anim_fps: float = 12.0
-@export var coin_osc_amplitude: float = 12.0
-@export var coin_osc_frequency: float = 0.2
+@export var coin_groups_max: int = 1
+@export var coins_per_group_min: int = 2
+@export var coins_per_group_max: int = 3
+@export var coin_spacing_tiles_min: int = 2
+@export var coin_spacing_tiles_max: int = 2
+@export var coin_group_spacing_tiles_min: int = 20
+@export var coin_group_spacing_tiles_max: int = 22
+@export var coin_min_column_gap: int = 1
+@export var coin_max_per_column: int = 1
+@export var coin_scale: float = 0.45
+@export var coin_anim_fps: float = 10.0
+@export var coin_osc_amplitude: float = 8.0
+@export var coin_osc_frequency: float = 0.3
 @export var coin_spawn_x_additional_px: float = 0.0
+@export var coin_spawn_right_margin_px: float = 96.0
 @export var coin_spawn_follow_player: bool = false
 @export var coin_spawn_player_offset_min_px: float = 150.0
 @export var coin_spawn_player_offset_max_px: float = 450.0
-@export var coin_min_clearance_px: float = 10.0
+@export var coin_min_clearance_px: float = 12.0
 @export var coin_infinite_spawn_enabled: bool = true
-@export var coin_stack_enabled: bool = true
-@export var coin_stack_prob: float = 0.5
+@export var coin_stack_enabled: bool = false
+@export var coin_stack_prob: float = 0.0
 @export var coin_stack_max_per_column: int = 1
-@export var coin_stack_vertical_offset_px: float = 20.0
+@export var coin_stack_vertical_offset_px: float = 12.0
 @export var coin_stack_horizontal_jitter_px: float = 0.0
 @export var coin_stack_use_tile_height: bool = false
 @export var coin_stack_min_separation_px: float = 16.0
-@export var coin_min_h_spacing_px: float = 24.0
-@export var coin_min_v_spacing_px: float = 24.0
-@export var coin_base_tint: Color = Color(1, 0.3297266, 0.5161776, 1)
-@export var coin_stack_tint: Color = Color(0.27943614, 0.49578863, 1, 1)
-@export var coin_tint_enabled: bool = true
+@export var coin_min_h_spacing_px: float = 32.0
+@export var coin_min_v_spacing_px: float = 32.0
+@export var coin_min_dist_px: float = 0.0
+@export var coin_seed_cross_segment_spacing: bool = false
+@export var coin_use_enemy_margins_for_seed: bool = false
+@export var coin_base_tint: Color = Color(1, 1, 1, 1)
+@export var coin_stack_tint: Color = Color(1, 1, 1, 1)
+@export var coin_tint_enabled: bool = false
 @export var coin_allow_over_empty: bool = false
+@export var coin_base_shape_half_height_px: float = 14.0
 
 @export var enemy_spawn_enabled: bool = true
 @export var enemy_spawn_margin_tiles: int = 2
@@ -111,18 +120,25 @@ extends TileMapLayer
 @export var enemy_vertical_offset_px: float = 12.0
 @export var enemy_scale: float = 0.6
 @export var enemy_min_clearance_px: float = 6.0
-@export var enemy_coin_min_h_spacing_px: float = 32.0
-@export var enemy_coin_min_v_spacing_px: float = 32.0
-@export var enemy_coin_min_dist_px: float = 56.0
+@export var enemy_coin_min_h_spacing_px: float = 40.0
+@export var enemy_coin_min_v_spacing_px: float = 40.0
+@export var enemy_coin_min_dist_px: float = 80.0
 @export var enemy_edge_clear_tiles: int = 5
 @export var enemy_player_min_dx_px: float = 140.0
+@export var enemy_spawn_right_margin_px: float = 96.0
 @export var enemy_slope_max_delta_tiles: int = 1
 @export var enemy_allow_over_empty: bool = false
 @export var enemy_min_platform_tiles: int = 9
 @export var enemy_min_right_run_tiles: int = 5
 @export var enemy_min_left_run_tiles: int = 5
-@export var coin_max_children: int = 200
-@export var enemy_max_children: int = 60
+@export var coin_max_children: int = 60
+@export var enemy_max_children: int = 45
+@export var enemy_block_prob: float = 0.5
+@export var enemy_block_enabled: bool = false
+@export var coin_spawn_batch_limit: int = 6
+@export var enemy_spawn_batch_limit: int = 8
+@export var spawn_min_fps: int = 30
+@export var use_object_pool: bool = true
 
 var _noise := FastNoiseLite.new()
 var _rng := RandomNumberGenerator.new()
@@ -132,19 +148,41 @@ var _next_spawn_x: int = -1
 var _last_tint_enabled: bool = true
 var _last_base_tint: Color = Color(1, 1, 1, 1)
 var _last_stack_tint: Color = Color(1, 1, 1, 1)
-var _enemy_scene: PackedScene = null
+var _enemy_scene_cone: PackedScene = null
+var _enemy_scene_block: PackedScene = null
 var _next_enemy_spawn_x: int = -1
-@export var spawn_update_interval_sec: float = 0.25
+@export var spawn_update_interval_sec: float = 0.55
 var _spawn_t_accum_coins: float = 0.0
 var _spawn_t_accum_enemies: float = 0.0
+var _coin_pool := {}
+var _enemy_pool := {}
+@export var powerup_magnet_enabled: bool = true
+@export var powerup_magnet_chance: float = 0.2
+@export var powerup_magnet_duration_sec: float = 12.0
+@export var powerup_magnet_height_px: float = 56.0
+@export var powerup_magnet_min_dist_px: float = 32.0
+@export var coin_wave_enabled: bool = false
+@export var coin_wave_amplitude_px: float = 12.0
+@export var coin_wave_period_tiles: int = 6
+var _magnet_scene: PackedScene = preload("res://scenes/MagnetPowerup.tscn")
+@export var coin_circle_enabled: bool = false
+@export var coin_circle_chance: float = 0.2
+@export var coin_circle_radius_px: float = 28.0
+@export var coin_circle_count: int = 6
 
 
 func _ready():
     _configure_noise()
-    if _enemy_scene == null:
-        var r = load("res://scenes/EnemyCone.tscn")
-        if r is PackedScene:
-            _enemy_scene = r
+    _sync_coin_base_shape_metrics()
+    _sync_settings_only()
+    if _enemy_scene_cone == null:
+        var r1 = load("res://scenes/EnemyCone.tscn")
+        if r1 is PackedScene:
+            _enemy_scene_cone = r1
+    if enemy_block_enabled and _enemy_scene_block == null:
+        var r2 = load("res://scenes/EnemyBlock.tscn")
+        if r2 is PackedScene:
+            _enemy_scene_block = r2
     if auto_generate_on_ready:
         generate()
 
@@ -159,7 +197,7 @@ func _process(delta: float) -> void:
     if cont_a != null and name == "TileMapLayer":
         cont_a.position.x = position.x
         var parent_movement_enabled := bool(p.get("movement_enabled")) if p != null else false
-        if coin_infinite_spawn_enabled and parent_movement_enabled:
+        if coin_infinite_spawn_enabled and parent_movement_enabled and _should_spawn():
             _spawn_t_accum_coins += delta
             if _spawn_t_accum_coins >= spawn_update_interval_sec:
                 _spawn_groups_append_right(cont_a)
@@ -172,7 +210,7 @@ func _process(delta: float) -> void:
     if cont_b != null and name == "TileMapLayerB":
         cont_b.position.x = position.x
         var parent_movement_enabled_b := bool(p.get("movement_enabled")) if p != null else false
-        if coin_infinite_spawn_enabled and parent_movement_enabled_b:
+        if coin_infinite_spawn_enabled and parent_movement_enabled_b and _should_spawn():
             _spawn_t_accum_coins += delta
             if _spawn_t_accum_coins >= spawn_update_interval_sec:
                 _spawn_groups_append_right(cont_b)
@@ -185,7 +223,7 @@ func _process(delta: float) -> void:
     if enem_a != null and name == "TileMapLayer":
         enem_a.position.x = position.x
         var move_en_a := bool(p.get("movement_enabled")) if p != null else false
-        if enemy_spawn_enabled and move_en_a:
+        if enemy_spawn_enabled and move_en_a and _should_spawn():
             _spawn_t_accum_enemies += delta
             if _spawn_t_accum_enemies >= spawn_update_interval_sec:
                 _spawn_enemy_groups_append_right(enem_a)
@@ -193,7 +231,7 @@ func _process(delta: float) -> void:
     if enem_b != null and name == "TileMapLayerB":
         enem_b.position.x = position.x
         var move_en_b := bool(p.get("movement_enabled")) if p != null else false
-        if enemy_spawn_enabled and move_en_b:
+        if enemy_spawn_enabled and move_en_b and _should_spawn():
             _spawn_t_accum_enemies += delta
             if _spawn_t_accum_enemies >= spawn_update_interval_sec:
                 _spawn_enemy_groups_append_right(enem_b)
@@ -221,6 +259,7 @@ func generate():
     _configure_noise()
     if runner_mode:
         _generate_flat_runner()
+        _ensure_surface_grass()
         _build_colliders()
         queue_redraw()
     else:
@@ -267,6 +306,7 @@ func generate():
                     set_cell(pos, dirt_source_id, atlas_coords_dirt, alternative_dirt)
         if add_dirt_band:
             _draw_dirt_band()
+        _ensure_surface_grass()
         _build_colliders()
         queue_redraw()
 
@@ -289,6 +329,9 @@ func _generate_flat_runner():
                 var coords: Vector2i = atlas_coords_grass_mid if use_mid else atlas_coords_grass
                 var alt: int = alternative_grass_mid if use_mid else alternative_grass
                 set_cell(top, sid, coords, alt)
+                # Ensure grass is always placed on surface
+                if get_cell_source_id(top) == -1:
+                    set_cell(top, sid, coords, alt)
             for ty in range(1, thick):
                 var pos: Vector2i = Vector2i(origin.x + px, origin.y + gy + ty)
                 if has_dirt:
@@ -319,14 +362,9 @@ func _generate_flat_runner():
                 var top_y: int = gy
                 var in_raised: bool = px >= end_l1 and px < end_lup
                 if in_raised:
-                    # Pastikan baris flat lama dihapus pada area naik
-                    erase_cell(Vector2i(origin.x + px, origin.y + gy))
-                    if has_dirt:
-                        set_cell(Vector2i(origin.x + px, origin.y + gy), dirt_source_id, atlas_coords_dirt, alternative_dirt)
-                        var max_thick := int(clamp(ground_thickness, 1, height - gy))
-                        for by in range(1, max_thick):
-                            var bpos := Vector2i(origin.x + px, origin.y + gy + by)
-                            set_cell(bpos, dirt_source_id, atlas_coords_dirt, alternative_dirt)
+                    # Clear existing tiles in raised section
+                    for clear_y in range(0, height):
+                        erase_cell(Vector2i(origin.x + px, origin.y + clear_y))
                     top_y = up_y
                 var top: Vector2i = Vector2i(origin.x + px, origin.y + top_y)
                 if has_top:
@@ -335,6 +373,9 @@ func _generate_flat_runner():
                     var coords: Vector2i = atlas_coords_grass_mid if use_mid else atlas_coords_grass
                     var alt: int = alternative_grass_mid if use_mid else alternative_grass
                     set_cell(top, sid, coords, alt)
+                    # Force grass placement on surface
+                    if top_y == gy and sid != -1:
+                        set_cell(top, sid, coords, alt)
                 var fill_thick: int = step_flat_flat_dirt_thickness
                 if in_raised:
                     fill_thick = step_flat_up_dirt_thickness
@@ -389,34 +430,89 @@ func _build_colliders():
     var root := StaticBody2D.new()
     root.name = "TileColliders"
     root.collision_layer = 1
+    root.collision_mask = 1
     add_child(root)
-    for x in range(width):
-        var y := 0
-        while y < height:
-            var mp := Vector2i(origin.x + x, origin.y + y)
-            var sid := get_cell_source_id(mp)
-            var solid := sid == grass_source_id or sid == grass_mid_source_id or sid == dirt_source_id
-            if not solid:
-                y += 1
-                continue
-            var start_y := y
-            var end_y := y
-            while end_y + 1 < height:
-                var mp2 := Vector2i(origin.x + x, origin.y + end_y + 1)
-                var sid2 := get_cell_source_id(mp2)
-                var solid2 := sid2 == grass_source_id or sid2 == grass_mid_source_id or sid2 == dirt_source_id
-                if not solid2:
-                    break
-                end_y += 1
-            var top_center: Vector2 = map_to_local(Vector2i(origin.x + x, origin.y + start_y))
-            var bottom_center: Vector2 = map_to_local(Vector2i(origin.x + x, origin.y + end_y))
-            var rect := RectangleShape2D.new()
-            rect.size = Vector2(cell.x, float(end_y - start_y + 1) * float(cell.y))
-            var col := CollisionShape2D.new()
-            col.shape = rect
-            col.position = Vector2(top_center.x, (top_center.y + bottom_center.y) * 0.5)
-            root.add_child(col)
-            y = end_y + 1
+    if colliders_flat:
+        for y in range(height):
+            var x := 0
+            while x < width:
+                var mp := Vector2i(origin.x + x, origin.y + y)
+                var sid := get_cell_source_id(mp)
+                var above_sid := -1
+                if y - 1 >= 0:
+                    above_sid = get_cell_source_id(Vector2i(origin.x + x, origin.y + y - 1))
+                var is_top := sid != -1 and above_sid == -1
+                if not is_top:
+                    x += 1
+                    continue
+                var run_start := x
+                var run_end := x
+                var height_tiles := 1
+                if colliders_full_thickness:
+                    while (y + height_tiles) < height:
+                        var below_sid := get_cell_source_id(Vector2i(origin.x + x, origin.y + y + height_tiles))
+                        if below_sid == -1:
+                            break
+                        height_tiles += 1
+                while run_end + 1 < width:
+                    var mpn := Vector2i(origin.x + run_end + 1, origin.y + y)
+                    var sidn := get_cell_source_id(mpn)
+                    var above_sidn := -1
+                    if y - 1 >= 0:
+                        above_sidn = get_cell_source_id(Vector2i(origin.x + run_end + 1, origin.y + y - 1))
+                    var is_top_n := sidn != -1 and above_sidn == -1
+                    if not is_top_n:
+                        break
+                    var height_tiles_n := 1
+                    if colliders_full_thickness:
+                        while (y + height_tiles_n) < height:
+                            var below_sid_n := get_cell_source_id(Vector2i(origin.x + run_end + 1, origin.y + y + height_tiles_n))
+                            if below_sid_n == -1:
+                                break
+                            height_tiles_n += 1
+                    if height_tiles_n != height_tiles:
+                        break
+                    run_end += 1
+                var tl_px := Vector2(float(origin.x + run_start) * float(cell.x), float(origin.y + y) * float(cell.y))
+                var width_px := float(run_end - run_start + 1) * float(cell.x)
+                var rect := RectangleShape2D.new()
+                var height_px := float(height_tiles) * float(cell.y)
+                rect.size = Vector2(width_px, height_px)
+                var col := CollisionShape2D.new()
+                col.shape = rect
+                var center := tl_px + Vector2(width_px * 0.5, height_px * 0.5)
+                col.position = center
+                root.add_child(col)
+                x = run_end + 1
+    else:
+        for x in range(width):
+            var y := 0
+            while y < height:
+                var mp := Vector2i(origin.x + x, origin.y + y)
+                var sid := get_cell_source_id(mp)
+                var solid := sid == grass_source_id or sid == grass_mid_source_id or sid == dirt_source_id
+                if not solid:
+                    y += 1
+                    continue
+                var start_y := y
+                var end_y := y
+                while end_y + 1 < height:
+                    var mp2 := Vector2i(origin.x + x, origin.y + end_y + 1)
+                    var sid2 := get_cell_source_id(mp2)
+                    var solid2 := sid2 == grass_source_id or sid2 == grass_mid_source_id or sid2 == dirt_source_id
+                    if not solid2:
+                        break
+                    end_y += 1
+                var tl_px_col := Vector2(float(origin.x + x) * float(cell.x), float(origin.y + start_y) * float(cell.y))
+                var height_px_col := float(end_y - start_y + 1) * float(cell.y)
+                var rect2 := RectangleShape2D.new()
+                rect2.size = Vector2(float(cell.x), height_px_col)
+                var col2 := CollisionShape2D.new()
+                col2.shape = rect2
+                var center2 := tl_px_col + Vector2(float(cell.x) * 0.5, height_px_col * 0.5)
+                col2.position = center2
+                root.add_child(col2)
+                y = end_y + 1
 
 func _draw_dirt_band():
     if tile_set == null:
@@ -473,9 +569,29 @@ func _draw() -> void:
                     if has_col:
                         draw_rect(rect, collision_overlay_color, not collision_overlay_outline)
 
+func _ensure_surface_grass() -> void:
+    if tile_set == null:
+        return
+    var use_mid: bool = use_grass_mid and tile_set.has_source(grass_mid_source_id)
+    var sid: int = grass_mid_source_id if use_mid else grass_source_id
+    var coords: Vector2i = atlas_coords_grass_mid if use_mid else atlas_coords_grass
+    var alt: int = alternative_grass_mid if use_mid else alternative_grass
+    var has_top := tile_set.has_source(sid)
+    if not has_top:
+        return
+    for x in range(width):
+        var top_y := _column_top_y(x)
+        if top_y == -1:
+            continue
+        var mp := Vector2i(origin.x + x, origin.y + top_y)
+        var cur := get_cell_source_id(mp)
+        if cur != sid:
+            set_cell(mp, sid, coords, alt)
+
 func _set_generate_now(value: bool) -> void:
     _generate_now = value
     if value:
+        _sync_settings_only()
         generate()
         _generate_pair_if_exists()
         var gp := get_parent()
@@ -536,6 +652,13 @@ func _generate_pair_if_exists() -> void:
         dst.set("coin_stack_min_separation_px", src.get("coin_stack_min_separation_px"))
         dst.set("coin_min_h_spacing_px", src.get("coin_min_h_spacing_px"))
         dst.set("coin_min_v_spacing_px", src.get("coin_min_v_spacing_px"))
+        dst.set("coin_min_dist_px", src.get("coin_min_dist_px"))
+        dst.set("coin_seed_cross_segment_spacing", src.get("coin_seed_cross_segment_spacing"))
+        dst.set("coin_use_enemy_margins_for_seed", src.get("coin_use_enemy_margins_for_seed"))
+        dst.set("coin_spawn_right_margin_px", src.get("coin_spawn_right_margin_px"))
+        dst.set("coin_base_shape_half_height_px", src.get("coin_base_shape_half_height_px"))
+        dst.set("coin_max_children", src.get("coin_max_children"))
+        dst.set("coin_min_column_gap", src.get("coin_min_column_gap"))
         dst.set("coin_allow_over_empty", src.get("coin_allow_over_empty"))
         dst.set("enemy_spawn_enabled", src.get("enemy_spawn_enabled"))
         dst.set("enemy_spawn_margin_tiles", src.get("enemy_spawn_margin_tiles"))
@@ -547,6 +670,12 @@ func _generate_pair_if_exists() -> void:
         dst.set("enemy_spacing_tiles_max", src.get("enemy_spacing_tiles_max"))
         dst.set("enemy_vertical_offset_px", src.get("enemy_vertical_offset_px"))
         dst.set("enemy_scale", src.get("enemy_scale"))
+        dst.set("enemy_max_children", src.get("enemy_max_children"))
+        dst.set("enemy_block_prob", src.get("enemy_block_prob"))
+        dst.set("enemy_block_enabled", src.get("enemy_block_enabled"))
+        dst.set("spawn_update_interval_sec", src.get("spawn_update_interval_sec"))
+        dst.set("spawn_min_fps", src.get("spawn_min_fps"))
+        dst.set("use_object_pool", src.get("use_object_pool"))
     if layer_a.has_method("generate"):
         layer_a.generate()
     layer_b.flat_start_enabled = false
@@ -572,6 +701,50 @@ func _generate_pair_if_exists() -> void:
     if layer_b.has_method("spawn_initial_enemies"):
         layer_b.spawn_initial_enemies()
 
+func _sync_settings_only() -> void:
+    var p := get_parent()
+    if p == null:
+        return
+    var layer_a: TileMapLayer = p.get_node_or_null("TileMapLayer") as TileMapLayer
+    var layer_b: TileMapLayer = p.get_node_or_null("TileMapLayerB") as TileMapLayer
+    if layer_a == null or layer_b == null:
+        return
+    var src: TileMapLayer = self
+    var dst: TileMapLayer = layer_b if self == layer_a else layer_a
+    if dst == null:
+        return
+    var keys := [
+        "auto_generate_on_ready","clear_before_generate","grass_source_id","dirt_source_id",
+        "ground_y","ground_thickness","min_platform_len","max_platform_len","min_gap_len","max_gap_len",
+        "use_grass_mid","grass_mid_source_id","labels_color","labels_font_size",
+        "overlay_only_ground","overlay_include_grass","overlay_include_dirt",
+        "colliders_flat","colliders_full_thickness","flat_start_enabled","flat_start_len",
+        "random_ascend_enabled","ascend_chance","max_ascend_tiles",
+        "step_flat_enabled","step_flat_chance","step_flat_len1","step_flat_up_len","step_flat_len2",
+        "step_flat_flat_dirt_thickness","step_flat_up_dirt_thickness","step_flat_use_random",
+        "step_flat_len1_min","step_flat_len1_max","step_flat_up_len_min","step_flat_up_len_max",
+        "step_flat_len2_min","step_flat_len2_max",
+        # coin
+        "coin_tint_enabled","coin_base_tint","coin_stack_tint","coin_vertical_offset_px",
+        "coin_y_tiles_min","coin_y_tiles_max","coin_spawn_margin_tiles","coin_groups_min","coin_groups_max",
+        "coins_per_group_min","coins_per_group_max","coin_spacing_tiles_min","coin_spacing_tiles_max",
+        "coin_group_spacing_tiles_min","coin_group_spacing_tiles_max","coin_scale","coin_anim_fps",
+        "coin_osc_amplitude","coin_osc_frequency","coin_spawn_x_additional_px","coin_spawn_follow_player",
+        "coin_spawn_player_offset_min_px","coin_spawn_player_offset_max_px","coin_min_clearance_px",
+        "coin_infinite_spawn_enabled","coin_stack_enabled","coin_stack_prob","coin_stack_max_per_column",
+        "coin_stack_vertical_offset_px","coin_stack_horizontal_jitter_px","coin_stack_use_tile_height",
+        "coin_stack_min_separation_px","coin_min_h_spacing_px","coin_min_v_spacing_px","coin_min_dist_px","coin_allow_over_empty",
+        "coin_max_children","coin_min_column_gap","coin_spawn_right_margin_px","coin_base_shape_half_height_px",
+        # enemy
+        "enemy_spawn_enabled","enemy_spawn_margin_tiles","enemy_groups_min","enemy_groups_max",
+        "enemies_per_group_min","enemies_per_group_max","enemy_spacing_tiles_min","enemy_spacing_tiles_max",
+        "enemy_vertical_offset_px","enemy_scale","enemy_max_children","enemy_block_prob","enemy_block_enabled",
+        "spawn_update_interval_sec","spawn_min_fps","use_object_pool"
+    ]
+    for k in keys:
+        var v = src.get(k)
+        dst.set(k, v)
+
 
 
 func spawn_initial_coins() -> void:
@@ -585,8 +758,193 @@ func spawn_initial_coins() -> void:
         container = p.get_node_or_null("CoinsB")
     if container == null:
         return
-    _spawn_groups_in_view_right(container)
+    _spawn_groups_seed_full(container)
     _next_spawn_x = -1
+
+func spawn_bonus_coins(groups: int = 2) -> void:
+    var p := get_parent()
+    if p == null:
+        return
+    var container: Node2D = null
+    if name == "TileMapLayer":
+        container = p.get_node_or_null("CoinsA")
+    elif name == "TileMapLayerB":
+        container = p.get_node_or_null("CoinsB")
+    if container == null:
+        return
+    if tile_set == null:
+        return
+    var w: int = width
+    var cell: Vector2i = tile_set.tile_size if tile_set != null else Vector2i(128, 128)
+    var margin: int = int(max(0, coin_spawn_margin_tiles))
+    var max_x: int = int(max(margin + 1, w - margin))
+    var cam := get_viewport().get_camera_2d()
+    var vw := int(get_viewport_rect().size.x)
+    if vw <= 0:
+        vw = 1024
+    var _step_px := int(float(cell.x) * scale.x)
+    var cx := cam.get_screen_center_position().x if cam != null else 0.0
+    var right_x := cx + float(vw) * 0.5
+    var start_world_x := right_x + coin_spawn_right_margin_px
+    var local := to_local(Vector2(start_world_x, 0.0))
+    var map := local_to_map(local)
+    var min_x: int = margin
+    if flat_start_enabled:
+        min_x = max(min_x, flat_start_len)
+    if name == "TileMapLayer":
+        min_x = max(min_x, flat_start_len)
+    var x: int = clamp(map.x - origin.x, min_x, max_x - 1)
+    var occupied: Dictionary = {}
+    var occupied_cols: Dictionary = {}
+    for c in container.get_children():
+        if c is Node2D:
+            var ep: Vector2 = (c as Node2D).position
+            var ekey := str(int(round(ep.x / max(1.0, coin_min_h_spacing_px)))) + ":" + str(int(round(ep.y / max(1.0, coin_min_v_spacing_px))))
+            occupied[ekey] = true
+    var _spawned: int = 0
+    var groups_to_spawn: int = max(1, groups)
+    var g := 0
+    while g < groups_to_spawn:
+        var count: int = _rng.randi_range(max(1, coins_per_group_min), max(coins_per_group_min, coins_per_group_max))
+        var spacing_tiles: int = _rng.randi_range(max(1, coin_spacing_tiles_min), max(coin_spacing_tiles_min, coin_spacing_tiles_max))
+        var vtiles_min: int = max(0, coin_y_tiles_min)
+        var vtiles_max: int = max(vtiles_min, coin_y_tiles_max)
+        var group_vtiles: int = _rng.randi_range(vtiles_min, vtiles_max)
+        var _offset_px: float = coin_vertical_offset_px if coin_vertical_offset_px > 0.0 else 32.0
+        var _clearance_px: float = max(0.0, float(coin_min_clearance_px)) + max(0.0, float(coin_osc_amplitude))
+        var group_center_world: Vector2 = Vector2.ZERO
+        for i in range(count):
+            var mx := x + i * spacing_tiles
+            if mx >= max_x:
+                break
+            var top_y := -1
+            for y in range(height - 1, -1, -1):
+                var mp := Vector2i(origin.x + mx, origin.y + y)
+                var sid := get_cell_source_id(mp)
+                if sid != -1:
+                    var above_sid := -1
+                    if y - 1 >= 0:
+                        above_sid = get_cell_source_id(Vector2i(origin.x + mx, origin.y + y - 1))
+                    if above_sid == -1:
+                        top_y = y
+                        break
+            var lc: Vector2
+            var wc: Vector2
+            if top_y == -1:
+                if not coin_allow_over_empty:
+                    continue
+                var pseudo_y: int = int(clamp(ground_y, 0, height - 1))
+                lc = map_to_local(Vector2i(origin.x + mx, origin.y + pseudo_y))
+            else:
+                lc = map_to_local(Vector2i(origin.x + mx, origin.y + top_y))
+            wc = to_global(lc)
+            var world_cell_h: float = float(cell.y) * scale.y
+            var top_surface_y: float = _get_top_surface_world_y(wc.x, wc.y - world_cell_h, wc.y + world_cell_h)
+            var coin_half_h_px: float = coin_base_shape_half_height_px * (coin_scale if coin_scale > 0.0 else 1.0)
+            var base_clearance: float = coin_min_clearance_px + coin_osc_amplitude
+            var coin_world: Vector2 = Vector2(wc.x + coin_spawn_x_additional_px, top_surface_y - coin_half_h_px - base_clearance - float(group_vtiles) * world_cell_h)
+            if coin_stack_vertical_offset_px != 0.0:
+                coin_world.y += coin_stack_vertical_offset_px
+            var base_sep: float = max(coin_stack_min_separation_px, coin_half_h_px * 2.0)
+            if coin_stack_use_tile_height:
+                base_sep = max(world_cell_h, base_sep)
+            var vstep: float = base_sep + coin_min_clearance_px + coin_osc_amplitude * 2.0
+            var stack_count: int = 1
+            if coin_stack_enabled:
+                var prob: float = clamp(coin_stack_prob, 0.0, 1.0)
+                if _rng.randf() < prob:
+                    stack_count = _rng.randi_range(2, max(2, coin_stack_max_per_column))
+            var apply_wave: bool = coin_wave_enabled and stack_count == 1
+            for s in range(stack_count):
+                var jitter_x: float = 0.0
+                var stacked_world: Vector2 = Vector2(coin_world.x + jitter_x, coin_world.y - float(s) * vstep)
+                if apply_wave:
+                    var phase: float = float(i) * TAU / max(float(max(1, coin_wave_period_tiles)), 1.0)
+                    stacked_world.y -= sin(phase) * coin_wave_amplitude_px
+                if group_center_world == Vector2.ZERO:
+                    group_center_world = stacked_world
+                var ncoin: Area2D = _coin_scene.instantiate() as Area2D
+                var segment: String = "A" if name == "TileMapLayer" else "B"
+                ncoin.set("source_segment", segment)
+                var tint_color: Color = coin_stack_tint if s > 0 else coin_base_tint
+                ncoin.set("tint", tint_color if coin_tint_enabled else Color(1, 1, 1, 1))
+                ncoin.set("is_stack", s > 0)
+                if coin_anim_fps > 0.0:
+                    ncoin.set("anim_fps", coin_anim_fps)
+                if coin_osc_amplitude > 0.0:
+                    ncoin.set("osc_amplitude", coin_osc_amplitude)
+                if coin_osc_frequency > 0.0:
+                    ncoin.set("osc_frequency", coin_osc_frequency)
+                var lp: Vector2 = container.to_local(stacked_world)
+                var key := str(int(round(lp.x / max(1.0, coin_min_h_spacing_px)))) + ":" + str(int(round(lp.y / max(1.0, coin_min_v_spacing_px))))
+                if occupied.has(key):
+                    continue
+                var world_new: Vector2 = container.to_global(lp)
+                var local_new: Vector2 = to_local(world_new)
+                var map_new: Vector2i = local_to_map(local_new)
+                var col_new: int = map_new.x - origin.x
+                var skip_col: bool = false
+                for d in range(-coin_min_column_gap, coin_min_column_gap + 1):
+                    if occupied_cols.has(str(col_new + d)):
+                        skip_col = true
+                        break
+                if skip_col:
+                    continue
+                var too_close: bool = false
+                for c in container.get_children():
+                    if c is Node2D:
+                        var cp: Vector2 = (c as Node2D).position
+                        var dx: float = abs(cp.x - lp.x)
+                        var dy: float = abs(cp.y - lp.y)
+                        var dist: float = sqrt(dx * dx + dy * dy)
+                        if (coin_min_h_spacing_px > 0.0 or coin_min_v_spacing_px > 0.0 or coin_min_dist_px > 0.0):
+                            if (dx < coin_min_h_spacing_px and dy < coin_min_v_spacing_px) or (coin_min_dist_px > 0.0 and dist < coin_min_dist_px):
+                                too_close = true
+                                break
+                        else:
+                            if dx <= 0.001 and dy <= 0.001:
+                                too_close = true
+                                break
+                if too_close:
+                    continue
+                occupied_cols[str(col_new)] = true
+                lp.x = round(lp.x)
+                lp.y = round(lp.y)
+                if coin_scale > 0.0:
+                    ncoin.scale = Vector2(coin_scale, coin_scale)
+                ncoin.position = lp
+                ncoin.z_index = 100
+                var gm := get_tree().get_current_scene()
+                if gm != null and gm.has_method("on_coin_collected"):
+                    ncoin.collected.connect(gm.on_coin_collected)
+                container.add_child(ncoin)
+                occupied[key] = true
+                _spawned += 1
+        if coin_circle_enabled and group_center_world != Vector2.ZERO and _rng.randf() < clamp(coin_circle_chance, 0.0, 1.0):
+            var cnt: int = max(3, coin_circle_count)
+            for k in range(cnt):
+                var ang := float(k) * TAU / float(cnt)
+                var cw := Vector2(group_center_world.x + cos(ang) * coin_circle_radius_px, group_center_world.y + sin(ang) * coin_circle_radius_px)
+                var lp_c: Vector2 = container.to_local(cw)
+                var key_c := str(int(round(lp_c.x / max(1.0, coin_min_h_spacing_px)))) + ":" + str(int(round(lp_c.y / max(1.0, coin_min_v_spacing_px))))
+                if occupied.has(key_c):
+                    continue
+                var ncoin_c: Area2D = _coin_scene.instantiate() as Area2D
+                var segment_c: String = "A" if name == "TileMapLayer" else "B"
+                ncoin_c.set("source_segment", segment_c)
+                ncoin_c.set("tint", coin_base_tint if coin_tint_enabled else Color(1, 1, 1, 1))
+                ncoin_c.set("is_stack", false)
+                if coin_scale > 0.0:
+                    ncoin_c.scale = Vector2(coin_scale, coin_scale)
+                ncoin_c.position = lp_c
+                ncoin_c.z_index = 100
+                var gm_c := get_tree().get_current_scene()
+                if gm_c != null and gm_c.has_method("on_coin_collected"):
+                    ncoin_c.collected.connect(gm_c.on_coin_collected)
+                container.add_child(ncoin_c)
+                occupied[key_c] = true
+        x = min(max_x, x + max(1, count) * spacing_tiles + _rng.randi_range(12, 20))
+        g += 1
 
 func spawn_initial_enemies() -> void:
     var p := get_parent()
@@ -599,7 +957,10 @@ func spawn_initial_enemies() -> void:
         container = p.get_node_or_null("EnemiesB")
     if container == null:
         return
-    _spawn_enemy_groups_append_right(container)
+    if Engine.is_editor_hint():
+        _spawn_enemy_groups_in_view_right(container)
+    else:
+        _spawn_enemy_groups_append_right(container)
     _next_enemy_spawn_x = -1
 
 func reset_coin_spawn_state() -> void:
@@ -622,7 +983,17 @@ func clear_coins() -> void:
     if container == null:
         return
     for c in container.get_children():
-        c.queue_free()
+        if use_object_pool and c is Area2D:
+            var seg := ("A" if name == "TileMapLayer" else "B")
+            var key := "coin:" + seg
+            if not _coin_pool.has(key):
+                _coin_pool[key] = []
+            (c as Area2D).visible = false
+            (c as Area2D).set_deferred("monitoring", false)
+            container.remove_child(c)
+            _coin_pool[key].append(c)
+        else:
+            c.queue_free()
 
 func clear_enemies() -> void:
     var p := get_parent()
@@ -636,7 +1007,17 @@ func clear_enemies() -> void:
     if container == null:
         return
     for e in container.get_children():
-        e.queue_free()
+        if use_object_pool and e is Node2D:
+            var seg2 := ("A" if name == "TileMapLayer" else "B")
+            var typ := "enemy:cone" if e.get_scene_file_path().ends_with("EnemyCone.tscn") else "enemy:block"
+            var key2 := typ + ":" + seg2
+            if not _enemy_pool.has(key2):
+                _enemy_pool[key2] = []
+            (e as Node2D).visible = false
+            container.remove_child(e)
+            _enemy_pool[key2].append(e)
+        else:
+            e.queue_free()
 
 func _spawn_groups_in_view_right(container: Node) -> void:
     if tile_set == null or container == null:
@@ -646,6 +1027,30 @@ func _spawn_groups_in_view_right(container: Node) -> void:
     for c in container.get_children():
         c.queue_free()
     var occupied: Dictionary = {}
+    var occupied_cols: Dictionary = {}
+    var other_container: Node2D = null
+    var pnode = get_parent()
+    if pnode != null and coin_seed_cross_segment_spacing:
+        if name == "TileMapLayer":
+            other_container = pnode.get_node_or_null("CoinsB")
+        elif name == "TileMapLayerB":
+            other_container = pnode.get_node_or_null("CoinsA")
+    for ec in container.get_children():
+        if ec is Node2D:
+            var ec_world: Vector2 = container.to_global((ec as Node2D).position)
+            var ec_local: Vector2 = to_local(ec_world)
+            var ec_map: Vector2i = local_to_map(ec_local)
+            var ec_col: int = ec_map.x - origin.x
+            occupied_cols[str(ec_col)] = true
+    if other_container != null:
+        for oc in other_container.get_children():
+            if oc is Node2D:
+                var oc_world: Vector2 = other_container.to_global((oc as Node2D).position)
+                var oc_local: Vector2 = to_local(oc_world)
+                var oc_map: Vector2i = local_to_map(oc_local)
+                var oc_col: int = oc_map.x - origin.x
+                occupied_cols[str(oc_col)] = true
+    var spawned: int = 0
     var sep_h: float = max(1.0, coin_min_h_spacing_px)
     var sep_v: float = max(1.0, coin_min_v_spacing_px)
     var w: int = width
@@ -656,11 +1061,11 @@ func _spawn_groups_in_view_right(container: Node) -> void:
     var vw := int(get_viewport_rect().size.x)
     if vw <= 0:
         vw = 1024
-    var step_px := int(float(cell.x) * scale.x)
+    var _step_px := int(float(cell.x) * scale.x)
     var cx := cam.get_screen_center_position().x if cam != null else 0.0
-    var left_x := cx - float(vw) * 0.5
+    var _left_x := cx - float(vw) * 0.5
     var right_x := cx + float(vw) * 0.5
-    var start_world_x := left_x
+    var start_world_x := right_x + coin_spawn_right_margin_px
     if coin_spawn_follow_player:
         var p := get_parent()
         var pl := p.get_node_or_null("Player") if p != null else null
@@ -668,11 +1073,7 @@ func _spawn_groups_in_view_right(container: Node) -> void:
             var px: float = (pl as Node2D).global_position.x
             var min_off: float = max(0.0, coin_spawn_player_offset_min_px)
             var max_off: float = max(min_off, coin_spawn_player_offset_max_px)
-            start_world_x = _rng.randf_range(px + min_off, px + max_off)
-        else:
-            start_world_x = _rng.randf_range(left_x, right_x - float(step_px))
-    else:
-        start_world_x = _rng.randf_range(left_x, right_x - float(step_px))
+            start_world_x = max(right_x + coin_spawn_right_margin_px, _rng.randf_range(px + min_off, px + max_off))
     var local := to_local(Vector2(start_world_x, 0.0))
     var map := local_to_map(local)
     var min_x: int = margin
@@ -688,8 +1089,9 @@ func _spawn_groups_in_view_right(container: Node) -> void:
         var vtiles_min: int = max(0, coin_y_tiles_min)
         var vtiles_max: int = max(vtiles_min, coin_y_tiles_max)
         var group_vtiles: int = _rng.randi_range(vtiles_min, vtiles_max)
-        var offset_px: float = coin_vertical_offset_px if coin_vertical_offset_px > 0.0 else 32.0
-        var clearance_px: float = max(0.0, float(coin_min_clearance_px)) + max(0.0, float(coin_osc_amplitude))
+        var _offset_px: float = coin_vertical_offset_px if coin_vertical_offset_px > 0.0 else 32.0
+        var _clearance_px: float = max(0.0, float(coin_min_clearance_px)) + max(0.0, float(coin_osc_amplitude))
+        var group_center_world: Vector2 = Vector2.ZERO
         for i in range(count):
             var mx := x + i * spacing_tiles
             if mx >= max_x:
@@ -705,7 +1107,7 @@ func _spawn_groups_in_view_right(container: Node) -> void:
                     if above_sid == -1:
                         top_y = y
                         break
-            if enemy_edge_clear_tiles > 0:
+            if coin_use_enemy_margins_for_seed and enemy_edge_clear_tiles > 0:
                 var left_ok := true
                 var right_ok := true
                 var lx_start := mx - enemy_edge_clear_tiles
@@ -724,15 +1126,15 @@ func _spawn_groups_in_view_right(container: Node) -> void:
                     ix += 1
                 if not (left_ok and right_ok):
                     continue
-            if enemy_min_platform_tiles > 0:
+            if coin_use_enemy_margins_for_seed and enemy_min_platform_tiles > 0:
                 var run_len := _platform_run_len_tiles(mx, min_x, max_x)
                 if run_len < enemy_min_platform_tiles:
                     continue
-            if enemy_min_right_run_tiles > 0:
+            if coin_use_enemy_margins_for_seed and enemy_min_right_run_tiles > 0:
                 var rr := _platform_run_len_right(mx, max_x)
                 if rr < enemy_min_right_run_tiles:
                     continue
-            if enemy_min_left_run_tiles > 0:
+            if coin_use_enemy_margins_for_seed and enemy_min_left_run_tiles > 0:
                 var rl := _platform_run_len_left(mx, min_x)
                 if rl < enemy_min_left_run_tiles:
                     continue
@@ -746,24 +1148,30 @@ func _spawn_groups_in_view_right(container: Node) -> void:
                 local_center = map_to_local(Vector2i(origin.x + mx, origin.y + top_y))
             var world_center: Vector2 = to_global(local_center)
             var world_cell_h: float = float(cell.y) * scale.y
-            var top_surface_y: float = world_center.y - world_cell_h * 0.5
-            var coin_world: Vector2 = Vector2(world_center.x + coin_spawn_x_additional_px, top_surface_y - offset_px - float(group_vtiles) * world_cell_h - clearance_px)
+            var top_surface_y: float = _get_top_surface_world_y(world_center.x, world_center.y - world_cell_h, world_center.y + world_cell_h)
+            var coin_half_h_px: float = coin_base_shape_half_height_px * (coin_scale if coin_scale > 0.0 else 1.0)
+            var base_clearance: float = coin_min_clearance_px + coin_osc_amplitude
+            var coin_world: Vector2 = Vector2(world_center.x + coin_spawn_x_additional_px, top_surface_y - coin_half_h_px - base_clearance - float(group_vtiles) * world_cell_h)
             if coin_stack_vertical_offset_px != 0.0:
                 coin_world.y += coin_stack_vertical_offset_px
-            var base_sep: float = coin_stack_min_separation_px
+            var base_sep: float = max(coin_stack_min_separation_px, coin_half_h_px * 2.0)
             if coin_stack_use_tile_height:
-                base_sep = max(world_cell_h, coin_stack_min_separation_px)
+                base_sep = max(world_cell_h, base_sep)
             var vstep: float = base_sep + coin_min_clearance_px + coin_osc_amplitude * 2.0
             var stack_count: int = 1
             if coin_stack_enabled:
                 var prob: float = clamp(coin_stack_prob, 0.0, 1.0)
                 if _rng.randf() < prob:
                     stack_count = _rng.randi_range(2, max(2, coin_stack_max_per_column))
+            var apply_wave: bool = coin_wave_enabled and stack_count == 1
             for s in range(stack_count):
-                var jitter_x: float = _rng.randf_range(-coin_stack_horizontal_jitter_px, coin_stack_horizontal_jitter_px)
+                var jitter_x: float = 0.0
                 var stacked_world: Vector2 = Vector2(coin_world.x + jitter_x, coin_world.y - float(s) * vstep)
-                var ncoin: Area2D = _coin_scene.instantiate() as Area2D
+                if apply_wave:
+                    var phase: float = float(i) * TAU / max(float(max(1, coin_wave_period_tiles)), 1.0)
+                    stacked_world.y -= sin(phase) * coin_wave_amplitude_px
                 var segment: String = "A" if name == "TileMapLayer" else "B"
+                var ncoin: Area2D = _get_pooled_coin(segment)
                 ncoin.set("source_segment", segment)
                 var tint_color: Color = coin_stack_tint if s > 0 else coin_base_tint
                 ncoin.set("tint", tint_color if coin_tint_enabled else Color(1, 1, 1, 1))
@@ -786,6 +1194,22 @@ func _spawn_groups_in_view_right(container: Node) -> void:
                             if dx <= 0.001 and dy <= 0.001:
                                 too_close = true
                                 break
+                if not too_close and other_container != null:
+                    for oc in other_container.get_children():
+                        if oc is Node2D:
+                            var ocw: Vector2 = other_container.to_global((oc as Node2D).position)
+                            var ocl: Vector2 = (container as Node2D).to_local(ocw)
+                            var odx: float = abs(ocl.x - lp.x)
+                            var ody: float = abs(ocl.y - lp.y)
+                            var odist: float = sqrt(odx * odx + ody * ody)
+                            if (coin_min_h_spacing_px > 0.0 or coin_min_v_spacing_px > 0.0 or coin_min_dist_px > 0.0):
+                                if (odx < coin_min_h_spacing_px and ody < coin_min_v_spacing_px) or (coin_min_dist_px > 0.0 and odist < coin_min_dist_px):
+                                    too_close = true
+                                    break
+                            else:
+                                if odx <= 0.001 and ody <= 0.001:
+                                    too_close = true
+                                    break
                 if not too_close:
                     var enemies_cont: Node2D = null
                     var parent_node := get_parent()
@@ -810,26 +1234,85 @@ func _spawn_groups_in_view_right(container: Node) -> void:
                     ncoin.set("osc_amplitude", coin_osc_amplitude)
                 if coin_osc_frequency > 0.0:
                     ncoin.set("osc_frequency", coin_osc_frequency)
+                if coin_anim_fps > 0.0:
+                    ncoin.set("anim_fps", coin_anim_fps)
+                if coin_osc_amplitude > 0.0:
+                    ncoin.set("osc_amplitude", coin_osc_amplitude)
+                if coin_osc_frequency > 0.0:
+                    ncoin.set("osc_frequency", coin_osc_frequency)
                 ncoin.position = lp
                 ncoin.z_index = 100
                 var gm := get_tree().get_current_scene()
                 if gm != null and gm.has_method("on_coin_collected"):
-                    ncoin.collected.connect(gm.on_coin_collected)
+                    if not (ncoin.has_meta("collected_connected") and bool(ncoin.get_meta("collected_connected"))):
+                        ncoin.collected.connect(gm.on_coin_collected)
+                        ncoin.set_meta("collected_connected", true)
                 container.add_child(ncoin)
+                ncoin.visible = true
+                ncoin.set_deferred("monitoring", true)
                 occupied[key] = true
+                spawned += 1
+                if coin_spawn_batch_limit > 0 and spawned >= coin_spawn_batch_limit:
+                    return
         var group_gap: int = _rng.randi_range(max(1, coin_group_spacing_tiles_min), max(coin_group_spacing_tiles_min, coin_group_spacing_tiles_max))
+        if powerup_magnet_enabled and _magnet_scene != null and group_center_world != Vector2.ZERO:
+            var main := get_tree().get_root().get_node_or_null("Main")
+            var allow := true
+            if main and main.has_method("get"):
+                allow = not bool(main.get("super_easy_mode"))
+            if allow and _rng.randf() < clamp(powerup_magnet_chance, 0.0, 1.0):
+                var mp_node := _magnet_scene.instantiate() as Area2D
+                if mp_node:
+                    var pos_world := group_center_world + Vector2(0.0, -powerup_magnet_height_px)
+                    var lp_mag: Vector2 = (container as Node2D).to_local(pos_world)
+                    var key_mag := str(int(round(lp_mag.x / sep_h))) + ":" + str(int(round(lp_mag.y / sep_v)))
+                    if occupied.has(key_mag):
+                        mp_node.free()
+                        mp_node = null
+                    else:
+                        var collide: bool = false
+                        for c in container.get_children():
+                            if c is Node2D:
+                                var cp: Vector2 = (c as Node2D).position
+                                var dx: float = abs(cp.x - lp_mag.x)
+                                var dy: float = abs(cp.y - lp_mag.y)
+                                var dist: float = sqrt(dx * dx + dy * dy)
+                                if (dx < coin_min_h_spacing_px and dy < coin_min_v_spacing_px) or dist < powerup_magnet_min_dist_px:
+                                    collide = true
+                                    break
+                        if not collide and other_container != null:
+                            for oc in other_container.get_children():
+                                if oc is Node2D:
+                                    var ocw: Vector2 = other_container.to_global((oc as Node2D).position)
+                                    var ocl: Vector2 = (container as Node2D).to_local(ocw)
+                                    var dx2: float = abs(ocl.x - lp_mag.x)
+                                    var dy2: float = abs(ocl.y - lp_mag.y)
+                                    var dist2: float = sqrt(dx2 * dx2 + dy2 * dy2)
+                                    if (dx2 < coin_min_h_spacing_px and dy2 < coin_min_v_spacing_px) or dist2 < powerup_magnet_min_dist_px:
+                                        collide = true
+                                        break
+                        if collide:
+                            mp_node.free()
+                            mp_node = null
+                        else:
+                            mp_node.position = lp_mag
+                            mp_node.z_index = 101
+                            mp_node.set("duration_sec", powerup_magnet_duration_sec)
+                            container.add_child(mp_node)
         x = min(max_x, x + max(1, count) * spacing_tiles + group_gap)
 
 func _spawn_enemy_groups_in_view_right(container: Node) -> void:
     if tile_set == null or container == null or not enemy_spawn_enabled:
         return
-    if _enemy_scene == null:
+    if _enemy_scene_cone == null and _enemy_scene_block == null:
         return
     if container is Node2D:
         (container as Node2D).position.x = position.x
     for c in container.get_children():
         c.queue_free()
     var occupied: Dictionary = {}
+    var _occupied_cols: Dictionary = {}
+    var spawned: int = 0
     for e in container.get_children():
         if e is Node2D:
             var eg: Vector2 = (container as Node2D).to_global((e as Node2D).position)
@@ -851,11 +1334,11 @@ func _spawn_enemy_groups_in_view_right(container: Node) -> void:
     var vw := int(get_viewport_rect().size.x)
     if vw <= 0:
         vw = 1024
-    var step_px := int(float(cell.x) * scale.x)
+    var _step_px := int(float(cell.x) * scale.x)
     var cx := cam.get_screen_center_position().x if cam != null else 0.0
-    var left_x := cx - float(vw) * 0.5
+    var _left_x := cx - float(vw) * 0.5
     var right_x := cx + float(vw) * 0.5
-    var start_world_x := _rng.randf_range(left_x, right_x - float(step_px))
+    var start_world_x := right_x + enemy_spawn_right_margin_px
     var local := to_local(Vector2(start_world_x, 0.0))
     var map := local_to_map(local)
     var min_x: int = margin
@@ -969,9 +1452,11 @@ func _spawn_enemy_groups_in_view_right(container: Node) -> void:
                     if abs(lt - rt) > enemy_slope_max_delta_tiles:
                         continue
             var world_cell_h: float = float(cell.y) * scale.y
-            var top_surface_y: float = wc.y - world_cell_h * 0.5
+            var top_surface_y: float = _get_top_surface_world_y(wc.x, wc.y - world_cell_h, wc.y + world_cell_h)
             var enemy_world: Vector2 = Vector2(wc.x, top_surface_y)
-            var nenemy: Node2D = _enemy_scene.instantiate() as Node2D
+            var seg_e := ("A" if name == "TileMapLayer" else "B")
+            var sc_pick := _pick_enemy_scene()
+            var nenemy: Node2D = _get_pooled_enemy(seg_e, sc_pick)
             if enemy_scale > 0.0:
                 nenemy.scale = Vector2(enemy_scale, enemy_scale)
             var lp: Vector2 = (container as Node2D).to_local(enemy_world)
@@ -1015,10 +1500,14 @@ func _spawn_enemy_groups_in_view_right(container: Node) -> void:
             nenemy.position = lp
             nenemy.z_index = 95
             container.add_child(nenemy)
+            nenemy.visible = true
             occupied[str(mx)] = true
             parent_occ[str(world_col_w)] = true
             if gp != null:
                 gp.set_meta("enemy_occ", parent_occ)
+            spawned += 1
+            if enemy_spawn_batch_limit > 0 and spawned >= enemy_spawn_batch_limit:
+                return
         var group_gap: int = _rng.randi_range(max(1, enemy_spacing_tiles_min), max(enemy_spacing_tiles_min, enemy_spacing_tiles_max))
         x = min(max_x, x + max(1, count) * spacing_tiles + group_gap)
 
@@ -1034,7 +1523,7 @@ func _spawn_groups_append_right(container: Node) -> void:
         vw = 1024
     var cx := cam.get_screen_center_position().x if cam != null else 0.0
     var right_x := cx + float(vw) * 0.5
-    var step_px := int(float(cell.x) * scale.x)
+    var _step_px := int(float(cell.x) * scale.x)
     var min_x: int = margin
     if flat_start_enabled:
         min_x = max(min_x, flat_start_len)
@@ -1045,21 +1534,36 @@ func _spawn_groups_append_right(container: Node) -> void:
     if coin_max_children > 0 and container.get_child_count() >= coin_max_children:
         return
     if _next_spawn_x < 0:
-        var start_world_x := right_x - float(step_px) * 2.0
+        var start_world_x := right_x + coin_spawn_right_margin_px
         var local := to_local(Vector2(start_world_x, 0.0))
         var map := local_to_map(local)
         _next_spawn_x = clamp(map.x - origin.x, min_x, max_x - 1)
     var local_center: Vector2 = map_to_local(Vector2i(origin.x + _next_spawn_x, origin.y))
     var world_center: Vector2 = to_global(local_center)
     var occupied2: Dictionary = {}
+    var occupied_cols2: Dictionary = {}
+    var other_container2: Node2D = null
+    var pnode2 = get_parent()
+    if pnode2 != null:
+        if name == "TileMapLayer":
+            other_container2 = pnode2.get_node_or_null("CoinsB")
+        elif name == "TileMapLayerB":
+            other_container2 = pnode2.get_node_or_null("CoinsA")
     var sep_h2: float = max(1.0, coin_min_h_spacing_px)
     var sep_v2: float = max(1.0, coin_min_v_spacing_px)
+    var spawned2: int = 0
     for ec in container.get_children():
         if ec is Node2D:
             var ep: Vector2 = (ec as Node2D).position
             var ekey := str(int(round(ep.x / sep_h2))) + ":" + str(int(round(ep.y / sep_v2)))
             occupied2[ekey] = true
-    while world_center.x <= right_x + float(step_px) * 2.0:
+            var ec_world2: Vector2 = container.to_global(ep)
+            var ec_local2: Vector2 = to_local(ec_world2)
+            var ec_map2: Vector2i = local_to_map(ec_local2)
+            var ec_col2: int = ec_map2.x - origin.x
+            occupied_cols2[str(ec_col2)] = true
+    while world_center.x <= right_x + coin_spawn_right_margin_px + float(_step_px) * 3.0:
+        var group_center_world2: Vector2 = Vector2.ZERO
         var count: int = _rng.randi_range(max(1, coins_per_group_min), max(coins_per_group_min, coins_per_group_max))
         var spacing_tiles: int = _rng.randi_range(max(1, coin_spacing_tiles_min), max(coin_spacing_tiles_min, coin_spacing_tiles_max))
         var vtiles_min: int = max(0, coin_y_tiles_min)
@@ -1107,18 +1611,37 @@ func _spawn_groups_append_right(container: Node) -> void:
                 var prob2: float = clamp(coin_stack_prob, 0.0, 1.0)
                 if _rng.randf() < prob2:
                     stack_count = _rng.randi_range(2, max(2, coin_stack_max_per_column))
+            var apply_wave2: bool = coin_wave_enabled and stack_count == 1
             for s in range(stack_count):
-                var jitter_x2: float = _rng.randf_range(-coin_stack_horizontal_jitter_px, coin_stack_horizontal_jitter_px)
+                var jitter_x2: float = 0.0
                 var stacked_world2: Vector2 = Vector2(coin_world.x + jitter_x2, coin_world.y - float(s) * vstep2)
-                var ncoin2: Area2D = _coin_scene.instantiate() as Area2D
+                if apply_wave2:
+                    var phase2: float = float(i) * TAU / max(float(max(1, coin_wave_period_tiles)), 1.0)
+                    stacked_world2.y -= sin(phase2) * coin_wave_amplitude_px
+                if group_center_world2 == Vector2.ZERO:
+                    group_center_world2 = stacked_world2
                 var segment2: String = "A" if name == "TileMapLayer" else "B"
+                var ncoin2: Area2D = _get_pooled_coin(segment2)
                 ncoin2.set("source_segment", segment2)
                 var tint_color2: Color = coin_stack_tint if s > 0 else coin_base_tint
                 ncoin2.set("tint", tint_color2 if coin_tint_enabled else Color(1, 1, 1, 1))
                 ncoin2.set("is_stack", s > 0)
                 var lp2: Vector2 = (container as Node2D).to_local(stacked_world2)
+                lp2.x = round(lp2.x)
+                lp2.y = round(lp2.y)
                 var key2 := str(int(round(lp2.x / sep_h2))) + ":" + str(int(round(lp2.y / sep_v2)))
                 if occupied2.has(key2):
+                    continue
+                var world_new2: Vector2 = container.to_global(lp2)
+                var local_new2: Vector2 = to_local(world_new2)
+                var map_new2: Vector2i = local_to_map(local_new2)
+                var col_new2: int = map_new2.x - origin.x
+                var skip_col2: bool = false
+                for d2 in range(-coin_min_column_gap, coin_min_column_gap + 1):
+                    if occupied_cols2.has(str(col_new2 + d2)):
+                        skip_col2 = true
+                        break
+                if skip_col2:
                     continue
                 var too_close2: bool = false
                 for c2 in container.get_children():
@@ -1126,14 +1649,31 @@ func _spawn_groups_append_right(container: Node) -> void:
                         var cp2: Vector2 = (c2 as Node2D).position
                         var dx2: float = abs(cp2.x - lp2.x)
                         var dy2: float = abs(cp2.y - lp2.y)
-                        if (coin_min_h_spacing_px > 0.0 or coin_min_v_spacing_px > 0.0):
-                            if dx2 < coin_min_h_spacing_px and dy2 < coin_min_v_spacing_px:
+                        var dist2: float = sqrt(dx2 * dx2 + dy2 * dy2)
+                        if (coin_min_h_spacing_px > 0.0 or coin_min_v_spacing_px > 0.0 or coin_min_dist_px > 0.0):
+                            if (dx2 < coin_min_h_spacing_px and dy2 < coin_min_v_spacing_px) or (coin_min_dist_px > 0.0 and dist2 < coin_min_dist_px):
                                 too_close2 = true
                                 break
                         else:
                             if dx2 <= 0.001 and dy2 <= 0.001:
                                 too_close2 = true
                                 break
+                if not too_close2 and other_container2 != null:
+                    for oc2 in other_container2.get_children():
+                        if oc2 is Node2D:
+                            var ocw2: Vector2 = other_container2.to_global((oc2 as Node2D).position)
+                            var ocl2: Vector2 = (container as Node2D).to_local(ocw2)
+                            var odx2: float = abs(ocl2.x - lp2.x)
+                            var ody2: float = abs(ocl2.y - lp2.y)
+                            var odist2: float = sqrt(odx2 * odx2 + ody2 * ody2)
+                            if (coin_min_h_spacing_px > 0.0 or coin_min_v_spacing_px > 0.0 or coin_min_dist_px > 0.0):
+                                if (odx2 < coin_min_h_spacing_px and ody2 < coin_min_v_spacing_px) or (coin_min_dist_px > 0.0 and odist2 < coin_min_dist_px):
+                                    too_close2 = true
+                                    break
+                            else:
+                                if odx2 <= 0.001 and ody2 <= 0.001:
+                                    too_close2 = true
+                                    break
                 if not too_close2:
                     var enemies_cont2: Node2D = null
                     var parent_node2 := get_parent()
@@ -1158,15 +1698,68 @@ func _spawn_groups_append_right(container: Node) -> void:
                     ncoin2.set("osc_amplitude", coin_osc_amplitude)
                 if coin_osc_frequency > 0.0:
                     ncoin2.set("osc_frequency", coin_osc_frequency)
+                occupied_cols2[str(col_new2)] = true
                 ncoin2.position = lp2
                 ncoin2.z_index = 100
                 var gm2 := get_tree().get_current_scene()
                 if gm2 != null and gm2.has_method("on_coin_collected"):
-                    ncoin2.collected.connect(gm2.on_coin_collected)
+                    if not (ncoin2.has_meta("collected_connected") and bool(ncoin2.get_meta("collected_connected"))):
+                        ncoin2.collected.connect(gm2.on_coin_collected)
+                        ncoin2.set_meta("collected_connected", true)
                 if coin_max_children <= 0 or container.get_child_count() < coin_max_children:
                     container.add_child(ncoin2)
+                    ncoin2.visible = true
+                    ncoin2.set_deferred("monitoring", true)
                 occupied2[key2] = true
+                spawned2 += 1
+                if coin_spawn_batch_limit > 0 and spawned2 >= coin_spawn_batch_limit:
+                    _next_spawn_x = clamp(mx + spacing_tiles, min_x, max_x - 1)
+                    return
         var group_gap: int = _rng.randi_range(max(1, coin_group_spacing_tiles_min), max(coin_group_spacing_tiles_min, coin_group_spacing_tiles_max))
+        if powerup_magnet_enabled and _magnet_scene != null and group_center_world2 != Vector2.ZERO:
+            var main2 := get_tree().get_root().get_node_or_null("Main")
+            var allow2 := true
+            if main2 and main2.has_method("get"):
+                allow2 = not bool(main2.get("super_easy_mode"))
+            if allow2 and _rng.randf() < clamp(powerup_magnet_chance, 0.0, 1.0):
+                var mp_node2 := _magnet_scene.instantiate() as Area2D
+                if mp_node2:
+                    var pos_world2 := group_center_world2 + Vector2(0.0, -powerup_magnet_height_px)
+                    var lp_mag2: Vector2 = (container as Node2D).to_local(pos_world2)
+                    var key_mag2 := str(int(round(lp_mag2.x / sep_h2))) + ":" + str(int(round(lp_mag2.y / sep_v2)))
+                    if occupied2.has(key_mag2):
+                        mp_node2.free()
+                        mp_node2 = null
+                    else:
+                        var collide2: bool = false
+                        for c2 in container.get_children():
+                            if c2 is Node2D:
+                                var cp2: Vector2 = (c2 as Node2D).position
+                                var dx2: float = abs(cp2.x - lp_mag2.x)
+                                var dy2: float = abs(cp2.y - lp_mag2.y)
+                                var dist2: float = sqrt(dx2 * dx2 + dy2 * dy2)
+                                if (dx2 < coin_min_h_spacing_px and dy2 < coin_min_v_spacing_px) or dist2 < powerup_magnet_min_dist_px:
+                                    collide2 = true
+                                    break
+                        if not collide2 and other_container2 != null:
+                            for oc2 in other_container2.get_children():
+                                if oc2 is Node2D:
+                                    var ocw2: Vector2 = other_container2.to_global((oc2 as Node2D).position)
+                                    var ocl2: Vector2 = (container as Node2D).to_local(ocw2)
+                                    var dx3: float = abs(ocl2.x - lp_mag2.x)
+                                    var dy3: float = abs(ocl2.y - lp_mag2.y)
+                                    var dist3: float = sqrt(dx3 * dx3 + dy3 * dy3)
+                                    if (dx3 < coin_min_h_spacing_px and dy3 < coin_min_v_spacing_px) or dist3 < powerup_magnet_min_dist_px:
+                                        collide2 = true
+                                        break
+                        if collide2:
+                            mp_node2.free()
+                            mp_node2 = null
+                        else:
+                            mp_node2.position = lp_mag2
+                            mp_node2.z_index = 101
+                            mp_node2.set("duration_sec", powerup_magnet_duration_sec)
+                            container.add_child(mp_node2)
         _next_spawn_x = min(max_x, _next_spawn_x + max(1, count) * spacing_tiles + group_gap)
         local_center = map_to_local(Vector2i(origin.x + _next_spawn_x, origin.y))
         world_center = to_global(local_center)
@@ -1174,7 +1767,7 @@ func _spawn_groups_append_right(container: Node) -> void:
 func _spawn_enemy_groups_append_right(container: Node) -> void:
     if not enemy_spawn_enabled or tile_set == null or container == null:
         return
-    if _enemy_scene == null:
+    if _enemy_scene_cone == null and _enemy_scene_block == null:
         return
     var cell: Vector2i = tile_set.tile_size if tile_set != null else Vector2i(128, 128)
     var margin: int = int(max(0, enemy_spawn_margin_tiles))
@@ -1185,7 +1778,7 @@ func _spawn_enemy_groups_append_right(container: Node) -> void:
         vw = 1024
     var cx := cam.get_screen_center_position().x if cam != null else 0.0
     var right_x := cx + float(vw) * 0.5
-    var step_px := int(float(cell.x) * scale.x)
+    var _step_px := int(float(cell.x) * scale.x)
     var min_x: int = margin
     if flat_start_enabled:
         min_x = max(min_x, flat_start_len)
@@ -1209,14 +1802,15 @@ func _spawn_enemy_groups_append_right(container: Node) -> void:
         if gp2.has_meta("enemy_occ"):
             parent_occ2 = gp2.get_meta("enemy_occ")
     if _next_enemy_spawn_x < 0:
-        var start_world_x := right_x - float(step_px) * 2.0
+        var start_world_x := right_x + enemy_spawn_right_margin_px
         var local := to_local(Vector2(start_world_x, 0.0))
         var map := local_to_map(local)
         _next_enemy_spawn_x = clamp(map.x - origin.x, min_x, max_x - 1)
     var local_center: Vector2 = map_to_local(Vector2i(origin.x + _next_enemy_spawn_x, origin.y))
     var world_center: Vector2 = to_global(local_center)
     var coins_cont2: Node2D = null
-    while world_center.x <= right_x + float(step_px) * 2.0:
+    var spawned_e2: int = 0
+    while world_center.x <= right_x + enemy_spawn_right_margin_px + float(_step_px) * 3.0:
         var count: int = _rng.randi_range(max(1, enemies_per_group_min), max(enemies_per_group_min, enemies_per_group_max))
         var spacing_tiles: int = _rng.randi_range(max(1, enemy_spacing_tiles_min), max(enemy_spacing_tiles_min, enemy_spacing_tiles_max))
         for i in range(count):
@@ -1289,9 +1883,11 @@ func _spawn_enemy_groups_append_right(container: Node) -> void:
                     if abs(lt2 - rt2) > enemy_slope_max_delta_tiles:
                         continue
             var world_cell_h: float = float(cell.y) * scale.y
-            var top_surface_y: float = wc.y - world_cell_h * 0.5
+            var top_surface_y: float = _get_top_surface_world_y(wc.x, wc.y - world_cell_h, wc.y + world_cell_h)
             var enemy_world: Vector2 = Vector2(wc.x, top_surface_y)
-            var nenemy2: Node2D = _enemy_scene.instantiate() as Node2D
+            var seg_e2 := ("A" if name == "TileMapLayer" else "B")
+            var sc_pick2 := _pick_enemy_scene()
+            var nenemy2: Node2D = _get_pooled_enemy(seg_e2, sc_pick2)
             if enemy_scale > 0.0:
                 nenemy2.scale = Vector2(enemy_scale, enemy_scale)
             var lp2: Vector2 = (container as Node2D).to_local(enemy_world)
@@ -1336,14 +1932,192 @@ func _spawn_enemy_groups_append_right(container: Node) -> void:
             nenemy2.z_index = 95
             if enemy_max_children <= 0 or container.get_child_count() < enemy_max_children:
                 container.add_child(nenemy2)
+                nenemy2.visible = true
                 occupied2[str(mx)] = true
                 parent_occ2[str(world_col_w2)] = true
                 if gp2 != null:
                     gp2.set_meta("enemy_occ", parent_occ2)
+                spawned_e2 += 1
+                if enemy_spawn_batch_limit > 0 and spawned_e2 >= enemy_spawn_batch_limit:
+                    _next_enemy_spawn_x = clamp(mx + spacing_tiles, min_x, max_x - 1)
+                    return
         var group_gap: int = _rng.randi_range(max(1, enemy_spacing_tiles_min), max(enemy_spacing_tiles_min, enemy_spacing_tiles_max))
         _next_enemy_spawn_x = min(max_x, _next_enemy_spawn_x + max(1, count) * spacing_tiles + group_gap)
         local_center = map_to_local(Vector2i(origin.x + _next_enemy_spawn_x, origin.y))
         world_center = to_global(local_center)
+
+func _spawn_groups_seed_full(container: Node) -> void:
+    if tile_set == null or container == null:
+        return
+    var cell: Vector2i = tile_set.tile_size if tile_set != null else Vector2i(128, 128)
+    var margin: int = int(max(0, coin_spawn_margin_tiles))
+    var max_x: int = int(max(margin + 1, width - margin))
+    var _step_px := int(float(cell.x) * scale.x)
+    var min_x: int = margin
+    if flat_start_enabled:
+        min_x = max(min_x, flat_start_len)
+    if name == "TileMapLayer":
+        min_x = max(min_x, flat_start_len)
+    if container is Node2D:
+        (container as Node2D).position.x = position.x
+    if coin_max_children > 0 and container.get_child_count() >= coin_max_children:
+        return
+    var occupied: Dictionary = {}
+    var occupied_cols: Dictionary = {}
+    var _other_container: Node2D = null
+    var pnode = get_parent()
+    if pnode != null:
+        if name == "TileMapLayer":
+            _other_container = pnode.get_node_or_null("CoinsB")
+        elif name == "TileMapLayerB":
+            _other_container = pnode.get_node_or_null("CoinsA")
+    var sep_h: float = max(1.0, coin_min_h_spacing_px)
+    var sep_v: float = max(1.0, coin_min_v_spacing_px)
+    for ec in container.get_children():
+        if ec is Node2D:
+            var ep: Vector2 = (ec as Node2D).position
+            var ekey := str(int(round(ep.x / sep_h))) + ":" + str(int(round(ep.y / sep_v)))
+            occupied[ekey] = true
+            var ec_world: Vector2 = container.to_global(ep)
+            var ec_local: Vector2 = to_local(ec_world)
+            var ec_map: Vector2i = local_to_map(ec_local)
+            var ec_col: int = ec_map.x - origin.x
+            occupied_cols[str(ec_col)] = true
+    if _next_spawn_x < 0:
+        _next_spawn_x = min_x
+    var spawned: int = 0
+    while _next_spawn_x < max_x:
+        var group_center_world: Vector2 = Vector2.ZERO
+        var count: int = _rng.randi_range(max(1, coins_per_group_min), max(coins_per_group_min, coins_per_group_max))
+        var spacing_tiles: int = _rng.randi_range(max(1, coin_spacing_tiles_min), max(coin_spacing_tiles_min, coin_spacing_tiles_max))
+        var vtiles_min: int = max(0, coin_y_tiles_min)
+        var vtiles_max: int = max(vtiles_min, coin_y_tiles_max)
+        var group_vtiles: int = _rng.randi_range(vtiles_min, vtiles_max)
+        var offset_px: float = coin_vertical_offset_px if coin_vertical_offset_px > 0.0 else 32.0
+        var clearance_px: float = max(0.0, float(coin_min_clearance_px)) + max(0.0, float(coin_osc_amplitude))
+        for i in range(count):
+            var mx := _next_spawn_x + i * spacing_tiles
+            if mx >= max_x:
+                break
+            var top_y := -1
+            for y in range(height - 1, -1, -1):
+                var mp := Vector2i(origin.x + mx, origin.y + y)
+                var sid := get_cell_source_id(mp)
+                if sid != -1:
+                    var above_sid := -1
+                    if y - 1 >= 0:
+                        above_sid = get_cell_source_id(Vector2i(origin.x + mx, origin.y + y - 1))
+                    if above_sid == -1:
+                        top_y = y
+                        break
+            var lc: Vector2
+            var wc: Vector2
+            if top_y == -1:
+                if not coin_allow_over_empty:
+                    continue
+                var pseudo_y: int = int(clamp(ground_y, 0, height - 1))
+                lc = map_to_local(Vector2i(origin.x + mx, origin.y + pseudo_y))
+                wc = to_global(lc)
+            else:
+                lc = map_to_local(Vector2i(origin.x + mx, origin.y + top_y))
+                wc = to_global(lc)
+            var world_cell_h: float = float(cell.y) * scale.y
+            var top_surface_y: float = wc.y - world_cell_h * 0.5
+            var coin_world: Vector2 = Vector2(wc.x + coin_spawn_x_additional_px, top_surface_y - offset_px - float(group_vtiles) * world_cell_h - clearance_px)
+            if coin_stack_vertical_offset_px != 0.0:
+                coin_world.y += coin_stack_vertical_offset_px
+            var base_sep: float = coin_stack_min_separation_px
+            if coin_stack_use_tile_height:
+                base_sep = max(world_cell_h, coin_stack_min_separation_px)
+            var vstep: float = base_sep + coin_min_clearance_px + coin_osc_amplitude * 2.0
+            var stack_count: int = 1
+            if coin_stack_enabled:
+                var prob: float = clamp(coin_stack_prob, 0.0, 1.0)
+                if _rng.randf() < prob:
+                    stack_count = _rng.randi_range(2, max(2, coin_stack_max_per_column))
+            var apply_wave: bool = coin_wave_enabled and stack_count == 1
+            for s in range(stack_count):
+                var jitter_x: float = 0.0
+                var stacked_world: Vector2 = Vector2(coin_world.x + jitter_x, coin_world.y - float(s) * vstep)
+                if apply_wave:
+                    var phase: float = float(i) * TAU / max(float(max(1, coin_wave_period_tiles)), 1.0)
+                    stacked_world.y -= sin(phase) * coin_wave_amplitude_px
+                if group_center_world == Vector2.ZERO:
+                    group_center_world = stacked_world
+                var segment: String = "A" if name == "TileMapLayer" else "B"
+                var ncoin: Area2D = _get_pooled_coin(segment)
+                ncoin.set("source_segment", segment)
+                var tint_color: Color = coin_stack_tint if s > 0 else coin_base_tint
+                ncoin.set("tint", tint_color if coin_tint_enabled else Color(1, 1, 1, 1))
+                ncoin.set("is_stack", s > 0)
+                var lp: Vector2 = (container as Node2D).to_local(stacked_world)
+                lp.x = round(lp.x)
+                lp.y = round(lp.y)
+                var key := str(int(round(lp.x / sep_h))) + ":" + str(int(round(lp.y / sep_v)))
+                if occupied.has(key):
+                    continue
+                var world_new: Vector2 = container.to_global(lp)
+                var local_new: Vector2 = to_local(world_new)
+                var map_new: Vector2i = local_to_map(local_new)
+                var col_new: int = map_new.x - origin.x
+                var skip_col: bool = false
+                for d in range(-coin_min_column_gap, coin_min_column_gap + 1):
+                    if occupied_cols.has(str(col_new + d)):
+                        skip_col = true
+                        break
+                if skip_col:
+                    continue
+                var too_close: bool = false
+                for c in container.get_children():
+                    if c is Node2D:
+                        var cp: Vector2 = (c as Node2D).position
+                        var dx: float = abs(cp.x - lp.x)
+                        var dy: float = abs(cp.y - lp.y)
+                        var dist: float = sqrt(dx * dx + dy * dy)
+                        if (coin_min_h_spacing_px > 0.0 or coin_min_v_spacing_px > 0.0 or coin_min_dist_px > 0.0):
+                            if (dx < coin_min_h_spacing_px and dy < coin_min_v_spacing_px) or (coin_min_dist_px > 0.0 and dist < coin_min_dist_px):
+                                too_close = true
+                                break
+                        else:
+                            if dx <= 0.001 and dy <= 0.001:
+                                too_close = true
+                                break
+                if too_close:
+                    continue
+                if coin_scale > 0.0:
+                    ncoin.scale = Vector2(coin_scale, coin_scale)
+                if coin_anim_fps > 0.0:
+                    ncoin.set("anim_fps", coin_anim_fps)
+                if coin_osc_amplitude > 0.0:
+                    ncoin.set("osc_amplitude", coin_osc_amplitude)
+                if coin_osc_frequency > 0.0:
+                    ncoin.set("osc_frequency", coin_osc_frequency)
+                occupied_cols[str(col_new)] = true
+                ncoin.position = lp
+                ncoin.z_index = 100
+                var gm := get_tree().get_current_scene()
+                if gm != null and gm.has_method("on_coin_collected"):
+                    if not (ncoin.has_meta("collected_connected") and bool(ncoin.get_meta("collected_connected"))):
+                        ncoin.collected.connect(gm.on_coin_collected)
+                        ncoin.set_meta("collected_connected", true)
+                if coin_max_children <= 0 or container.get_child_count() < coin_max_children:
+                    container.add_child(ncoin)
+                    ncoin.visible = true
+                    ncoin.set_deferred("monitoring", true)
+                occupied[key] = true
+                spawned += 1
+                if coin_spawn_batch_limit > 0 and spawned >= coin_spawn_batch_limit:
+                    _next_spawn_x = clamp(mx + spacing_tiles, min_x, max_x - 1)
+                    return
+        var group_gap: int = _rng.randi_range(max(1, coin_group_spacing_tiles_min), max(coin_group_spacing_tiles_min, coin_group_spacing_tiles_max))
+        _next_spawn_x = min(max_x, _next_spawn_x + max(1, count) * spacing_tiles + group_gap)
+
+func _pick_enemy_scene() -> PackedScene:
+    if enemy_block_enabled and _enemy_scene_block != null and _rng.randf() < clamp(enemy_block_prob, 0.0, 1.0):
+        return _enemy_scene_block
+    if _enemy_scene_cone != null:
+        return _enemy_scene_cone
+    return _enemy_scene_block
 func _apply_tint(container: Node) -> void:
     if container == null:
         return
@@ -1460,3 +2234,51 @@ func _platform_run_len_left(mx: int, min_x: int) -> int:
         count += 1
         i -= 1
     return count
+
+func _get_top_surface_world_y(world_x: float, from_y: float, to_y: float) -> float:
+    var space := get_world_2d().direct_space_state
+    var from := Vector2(world_x, from_y)
+    var to := Vector2(world_x, to_y)
+    var params := PhysicsRayQueryParameters2D.create(from, to)
+    params.collide_with_areas = false
+    params.collision_mask = 1
+    var res := space.intersect_ray(params)
+    if res.has("position"):
+        return float(res["position"].y)
+    return to_y
+func _should_spawn() -> bool:
+    var fps := int(round(Engine.get_frames_per_second()))
+    return fps >= spawn_min_fps
+
+func _get_pooled_coin(segment: String) -> Area2D:
+    if not use_object_pool:
+        return _coin_scene.instantiate() as Area2D
+    var key := "coin:" + segment
+    if _coin_pool.has(key) and _coin_pool[key].size() > 0:
+        return _coin_pool[key].pop_back()
+    return _coin_scene.instantiate() as Area2D
+
+func _sync_coin_base_shape_metrics() -> void:
+    if _coin_scene == null:
+        return
+    var tmp := _coin_scene.instantiate() as Area2D
+    if tmp == null:
+        return
+    var cs := tmp.get_node_or_null("CollisionShape2D")
+    if cs != null and cs is CollisionShape2D:
+        if cs.shape is CircleShape2D:
+            coin_base_shape_half_height_px = (cs.shape as CircleShape2D).radius
+        elif cs.shape is RectangleShape2D:
+            coin_base_shape_half_height_px = (cs.shape as RectangleShape2D).size.y * 0.5
+        elif cs.shape is CapsuleShape2D:
+            coin_base_shape_half_height_px = (cs.shape as CapsuleShape2D).height * 0.5 + (cs.shape as CapsuleShape2D).radius
+    tmp.queue_free()
+
+func _get_pooled_enemy(segment: String, scene: PackedScene) -> Node2D:
+    if not use_object_pool:
+        return scene.instantiate() as Node2D
+    var typ := "enemy:cone" if scene == _enemy_scene_cone else "enemy:block"
+    var key := typ + ":" + segment
+    if _enemy_pool.has(key) and _enemy_pool[key].size() > 0:
+        return _enemy_pool[key].pop_back()
+    return scene.instantiate() as Node2D

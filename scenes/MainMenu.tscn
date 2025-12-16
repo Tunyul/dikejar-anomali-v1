@@ -1,0 +1,272 @@
+[gd_scene load_steps=16 format=3 uid="uid://c7ye5080oeksi"]
+
+[ext_resource type="Script" uid="uid://noswsccs8n2x" path="res://scripts/MainMenu.gd" id="1"]
+[ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://1d818ghi2rdd" path="res://assets/Background/png/Clouds/512x512/Cloud_1.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://cyv2v7og50o2r" path="res://assets/Background/png/Clouds/512x512/Cloud_2.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/1920x1080/All/Mountain_4.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/1920x1080/All/Mountain_3.png" id="7"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/1920x1080/All/Mountain_2.png" id="8"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/1920x1080/All/Mountain_1.png" id="9"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/Clouds/128x128/Cloud_1.png" id="12"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/Clouds/128x128/Cloud_2.png" id="13"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/Clouds/256x256/Cloud_1.png" id="14"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/Clouds/256x256/Cloud_2.png" id="15"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/1920x1080/All/Hills_2.png" id="16"]
+[ext_resource type="Texture2D" path="res://assets/Background/png/1920x1080/All/Hills_1.png" id="17"]
+[ext_resource type="PackedScene" uid="uid://vwgvkrfenbcg" path="res://scenes/Ground.tscn" id="10"]
+[ext_resource type="Texture2D" uid="uid://cs57tqdxe7yjm" path="res://assets/title/title_game.png" id="11"]
+[ext_resource type="Texture2D" path="res://assets/generated/svg/ui_play.svg" id="18"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+script = ExtResource("2")
+speed = 200.0
+
+[node name="LayerSky" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.1, 0.1)
+motion_mirroring = Vector2(1024, 0)
+
+[node name="Sky" type="Sprite2D" parent="ParallaxBackground/LayerSky"]
+scale = Vector2(0.53333336, 0.53333336)
+texture = ExtResource("3")
+centered = false
+
+[node name="Mountain_4" type="ParallaxLayer" parent="ParallaxBackground"]
+z_index = 1
+motion_scale = Vector2(0.3, 0)
+motion_mirroring = Vector2(2048, 0)
+
+[node name="Mountain_4_A" type="Sprite2D" parent="ParallaxBackground/Mountain_4"]
+position = Vector2(6, 93)
+scale = Vector2(0.50781244, 0.47083336)
+texture = ExtResource("6")
+centered = false
+
+[node name="Mountain_4_B" type="Sprite2D" parent="ParallaxBackground/Mountain_4"]
+position = Vector2(1024, 30)
+scale = Vector2(0.7304687, 0.53333336)
+texture = ExtResource("6")
+centered = false
+
+[node name="Mountain_3" type="ParallaxLayer" parent="ParallaxBackground"]
+z_index = 1
+motion_scale = Vector2(0.5, 0)
+motion_mirroring = Vector2(2048, 0)
+
+[node name="Mountain_3_A" type="Sprite2D" parent="ParallaxBackground/Mountain_3"]
+position = Vector2(229.00002, 129)
+scale = Vector2(0.6494382, 0.45050505)
+texture = ExtResource("7")
+centered = false
+
+[node name="Mountain_3_B" type="Sprite2D" parent="ParallaxBackground/Mountain_3"]
+position = Vector2(1253, 77)
+scale = Vector2(0.76404506, 0.5060606)
+texture = ExtResource("7")
+centered = false
+
+[node name="Mountain_3_C" type="Sprite2D" parent="ParallaxBackground/Mountain_3"]
+position = Vector2(731, 119.00001)
+scale = Vector2(0.4561798, 0.46666664)
+texture = ExtResource("7")
+centered = false
+
+[node name="Mountain_3_D" type="Sprite2D" parent="ParallaxBackground/Mountain_3"]
+position = Vector2(1611.0001, 99.99999)
+scale = Vector2(0.97078645, 0.4787878)
+texture = ExtResource("7")
+centered = false
+
+[node name="Mountain_1" type="ParallaxLayer" parent="ParallaxBackground"]
+z_index = 1
+motion_scale = Vector2(0.9, 0)
+motion_mirroring = Vector2(2048, 0)
+
+[node name="Mountain_1_A" type="Sprite2D" parent="ParallaxBackground/Mountain_1"]
+position = Vector2(319, 223.00002)
+scale = Vector2(0.6222664, 0.55211264)
+texture = ExtResource("9")
+centered = false
+
+[node name="Mountain_1_B" type="Sprite2D" parent="ParallaxBackground/Mountain_1"]
+position = Vector2(1339, 142.99998)
+scale = Vector2(0.44532806, 0.6773084)
+texture = ExtResource("9")
+centered = false
+
+[node name="Mountain_1_C" type="Sprite2D" parent="ParallaxBackground/Mountain_1"]
+position = Vector2(737.00006, 236)
+scale = Vector2(0.5626245, 0.53229904)
+texture = ExtResource("9")
+centered = false
+
+[node name="Mountain_1_D" type="Sprite2D" parent="ParallaxBackground/Mountain_1"]
+position = Vector2(1660, 245)
+scale = Vector2(0.60214126, 0.52003425)
+texture = ExtResource("9")
+centered = false
+
+[node name="Mountain_2" type="ParallaxLayer" parent="ParallaxBackground"]
+z_index = 1
+motion_scale = Vector2(0.7, 0)
+motion_mirroring = Vector2(2048, 0)
+
+[node name="Mountain_2_A" type="Sprite2D" parent="ParallaxBackground/Mountain_2"]
+position = Vector2(89, 195.99998)
+scale = Vector2(0.7869674, 0.45752108)
+texture = ExtResource("8")
+centered = false
+
+[node name="Mountain_2_B" type="Sprite2D" parent="ParallaxBackground/Mountain_2"]
+position = Vector2(1206, 106)
+scale = Vector2(0.49122792, 0.5670277)
+texture = ExtResource("8")
+centered = false
+
+[node name="Mountain_2_C" type="Sprite2D" parent="ParallaxBackground/Mountain_2"]
+position = Vector2(413.99997, 172)
+scale = Vector2(0.97493744, 0.49217814)
+texture = ExtResource("8")
+centered = false
+
+[node name="Mountain_2_D" type="Sprite2D" parent="ParallaxBackground/Mountain_2"]
+position = Vector2(1504, 164.00002)
+scale = Vector2(1.2305763, 0.49573466)
+texture = ExtResource("8")
+centered = false
+
+[node name="Clouds_1" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.06, 0)
+motion_mirroring = Vector2(1024, 0)
+
+[node name="cloud_512_A" type="Sprite2D" parent="ParallaxBackground/Clouds_1"]
+position = Vector2(-28, -52)
+scale = Vector2(0.40039063, 0.40039063)
+texture = ExtResource("4")
+centered = false
+
+[node name="cloud_512_B" type="Sprite2D" parent="ParallaxBackground/Clouds_1"]
+position = Vector2(777, 15)
+scale = Vector2(0.4003906, 0.4003906)
+texture = ExtResource("5")
+centered = false
+
+[node name="Clouds_2" type="ParallaxLayer" parent="ParallaxBackground"]
+z_index = 1
+motion_scale = Vector2(0.05, 0)
+motion_mirroring = Vector2(1024, 0)
+
+[node name="cloud_512_A2" type="Sprite2D" parent="ParallaxBackground/Clouds_2"]
+position = Vector2(15, 53)
+scale = Vector2(0.27343747, 0.28320313)
+texture = ExtResource("4")
+centered = false
+
+[node name="cloud_512_B2" type="Sprite2D" parent="ParallaxBackground/Clouds_2"]
+position = Vector2(862, -16)
+scale = Vector2(0.26171878, 0.26171878)
+texture = ExtResource("5")
+centered = false
+
+[node name="cloud_128_A" type="Sprite2D" parent="ParallaxBackground/Clouds_2"]
+position = Vector2(373, 34)
+scale = Vector2(0.6640625, 0.671875)
+texture = ExtResource("12")
+centered = false
+
+[node name="cloud_128_B" type="Sprite2D" parent="ParallaxBackground/Clouds_2"]
+position = Vector2(798, 1)
+scale = Vector2(0.460937, 0.460937)
+texture = ExtResource("13")
+centered = false
+
+[node name="cloud_256_A" type="Sprite2D" parent="ParallaxBackground/Clouds_2"]
+position = Vector2(166, 0)
+scale = Vector2(0.42968756, 0.42968756)
+texture = ExtResource("14")
+centered = false
+
+[node name="cloud_256_B" type="Sprite2D" parent="ParallaxBackground/Clouds_2"]
+position = Vector2(471, -10)
+scale = Vector2(0.3828125, 0.3828125)
+texture = ExtResource("15")
+centered = false
+
+[node name="Hills_2" type="ParallaxLayer" parent="ParallaxBackground"]
+z_index = 2
+motion_scale = Vector2(0.95, 0)
+motion_mirroring = Vector2(1024, 0)
+
+[node name="Hills_2_Sprite" type="Sprite2D" parent="ParallaxBackground/Hills_2"]
+scale = Vector2(0.53333336, 0.53333336)
+texture = ExtResource("16")
+centered = false
+
+[node name="Hills_1" type="ParallaxLayer" parent="ParallaxBackground"]
+z_index = 3
+motion_scale = Vector2(0.85, 0)
+motion_mirroring = Vector2(1024, 0)
+
+[node name="Hills_1_Sprite" type="Sprite2D" parent="ParallaxBackground/Hills_1"]
+scale = Vector2(0.53333336, 0.53333336)
+texture = ExtResource("17")
+centered = false
+
+[node name="Ground" parent="." instance=ExtResource("10")]
+z_index = 5
+movement_enabled = true
+scroll_speed = 34.0
+
+[node name="CenterContainer" type="CenterContainer" parent="UI"]
+layout_mode = 0
+anchor_top = 0.48
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="UI/CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="PlayButton" type="Button" parent="UI/CenterContainer/VBox"]
+custom_minimum_size = Vector2(340, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 34
+text = "Play"
+text_alignment = 1
+expand_icon = false
+
+[node name="QuitButton" type="Button" parent="UI/CenterContainer/VBox"]
+custom_minimum_size = Vector2(340, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 28
+text = "Keluar"
+
+[node name="SuperEasyCheck" type="CheckBox" parent="UI/CenterContainer/VBox"]
+layout_mode = 2
+text = "Super Easy Mode"
+
+[node name="StatsLabel" type="Label" parent="UI/CenterContainer/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+text = "Best: 0 | Coins: 0"
+
+[node name="TitleSprite" type="Sprite2D" parent="UI"]
+z_index = 100
+position = Vector2(512, 160)
+scale = Vector2(0.34, 0.34)
+texture = ExtResource("11")

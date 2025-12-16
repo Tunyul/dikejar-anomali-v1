@@ -1,4 +1,4 @@
-[gd_scene load_steps=63 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene load_steps=71 format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -22,12 +22,36 @@
 [ext_resource type="Script" uid="uid://cabvraniau87d" path="res://scripts/version_label.gd" id="28"]
 [ext_resource type="Texture2D" uid="uid://488lc5kv6uhg" path="res://assets/tombol/tombol_jump.png" id="29"]
 [ext_resource type="Texture2D" uid="uid://vonvne5tbd6f" path="res://assets/tombol/tombol_atk.png" id="30"]
+[ext_resource type="Script" uid="uid://bqtf5uji02hgv" path="res://scripts/PauseMenu.gd" id="31"]
+[ext_resource type="Script" uid="uid://djnoqwvrfrwnr" path="res://scripts/TutorialOverlay.gd" id="33"]
+[ext_resource type="Script" uid="uid://vy3s5tmkqslw" path="res://scripts/GameOverMenu.gd" id="34"]
+[ext_resource type="Script" uid="uid://cvivocoxcy2xo" path="res://scripts/AdManager.gd" id="35"]
+[ext_resource type="Script" uid="uid://dhacrgdwndgfc" path="res://scripts/MissionsManager.gd" id="36"]
+[ext_resource type="Texture2D" uid="uid://dwk3durbly5we" path="res://assets/generated/svg/coin_gold.svg" id="38"]
+[ext_resource type="Texture2D" uid="uid://ccs65yudrkhjh" path="res://assets/generated/svg/heart.svg" id="39"]
+[ext_resource type="PackedScene" uid="uid://ddpqyikpv4h24" path="res://scenes/Coin.tscn" id="56"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 1.png" id="40"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 2.png" id="41"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 3.png" id="42"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 4.png" id="43"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 5.png" id="44"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 6.png" id="45"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 7.png" id="46"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 8.png" id="47"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 9.png" id="48"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 10.png" id="49"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 11.png" id="50"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 12.png" id="51"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 13.png" id="52"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 14.png" id="53"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 15.png" id="54"]
+[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 16.png" id="55"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jump"]
-radius = 36.0
+radius = 48.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
-radius = 32.0
+radius = 46.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2ofn6"]
 atlas = ExtResource("23_ebg2g")
@@ -294,7 +318,30 @@ animations = [{
 "speed": 12.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_yxlcp"]
+[sub_resource type="SpriteFrames" id="SpriteFrames_coin_hud"]
+animations = [{
+"frames": [{"duration": 1.0, "texture": ExtResource("40")},
+{"duration": 1.0, "texture": ExtResource("41")},
+{"duration": 1.0, "texture": ExtResource("42")},
+{"duration": 1.0, "texture": ExtResource("43")},
+{"duration": 1.0, "texture": ExtResource("44")},
+{"duration": 1.0, "texture": ExtResource("45")},
+{"duration": 1.0, "texture": ExtResource("46")},
+{"duration": 1.0, "texture": ExtResource("47")},
+{"duration": 1.0, "texture": ExtResource("48")},
+{"duration": 1.0, "texture": ExtResource("49")},
+{"duration": 1.0, "texture": ExtResource("50")},
+{"duration": 1.0, "texture": ExtResource("51")},
+{"duration": 1.0, "texture": ExtResource("52")},
+{"duration": 1.0, "texture": ExtResource("53")},
+{"duration": 1.0, "texture": ExtResource("54")},
+{"duration": 1.0, "texture": ExtResource("55")}],
+"loop": true,
+"name": &"spin",
+"speed": 12.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gsxep"]
 size = Vector2(64, 64)
 
 [node name="Main" type="Node2D"]
@@ -531,24 +578,207 @@ offset_bottom = 33.0
 script = ExtResource("28")
 
 [node name="JumpButton" type="TouchScreenButton" parent="CanvasLayer"]
-position = Vector2(940, 510)
+position = Vector2(960, 500)
 shape = SubResource("CircleShape2D_jump")
 action = "jump"
 
 [node name="JumpSprite" type="Sprite2D" parent="CanvasLayer/JumpButton"]
-position = Vector2(-3.9339066e-05, 4.4226646e-05)
-scale = Vector2(0.08398439, 0.0839844)
+scale = Vector2(0.1, 0.1)
 texture = ExtResource("29")
 
 [node name="AttackButton" type="TouchScreenButton" parent="CanvasLayer"]
-position = Vector2(860, 520)
+position = Vector2(860, 500)
 shape = SubResource("CircleShape2D_attack")
 action = "attack"
 
 [node name="AttackSprite" type="Sprite2D" parent="CanvasLayer/AttackButton"]
-position = Vector2(0.99998844, 1.500027)
-scale = Vector2(0.08203128, 0.081054695)
+scale = Vector2(0.1, 0.1)
 texture = ExtResource("30")
+
+[node name="PauseMenu" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1024.0
+offset_bottom = 576.0
+script = ExtResource("31")
+
+[node name="Panel" type="ColorRect" parent="CanvasLayer/PauseMenu"]
+layout_mode = 0
+offset_right = 1024.0
+offset_bottom = 576.0
+color = Color(0, 0, 0, 0.45)
+
+[node name="Title" type="Label" parent="CanvasLayer/PauseMenu"]
+layout_mode = 0
+offset_left = 216.0
+offset_top = 132.0
+offset_right = 808.0
+offset_bottom = 172.0
+text = "Paused"
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/PauseMenu"]
+layout_mode = 0
+offset_left = 216.0
+offset_top = 188.0
+offset_right = 808.0
+offset_bottom = 452.0
+
+[node name="ResumeButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Resume"
+
+[node name="RestartButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Restart"
+
+[node name="MenuButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Menu"
+
+[node name="BGMVolume" type="HSlider" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 0.8
+
+[node name="BGMMute" type="CheckBox" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+text = "Mute BGM"
+
+[node name="SFXMute" type="CheckBox" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+text = "Mute SFX"
+
+[node name="SFXVolume" type="HSlider" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 0.8
+
+[node name="MissionsLabel" type="Label" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+text = "Misi:"
+
+[node name="TutorialOverlay" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 128.0
+offset_top = 64.0
+offset_right = 896.0
+offset_bottom = 512.0
+script = ExtResource("33")
+
+[node name="Panel" type="ColorRect" parent="CanvasLayer/TutorialOverlay"]
+layout_mode = 0
+offset_right = 768.0
+offset_bottom = 448.0
+color = Color(0, 0, 0, 0.6)
+
+[node name="Title" type="Label" parent="CanvasLayer/TutorialOverlay"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 744.0
+offset_bottom = 64.0
+text = "Cara Main"
+
+[node name="Desc" type="Label" parent="CanvasLayer/TutorialOverlay"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 80.0
+offset_right = 744.0
+offset_bottom = 200.0
+text = "Tekan tombol Jump untuk melompat. Gunakan Attack untuk aksi."
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/TutorialOverlay"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 240.0
+offset_right = 744.0
+offset_bottom = 400.0
+
+[node name="OKButton" type="Button" parent="CanvasLayer/TutorialOverlay/VBox"]
+layout_mode = 2
+text = "Saya Mengerti"
+
+[node name="HintIcon" type="TextureRect" parent="CanvasLayer/TutorialOverlay"]
+layout_mode = 0
+offset_left = 720.0
+offset_top = 72.0
+offset_right = 760.0
+offset_bottom = 112.0
+texture = ExtResource("39")
+stretch_mode = 1
+
+[node name="GameOverMenu" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1024.0
+offset_bottom = 576.0
+script = ExtResource("34")
+
+[node name="Panel" type="ColorRect" parent="CanvasLayer/GameOverMenu"]
+layout_mode = 0
+offset_right = 1024.0
+offset_bottom = 576.0
+color = Color(0, 0, 0, 0.45)
+
+[node name="Title" type="Label" parent="CanvasLayer/GameOverMenu"]
+layout_mode = 0
+offset_left = 216.0
+offset_top = 132.0
+offset_right = 808.0
+offset_bottom = 172.0
+text = "Game Over"
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/GameOverMenu"]
+layout_mode = 0
+offset_left = 216.0
+offset_top = 188.0
+offset_right = 808.0
+offset_bottom = 452.0
+
+[node name="RetryButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Play Again"
+
+[node name="ContinueButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Continue (Bonus)"
+
+[node name="CoinHUD" type="HBoxContainer" parent="CanvasLayer"]
+z_index = 100
+custom_minimum_size = Vector2(100, 32)
+offset_left = 46.0
+offset_top = 52.0
+offset_right = 210.0
+offset_bottom = 84.0
+
+[node name="Icon" type="TextureRect" parent="CanvasLayer/CoinHUD"]
+visible = false
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+texture = ExtResource("38")
+
+[node name="Label" type="Label" parent="CanvasLayer/CoinHUD"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "0"
+
+[node name="CoinIconAnim" type="AnimatedSprite2D" parent="CanvasLayer"]
+z_index = 99
+position = Vector2(24, 68)
+scale = Vector2(0.25, 0.25)
+sprite_frames = SubResource("SpriteFrames_coin_hud")
+animation = &"spin"
+process_mode = 3
 
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
@@ -593,10 +823,10 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.16619675
+frame_progress = 0.22998743
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser"]
-shape = SubResource("RectangleShape2D_yxlcp")
+shape = SubResource("RectangleShape2D_gsxep")
 
 [node name="GroundRay" type="RayCast2D" parent="AnomalyChaser"]
 target_position = Vector2(0, 200)
@@ -604,3 +834,9 @@ target_position = Vector2(0, 200)
 [node name="BGM" type="AudioStreamPlayer" parent="."]
 
 [node name="SFXJump" type="AudioStreamPlayer" parent="."]
+
+[node name="AdManager" type="Node" parent="."]
+script = ExtResource("35")
+
+[node name="MissionsManager" type="Node" parent="."]
+script = ExtResource("36")

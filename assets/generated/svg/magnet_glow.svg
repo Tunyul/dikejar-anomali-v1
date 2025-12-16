@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="magStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ff8a80"/>
+      <stop offset="60%" stop-color="#e53935"/>
+      <stop offset="100%" stop-color="#b71c1c"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#eceff1"/>
+      <stop offset="50%" stop-color="#cfd8dc"/>
+      <stop offset="100%" stop-color="#90a4ae"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="104" fill="#ff5252" opacity="0.10"/>
+  <circle cx="128" cy="128" r="116" fill="#ff5252" opacity="0.06"/>
+  <path d="M64 80 V176 A64 64 0 0 0 192 176 V80" fill="none" stroke="url(#magStroke)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="48" y="56" width="56" height="30" rx="8" fill="url(#metal)" stroke="#37474F" stroke-width="4"/>
+  <rect x="152" y="56" width="56" height="30" rx="8" fill="url(#metal)" stroke="#37474F" stroke-width="4"/>
+</svg>
