@@ -3,7 +3,7 @@ extends Node2D
 signal generation_progress(pct: float)
 
 @onready var tile_layer: TileMapLayer = $TileMapLayer
-@onready var tile_layer_b: TileMapLayer = $TileMapLayerB
+@onready var tile_layer_b: TileMapLayer = get_node_or_null("TileMapLayerB") as TileMapLayer
 
 
 var _title_mode: bool = true
@@ -197,70 +197,76 @@ func _physics_process(delta: float) -> void:
         if wrap_infinite:
             var seg := _segment_width_px()
             if seg > 0.0:
+                var need_regen_a := false
+                var need_regen_b := false
+                var need_spawn_b := false
                 if tile_layer_b != null:
                     var iter_guard := 0
                     while tile_layer.position.x <= -seg and iter_guard < 8:
                         tile_layer.position.x += seg * 2.0
                         if not _a_flat_removed:
                             tile_layer.flat_start_enabled = false
-                            tile_layer.noise_seed = 0
-                            if regenerate_on_wrap and tile_layer.has_method("generate"):
-                                tile_layer.call_deferred("generate")
                             _a_flat_removed = true
-                        elif regenerate_on_wrap:
-                            tile_layer.noise_seed = 0
-                            if tile_layer.has_method("generate"):
-                                tile_layer.call_deferred("generate")
+                        if regenerate_on_wrap:
+                            need_regen_a = true
                         iter_guard += 1
                     iter_guard = 0
                     while tile_layer_b.position.x <= -seg and iter_guard < 8:
                         tile_layer_b.position.x += seg * 2.0
                         if not _b_ready:
                             tile_layer_b.flat_start_enabled = false
-                            tile_layer_b.noise_seed = 0
-                            if regenerate_on_wrap and tile_layer_b.has_method("generate"):
-                                tile_layer_b.call_deferred("generate")
                             _b_ready = true
                         if regenerate_on_wrap:
-                            tile_layer_b.noise_seed = 0
-                            if tile_layer_b.has_method("generate"):
-                                tile_layer_b.call_deferred("generate")
+                            need_regen_b = true
+                            need_spawn_b = true
                         iter_guard += 1
                     iter_guard = 0
                     while tile_layer.position.x >= seg and iter_guard < 8:
                         tile_layer.position.x -= seg * 2.0
                         if not _a_flat_removed:
                             tile_layer.flat_start_enabled = false
-                            tile_layer.noise_seed = 0
-                            if regenerate_on_wrap and tile_layer.has_method("generate"):
-                                tile_layer.call_deferred("generate")
                             _a_flat_removed = true
-                        elif regenerate_on_wrap:
-                            tile_layer.noise_seed = 0
-                            if tile_layer.has_method("generate"):
-                                tile_layer.call_deferred("generate")
+                        if regenerate_on_wrap:
+                            need_regen_a = true
                         iter_guard += 1
                     iter_guard = 0
                     while tile_layer_b.position.x >= seg and iter_guard < 8:
                         tile_layer_b.position.x -= seg * 2.0
                         if not _b_ready:
                             tile_layer_b.flat_start_enabled = false
-                            tile_layer_b.noise_seed = 0
-                            if regenerate_on_wrap and tile_layer_b.has_method("generate"):
-                                tile_layer_b.call_deferred("generate")
-                            if regenerate_on_wrap and tile_layer_b.has_method("clear_coins"):
-                                tile_layer_b.call_deferred("clear_coins")
-                            if regenerate_on_wrap and tile_layer_b.has_method("spawn_initial_coins"):
-                                tile_layer_b.call_deferred("spawn_initial_coins")
-                            if regenerate_on_wrap and tile_layer_b.has_method("clear_enemies"):
-                                tile_layer_b.call_deferred("clear_enemies")
-                            if regenerate_on_wrap and tile_layer_b.has_method("spawn_initial_enemies"):
-                                tile_layer_b.call_deferred("spawn_initial_enemies")
                             _b_ready = true
                         if regenerate_on_wrap:
-                            tile_layer_b.noise_seed = 0
-                            if tile_layer_b.has_method("generate"):
-                                tile_layer_b.call_deferred("generate")
+                            need_regen_b = true
+                            need_spawn_b = true
+                        iter_guard += 1
+                else:
+                    while tile_layer.position.x <= -seg:
+                        tile_layer.position.x = tile_layer.position.x + seg * 2.0
+                        if regenerate_on_wrap:
+                            need_regen_a = true
+                    while tile_layer.position.x >= seg:
+                        tile_layer.position.x = tile_layer.position.x - seg * 2.0
+                        if regenerate_on_wrap:
+                            need_regen_a = true
+
+                if regenerate_on_wrap:
+                    if need_regen_a and tile_layer.has_method("generate"):
+                        print("[GROUND] wrap & regenerate A, pos=", tile_layer.position.x)
+                        tile_layer.noise_seed = 0
+                        tile_layer.call_deferred("generate")
+                        if tile_layer.has_method("clear_coins"):
+                            tile_layer.call_deferred("clear_coins")
+                        if tile_layer.has_method("spawn_initial_coins"):
+                            tile_layer.call_deferred("spawn_initial_coins")
+                        if tile_layer.has_method("clear_enemies"):
+                            tile_layer.call_deferred("clear_enemies")
+                        if tile_layer.has_method("spawn_initial_enemies"):
+                            tile_layer.call_deferred("spawn_initial_enemies")
+                    if tile_layer_b != null and need_regen_b and tile_layer_b.has_method("generate"):
+                        print("[GROUND] wrap & regenerate B, pos=", tile_layer_b.position.x)
+                        tile_layer_b.noise_seed = 0
+                        tile_layer_b.call_deferred("generate")
+                        if need_spawn_b:
                             if tile_layer_b.has_method("clear_coins"):
                                 tile_layer_b.call_deferred("clear_coins")
                             if tile_layer_b.has_method("spawn_initial_coins"):
@@ -269,36 +275,6 @@ func _physics_process(delta: float) -> void:
                                 tile_layer_b.call_deferred("clear_enemies")
                             if tile_layer_b.has_method("spawn_initial_enemies"):
                                 tile_layer_b.call_deferred("spawn_initial_enemies")
-                        iter_guard += 1
-                else:
-                    while tile_layer.position.x <= -seg:
-                        tile_layer.position.x = tile_layer.position.x + seg * 2.0
-                        if regenerate_on_wrap:
-                            tile_layer.noise_seed = 0
-                            if tile_layer.has_method("generate"):
-                                tile_layer.call_deferred("generate")
-                            if tile_layer.has_method("clear_coins"):
-                                tile_layer.call_deferred("clear_coins")
-                            if tile_layer.has_method("spawn_initial_coins"):
-                                tile_layer.call_deferred("spawn_initial_coins")
-                            if tile_layer.has_method("clear_enemies"):
-                                tile_layer.call_deferred("clear_enemies")
-                            if tile_layer.has_method("spawn_initial_enemies"):
-                                tile_layer.call_deferred("spawn_initial_enemies")
-                    while tile_layer.position.x >= seg:
-                        tile_layer.position.x = tile_layer.position.x - seg * 2.0
-                        if regenerate_on_wrap:
-                            tile_layer.noise_seed = 0
-                            if tile_layer.has_method("generate"):
-                                tile_layer.call_deferred("generate")
-                            if tile_layer.has_method("clear_coins"):
-                                tile_layer.call_deferred("clear_coins")
-                            if tile_layer.has_method("spawn_initial_coins"):
-                                tile_layer.call_deferred("spawn_initial_coins")
-                            if tile_layer.has_method("clear_enemies"):
-                                tile_layer.call_deferred("clear_enemies")
-                            if tile_layer.has_method("spawn_initial_enemies"):
-                                tile_layer.call_deferred("spawn_initial_enemies")
 
 func is_solid_at_world_pos(pos: Vector2) -> bool:
     if tile_layer == null:
@@ -325,14 +301,16 @@ func is_gap_below_world_pos(pos: Vector2, cells: int = 2) -> bool:
     return res.is_empty()
 
 func _ready() -> void:
-    if tile_layer != null and tile_layer_b != null:
-        var seg := _segment_width_px()
-        if seg > 0.0:
-            if start_with_b:
-                tile_layer.position.x = tile_layer_b.position.x + seg
-            else:
-                tile_layer_b.position.x = tile_layer.position.x + seg
-        tile_layer_b.flat_start_enabled = false
+    if tile_layer != null:
+        if tile_layer_b != null:
+            var seg := _segment_width_px()
+            if seg > 0.0:
+                if start_with_b:
+                    tile_layer.position.x = tile_layer_b.position.x + seg
+                else:
+                    tile_layer_b.position.x = tile_layer.position.x + seg
+            tile_layer_b.flat_start_enabled = false
+        tile_layer.noise_seed = 0
         if tile_layer.has_method("generate"):
             tile_layer.call_deferred("generate")
         _b_ready = false

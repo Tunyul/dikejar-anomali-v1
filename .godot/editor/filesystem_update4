@@ -1,2 +1,3 @@
 res://scenes/Ground.tscn
 res://scripts/GroundController.gd
+res://scripts/TileMapGenerator.gd

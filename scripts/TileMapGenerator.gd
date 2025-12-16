@@ -109,7 +109,7 @@ extends TileMapLayer
 @export var coin_allow_over_empty: bool = false
 @export var coin_base_shape_half_height_px: float = 14.0
 
-@export var enemy_spawn_enabled: bool = true
+@export var enemy_spawn_enabled: bool = false
 @export var enemy_spawn_margin_tiles: int = 2
 @export var enemy_groups_min: int = 1
 @export var enemy_groups_max: int = 2
@@ -172,6 +172,10 @@ var _magnet_scene: PackedScene = preload("res://scenes/MagnetPowerup.tscn")
 
 
 func _ready():
+    if runner_mode:
+        var min_width: int = 512
+        if width < min_width:
+            width = min_width
     _configure_noise()
     _sync_coin_base_shape_metrics()
     _sync_settings_only()
@@ -257,6 +261,7 @@ func generate():
         if cc:
             cc.queue_free()
     _configure_noise()
+    print("[GROUND] generate seg=", name, " seed=", noise_seed)
     if runner_mode:
         _generate_flat_runner()
         _ensure_surface_grass()
@@ -399,10 +404,23 @@ func _generate_flat_runner():
                     var pos: Vector2i = Vector2i(origin.x + px, origin.y + gy + ty)
                     if has_dirt:
                         set_cell(pos, dirt_source_id, atlas_coords_dirt, alternative_dirt)
-    # no base redraw here; raised segment handled above
         x = plat_end
         var gap_len: int = _rng.randi_range(min_gap_len, max_gap_len)
-        x = int(min(x + gap_len, width))
+        if gap_len > 0:
+            var extra_end: int = int(min(x + gap_len, width))
+            for px in range(x, extra_end):
+                var top_gap: Vector2i = Vector2i(origin.x + px, origin.y + gy)
+                if has_top:
+                    var use_mid_gap: bool = use_grass_mid and tile_set.has_source(grass_mid_source_id)
+                    var sid_gap: int = grass_mid_source_id if use_mid_gap else grass_source_id
+                    var coords_gap: Vector2i = atlas_coords_grass_mid if use_mid_gap else atlas_coords_grass
+                    var alt_gap: int = alternative_grass_mid if use_mid_gap else alternative_grass
+                    set_cell(top_gap, sid_gap, coords_gap, alt_gap)
+                for ty in range(1, thick):
+                    var pos_gap: Vector2i = Vector2i(origin.x + px, origin.y + gy + ty)
+                    if has_dirt:
+                        set_cell(pos_gap, dirt_source_id, atlas_coords_dirt, alternative_dirt)
+            x = extra_end
         if use_step:
             pending_step = 0
             first_change_done = true
@@ -418,6 +436,24 @@ func _generate_flat_runner():
                 pending_step = 0
         if add_dirt_band:
             _draw_dirt_band()
+
+    # Pastikan tidak ada "ujung dunia" di akhir segmen:
+    # isi sisa kolom hingga width dengan ground datar berkelanjutan.
+    if x < width:
+        gy = int(clamp(gy, 0, int(max(0, height - 1))))
+        thick = int(clamp(ground_thickness, 1, height - gy))
+        for px in range(x, width):
+            var top: Vector2i = Vector2i(origin.x + px, origin.y + gy)
+            if has_top:
+                var use_mid2: bool = use_grass_mid and tile_set.has_source(grass_mid_source_id)
+                var sid2: int = grass_mid_source_id if use_mid2 else grass_source_id
+                var coords2: Vector2i = atlas_coords_grass_mid if use_mid2 else atlas_coords_grass
+                var alt2: int = alternative_grass_mid if use_mid2 else alternative_grass
+                set_cell(top, sid2, coords2, alt2)
+            for ty in range(1, thick):
+                var pos2: Vector2i = Vector2i(origin.x + px, origin.y + gy + ty)
+                if has_dirt:
+                    set_cell(pos2, dirt_source_id, atlas_coords_dirt, alternative_dirt)
 
 func _build_colliders():
     if tile_set == null:
@@ -774,6 +810,8 @@ func spawn_bonus_coins(groups: int = 2) -> void:
         return
     if tile_set == null:
         return
+    if coin_max_children > 0 and container.get_child_count() >= coin_max_children:
+        return
     var w: int = width
     var cell: Vector2i = tile_set.tile_size if tile_set != null else Vector2i(128, 128)
     var margin: int = int(max(0, coin_spawn_margin_tiles))
@@ -796,15 +834,25 @@ func spawn_bonus_coins(groups: int = 2) -> void:
     var x: int = clamp(map.x - origin.x, min_x, max_x - 1)
     var occupied: Dictionary = {}
     var occupied_cols: Dictionary = {}
+    var sep_h: float = max(1.0, coin_min_h_spacing_px)
+    var sep_v: float = max(1.0, coin_min_v_spacing_px)
     for c in container.get_children():
         if c is Node2D:
             var ep: Vector2 = (c as Node2D).position
-            var ekey := str(int(round(ep.x / max(1.0, coin_min_h_spacing_px)))) + ":" + str(int(round(ep.y / max(1.0, coin_min_v_spacing_px))))
+            var ekey := str(int(round(ep.x / sep_h))) + ":" + str(int(round(ep.y / sep_v)))
             occupied[ekey] = true
+            var ec_world: Vector2 = container.to_global(ep)
+            var ec_local: Vector2 = to_local(ec_world)
+            var ec_map: Vector2i = local_to_map(ec_local)
+            var ec_col: int = ec_map.x - origin.x
+            occupied_cols[str(ec_col)] = true
     var _spawned: int = 0
+    var max_spawn: int = coin_spawn_batch_limit if coin_spawn_batch_limit > 0 else 100
     var groups_to_spawn: int = max(1, groups)
     var g := 0
     while g < groups_to_spawn:
+        if coin_max_children > 0 and container.get_child_count() >= coin_max_children:
+            return
         var count: int = _rng.randi_range(max(1, coins_per_group_min), max(coins_per_group_min, coins_per_group_max))
         var spacing_tiles: int = _rng.randi_range(max(1, coin_spacing_tiles_min), max(coin_spacing_tiles_min, coin_spacing_tiles_max))
         var vtiles_min: int = max(0, coin_y_tiles_min)
@@ -863,8 +911,10 @@ func spawn_bonus_coins(groups: int = 2) -> void:
                     stacked_world.y -= sin(phase) * coin_wave_amplitude_px
                 if group_center_world == Vector2.ZERO:
                     group_center_world = stacked_world
-                var ncoin: Area2D = _coin_scene.instantiate() as Area2D
+                if coin_max_children > 0 and container.get_child_count() >= coin_max_children:
+                    return
                 var segment: String = "A" if name == "TileMapLayer" else "B"
+                var ncoin: Area2D = _get_pooled_coin(segment)
                 ncoin.set("source_segment", segment)
                 var tint_color: Color = coin_stack_tint if s > 0 else coin_base_tint
                 ncoin.set("tint", tint_color if coin_tint_enabled else Color(1, 1, 1, 1))
@@ -876,7 +926,7 @@ func spawn_bonus_coins(groups: int = 2) -> void:
                 if coin_osc_frequency > 0.0:
                     ncoin.set("osc_frequency", coin_osc_frequency)
                 var lp: Vector2 = container.to_local(stacked_world)
-                var key := str(int(round(lp.x / max(1.0, coin_min_h_spacing_px)))) + ":" + str(int(round(lp.y / max(1.0, coin_min_v_spacing_px))))
+                var key := str(int(round(lp.x / sep_h))) + ":" + str(int(round(lp.y / sep_v)))
                 if occupied.has(key):
                     continue
                 var world_new: Vector2 = container.to_global(lp)
@@ -907,6 +957,8 @@ func spawn_bonus_coins(groups: int = 2) -> void:
                                 break
                 if too_close:
                     continue
+                if coin_max_children > 0 and container.get_child_count() >= coin_max_children:
+                    return
                 occupied_cols[str(col_new)] = true
                 lp.x = round(lp.x)
                 lp.y = round(lp.y)
@@ -920,15 +972,19 @@ func spawn_bonus_coins(groups: int = 2) -> void:
                 container.add_child(ncoin)
                 occupied[key] = true
                 _spawned += 1
+                if _spawned >= max_spawn:
+                    return
         if coin_circle_enabled and group_center_world != Vector2.ZERO and _rng.randf() < clamp(coin_circle_chance, 0.0, 1.0):
             var cnt: int = max(3, coin_circle_count)
             for k in range(cnt):
                 var ang := float(k) * TAU / float(cnt)
                 var cw := Vector2(group_center_world.x + cos(ang) * coin_circle_radius_px, group_center_world.y + sin(ang) * coin_circle_radius_px)
                 var lp_c: Vector2 = container.to_local(cw)
-                var key_c := str(int(round(lp_c.x / max(1.0, coin_min_h_spacing_px)))) + ":" + str(int(round(lp_c.y / max(1.0, coin_min_v_spacing_px))))
+                var key_c := str(int(round(lp_c.x / sep_h))) + ":" + str(int(round(lp_c.y / sep_v)))
                 if occupied.has(key_c):
                     continue
+                if coin_max_children > 0 and container.get_child_count() >= coin_max_children:
+                    return
                 var ncoin_c: Area2D = _coin_scene.instantiate() as Area2D
                 var segment_c: String = "A" if name == "TileMapLayer" else "B"
                 ncoin_c.set("source_segment", segment_c)
@@ -943,10 +999,15 @@ func spawn_bonus_coins(groups: int = 2) -> void:
                     ncoin_c.collected.connect(gm_c.on_coin_collected)
                 container.add_child(ncoin_c)
                 occupied[key_c] = true
+                _spawned += 1
+                if _spawned >= max_spawn:
+                    return
         x = min(max_x, x + max(1, count) * spacing_tiles + _rng.randi_range(12, 20))
         g += 1
 
 func spawn_initial_enemies() -> void:
+    if not enemy_spawn_enabled:
+        return
     var p := get_parent()
     if p == null:
         return
@@ -1562,7 +1623,8 @@ func _spawn_groups_append_right(container: Node) -> void:
             var ec_map2: Vector2i = local_to_map(ec_local2)
             var ec_col2: int = ec_map2.x - origin.x
             occupied_cols2[str(ec_col2)] = true
-    while world_center.x <= right_x + coin_spawn_right_margin_px + float(_step_px) * 3.0:
+    var safety_iters2: int = 0
+    while world_center.x <= right_x + coin_spawn_right_margin_px + float(_step_px) * 3.0 and safety_iters2 < 256:
         var group_center_world2: Vector2 = Vector2.ZERO
         var count: int = _rng.randi_range(max(1, coins_per_group_min), max(coins_per_group_min, coins_per_group_max))
         var spacing_tiles: int = _rng.randi_range(max(1, coin_spacing_tiles_min), max(coin_spacing_tiles_min, coin_spacing_tiles_max))
@@ -1763,6 +1825,7 @@ func _spawn_groups_append_right(container: Node) -> void:
         _next_spawn_x = min(max_x, _next_spawn_x + max(1, count) * spacing_tiles + group_gap)
         local_center = map_to_local(Vector2i(origin.x + _next_spawn_x, origin.y))
         world_center = to_global(local_center)
+        safety_iters2 += 1
 
 func _spawn_enemy_groups_append_right(container: Node) -> void:
     if not enemy_spawn_enabled or tile_set == null or container == null:
@@ -1810,7 +1873,8 @@ func _spawn_enemy_groups_append_right(container: Node) -> void:
     var world_center: Vector2 = to_global(local_center)
     var coins_cont2: Node2D = null
     var spawned_e2: int = 0
-    while world_center.x <= right_x + enemy_spawn_right_margin_px + float(_step_px) * 3.0:
+    var safety_enemy_iters: int = 0
+    while world_center.x <= right_x + enemy_spawn_right_margin_px + float(_step_px) * 3.0 and safety_enemy_iters < 256:
         var count: int = _rng.randi_range(max(1, enemies_per_group_min), max(enemies_per_group_min, enemies_per_group_max))
         var spacing_tiles: int = _rng.randi_range(max(1, enemy_spacing_tiles_min), max(enemy_spacing_tiles_min, enemy_spacing_tiles_max))
         for i in range(count):
@@ -1945,6 +2009,7 @@ func _spawn_enemy_groups_append_right(container: Node) -> void:
         _next_enemy_spawn_x = min(max_x, _next_enemy_spawn_x + max(1, count) * spacing_tiles + group_gap)
         local_center = map_to_local(Vector2i(origin.x + _next_enemy_spawn_x, origin.y))
         world_center = to_global(local_center)
+        safety_enemy_iters += 1
 
 func _spawn_groups_seed_full(container: Node) -> void:
     if tile_set == null or container == null:

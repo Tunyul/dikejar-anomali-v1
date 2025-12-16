@@ -24,7 +24,7 @@ func add_coins(n: int) -> void:
     for m in missions:
         if String(m.name).begins_with("Kumpulkan"):
             m.progress = coins_collected
-    _save()
+
 
 func update_distance(d: float) -> void:
     var di := int(round(d))
@@ -33,7 +33,7 @@ func update_distance(d: float) -> void:
         for m in missions:
             if String(m.name).begins_with("Capai jarak"):
                 m.progress = max_distance
-        _save()
+
 
 func get_missions_text() -> String:
     var lines := []

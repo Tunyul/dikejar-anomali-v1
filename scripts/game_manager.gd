@@ -11,6 +11,9 @@ var coin_collected_b: int = 0
 var last_score: int = 0
 var last_coins: int = 0
 var total_coins: int = 0
+var game_time_sec: float = 0.0
+var total_tiles_passed: int = 0
+var _tiles_passed_accum: float = 0.0
 
 @export var debug_info_enabled: bool = false
 @export var base_speed: float = 150.0
@@ -22,7 +25,7 @@ var total_coins: int = 0
 @export var watchdog_fps_threshold: int = 15
 @export var watchdog_hang_seconds: float = 1.5
 @export var watchdog_print_interval_sec: float = 2.0
-@export var perf_log_to_file: bool = true
+@export var perf_log_to_file: bool = false
 @export var tutorial_enabled: bool = true
 @export var super_easy_mode: bool = false
 var magnet_enabled: bool = false
@@ -54,16 +57,13 @@ var ads_shown_count: int = 0
 var continue_grace_timer: float = 0.0
 @onready var coin_hud_label: Label = $CanvasLayer/CoinHUD/Label
 @export var enemy_ramp_start_distance: float = 400.0
+@export var enemy_ramp_enabled: bool = true
 var _enemy_ramp_applied: bool = false
 
 func _ready() -> void:
+    debug_info_enabled = true
     if player:
         player.connect("game_over_signal", Callable(self, "on_player_game_over"))
-    if not InputMap.has_action("toggle_debug"):
-        InputMap.add_action("toggle_debug")
-        var ev := InputEventKey.new()
-        ev.physical_keycode = KEY_F3
-        InputMap.action_add_event("toggle_debug", ev)
     if not InputMap.has_action("verify_scenes"):
         InputMap.add_action("verify_scenes")
         var ev2 := InputEventKey.new()
@@ -80,7 +80,7 @@ func _ready() -> void:
         dl.z_index = 999
         dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
         dl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-        dl.add_theme_font_size_override("font_size", 14)
+        dl.add_theme_font_size_override("font_size", 18)
         dl.add_theme_color_override("font_color", Color(1, 1, 1, 1))
         dl.add_theme_constant_override("outline_size", 2)
         dl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
@@ -94,6 +94,7 @@ func _ready() -> void:
         dl.set_anchors_preset(Control.PRESET_TOP_LEFT)
         dl.offset_left = 8
         dl.offset_top = 8
+        dl.mouse_filter = Control.MOUSE_FILTER_IGNORE
         canvas.add_child(dl)
         debug_label = dl
     if canvas:
@@ -115,7 +116,17 @@ func _process(delta: float) -> void:
         var env_speed: float = base_speed
         if ground_a and ground_a.has_method("get_speed"):
             env_speed = float(ground_a.call("get_speed"))
+        var tile_w_px: float = 128.0
+        if _ga_layer != null and (_ga_layer as Node).has_method("get"):
+            var ts: TileSet = _ga_layer.get("tile_set") if _ga_layer.has_method("get") else null
+            if ts != null:
+                var cell_a: Vector2i = ts.tile_size
+                tile_w_px = float(cell_a.x) * (_ga_layer.get("scale").x if _ga_layer.has_method("get") else 1.0)
         distance += env_speed * delta
+        if tile_w_px > 0.0:
+            _tiles_passed_accum += env_speed * delta / tile_w_px
+            total_tiles_passed = int(_tiles_passed_accum)
+        game_time_sec += delta
         score = int(distance * score_per_meter)
         if coin_hud_label != null:
             coin_hud_label.text = str(coin_collected_a + coin_collected_b)
@@ -134,9 +145,6 @@ func _process(delta: float) -> void:
             if magnet_timer <= 0.0 and not super_easy_mode:
                 magnet_enabled = false
         _apply_enemy_ramp_if_needed()
-        if int(round(distance)) >= _next_coin_burst_distance:
-            _trigger_coin_burst()
-            _next_coin_burst_distance += 300
     if continue_grace_timer > 0.0:
         continue_grace_timer = max(continue_grace_timer - delta, 0.0)
         if player:
@@ -168,6 +176,11 @@ func _process(delta: float) -> void:
                 pstate = ("PLAYING" if player.current_state == player.PlayerState.FULL_MOVEMENT else "GAME_OVER")
             var ground_tiles_run: int = 0
             var ground_tiles_lr: String = "-"
+            var active_seg_name: String = "-"
+            var coins_a_count: int = 0
+            var coins_b_count: int = 0
+            var enemies_a_count: int = 0
+            var enemies_b_count: int = 0
             if player:
                 var active := _ga_layer
                 if _ga_layer != null and _gb_layer != null:
@@ -186,6 +199,28 @@ func _process(delta: float) -> void:
                     if active.has_method("get_platform_runs_lr_at_world_x"):
                         var lr: Vector2i = active.call("get_platform_runs_lr_at_world_x", player.global_position.x)
                         ground_tiles_lr = str(lr.x) + "/" + str(lr.y)
+                if ground_a != null:
+                    var ca := ground_a.get_node_or_null("CoinsA")
+                    var ea := ground_a.get_node_or_null("EnemiesA")
+                    if ca != null:
+                        coins_a_count = ca.get_child_count()
+                    if ea != null:
+                        enemies_a_count = ea.get_child_count()
+                if ground_b != null:
+                    var cb := ground_b.get_node_or_null("CoinsB")
+                    var eb := ground_b.get_node_or_null("EnemiesB")
+                    if cb != null:
+                        coins_b_count = cb.get_child_count()
+                    if eb != null:
+                        enemies_b_count = eb.get_child_count()
+                if ground_a != null and ground_a.has_method("get_active_segment_name"):
+                    var nm: String = ground_a.call("get_active_segment_name")
+                    if nm == "TileMapLayer":
+                        active_seg_name = "A"
+                    elif nm == "TileMapLayerB":
+                        active_seg_name = "B"
+                    else:
+                        active_seg_name = nm
             var env_move := false
             if ground_a and ground_a.has_method("get"):
                 env_move = bool(ground_a.get("movement_enabled"))
@@ -199,8 +234,11 @@ func _process(delta: float) -> void:
             var lines := []
             lines.append("Phase: " + phase_name + " | GameActive: " + str(game_active))
             lines.append("EnvSpeed: " + str(int(round(cur_speed))) + " / Target: " + str(int(round(tgt_speed))) + " | Base/Max: " + str(int(base_speed)) + "/" + str(int(max_speed)))
+            var tsec := int(round(game_time_sec))
+            lines.append("Layer: " + active_seg_name + " | TilesPassed: " + str(total_tiles_passed) + " | Time: " + str(tsec) + "s")
             lines.append("Distance: " + str(int(round(distance))) + " | Score: " + str(score))
             lines.append("Coins A/B: " + str(coin_collected_a) + "/" + str(coin_collected_b) + " | Last: " + str(last_coins) + " | Best: " + str(best_score))
+            lines.append("CoinsCnt A/B: " + str(coins_a_count) + "/" + str(coins_b_count) + " | EnemiesCnt A/B: " + str(enemies_a_count) + "/" + str(enemies_b_count))
             lines.append("Player X/Y: " + str(int(round(ppos.x))) + "/" + str(int(round(ppos.y))) + " | Vel X/Y: " + str(int(round(pvel.x))) + "/" + str(int(round(pvel.y))))
             lines.append("Grounded: " + str(grounded) + " | State: " + pstate + " | EnvMove: " + str(env_move))
             lines.append("Ground Tiles Run: " + str(ground_tiles_run) + " | L/R: " + ground_tiles_lr)
@@ -377,26 +415,7 @@ func activate_magnet(d: float) -> void:
     magnet_enabled = true
 
 func _apply_enemy_ramp_if_needed() -> void:
-    if _enemy_ramp_applied:
-        return
-    if distance < enemy_ramp_start_distance:
-        return
-    var layers: Array = []
-    if _ga_layer != null:
-        layers.append(_ga_layer)
-    if _gb_layer != null:
-        layers.append(_gb_layer)
-    for tl in layers:
-        if tl != null:
-            tl.set("enemy_spawn_enabled", true)
-            tl.set("enemy_groups_min", 1)
-            tl.set("enemy_groups_max", 1)
-            tl.set("enemy_spacing_tiles_min", 14)
-            tl.set("enemy_spacing_tiles_max", 18)
-            tl.set("enemy_min_platform_tiles", 10)
-            tl.set("enemy_min_right_run_tiles", 6)
-            tl.set("enemy_min_left_run_tiles", 6)
-    _enemy_ramp_applied = true
+    return
 
 func set_playing_phase() -> void:
     phase = Phase.PLAYING
@@ -405,6 +424,11 @@ func set_playing_phase() -> void:
     score = 0
     coin_collected_a = 0
     coin_collected_b = 0
+    game_time_sec = 0.0
+    _tiles_passed_accum = 0.0
+    total_tiles_passed = 0
+    _next_coin_burst_distance = 300
+    _apply_spawn_safety_limits()
     if ground_a and ground_a.has_method("set_speed_limits"):
         ground_a.set_speed_limits(0.0, max_speed)
     if ground_b and ground_b.has_method("set_speed_limits"):
@@ -470,6 +494,10 @@ func on_player_game_over(_cause: String) -> void:
     last_score = score
     last_coins = coin_collected_a + coin_collected_b
     total_coins += last_coins
+    if missions_manager and missions_manager.has_method("update_distance"):
+        missions_manager.update_distance(distance)
+    if missions_manager and missions_manager.has_method("add_coins") and last_coins > 0:
+        missions_manager.add_coins(last_coins)
     if score > best_score:
         best_score = score
     _save_progress()
@@ -593,6 +621,9 @@ func _load_progress() -> void:
 
 func _save_progress() -> void:
     var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK:
+        cfg = ConfigFile.new()
     cfg.set_value("progress", "best_score", best_score)
     cfg.set_value("progress", "last_score", last_score)
     cfg.set_value("progress", "last_coins", last_coins)
@@ -605,9 +636,7 @@ func _save_progress() -> void:
 
 func _unhandled_input(event) -> void:
     if event is InputEventKey and event.pressed and not event.echo:
-        if Input.is_action_just_pressed("toggle_debug") or event.keycode == KEY_F3:
-            debug_info_enabled = not debug_info_enabled
-        elif Input.is_action_just_pressed("verify_scenes") or event.keycode == KEY_F6:
+        if Input.is_action_just_pressed("verify_scenes") or event.keycode == KEY_F6:
             call_deferred("_verify_player_scenes")
         elif Input.is_action_pressed("ui_cancel"):
             if game_active:
@@ -622,24 +651,31 @@ func on_coin_collected(segment: String) -> void:
         coin_collected_b += 1
     if missions_manager and missions_manager.has_method("add_coins"):
         missions_manager.add_coins(1)
-func _input(event) -> void:
-    if event is InputEventKey and event.pressed and not event.echo:
-        if Input.is_action_just_pressed("toggle_debug") or event.keycode == KEY_F3:
-            debug_info_enabled = not debug_info_enabled
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return
     set_playing_phase()
 
-func _append_perf_log(line: String) -> void:
-    var f := FileAccess.open("user://perf.log", FileAccess.READ_WRITE)
-    if f:
-        f.seek(f.get_length())
-        f.store_string(line + "\n")
+func _append_perf_log(_line: String) -> void:
+    pass
 
 
 @onready var missions_manager: Node = get_node_or_null("MissionsManager")
 var _next_coin_burst_distance: int = 300
+func _apply_spawn_safety_limits() -> void:
+    var layers: Array = []
+    if _ga_layer != null:
+        layers.append(_ga_layer)
+    if _gb_layer != null:
+        layers.append(_gb_layer)
+    for tl in layers:
+        if tl != null:
+            tl.set("coin_max_children", 40)
+            tl.set("coin_spawn_batch_limit", 4)
+            tl.set("enemy_max_children", 24)
+            tl.set("enemy_spawn_batch_limit", 4)
+            tl.set("spawn_update_interval_sec", 0.7)
+            tl.set("spawn_min_fps", 45)
 func _refresh_missions_label() -> void:
     if not canvas:
         return
