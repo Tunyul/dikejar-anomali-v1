@@ -579,11 +579,11 @@ func _is_environment_moving() -> bool:
     for n in nodes:
         var me := false
         if n and n.has_method("get"):
-            me = bool(n.get("movement_enabled"))
+            me = n.get("movement_enabled")
         if me:
             return true
     if parallax_background and parallax_background.has_method("get"):
-        var pm := bool(parallax_background.get("movement_enabled"))
+        var pm: bool = parallax_background.get("movement_enabled")
         if pm:
             return true
     return _env_move_enabled

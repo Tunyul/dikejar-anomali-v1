@@ -1,4 +1,4 @@
-[gd_scene load_steps=71 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene load_steps=85 format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -17,41 +17,94 @@
 [ext_resource type="PackedScene" uid="uid://b8il18k1d04wg" path="res://scenes/player.tscn" id="20"]
 [ext_resource type="Script" uid="uid://baxidkq4mikew" path="res://scripts/game_manager.gd" id="21"]
 [ext_resource type="Texture2D" uid="uid://dqmmglr4yqrso" path="res://assets/enemy/sprite-256px-36.png" id="23_ebg2g"]
-[ext_resource type="PackedScene" uid="uid://vwgvkrfenbcg" path="res://scenes/Ground.tscn" id="25"]
 [ext_resource type="Script" uid="uid://tarkx6h70bep" path="res://scripts/anomaly_chaser.gd" id="27"]
 [ext_resource type="Script" uid="uid://cabvraniau87d" path="res://scripts/version_label.gd" id="28"]
 [ext_resource type="Texture2D" uid="uid://488lc5kv6uhg" path="res://assets/tombol/tombol_jump.png" id="29"]
 [ext_resource type="Texture2D" uid="uid://vonvne5tbd6f" path="res://assets/tombol/tombol_atk.png" id="30"]
 [ext_resource type="Script" uid="uid://bqtf5uji02hgv" path="res://scripts/PauseMenu.gd" id="31"]
-[ext_resource type="Script" uid="uid://djnoqwvrfrwnr" path="res://scripts/TutorialOverlay.gd" id="33"]
 [ext_resource type="Script" uid="uid://vy3s5tmkqslw" path="res://scripts/GameOverMenu.gd" id="34"]
 [ext_resource type="Script" uid="uid://cvivocoxcy2xo" path="res://scripts/AdManager.gd" id="35"]
 [ext_resource type="Script" uid="uid://dhacrgdwndgfc" path="res://scripts/MissionsManager.gd" id="36"]
 [ext_resource type="Texture2D" uid="uid://dwk3durbly5we" path="res://assets/generated/svg/coin_gold.svg" id="38"]
-[ext_resource type="Texture2D" uid="uid://ccs65yudrkhjh" path="res://assets/generated/svg/heart.svg" id="39"]
-[ext_resource type="PackedScene" uid="uid://ddpqyikpv4h24" path="res://scenes/Coin.tscn" id="56"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 1.png" id="40"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 2.png" id="41"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 3.png" id="42"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 4.png" id="43"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 5.png" id="44"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 6.png" id="45"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 7.png" id="46"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 8.png" id="47"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 9.png" id="48"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 10.png" id="49"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 11.png" id="50"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 12.png" id="51"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 13.png" id="52"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 14.png" id="53"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 15.png" id="54"]
-[ext_resource type="Texture2D" path="res://assets/Coin Animation/png/2x/image 16.png" id="55"]
+[ext_resource type="Texture2D" uid="uid://cv2m8ao6ea8dm" path="res://assets/Coin Animation/png/2x/image 1.png" id="40"]
+[ext_resource type="Texture2D" uid="uid://dn3ku63liodkk" path="res://assets/Coin Animation/png/2x/image 2.png" id="41"]
+[ext_resource type="Texture2D" uid="uid://cfrlo0ws5whgv" path="res://assets/Coin Animation/png/2x/image 3.png" id="42"]
+[ext_resource type="Texture2D" uid="uid://cifwv46e4gaeg" path="res://assets/Coin Animation/png/2x/image 4.png" id="43"]
+[ext_resource type="Texture2D" uid="uid://b0x6c8m348jl5" path="res://assets/Coin Animation/png/2x/image 5.png" id="44"]
+[ext_resource type="Texture2D" uid="uid://cw4hfsbbwkngd" path="res://assets/Coin Animation/png/2x/image 6.png" id="45"]
+[ext_resource type="Texture2D" uid="uid://bjukd7xpvam0" path="res://assets/Coin Animation/png/2x/image 7.png" id="46"]
+[ext_resource type="Texture2D" uid="uid://ce0mg72tyvouo" path="res://assets/Coin Animation/png/2x/image 8.png" id="47"]
+[ext_resource type="Texture2D" uid="uid://chpvmfc6irdbt" path="res://assets/Coin Animation/png/2x/image 9.png" id="48"]
+[ext_resource type="Texture2D" uid="uid://bk5mt3hw3feq2" path="res://assets/Coin Animation/png/2x/image 10.png" id="49"]
+[ext_resource type="Texture2D" uid="uid://csrq1iqliyc7n" path="res://assets/Coin Animation/png/2x/image 11.png" id="50"]
+[ext_resource type="Texture2D" uid="uid://ckcpojxdc3ueg" path="res://assets/Coin Animation/png/2x/image 12.png" id="51"]
+[ext_resource type="Texture2D" uid="uid://cn3ublc236wf5" path="res://assets/Coin Animation/png/2x/image 13.png" id="52"]
+[ext_resource type="Texture2D" uid="uid://iuphyvl5bg2k" path="res://assets/Coin Animation/png/2x/image 14.png" id="53"]
+[ext_resource type="Texture2D" uid="uid://0c72kan61tye" path="res://assets/Coin Animation/png/2x/image 15.png" id="54"]
+[ext_resource type="Texture2D" uid="uid://dagmpexuijtgs" path="res://assets/Coin Animation/png/2x/image 16.png" id="55"]
+[ext_resource type="PackedScene" uid="uid://bdwwn7sxcph1g" path="res://scenes/Ground.tscn" id="56"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jump"]
 radius = 48.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
 radius = 46.0
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_coin_hud"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("40")
+}, {
+"duration": 1.0,
+"texture": ExtResource("41")
+}, {
+"duration": 1.0,
+"texture": ExtResource("42")
+}, {
+"duration": 1.0,
+"texture": ExtResource("43")
+}, {
+"duration": 1.0,
+"texture": ExtResource("44")
+}, {
+"duration": 1.0,
+"texture": ExtResource("45")
+}, {
+"duration": 1.0,
+"texture": ExtResource("46")
+}, {
+"duration": 1.0,
+"texture": ExtResource("47")
+}, {
+"duration": 1.0,
+"texture": ExtResource("48")
+}, {
+"duration": 1.0,
+"texture": ExtResource("49")
+}, {
+"duration": 1.0,
+"texture": ExtResource("50")
+}, {
+"duration": 1.0,
+"texture": ExtResource("51")
+}, {
+"duration": 1.0,
+"texture": ExtResource("52")
+}, {
+"duration": 1.0,
+"texture": ExtResource("53")
+}, {
+"duration": 1.0,
+"texture": ExtResource("54")
+}, {
+"duration": 1.0,
+"texture": ExtResource("55")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 12.0
+}]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2ofn6"]
 atlas = ExtResource("23_ebg2g")
@@ -318,30 +371,7 @@ animations = [{
 "speed": 12.0
 }]
 
-[sub_resource type="SpriteFrames" id="SpriteFrames_coin_hud"]
-animations = [{
-"frames": [{"duration": 1.0, "texture": ExtResource("40")},
-{"duration": 1.0, "texture": ExtResource("41")},
-{"duration": 1.0, "texture": ExtResource("42")},
-{"duration": 1.0, "texture": ExtResource("43")},
-{"duration": 1.0, "texture": ExtResource("44")},
-{"duration": 1.0, "texture": ExtResource("45")},
-{"duration": 1.0, "texture": ExtResource("46")},
-{"duration": 1.0, "texture": ExtResource("47")},
-{"duration": 1.0, "texture": ExtResource("48")},
-{"duration": 1.0, "texture": ExtResource("49")},
-{"duration": 1.0, "texture": ExtResource("50")},
-{"duration": 1.0, "texture": ExtResource("51")},
-{"duration": 1.0, "texture": ExtResource("52")},
-{"duration": 1.0, "texture": ExtResource("53")},
-{"duration": 1.0, "texture": ExtResource("54")},
-{"duration": 1.0, "texture": ExtResource("55")}],
-"loop": true,
-"name": &"spin",
-"speed": 12.0
-}]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gsxep"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5grtr"]
 size = Vector2(64, 64)
 
 [node name="Main" type="Node2D"]
@@ -662,57 +692,6 @@ value = 0.8
 layout_mode = 2
 text = "Misi:"
 
-[node name="TutorialOverlay" type="Control" parent="CanvasLayer"]
-layout_mode = 3
-anchors_preset = 0
-offset_left = 128.0
-offset_top = 64.0
-offset_right = 896.0
-offset_bottom = 512.0
-script = ExtResource("33")
-
-[node name="Panel" type="ColorRect" parent="CanvasLayer/TutorialOverlay"]
-layout_mode = 0
-offset_right = 768.0
-offset_bottom = 448.0
-color = Color(0, 0, 0, 0.6)
-
-[node name="Title" type="Label" parent="CanvasLayer/TutorialOverlay"]
-layout_mode = 0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 744.0
-offset_bottom = 64.0
-text = "Cara Main"
-
-[node name="Desc" type="Label" parent="CanvasLayer/TutorialOverlay"]
-layout_mode = 0
-offset_left = 24.0
-offset_top = 80.0
-offset_right = 744.0
-offset_bottom = 200.0
-text = "Tekan tombol Jump untuk melompat. Gunakan Attack untuk aksi."
-
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/TutorialOverlay"]
-layout_mode = 0
-offset_left = 24.0
-offset_top = 240.0
-offset_right = 744.0
-offset_bottom = 400.0
-
-[node name="OKButton" type="Button" parent="CanvasLayer/TutorialOverlay/VBox"]
-layout_mode = 2
-text = "Saya Mengerti"
-
-[node name="HintIcon" type="TextureRect" parent="CanvasLayer/TutorialOverlay"]
-layout_mode = 0
-offset_left = 720.0
-offset_top = 72.0
-offset_right = 760.0
-offset_bottom = 112.0
-texture = ExtResource("39")
-stretch_mode = 1
-
 [node name="GameOverMenu" type="Control" parent="CanvasLayer"]
 layout_mode = 3
 anchors_preset = 0
@@ -773,12 +752,17 @@ theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "0"
 
 [node name="CoinIconAnim" type="AnimatedSprite2D" parent="CanvasLayer"]
+process_mode = 3
 z_index = 99
 position = Vector2(24, 68)
 scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_coin_hud")
 animation = &"spin"
-process_mode = 3
+
+[node name="Ground" parent="." instance=ExtResource("56")]
+z_index = 5
+min_scroll_speed = 250.0
+debug_color_a = Color(0.7088994, 0, 0.12489515, 1)
 
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
@@ -789,19 +773,9 @@ jump_buffer_time = 0.9
 gravity = 1600.0
 max_fall_speed = 1000.0
 recenter_speed_x = 50.0
-preserve_editor_transform = false
-collision_size = Vector2(42, 72)
-lock_x_during_full_movement = false
-
-[node name="Ground" parent="." instance=ExtResource("25")]
-z_index = 5
-movement_enabled = true
-scroll_speed = 34.0
-acceleration = 24.0
-use_acceleration = true
-min_scroll_speed = 250.0
-debug_color_a = Color(0.7088994, 0, 0.12489515, 1)
-debug_color_b = Color(1, 0.95, 0, 1)
+preserve_editor_transform = true
+collision_size = Vector2(80, 124)
+lock_x_during_full_movement = true
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(512, 288)
@@ -823,10 +797,10 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.22998743
+frame_progress = 0.963709
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser"]
-shape = SubResource("RectangleShape2D_gsxep")
+shape = SubResource("RectangleShape2D_5grtr")
 
 [node name="GroundRay" type="RayCast2D" parent="AnomalyChaser"]
 target_position = Vector2(0, 200)

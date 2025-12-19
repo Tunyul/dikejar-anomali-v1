@@ -115,8 +115,8 @@
   - Engine membuka `project.godot` (Godot 4.5, viewport 1024x576, renderer `mobile`).
   - Scene awal: `scenes/MainMenu.tscn` dengan root `MainMenu` (`scripts/MainMenu.gd`).
 - Main menu `_ready()`:
-  - Connect tombol: `PlayButton`, `QuitButton`, `SuperEasyCheck`.
-  - Baca `user://save.cfg` → tampilkan `best_score`, `total_coins`, status `super_easy_mode`.
+	- Connect tombol: `PlayButton`, `QuitButton`.
+	- Baca `user://save.cfg` → tampilkan `best_score` dan `total_coins`.
   - Setup `Ground` (instance `scenes/Ground.tscn`) dalam **title mode**:
     - Panggil `set_title_mode(true)` → bersihkan koin/musuh, paksa ground flat.
     - Panggil `generate_random()` → generate segmen awal untuk tampilan menu.
@@ -138,9 +138,9 @@
   - `BGM`, `SFXJump` — audio.
   - `AdManager`, `MissionsManager` — sistem iklan & misi.
 - `GameManager._ready()` melakukan:
-  - Connect `player.game_over_signal` ke `on_player_game_over`.
-  - Tambah input `toggle_debug` (F3) dan `verify_scenes` (F6) jika belum ada.
-  - `_load_progress()` dari `user://save.cfg` untuk `best_score`, `last_score`, `total_coins`, `super_easy_mode`, setting audio.
+	- Connect `player.game_over_signal` ke `on_player_game_over`.
+	- Tambah input `toggle_debug` (F3) dan `verify_scenes` (F6) jika belum ada.
+	- `_load_progress()` dari `user://save.cfg` untuk `best_score`, `last_score`, `total_coins`, dan setting audio.
   - `call_deferred("_start_play_phase")` untuk mulai fase bermain.
   - Opsi debug: jika `scene_verify_on_start` aktif dan build debug, jalankan `_verify_player_scenes()`.
   - Buat `DebugInfoLabel` di CanvasLayer jika debug diaktifkan.
@@ -225,22 +225,14 @@
 ### 1. Profil Kesulitan (Difficulty Profile)
 
 - Bungkus parameter berikut ke dalam satu profil kesulitan:
-  - Kecepatan: `base_speed`, `max_speed`, `speed_gain_per_meter`.
-  - Musuh: `enemy_spawn_enabled`, `enemy_spacing_tiles_min/max`, `enemy_groups_min/max`, `enemy_min_platform_tiles`, dsb.
-  - Koin: densitas spawn, `coin_wave_enabled`, `coin_circle_enabled`, jarak aman terhadap musuh.
+	- Kecepatan: `base_speed`, `max_speed`, `speed_gain_per_meter`.
+	- Musuh: `enemy_spawn_enabled`, `enemy_spacing_tiles_min/max`, `enemy_groups_min/max`, `enemy_min_platform_tiles`, dsb.
+	- Koin: densitas spawn, `coin_wave_enabled`, `coin_circle_enabled`, jarak aman terhadap musuh.
 - Implementasi:
-  - Tambah fungsi `apply_difficulty_profile(profile: Dictionary)` di `game_manager.gd` dan `TileMapGenerator.gd`.
-  - Pilih profil berdasarkan `super_easy_mode`, jarak tempuh, atau progres pemain.
+	- Tambah fungsi `apply_difficulty_profile(profile: Dictionary)` di `game_manager.gd` dan `TileMapGenerator.gd`.
+	- Pilih profil berdasarkan jarak tempuh atau progres pemain.
 
-### 2. Super Easy Mode yang Konsisten
-
-- Saat `super_easy_mode` aktif:
-  - Kurangi intensitas musuh (kurangi `enemy_spawn_enabled`, tambah `enemy_spawn_margin_tiles`, longgarkan `enemy_spacing_tiles_min/max`).
-  - Tingkatkan reward koin (aktifkan `coin_wave_enabled`, naikkan `coin_circle_chance`).
-  - Pertahankan `magnet_enabled` lebih lama atau tingkatkan frekuensi power-up magnet.
-- Dokumentasikan profil ini di tabel kecil agar mudah di-tune.
-
-### 3. Power-Up Magnet yang Terlihat Jelas
+### 2. Power-Up Magnet yang Terlihat Jelas
 
 - Gunakan variabel yang sudah ada (`magnet_enabled`, `magnet_timer`, `powerup_magnet_duration_sec`).
 - Tambah elemen HUD:
@@ -248,7 +240,7 @@
   - Efek visual di player (glow atau partikel) selama durasi magnet.
 - Di kode, pastikan spawn `MagnetPowerup.tscn` menggunakan sistem spawn generator yang sudah ada.
 
-### 4. Flow Continue (Rewarded Ads)
+### 3. Flow Continue (Rewarded Ads)
 
 - Perkuat alur `try_rewarded_continue()`:
   - Pisahkan tanggung jawab:
@@ -257,14 +249,14 @@
   - Gunakan `continue_grace_timer` untuk membuat periode kebal singkat setelah continue.
 - Tambahkan penjelasan singkat di GameOverMenu tentang apa yang didapat pemain jika memilih Continue.
 
-### 5. Tutorial & Onboarding
+### 4. Tutorial & Onboarding
 
 - Manfaatkan `tutorial_enabled` dan `tutorial_shown`:
   - Run pertama: tampilkan overlay "Tap untuk lompat" dan "Hindari musuh/obstacle".
   - Matikan spawn musuh di beberapa segmen awal dengan mengubah parameter generator.
 - Simpan `tutorial_shown` di `save.cfg` agar tutorial hanya tampil sekali, kecuali di-reset.
 
-### 6. Biome / Dunia Berbeda
+### 5. Biome / Dunia Berbeda
 
 - Gunakan kemampuan `TileMapGenerator` dan `Ground.tscn` untuk beberapa tema visual:
   - Misal: Spring, City, Night.
@@ -274,11 +266,10 @@
   - BGM dan warna background disesuaikan.
 - Pilih biome berdasarkan jarak atau progres pemain.
 
-### 7. Tool Internal & QA
+### 6. Tool Internal & QA
 
 - Sempurnakan `_verify_player_scenes()` menjadi tool QA:
   - Cek semua scene `.tscn` yang mengandung `Player`.
   - Pastikan selalu ada `AnimatedSprite2D` + `CollisionShape2D` dengan ukuran minimal.
   - Tambah check untuk enemy/obstacle standar (hitbox, layer/mask benar).
 - Jalankan tool ini sebelum build untuk mencegah scene rusak.
-

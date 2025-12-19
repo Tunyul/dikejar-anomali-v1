@@ -1,3 +1,2 @@
 res://scenes/Ground.tscn
-res://scripts/GroundController.gd
-res://scripts/TileMapGenerator.gd
+res://scripts/infinite_ground.gd

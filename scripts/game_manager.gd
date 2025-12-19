@@ -27,7 +27,6 @@ var _tiles_passed_accum: float = 0.0
 @export var watchdog_print_interval_sec: float = 2.0
 @export var perf_log_to_file: bool = false
 @export var tutorial_enabled: bool = true
-@export var super_easy_mode: bool = false
 var magnet_enabled: bool = false
 
 @onready var player: Player = $Player
@@ -58,7 +57,6 @@ var continue_grace_timer: float = 0.0
 @onready var coin_hud_label: Label = $CanvasLayer/CoinHUD/Label
 @export var enemy_ramp_start_distance: float = 400.0
 @export var enemy_ramp_enabled: bool = true
-var _enemy_ramp_applied: bool = false
 
 func _ready() -> void:
     debug_info_enabled = true
@@ -105,8 +103,10 @@ func _ready() -> void:
         if gom:
             gom.visible = false
     if ground_a != null:
-        _ga_layer = ground_a.get_node_or_null("TileMapLayer")
-    if ground_b != null:
+        _ga_layer = ground_a.get_node_or_null("TileMapLayerA")
+        if _gb_layer == null:
+            _gb_layer = ground_a.get_node_or_null("TileMapLayerB")
+    if ground_b != null and _gb_layer == null:
         _gb_layer = ground_b.get_node_or_null("TileMapLayerB")
 
     _setup_tutorial_overlay()
@@ -142,7 +142,7 @@ func _process(delta: float) -> void:
             player.call("set_run_anim_factor", anim_factor)
         if magnet_timer > 0.0:
             magnet_timer = max(magnet_timer - delta, 0.0)
-            if magnet_timer <= 0.0 and not super_easy_mode:
+            if magnet_timer <= 0.0:
                 magnet_enabled = false
         _apply_enemy_ramp_if_needed()
     if continue_grace_timer > 0.0:
@@ -185,9 +185,11 @@ func _process(delta: float) -> void:
                 var active := _ga_layer
                 if _ga_layer != null and _gb_layer != null:
                     var cell_a: Vector2i = _ga_layer.tile_set.tile_size if _ga_layer.tile_set != null else Vector2i(128, 128)
-                    var seg_a: float = float(_ga_layer.width) * float(cell_a.x) * _ga_layer.scale.x
+                    var used_a: Rect2i = _ga_layer.get_used_rect()
+                    var seg_a: float = float(used_a.size.x) * float(cell_a.x) * _ga_layer.scale.x
                     var cell_b: Vector2i = _gb_layer.tile_set.tile_size if _gb_layer.tile_set != null else Vector2i(128, 128)
-                    var seg_b: float = float(_gb_layer.width) * float(cell_b.x) * _gb_layer.scale.x
+                    var used_b: Rect2i = _gb_layer.get_used_rect()
+                    var seg_b: float = float(used_b.size.x) * float(cell_b.x) * _gb_layer.scale.x
                     var px: float = player.global_position.x
                     var in_a: bool = (px >= _ga_layer.position.x) and (px <= _ga_layer.position.x + seg_a)
                     var in_b: bool = (px >= _gb_layer.position.x) and (px <= _gb_layer.position.x + seg_b)
@@ -215,7 +217,7 @@ func _process(delta: float) -> void:
                         enemies_b_count = eb.get_child_count()
                 if ground_a != null and ground_a.has_method("get_active_segment_name"):
                     var nm: String = ground_a.call("get_active_segment_name")
-                    if nm == "TileMapLayer":
+                    if nm == "TileMapLayerA":
                         active_seg_name = "A"
                     elif nm == "TileMapLayerB":
                         active_seg_name = "B"
@@ -615,7 +617,6 @@ func _load_progress() -> void:
         total_coins = int(cfg.get_value("progress", "total_coins", 0))
 
         tutorial_shown = bool(cfg.get_value("progress", "tutorial_shown", false))
-        super_easy_mode = bool(cfg.get_value("progress", "super_easy_mode", false))
         bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
         sfx_muted = bool(cfg.get_value("settings", "sfx_muted", false))
 
@@ -629,7 +630,6 @@ func _save_progress() -> void:
     cfg.set_value("progress", "last_coins", last_coins)
     cfg.set_value("progress", "total_coins", total_coins)
     cfg.set_value("progress", "tutorial_shown", tutorial_shown)
-    cfg.set_value("progress", "super_easy_mode", super_easy_mode)
     cfg.set_value("settings", "bgm_muted", bgm_muted)
     cfg.set_value("settings", "sfx_muted", sfx_muted)
     cfg.save("user://save.cfg")
