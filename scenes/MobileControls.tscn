@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://bj0vpeb24e585"]
+
+[ext_resource type="Texture2D" uid="uid://cjnrkfpjy8lru" path="res://assets/tombol/tombol_jump_96.png" id="1_c6u6f"]
+[ext_resource type="Texture2D" uid="uid://34a561mugc7b" path="res://assets/tombol/tombol_atk_96.png" id="2_hon3h"]
+[ext_resource type="Shape2D" uid="uid://cssv5cq62heo5" path="res://shape/tombol_circle.tres" id="2_oueyw"]
+
+[node name="MobileControls" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="JumpButton" type="TouchScreenButton" parent="."]
+z_index = 1
+position = Vector2(910, 445)
+texture_normal = ExtResource("1_c6u6f")
+shape = ExtResource("2_oueyw")
+shape_centered = true
+shape_visible = true
+action = "jump"
+
+[node name="AttackButton" type="TouchScreenButton" parent="."]
+position = Vector2(800, 460)
+texture_normal = ExtResource("2_hon3h")
+shape = ExtResource("2_oueyw")
+shape_centered = true
+shape_visible = true
+action = "attack"
+

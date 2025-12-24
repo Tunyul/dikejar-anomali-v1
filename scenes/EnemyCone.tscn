@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://dun051qtppput" path="res://assets/enemy/enemy_cone.png" id="1"]
 [ext_resource type="Script" uid="uid://kyvx8ta7pabe" path="res://scripts/enemy_block.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/enemy_hitbox.gd" id="3"]
+[ext_resource type="Script" uid="uid://c7kctfbimhmtu" path="res://scripts/enemy_hitbox.gd" id="3"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_f470c"]
 atlas = ExtResource("1")
@@ -129,6 +129,9 @@ size = Vector2(64, 64)
 
 [node name="EnemyCone" type="Node2D"]
 script = ExtResource("2")
+hitbox_size = Vector2(64, 64)
+hitbox_offset = Vector2(0, -32)
+sprite_offset_y = -28.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 z_index = 95

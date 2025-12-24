@@ -19,6 +19,7 @@ class_name Player
 @export var gap_fall_grace_time: float = 0.25
 @export var lock_environment_speed_to_player: bool = true
 @export var terrain_paths: Array[NodePath] = []
+@export var attack_duration: float = 0.3
 
 # ===== PERFORMANCE SETTINGS =====
 @export var position_adjustment_speed: float = 3.0
@@ -44,6 +45,7 @@ class_name Player
 @export var entry_stop_y: float = 444.0
 @export var entry_duration_sec: float = 1.5
 @export var entry_start_offset_x: float = -800.0
+@export var enable_entry_sequence: bool = true
 @export var front_check_distance: float = 24.0
 @export var front_block_margin: float = 2.0
 @export var front_probe_width: float = 2.0
@@ -61,6 +63,7 @@ class_name Player
 
 # ===== STATE MANAGEMENT =====
 enum PlayerState {
+    ENTRY,
     FULL_MOVEMENT,
     GAME_OVER
 }
@@ -76,8 +79,13 @@ var remaining_air_jumps: int = 0
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
 var jump_requested: bool = false
+var attack_active: bool = false
+var attack_timer: float = 0.0
+var attack_held: bool = false
 
 # ===== POSITION MANAGEMENT =====
+var _entry_start_position: Vector2 = Vector2.ZERO
+
 # ===== REFERENCES =====
 var game_manager: Node
 var parallax_background: Node
@@ -85,6 +93,7 @@ var terrain_nodes: Array = []
 var main_camera: Camera2D
 var animated_sprite: AnimatedSprite2D
 var ground_ray: RayCast2D
+var attack_hitbox: Area2D
 
 # ===== SIGNALS =====
 signal game_over_signal(cause: String)
@@ -101,6 +110,15 @@ var countdown_active: bool = false
 var _anim_scales: Dictionary = {}
 var _anim_offsets: Dictionary = {}
 var _run_anim_factor: float = 1.0
+
+func request_jump() -> void:
+    jump_buffer_timer = jump_buffer_time
+    jump_requested = true
+
+func request_attack() -> void:
+    if is_on_floor() and not attack_active:
+        attack_active = true
+        attack_timer = attack_duration
 
 func _left_bound_world() -> float:
     var lb: float = 0.0
@@ -135,19 +153,17 @@ func match_sprite_to_collision_size() -> void:
         print("Sprite resized: orig_run=", run_size, " orig_jump=", jump_size, " collision=", shape_size, " scale=", final_scale)
 
 func _ready() -> void:
-    if not InputMap.has_action("jump"):
-        InputMap.add_action("jump")
-        var ev := InputEventKey.new()
-        ev.physical_keycode = KEY_SPACE
-        InputMap.action_add_event("jump", ev)
-        var mev := InputEventMouseButton.new()
-        mev.button_index = MOUSE_BUTTON_LEFT
-        InputMap.action_add_event("jump", mev)
-    if not InputMap.has_action("attack"):
-        InputMap.add_action("attack")
-        var ev_att := InputEventKey.new()
-        ev_att.physical_keycode = KEY_K
-        InputMap.action_add_event("attack", ev_att)
+    if OS.is_debug_build():
+        if not InputMap.has_action("jump"):
+            InputMap.add_action("jump")
+            var ev := InputEventKey.new()
+            ev.physical_keycode = KEY_SPACE
+            InputMap.action_add_event("jump", ev)
+        if not InputMap.has_action("attack"):
+            InputMap.add_action("attack")
+            var ev_att := InputEventKey.new()
+            ev_att.physical_keycode = KEY_K
+            InputMap.action_add_event("attack", ev_att)
     if not InputMap.has_action("toggle_lock_x"):
         InputMap.add_action("toggle_lock_x")
         var ev2 := InputEventKey.new()
@@ -163,7 +179,7 @@ func _ready() -> void:
     find_and_cache_references()
     if entry_stop_x <= 0.0:
         entry_stop_x = 280.0
-    if enable_entry_stop:
+    if enable_entry_stop and not enable_entry_sequence:
         _set_to_entry_stop()
     start_initial_state_sequence()
     remaining_air_jumps = air_jumps
@@ -172,6 +188,7 @@ func initialize_player() -> void:
     visible = true
     set_process(true)
     set_physics_process(true)
+    set_process_input(true)
 
     # Initialize collision shape size and position
     var collision_shape = get_node_or_null("CollisionShape2D")
@@ -209,6 +226,12 @@ func initialize_player() -> void:
     if ground_ray:
         ground_ray.collision_mask = 1
         ground_ray.enabled = true
+    attack_hitbox = get_node_or_null("AttackHitbox") as Area2D
+    if attack_hitbox:
+        attack_hitbox.monitoring = false
+        attack_hitbox.monitorable = false
+        if not attack_hitbox.is_connected("area_entered", Callable(self, "_on_attack_hitbox_area_entered")):
+            attack_hitbox.area_entered.connect(Callable(self, "_on_attack_hitbox_area_entered"))
     if animated_sprite:
         log_animation_scales()
 
@@ -258,7 +281,14 @@ func _setup_camera_limits() -> void:
 
 
 func start_initial_state_sequence() -> void:
-    set_state(PlayerState.FULL_MOVEMENT)
+    if enable_entry_sequence:
+        start_entry_sequence()
+    else:
+        set_state(PlayerState.FULL_MOVEMENT)
+
+
+func start_entry_sequence() -> void:
+    set_state(PlayerState.ENTRY)
 
 
 
@@ -275,10 +305,20 @@ func start_initial_state_sequence() -> void:
 
 func _physics_process(delta: float) -> void:
     match current_state:
+        PlayerState.ENTRY:
+            handle_entry_state(delta)
         PlayerState.FULL_MOVEMENT:
             handle_full_movement_state(delta)
         PlayerState.GAME_OVER:
-            handle_game_over_state(delta)
+             handle_game_over_state(delta)
+    if attack_active:
+        attack_timer = max(attack_timer - delta, 0.0)
+        if attack_timer <= 0.0:
+            if attack_held and current_state == PlayerState.FULL_MOVEMENT and is_on_floor():
+                attack_timer = attack_duration
+            else:
+                attack_active = false
+    _update_attack_hitbox()
     apply_physics(delta)
     check_game_over_conditions()
     sync_environment_speed_if_needed()
@@ -289,9 +329,6 @@ func handle_full_movement_state(_delta: float) -> void:
     state_timer += _delta
     # Player tetap di posisi X=200, terrain yang bergerak
     velocity.x = 0  # Player tidak bergerak horizontal
-    if lock_x_during_full_movement:
-        global_position = Vector2(entry_stop_x, global_position.y)
-        position = Vector2(entry_stop_x, position.y)
     # Stabilkan posisi Y tepat setelah transisi agar tidak terjadi penyesuaian mendadak
     if state_timer < 0.2:
         position.y = entry_stop_y
@@ -307,22 +344,35 @@ func handle_full_movement_state(_delta: float) -> void:
 
     # Handle horizontal movement - freeze saat loncat jika diaktifkan
     if freeze_x_on_jump and not is_on_floor():
-        # Saat di udara, kurangi/diamkan gerakan horizontal
         velocity.x = velocity.x * (1.0 - jump_horizontal_damping)
-
-    # Handle jump input
-    if Input.is_action_just_pressed("jump"):
-        jump_buffer_timer = jump_buffer_time
-        jump_requested = true
-
-    if Input.is_action_just_pressed("attack"):
-        if enable_debug_logging:
-            print("Attack pressed")
 
 
     # Control animation based on state
     update_animation_state()
     # SKIP maintain_screen_position - player harus tetap di X=200
+
+
+func handle_entry_state(_delta: float) -> void:
+    state_timer += _delta
+    if _entry_start_position == Vector2.ZERO:
+        var start_x: float = entry_stop_x + entry_start_offset_x
+        _entry_start_position = Vector2(start_x, entry_stop_y)
+        global_position = _entry_start_position
+        position = _entry_start_position
+        velocity = Vector2.ZERO
+    var t: float = 1.0
+    if entry_duration_sec > 0.0:
+        t = clamp(state_timer / entry_duration_sec, 0.0, 1.0)
+    var new_x: float = lerpf(_entry_start_position.x, entry_stop_x, t)
+    global_position.x = new_x
+    position.x = new_x
+    velocity = Vector2.ZERO
+    update_animation_state()
+    if t >= 1.0:
+        _entry_start_position = Vector2.ZERO
+        set_state(PlayerState.FULL_MOVEMENT)
+        if game_manager and game_manager.has_method("on_player_entry_finished"):
+            game_manager.on_player_entry_finished()
 
 
 func handle_game_over_state(_delta: float) -> void:
@@ -332,10 +382,6 @@ func handle_game_over_state(_delta: float) -> void:
 
 func apply_physics(delta: float) -> void:
     if current_state == PlayerState.GAME_OVER:
-        var ty := fall_death_y
-        if ty > 0.0:
-            position.y = min(position.y, ty)
-            global_position.y = position.y
         velocity = Vector2.ZERO
         return
     # Apply gravity
@@ -394,28 +440,28 @@ func apply_physics(delta: float) -> void:
         velocity.y = max(velocity.y, 0.0)
         _head_clear_timer = head_block_grace_time
     move_and_slide()
-    var lbound2 := _left_bound_world()
-    if lock_x_during_full_movement:
-        global_position.x = clamp(global_position.x, lbound2, entry_stop_x)
-    else:
-        global_position.x = max(global_position.x, lbound2)
-    position.x = global_position.x
-    if enable_entry_stop and auto_recenter_x and not lock_x_during_full_movement:
-        var recenter_ready := is_on_floor() and not _blocked_ahead(front_check_distance)
-        if recenter_ready:
-            if recenter_use_linear:
-                var dx: float = entry_stop_x - global_position.x
-                var dir: float = 1.0 if dx > 0.0 else (-1.0 if dx < 0.0 else 0.0)
-                var step: float = recenter_speed_x * delta * dir
-                if absf(step) >= absf(dx):
-                    global_position.x = entry_stop_x
+    if current_state == PlayerState.FULL_MOVEMENT:
+        var lbound2 := _left_bound_world()
+        if lock_x_during_full_movement:
+            global_position.x = clamp(global_position.x, lbound2, entry_stop_x)
+        else:
+            global_position.x = max(global_position.x, lbound2)
+        position.x = global_position.x
+        if enable_entry_stop and auto_recenter_x:
+            var recenter_ready := is_on_floor() and not _blocked_ahead(front_check_distance)
+            if recenter_ready and global_position.x < entry_stop_x:
+                if recenter_use_linear:
+                    var dx: float = entry_stop_x - global_position.x
+                    var step: float = recenter_speed_x * delta
+                    if step >= absf(dx):
+                        global_position.x = entry_stop_x
+                    else:
+                        global_position.x += signf(dx) * step
+                    position.x = global_position.x
                 else:
-                    global_position.x += step
-                position.x = global_position.x
-            else:
-                var t: float = clampf(position_adjustment_speed * delta, 0.0, 1.0)
-                global_position.x = lerpf(global_position.x, entry_stop_x, t)
-                position.x = global_position.x
+                    var t: float = clampf(position_adjustment_speed * delta, 0.0, 1.0)
+                    global_position.x = lerpf(global_position.x, entry_stop_x, t)
+                    position.x = global_position.x
     if blocked_front and is_on_floor() and not _jumping_this_frame and velocity.y > 0.0:
         velocity.y = max(velocity.y, 0)
 
@@ -473,8 +519,6 @@ func check_game_over_conditions() -> void:
         var threshold: float = fall_death_y
         if threshold > 0.0:
             if position.y >= threshold or position.y > off_screen_threshold:
-                position.y = min(position.y, threshold)
-                global_position.y = position.y
                 velocity.y = 0.0
                 trigger_game_over("fell_off_screen")
         else:
@@ -484,6 +528,14 @@ func check_game_over_conditions() -> void:
 
 func update_animation_state() -> void:
     if not animated_sprite:
+        return
+
+    if attack_active and animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("attack"):
+        if animated_sprite.animation != "attack":
+            animated_sprite.play("attack")
+            _apply_scale_for_anim("attack")
+            _apply_offset_for_anim("attack")
+        animated_sprite.speed_scale = ((0.6 if countdown_active else 1.0) * _run_anim_factor)
         return
 
     if is_on_floor():
@@ -516,9 +568,11 @@ func set_state(new_state: PlayerState) -> void:
     if enable_debug_logging and OS.is_debug_build():
         print("State transition: ", old_state, " -> ", new_state, " position: ", position, " is_on_floor: ", is_on_floor())
 
-
-
     match new_state:
+        PlayerState.ENTRY:
+            visible = true
+            _entry_start_position = Vector2.ZERO
+            velocity = Vector2.ZERO
         PlayerState.FULL_MOVEMENT:
             visible = true
             if is_on_floor():
@@ -594,15 +648,41 @@ func prepare_for_playing_phase() -> void:
         set_environment_speed(run_speed)
 
 func _input(event: InputEvent) -> void:
-    if current_state != PlayerState.FULL_MOVEMENT:
+    if current_state == PlayerState.GAME_OVER:
         return
-
-    # Validate event and player state
     if not event or not is_instance_valid(self):
         return
+    if event.is_action_pressed("jump"):
+        request_jump()
+        return
+    if event.is_action_pressed("attack"):
+        attack_held = true
+        request_attack()
+        return
+    if event.is_action_released("attack"):
+        attack_held = false
+        return
+func _update_attack_hitbox() -> void:
+    if not attack_hitbox:
+        return
+    var active := attack_active and current_state == PlayerState.FULL_MOVEMENT
+    attack_hitbox.monitoring = active
+    attack_hitbox.monitorable = active
 
-
-
+func _on_attack_hitbox_area_entered(area: Area2D) -> void:
+    if not attack_active:
+        return
+    if area == null:
+        return
+    var enemy_node: Node = null
+    var parent := area.get_parent()
+    if parent and parent is Node2D:
+        var n2d := parent as Node2D
+        var nm: String = n2d.name
+        if nm.begins_with("EnemyBlock") or nm.begins_with("EnemyCone"):
+            enemy_node = n2d
+    if enemy_node and enemy_node.has_method("on_player_attack_hit"):
+        enemy_node.call("on_player_attack_hit", self)
 
 func trigger_game_over(cause: String) -> void:
     if current_state == PlayerState.GAME_OVER:
@@ -620,8 +700,12 @@ func trigger_game_over(cause: String) -> void:
 func reset_player() -> void:
     velocity = Vector2.ZERO
     state_timer = 0.0
-    _set_to_entry_stop()
-    set_state(PlayerState.FULL_MOVEMENT)
+    _entry_start_position = Vector2.ZERO
+    if enable_entry_sequence:
+        set_state(PlayerState.ENTRY)
+    else:
+        _set_to_entry_stop()
+        set_state(PlayerState.FULL_MOVEMENT)
 
 
 func get_player_state() -> Dictionary:
@@ -729,6 +813,7 @@ func _prepare_animation_scales() -> void:
     _anim_scales.clear()
     _anim_scales["run"] = Vector2(run_scale_override, run_scale_override) if run_scale_override > 0.0 else _compute_scale_for_anim("run")
     _anim_scales["jump"] = Vector2(jump_scale_override, jump_scale_override) if jump_scale_override > 0.0 else _compute_scale_for_anim("jump")
+    _anim_scales["attack"] = _compute_scale_for_anim("attack")
 
 func _apply_scale_for_anim(anim: String) -> void:
     if preserve_editor_sprite_scale:
@@ -761,6 +846,7 @@ func _prepare_animation_offsets() -> void:
     _anim_offsets.clear()
     _anim_offsets["run"] = _compute_offset_for_anim("run")
     _anim_offsets["jump"] = _compute_offset_for_anim("jump")
+    _anim_offsets["attack"] = _compute_offset_for_anim("attack")
 
 func _apply_offset_for_anim(anim: String) -> void:
     if _anim_offsets.has(anim):

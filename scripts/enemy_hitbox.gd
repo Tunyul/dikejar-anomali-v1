@@ -6,6 +6,13 @@ func _ready() -> void:
     body_entered.connect(_on_body_entered)
 
 func _on_body_entered(body: Node) -> void:
-    if body is Player:
-        if body.has_method("trigger_game_over"):
-            body.trigger_game_over("hit_enemy")
+    if not (body is Player):
+        return
+    var player := body as Player
+    if player.attack_active:
+        var enemy_node := get_parent()
+        if enemy_node and enemy_node.has_method("on_player_attack_hit"):
+            enemy_node.call("on_player_attack_hit", player)
+        return
+    if player.has_method("trigger_game_over"):
+        player.trigger_game_over("hit_enemy")

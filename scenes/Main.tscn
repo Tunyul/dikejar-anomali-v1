@@ -19,13 +19,13 @@
 [ext_resource type="Texture2D" uid="uid://dqmmglr4yqrso" path="res://assets/enemy/sprite-256px-36.png" id="23_ebg2g"]
 [ext_resource type="Script" uid="uid://tarkx6h70bep" path="res://scripts/anomaly_chaser.gd" id="27"]
 [ext_resource type="Script" uid="uid://cabvraniau87d" path="res://scripts/version_label.gd" id="28"]
-[ext_resource type="Texture2D" uid="uid://488lc5kv6uhg" path="res://assets/tombol/tombol_jump.png" id="29"]
-[ext_resource type="Texture2D" uid="uid://vonvne5tbd6f" path="res://assets/tombol/tombol_atk.png" id="30"]
 [ext_resource type="Script" uid="uid://bqtf5uji02hgv" path="res://scripts/PauseMenu.gd" id="31"]
 [ext_resource type="Script" uid="uid://vy3s5tmkqslw" path="res://scripts/GameOverMenu.gd" id="34"]
 [ext_resource type="Script" uid="uid://cvivocoxcy2xo" path="res://scripts/AdManager.gd" id="35"]
 [ext_resource type="Script" uid="uid://dhacrgdwndgfc" path="res://scripts/MissionsManager.gd" id="36"]
+[ext_resource type="PackedScene" uid="uid://7k5iilghm0po" path="res://scenes/EnemyBlock.tscn" id="37_5grtr"]
 [ext_resource type="Texture2D" uid="uid://dwk3durbly5we" path="res://assets/generated/svg/coin_gold.svg" id="38"]
+[ext_resource type="PackedScene" uid="uid://dddfqh8a72i3q" path="res://scenes/EnemyCone.tscn" id="38_vua0o"]
 [ext_resource type="Texture2D" uid="uid://cv2m8ao6ea8dm" path="res://assets/Coin Animation/png/2x/image 1.png" id="40"]
 [ext_resource type="Texture2D" uid="uid://dn3ku63liodkk" path="res://assets/Coin Animation/png/2x/image 2.png" id="41"]
 [ext_resource type="Texture2D" uid="uid://cfrlo0ws5whgv" path="res://assets/Coin Animation/png/2x/image 3.png" id="42"]
@@ -43,12 +43,8 @@
 [ext_resource type="Texture2D" uid="uid://0c72kan61tye" path="res://assets/Coin Animation/png/2x/image 15.png" id="54"]
 [ext_resource type="Texture2D" uid="uid://dagmpexuijtgs" path="res://assets/Coin Animation/png/2x/image 16.png" id="55"]
 [ext_resource type="PackedScene" uid="uid://bdwwn7sxcph1g" path="res://scenes/Ground.tscn" id="56"]
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_jump"]
-radius = 48.0
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
-radius = 46.0
+[ext_resource type="PackedScene" uid="uid://bj0vpeb24e585" path="res://scenes/MobileControls.tscn" id="57_mobile_controls"]
+[ext_resource type="PackedScene" path="res://scenes/HealthBar.tscn" id="58_healthbar"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_coin_hud"]
 animations = [{
@@ -371,7 +367,7 @@ animations = [{
 "speed": 12.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5grtr"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vua0o"]
 size = Vector2(64, 64)
 
 [node name="Main" type="Node2D"]
@@ -600,6 +596,8 @@ centered = false
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = 100
 
+[node name="MobileControls" parent="CanvasLayer" instance=ExtResource("57_mobile_controls")]
+
 [node name="VersionLabel" type="Label" parent="CanvasLayer"]
 offset_left = 900.0
 offset_top = 10.0
@@ -607,25 +605,8 @@ offset_right = 959.0
 offset_bottom = 33.0
 script = ExtResource("28")
 
-[node name="JumpButton" type="TouchScreenButton" parent="CanvasLayer"]
-position = Vector2(960, 500)
-shape = SubResource("CircleShape2D_jump")
-action = "jump"
-
-[node name="JumpSprite" type="Sprite2D" parent="CanvasLayer/JumpButton"]
-scale = Vector2(0.1, 0.1)
-texture = ExtResource("29")
-
-[node name="AttackButton" type="TouchScreenButton" parent="CanvasLayer"]
-position = Vector2(860, 500)
-shape = SubResource("CircleShape2D_attack")
-action = "attack"
-
-[node name="AttackSprite" type="Sprite2D" parent="CanvasLayer/AttackButton"]
-scale = Vector2(0.1, 0.1)
-texture = ExtResource("30")
-
 [node name="PauseMenu" type="Control" parent="CanvasLayer"]
+visible = false
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1024.0
@@ -730,6 +711,10 @@ layout_mode = 2
 size_flags_horizontal = 4
 text = "Continue (Bonus)"
 
+[node name="HealthBar" parent="CanvasLayer" instance=ExtResource("58_healthbar")]
+offset_left = 64.0
+offset_top = 12.0
+
 [node name="CoinHUD" type="HBoxContainer" parent="CanvasLayer"]
 z_index = 100
 custom_minimum_size = Vector2(100, 32)
@@ -759,10 +744,26 @@ scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_coin_hud")
 animation = &"spin"
 
+[node name="CountdownLabel" type="Label" parent="CanvasLayer"]
+z_index = 200
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1024.0
+offset_bottom = 576.0
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 96
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = ""
+visible = false
+
 [node name="Ground" parent="." instance=ExtResource("56")]
 z_index = 5
 min_scroll_speed = 250.0
 debug_color_a = Color(0.7088994, 0, 0.12489515, 1)
+enemy_block_scene = ExtResource("37_5grtr")
+enemy_cone_scene = ExtResource("38_vua0o")
 
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
@@ -773,9 +774,7 @@ jump_buffer_time = 0.9
 gravity = 1600.0
 max_fall_speed = 1000.0
 recenter_speed_x = 50.0
-preserve_editor_transform = true
 collision_size = Vector2(80, 124)
-lock_x_during_full_movement = true
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(512, 288)
@@ -797,10 +796,10 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.963709
+frame_progress = 0.5693199
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser"]
-shape = SubResource("RectangleShape2D_5grtr")
+shape = SubResource("RectangleShape2D_vua0o")
 
 [node name="GroundRay" type="RayCast2D" parent="AnomalyChaser"]
 target_position = Vector2(0, 200)

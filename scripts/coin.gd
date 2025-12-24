@@ -14,6 +14,7 @@ signal collected(segment: String)
 @export var use_texture_radius: bool = false
 @export var texture_radius_factor: float = 0.35
 @export var base_radius_px: float = 14.0
+@export var always_magnet: bool = false
 
 var _base_y: float = 0.0
 var _t: float = 0.0
@@ -45,28 +46,38 @@ func _capture_base_y() -> void:
 func _physics_process(delta: float) -> void:
     _t += delta
     position.y = _base_y + abs(sin(_t * TAU * osc_frequency)) * osc_amplitude
-    var main := get_tree().get_root().get_node_or_null("Main")
+    var root := get_tree().get_root()
+    var main := root.get_node_or_null("Main")
+    var mag: bool = always_magnet
+    if main and not mag and main.has_method("get"):
+        mag = bool(main.get("magnet_enabled"))
+    if not mag:
+        return
+    var pl: Node2D = null
     if main:
-        var mag := false
-        if main.has_method("get"):
-            mag = bool(main.get("magnet_enabled"))
-        if mag:
-            var pl := main.get_node_or_null("Player")
-            if pl and pl is Node2D:
-                var pw := (pl as Node2D).global_position
-                var cw := global_position
-                var dx := pw.x - cw.x
-                var dy := pw.y - cw.y
-                var dist := sqrt(dx * dx + dy * dy)
-                if dist < magnet_radius:
-                    var step := magnet_speed * delta
-                    if dist <= step:
-                        global_position = pw
-                    else:
-                        var dirx: float = dx / max(dist, 0.001)
-                        var diry: float = dy / max(dist, 0.001)
-                        global_position.x += dirx * step
-                        global_position.y += diry * step
+        pl = main.get_node_or_null("Player") as Node2D
+    if pl == null:
+        pl = root.get_node_or_null("Player") as Node2D
+    if pl == null:
+        return
+    var pw := pl.global_position
+    var cw := global_position
+    var dx := pw.x - cw.x
+    var dy := pw.y - cw.y
+    var dist: float = sqrt(dx * dx + dy * dy)
+    if not always_magnet and dist >= magnet_radius:
+        return
+    var step: float = magnet_speed * delta
+    if dist <= step:
+        global_position = pw
+    else:
+        var safe_dist: float = dist
+        if safe_dist < 0.001:
+            safe_dist = 0.001
+        var dirx: float = dx / safe_dist
+        var diry: float = dy / safe_dist
+        global_position.x += dirx * step
+        global_position.y += diry * step
 
 func _on_body_entered(_body: Node) -> void:
     if _collected:

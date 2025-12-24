@@ -1,7 +1,7 @@
 extends Node2D
 
-enum Phase { PLAYING, GAME_OVER }
-var phase: Phase = Phase.PLAYING
+enum Phase { ENTRY, PLAYING, GAME_OVER }
+var phase: Phase = Phase.ENTRY
 var game_active: bool = false
 var score: int = 0
 var distance: float = 0.0
@@ -14,6 +14,7 @@ var total_coins: int = 0
 var game_time_sec: float = 0.0
 var total_tiles_passed: int = 0
 var _tiles_passed_accum: float = 0.0
+var _debug_time_accum: float = 0.0
 
 @export var debug_info_enabled: bool = false
 @export var base_speed: float = 150.0
@@ -26,7 +27,6 @@ var _tiles_passed_accum: float = 0.0
 @export var watchdog_hang_seconds: float = 1.5
 @export var watchdog_print_interval_sec: float = 2.0
 @export var perf_log_to_file: bool = false
-@export var tutorial_enabled: bool = true
 var magnet_enabled: bool = false
 
 @onready var player: Player = $Player
@@ -38,14 +38,12 @@ var magnet_enabled: bool = false
 @onready var parallax = $ParallaxBackground
 @onready var canvas = $CanvasLayer
 var debug_label: Label
-var _debug_t_accum: float = 0.0
+var _jump_button: TouchScreenButton
+var _attack_button: TouchScreenButton
 var _ga_layer: Node = null
 var _gb_layer: Node = null
 var _scene_verify_running: bool = false
-var _watchdog_low_fps_accum: float = 0.0
-var _watchdog_print_accum: float = 0.0
 var _scene_verify_start_ms: int = 0
-var tutorial_shown: bool = false
 var bgm_muted: bool = false
 var sfx_muted: bool = false
 var magnet_timer: float = 0.0
@@ -57,21 +55,31 @@ var continue_grace_timer: float = 0.0
 @onready var coin_hud_label: Label = $CanvasLayer/CoinHUD/Label
 @export var enemy_ramp_start_distance: float = 400.0
 @export var enemy_ramp_enabled: bool = true
+@export var countdown_duration_sec: float = 3.0
+
+var countdown_active: bool = false
+var countdown_timer: float = 0.0
+var entry_finished: bool = false
 
 func _ready() -> void:
-    debug_info_enabled = true
     if player:
         player.connect("game_over_signal", Callable(self, "on_player_game_over"))
-    if not InputMap.has_action("verify_scenes"):
-        InputMap.add_action("verify_scenes")
-        var ev2 := InputEventKey.new()
-        ev2.physical_keycode = KEY_F6
-        InputMap.action_add_event("verify_scenes", ev2)
+    if OS.is_debug_build():
+        if not InputMap.has_action("verify_scenes"):
+            InputMap.add_action("verify_scenes")
+            var ev2 := InputEventKey.new()
+            ev2.physical_keycode = KEY_F6
+            InputMap.action_add_event("verify_scenes", ev2)
+        if not InputMap.has_action("toggle_debug"):
+            InputMap.add_action("toggle_debug")
+            var ev3 := InputEventKey.new()
+            ev3.physical_keycode = KEY_F3
+            InputMap.action_add_event("toggle_debug", ev3)
     _load_progress()
     call_deferred("_start_play_phase")
     if scene_verify_on_start and OS.is_debug_build():
         call_deferred("_verify_player_scenes")
-    if canvas and debug_label == null:
+    if OS.is_debug_build() and canvas and debug_label == null:
         var dl := Label.new()
         dl.name = "DebugInfoLabel"
         dl.visible = debug_info_enabled
@@ -109,9 +117,51 @@ func _ready() -> void:
     if ground_b != null and _gb_layer == null:
         _gb_layer = ground_b.get_node_or_null("TileMapLayerB")
 
-    _setup_tutorial_overlay()
+    _connect_mobile_buttons()
+
+func _connect_mobile_buttons() -> void:
+    if not canvas or not player:
+        return
+    _jump_button = canvas.get_node_or_null("MobileControls/JumpButton") as TouchScreenButton
+    if _jump_button and _jump_button.has_signal("pressed"):
+        _jump_button.pressed.connect(_on_jump_button_pressed)
+    _attack_button = canvas.get_node_or_null("MobileControls/AttackButton") as TouchScreenButton
+    if _attack_button and _attack_button.has_signal("pressed"):
+        _attack_button.pressed.connect(_on_attack_button_pressed)
+
+func _debug_input(msg: String) -> void:
+    if OS.is_debug_build():
+        print(msg)
+    if OS.is_debug_build() and debug_label != null and debug_info_enabled:
+        debug_label.visible = true
+        debug_label.text = msg
+
+func _on_jump_button_pressed() -> void:
+    _debug_input("INPUT: jump_button")
+    if player and player.has_method("request_jump"):
+        player.request_jump()
+
+func _on_attack_button_pressed() -> void:
+    _debug_input("INPUT: attack_button")
+    if player and player.has_method("request_attack"):
+        player.request_attack()
 
 func _process(delta: float) -> void:
+    if countdown_active:
+        var lbl := canvas.get_node_or_null("CountdownLabel") if canvas else null
+        countdown_timer = max(countdown_timer - delta, 0.0)
+        if lbl and lbl is Label:
+            var t := int(ceil(countdown_timer))
+            if countdown_timer <= 0.0:
+                (lbl as Label).visible = false
+            elif t > 0:
+                (lbl as Label).visible = true
+                (lbl as Label).text = str(t)
+        if countdown_timer <= 0.0:
+            countdown_active = false
+            if phase == Phase.ENTRY and entry_finished:
+                set_playing_phase()
+
     if phase == Phase.PLAYING:
         var env_speed: float = base_speed
         if ground_a and ground_a.has_method("get_speed"):
@@ -145,6 +195,11 @@ func _process(delta: float) -> void:
             if magnet_timer <= 0.0:
                 magnet_enabled = false
         _apply_enemy_ramp_if_needed()
+    if OS.is_debug_build() and debug_info_enabled:
+        _debug_time_accum += delta
+        if _debug_time_accum >= debug_update_interval_sec:
+            _debug_time_accum = 0.0
+            _update_debug_label()
     if continue_grace_timer > 0.0:
         continue_grace_timer = max(continue_grace_timer - delta, 0.0)
         if player:
@@ -152,113 +207,93 @@ func _process(delta: float) -> void:
     else:
         if player:
             player.enable_fall_death = true
-    if debug_label != null:
-        debug_label.visible = debug_info_enabled
-        if debug_info_enabled:
-            _debug_t_accum += delta
-            if _debug_t_accum < debug_update_interval_sec:
-                return
-            _debug_t_accum = 0.0
-            var cur_speed: float = base_speed
-            if ground_a and ground_a.has_method("get_speed"):
-                cur_speed = float(ground_a.call("get_speed"))
-            var tgt_speed: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
-            var fps := int(round(Engine.get_frames_per_second()))
-            var phase_name := ("PLAYING" if phase == Phase.PLAYING else "GAME_OVER")
-            var ppos := Vector2.ZERO
-            var pvel := Vector2.ZERO
-            var grounded := false
-            var pstate := "-"
-            if player:
-                ppos = player.global_position
-                pvel = player.velocity
-                grounded = player.is_on_floor()
-                pstate = ("PLAYING" if player.current_state == player.PlayerState.FULL_MOVEMENT else "GAME_OVER")
-            var ground_tiles_run: int = 0
-            var ground_tiles_lr: String = "-"
-            var active_seg_name: String = "-"
-            var coins_a_count: int = 0
-            var coins_b_count: int = 0
-            var enemies_a_count: int = 0
-            var enemies_b_count: int = 0
-            if player:
-                var active := _ga_layer
-                if _ga_layer != null and _gb_layer != null:
-                    var cell_a: Vector2i = _ga_layer.tile_set.tile_size if _ga_layer.tile_set != null else Vector2i(128, 128)
-                    var used_a: Rect2i = _ga_layer.get_used_rect()
-                    var seg_a: float = float(used_a.size.x) * float(cell_a.x) * _ga_layer.scale.x
-                    var cell_b: Vector2i = _gb_layer.tile_set.tile_size if _gb_layer.tile_set != null else Vector2i(128, 128)
-                    var used_b: Rect2i = _gb_layer.get_used_rect()
-                    var seg_b: float = float(used_b.size.x) * float(cell_b.x) * _gb_layer.scale.x
-                    var px: float = player.global_position.x
-                    var in_a: bool = (px >= _ga_layer.position.x) and (px <= _ga_layer.position.x + seg_a)
-                    var in_b: bool = (px >= _gb_layer.position.x) and (px <= _gb_layer.position.x + seg_b)
-                    if in_b and not in_a:
-                        active = _gb_layer
-                if active != null:
-                    if active.has_method("get_platform_run_len_at_world_x"):
-                        ground_tiles_run = int(active.call("get_platform_run_len_at_world_x", player.global_position.x))
-                    if active.has_method("get_platform_runs_lr_at_world_x"):
-                        var lr: Vector2i = active.call("get_platform_runs_lr_at_world_x", player.global_position.x)
-                        ground_tiles_lr = str(lr.x) + "/" + str(lr.y)
-                if ground_a != null:
-                    var ca := ground_a.get_node_or_null("CoinsA")
-                    var ea := ground_a.get_node_or_null("EnemiesA")
-                    if ca != null:
-                        coins_a_count = ca.get_child_count()
-                    if ea != null:
-                        enemies_a_count = ea.get_child_count()
-                if ground_b != null:
-                    var cb := ground_b.get_node_or_null("CoinsB")
-                    var eb := ground_b.get_node_or_null("EnemiesB")
-                    if cb != null:
-                        coins_b_count = cb.get_child_count()
-                    if eb != null:
-                        enemies_b_count = eb.get_child_count()
-                if ground_a != null and ground_a.has_method("get_active_segment_name"):
-                    var nm: String = ground_a.call("get_active_segment_name")
-                    if nm == "TileMapLayerA":
-                        active_seg_name = "A"
-                    elif nm == "TileMapLayerB":
-                        active_seg_name = "B"
-                    else:
-                        active_seg_name = nm
-            var env_move := false
-            if ground_a and ground_a.has_method("get"):
-                env_move = bool(ground_a.get("movement_enabled"))
-            var cam := get_viewport().get_camera_2d()
-            var cam_x := 0
-            var cam_y := 0
-            if cam != null:
-                var cc := cam.get_screen_center_position()
-                cam_x = int(round(cc.x))
-                cam_y = int(round(cc.y))
-            var lines := []
-            lines.append("Phase: " + phase_name + " | GameActive: " + str(game_active))
-            lines.append("EnvSpeed: " + str(int(round(cur_speed))) + " / Target: " + str(int(round(tgt_speed))) + " | Base/Max: " + str(int(base_speed)) + "/" + str(int(max_speed)))
-            var tsec := int(round(game_time_sec))
-            lines.append("Layer: " + active_seg_name + " | TilesPassed: " + str(total_tiles_passed) + " | Time: " + str(tsec) + "s")
-            lines.append("Distance: " + str(int(round(distance))) + " | Score: " + str(score))
-            lines.append("Coins A/B: " + str(coin_collected_a) + "/" + str(coin_collected_b) + " | Last: " + str(last_coins) + " | Best: " + str(best_score))
-            lines.append("CoinsCnt A/B: " + str(coins_a_count) + "/" + str(coins_b_count) + " | EnemiesCnt A/B: " + str(enemies_a_count) + "/" + str(enemies_b_count))
-            lines.append("Player X/Y: " + str(int(round(ppos.x))) + "/" + str(int(round(ppos.y))) + " | Vel X/Y: " + str(int(round(pvel.x))) + "/" + str(int(round(pvel.y))))
-            lines.append("Grounded: " + str(grounded) + " | State: " + pstate + " | EnvMove: " + str(env_move))
-            lines.append("Ground Tiles Run: " + str(ground_tiles_run) + " | L/R: " + ground_tiles_lr)
-            lines.append("CamCenter X/Y: " + str(cam_x) + "/" + str(cam_y) + " | FPS: " + str(fps))
-            debug_label.text = "\n".join(lines)
-            if OS.is_debug_build():
-                if fps < watchdog_fps_threshold:
-                    _watchdog_low_fps_accum += debug_update_interval_sec
-                    _watchdog_print_accum += debug_update_interval_sec
-                    if _watchdog_low_fps_accum >= watchdog_hang_seconds and _watchdog_print_accum >= watchdog_print_interval_sec:
-                        _watchdog_print_accum = 0.0
-                        var msg := "Watchdog: LowFPS " + str(fps) + " for " + ("%0.2f" % _watchdog_low_fps_accum) + "s | phase:" + phase_name + " | active:" + str(game_active) + " | scene_verify:" + str(_scene_verify_running) + " | dist:" + str(int(round(distance))) + " | speed:" + str(int(round(cur_speed)))
-                        push_warning(msg)
-                        print(msg)
-                        if perf_log_to_file:
-                            _append_perf_log(msg)
+
+func _update_debug_label() -> void:
+    if debug_label == null or not debug_info_enabled:
+        return
+    var fps: int = int(Engine.get_frames_per_second())
+    var env_speed: float = base_speed
+    if ground_a and ground_a.has_method("get_speed"):
+        env_speed = float(ground_a.call("get_speed"))
+    var target_speed: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
+    var layer_name: String = ""
+    if ground_a and ground_a.has_method("get_active_segment_name"):
+        layer_name = str(ground_a.call("get_active_segment_name"))
+    var layer_short: String = ""
+    if layer_name.ends_with("A"):
+        layer_short = "A"
+    elif layer_name.ends_with("B"):
+        layer_short = "B"
+    var time_s: int = int(game_time_sec)
+    var coins_a: int = coin_collected_a
+    var coins_b: int = coin_collected_b
+    var coins_cnt_a: int = 0
+    var coins_cnt_b: int = 0
+    var enemies_cnt_a: int = 0
+    var enemies_cnt_b: int = 0
+    if ground_a:
+        var coins_a_node := ground_a.get_node_or_null("CoinsA")
+        if coins_a_node:
+            coins_cnt_a = coins_a_node.get_child_count()
+        var coins_b_node := ground_a.get_node_or_null("CoinsB")
+        if coins_b_node:
+            coins_cnt_b = coins_b_node.get_child_count()
+        var enemies_a_node := ground_a.get_node_or_null("EnemiesA")
+        if enemies_a_node:
+            enemies_cnt_a = enemies_a_node.get_child_count()
+        var enemies_b_node := ground_a.get_node_or_null("EnemiesB")
+        if enemies_b_node:
+            enemies_cnt_b = enemies_b_node.get_child_count()
+    var player_pos: Vector2 = Vector2.ZERO
+    var player_vel: Vector2 = Vector2.ZERO
+    var player_grounded: bool = false
+    var player_state_text: String = ""
+    var env_move: bool = false
+    if player:
+        if player.has_method("get_player_state"):
+            var ps: Dictionary = player.get_player_state()
+            if ps.has("position"):
+                player_pos = ps["position"]
+            if ps.has("velocity"):
+                player_vel = ps["velocity"]
+            if ps.has("is_grounded"):
+                player_grounded = bool(ps["is_grounded"])
+            if ps.has("current_state"):
+                var st_val: int = int(ps["current_state"])
+                if st_val == 0:
+                    player_state_text = "FULL_MOVEMENT"
+                elif st_val == 1:
+                    player_state_text = "GAME_OVER"
                 else:
-                    _watchdog_low_fps_accum = 0.0
+                    player_state_text = str(st_val)
+        if player.has_method("_is_environment_moving"):
+            env_move = bool(player._is_environment_moving())
+    var jump_pos: Vector2 = Vector2.ZERO
+    var attack_pos: Vector2 = Vector2.ZERO
+    if _jump_button:
+        jump_pos = _jump_button.global_position
+    if _attack_button:
+        attack_pos = _attack_button.global_position
+    var cam_center: Vector2 = Vector2.ZERO
+    var cam := get_viewport().get_camera_2d()
+    if cam != null:
+        cam_center = cam.global_position
+    var phase_text: String = ("PLAYING" if phase == Phase.PLAYING else "GAME_OVER")
+    var txt: String = ""
+    txt += "Phase: " + phase_text + " | GameActive: " + str(game_active)
+    txt += "\nEnvSpeed: " + str(int(env_speed)) + " / Target: " + str(int(target_speed)) + " | Base/Max: " + str(int(base_speed)) + "/" + str(int(max_speed))
+    var layer_display: String = (layer_short if layer_short != "" else layer_name)
+    txt += "\nLayer: " + layer_display + " | TilesPassed: " + str(total_tiles_passed) + " | Time: " + str(time_s) + "s"
+    txt += "\nDistance: " + str(int(distance)) + " | Score: " + str(score)
+    txt += "\nCoins A/B: " + str(coins_a) + "/" + str(coins_b) + " | Last: " + str(last_coins) + " | Best: " + str(best_score)
+    txt += "\nCoinsCnt A/B: " + str(coins_cnt_a) + "/" + str(coins_cnt_b) + " | EnemiesCnt A/B: " + str(enemies_cnt_a) + "/" + str(enemies_cnt_b)
+    txt += "\nPlayer XY: " + str(int(player_pos.x)) + "/" + str(int(player_pos.y)) + " | Vel X/Y: " + str(int(player_vel.x)) + "/" + str(int(player_vel.y))
+    txt += "\nGrounded: " + str(player_grounded) + " | State: " + (player_state_text if player_state_text != "" else "-") + " | EnvMove: " + str(env_move)
+    txt += "\nGround Tiles Run: " + str(total_tiles_passed) + " | L/R: 0/0"
+    txt += "\nJumpBtn X/Y: " + str(int(jump_pos.x)) + "/" + str(int(jump_pos.y)) + " | AtkBtn X/Y: " + str(int(attack_pos.x)) + "/" + str(int(attack_pos.y))
+    txt += "\nCamCenter X/Y: " + str(int(cam_center.x)) + "/" + str(int(cam_center.y)) + " | FPS: " + str(fps)
+    debug_label.visible = true
+    debug_label.text = txt
 
 func on_quit_game() -> void:
     get_tree().quit()
@@ -395,23 +430,6 @@ func _set_pause_menu_visible(v: bool) -> void:
             if v:
                 _refresh_missions_label()
 
-func _set_tutorial_visible(v: bool) -> void:
-    if not tutorial_enabled:
-        return
-    if canvas:
-        var to := canvas.get_node_or_null("TutorialOverlay")
-        if to:
-            to.visible = v
-
-func _setup_tutorial_overlay() -> void:
-    if tutorial_enabled and not tutorial_shown:
-        _set_tutorial_visible(true)
-
-func on_tutorial_dismiss() -> void:
-    tutorial_shown = true
-    _set_tutorial_visible(false)
-    _save_progress()
-
 func activate_magnet(d: float) -> void:
     magnet_timer = max(magnet_timer, max(d, 0.0))
     magnet_enabled = true
@@ -419,17 +437,10 @@ func activate_magnet(d: float) -> void:
 func _apply_enemy_ramp_if_needed() -> void:
     return
 
+
 func set_playing_phase() -> void:
     phase = Phase.PLAYING
     game_active = true
-    distance = 0.0
-    score = 0
-    coin_collected_a = 0
-    coin_collected_b = 0
-    game_time_sec = 0.0
-    _tiles_passed_accum = 0.0
-    total_tiles_passed = 0
-    _next_coin_burst_distance = 300
     _apply_spawn_safety_limits()
     if ground_a and ground_a.has_method("set_speed_limits"):
         ground_a.set_speed_limits(0.0, max_speed)
@@ -454,9 +465,6 @@ func set_playing_phase() -> void:
             player.prepare_for_playing_phase()
         if player.has_method("enable_environment_movement"):
             player.enable_environment_movement(true)
-        if player.lock_x_during_full_movement and player.enable_entry_stop:
-            player.global_position = Vector2(player.entry_stop_x, player.global_position.y)
-            player.position = Vector2(player.entry_stop_x, player.position.y)
 
     var bgm2 := get_node_or_null("BGM")
     if bgm2 and bgm2 is AudioStreamPlayer and (bgm2 as AudioStreamPlayer).stream != null:
@@ -472,6 +480,14 @@ func set_playing_phase() -> void:
         var gom2 := canvas.get_node_or_null("GameOverMenu")
         if gom2:
             gom2.visible = false
+
+
+func on_player_entry_finished() -> void:
+    if phase != Phase.ENTRY:
+        return
+    entry_finished = true
+    if not countdown_active:
+        set_playing_phase()
 
 func on_player_game_over(_cause: String) -> void:
     phase = Phase.GAME_OVER
@@ -517,7 +533,7 @@ func on_player_game_over(_cause: String) -> void:
             gom.visible = true
 
 func restart_game() -> void:
-    set_playing_phase()
+    _start_play_phase()
 
 func get_game_state() -> Dictionary:
     return {
@@ -616,7 +632,6 @@ func _load_progress() -> void:
         last_coins = int(cfg.get_value("progress", "last_coins", 0))
         total_coins = int(cfg.get_value("progress", "total_coins", 0))
 
-        tutorial_shown = bool(cfg.get_value("progress", "tutorial_shown", false))
         bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
         sfx_muted = bool(cfg.get_value("settings", "sfx_muted", false))
 
@@ -629,14 +644,63 @@ func _save_progress() -> void:
     cfg.set_value("progress", "last_score", last_score)
     cfg.set_value("progress", "last_coins", last_coins)
     cfg.set_value("progress", "total_coins", total_coins)
-    cfg.set_value("progress", "tutorial_shown", tutorial_shown)
     cfg.set_value("settings", "bgm_muted", bgm_muted)
     cfg.set_value("settings", "sfx_muted", sfx_muted)
     cfg.save("user://save.cfg")
 
-func _unhandled_input(event) -> void:
+
+
+func _is_touch_over_button(btn: TouchScreenButton, pos: Vector2) -> bool:
+    if not btn:
+        return false
+    var local: Vector2 = btn.to_local(pos)
+    var tex := btn.texture_normal
+    if tex == null:
+        return false
+    var size: Vector2 = tex.get_size()
+    var rect := Rect2(Vector2.ZERO, size)
+    return rect.has_point(local)
+
+func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventAction:
+        var ia := event as InputEventAction
+        if ia.pressed:
+            if ia.action == "jump":
+                if player and player.has_method("request_jump"):
+                    player.request_jump()
+                return
+            if ia.action == "attack":
+                if player and player.has_method("request_attack"):
+                    player.request_attack()
+                return
+    if event is InputEventMouseButton and event.pressed:
+        var mb := event as InputEventMouseButton
+        if _is_touch_over_button(_jump_button, mb.position):
+            if player and player.has_method("request_jump"):
+                player.request_jump()
+            return
+        if _is_touch_over_button(_attack_button, mb.position):
+            if player and player.has_method("request_attack"):
+                player.request_attack()
+            return
+    if event is InputEventScreenTouch:
+        var st := event as InputEventScreenTouch
+        if st.pressed:
+            if _is_touch_over_button(_jump_button, st.position):
+                if player and player.has_method("request_jump"):
+                    player.request_jump()
+                return
+            if _is_touch_over_button(_attack_button, st.position):
+                if player and player.has_method("request_attack"):
+                    player.request_attack()
+                return
     if event is InputEventKey and event.pressed and not event.echo:
-        if Input.is_action_just_pressed("verify_scenes") or event.keycode == KEY_F6:
+        if OS.is_debug_build() and (Input.is_action_just_pressed("toggle_debug") or event.keycode == KEY_F3):
+            debug_info_enabled = not debug_info_enabled
+            if debug_label != null:
+                debug_label.visible = debug_info_enabled
+            return
+        if OS.is_debug_build() and (Input.is_action_just_pressed("verify_scenes") or event.keycode == KEY_F6):
             call_deferred("_verify_player_scenes")
         elif Input.is_action_pressed("ui_cancel"):
             if game_active:
@@ -654,7 +718,42 @@ func on_coin_collected(segment: String) -> void:
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return
-    set_playing_phase()
+    phase = Phase.ENTRY
+    game_active = false
+    distance = 0.0
+    score = 0
+    coin_collected_a = 0
+    coin_collected_b = 0
+    game_time_sec = 0.0
+    _tiles_passed_accum = 0.0
+    total_tiles_passed = 0
+    countdown_active = true
+    countdown_timer = countdown_duration_sec
+    entry_finished = false
+    if player and player.has_method("reset_player"):
+        player.reset_player()
+    _next_coin_burst_distance = 300
+    _apply_spawn_safety_limits()
+    if parallax and parallax.has_method("set_movement_enabled"):
+        parallax.set_movement_enabled(false)
+    if terrain and terrain.has_method("set_movement_enabled"):
+        terrain.set_movement_enabled(false)
+    if terrain_b and terrain_b.has_method("set_movement_enabled"):
+        terrain_b.set_movement_enabled(false)
+    if ground_a and ground_a.has_method("set_movement_enabled"):
+        ground_a.set_movement_enabled(false)
+    if ground_b and ground_b.has_method("set_movement_enabled"):
+        ground_b.set_movement_enabled(false)
+    var bgm2 := get_node_or_null("BGM")
+    if bgm2 and bgm2 is AudioStreamPlayer:
+        (bgm2 as AudioStreamPlayer).stop()
+    if anomaly:
+        anomaly.hide()
+    if player:
+        if player.has_method("enable_environment_movement"):
+            player.enable_environment_movement(false)
+        if player.has_method("start_entry_sequence"):
+            player.start_entry_sequence()
 
 func _append_perf_log(_line: String) -> void:
     pass

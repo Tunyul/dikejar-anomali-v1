@@ -13,9 +13,6 @@ func _process(_delta: float) -> void:
         var phase := int(st.get("phase", 0))
         var active := bool(st.get("game_active", false))
         visible = (phase == 0)
-        var to := get_tree().get_root().get_node_or_null("Main/CanvasLayer/TutorialOverlay")
-        if to and to is Control and (to as Control).visible:
-            visible = false
         if active:
             self.disabled = false
         else:
