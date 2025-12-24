@@ -71,14 +71,16 @@ func _spawn_coins() -> void:
         if coin == null:
             continue
         coin.scale = Vector2.ONE * enemy_coin_scale
+        coin.z_index = 100
         coin.set("magnet_speed", enemy_coin_magnet_speed)
         coin.set("source_segment", seg)
         coin.set("always_magnet", true)
-        var parent := get_parent()
-        if parent:
-            parent.add_child(coin)
+        var root := get_tree().get_root()
+        var main_node := root.get_node_or_null("Main")
+        if main_node:
+            main_node.add_child(coin)
         else:
-            get_tree().get_root().add_child(coin)
+            root.add_child(coin)
         var origin := global_position
         var hitbox_node := get_node_or_null("Hitbox") as Node2D
         if hitbox_node:

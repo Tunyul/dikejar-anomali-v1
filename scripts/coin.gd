@@ -43,21 +43,33 @@ func _ready() -> void:
 func _capture_base_y() -> void:
     _base_y = position.y
 
+func _find_player() -> Node2D:
+    var root := get_tree().get_root()
+    var main := root.get_node_or_null("Main")
+    if main:
+        var from_main := main.get_node_or_null("Player") as Node2D
+        if from_main:
+            return from_main
+    for child in root.get_children():
+        if child is Node2D and child.name == "Player":
+            return child
+        if child is Node and child.has_node("Player"):
+            var nested := child.get_node_or_null("Player") as Node2D
+            if nested:
+                return nested
+    return null
+
 func _physics_process(delta: float) -> void:
     _t += delta
-    position.y = _base_y + abs(sin(_t * TAU * osc_frequency)) * osc_amplitude
     var root := get_tree().get_root()
     var main := root.get_node_or_null("Main")
     var mag: bool = always_magnet
-    if main and not mag and main.has_method("get"):
+    if main and main.has_method("get") and not mag:
         mag = bool(main.get("magnet_enabled"))
     if not mag:
+        position.y = _base_y + abs(sin(_t * TAU * osc_frequency)) * osc_amplitude
         return
-    var pl: Node2D = null
-    if main:
-        pl = main.get_node_or_null("Player") as Node2D
-    if pl == null:
-        pl = root.get_node_or_null("Player") as Node2D
+    var pl := _find_player()
     if pl == null:
         return
     var pw := pl.global_position
