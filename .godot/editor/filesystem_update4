@@ -1,9 +1,2 @@
-res://scripts/infinite_ground.gd
-res://scripts/enemy_block.gd
-res://scenes/EnemyCone.tscn
-res://scenes/EnemyBlock.tscn
-res://scenes/Ground.tscn
 res://scripts/game_manager.gd
 res://scripts/player.gd
-res://scripts/enemy_hitbox.gd
-res://scripts/coin.gd

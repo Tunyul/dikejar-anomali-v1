@@ -20,6 +20,12 @@ class_name Player
 @export var lock_environment_speed_to_player: bool = true
 @export var terrain_paths: Array[NodePath] = []
 @export var attack_duration: float = 0.3
+@export var max_health: int = 100
+@export var starting_health: int = 100
+@export var damage_knockback_horizontal: float = 260.0
+@export var damage_knockback_vertical: float = -420.0
+@export var hit_invincibility_sec: float = 1.0
+@export var hit_blink_interval_sec: float = 0.1
 
 # ===== PERFORMANCE SETTINGS =====
 @export var position_adjustment_speed: float = 3.0
@@ -82,6 +88,10 @@ var jump_requested: bool = false
 var attack_active: bool = false
 var attack_timer: float = 0.0
 var attack_held: bool = false
+var current_health: int = 0
+var is_invincible: bool = false
+var invincible_timer: float = 0.0
+var _blink_timer: float = 0.0
 
 # ===== POSITION MANAGEMENT =====
 var _entry_start_position: Vector2 = Vector2.ZERO
@@ -235,6 +245,8 @@ func initialize_player() -> void:
     if animated_sprite:
         log_animation_scales()
 
+    current_health = starting_health
+
 func setup_collision_layers() -> void:
     collision_layer = 2  # Player layer
     collision_mask = 1   # Terrain layer
@@ -322,6 +334,7 @@ func _physics_process(delta: float) -> void:
     apply_physics(delta)
     check_game_over_conditions()
     sync_environment_speed_if_needed()
+    _update_invincibility(delta)
 
 
 
@@ -525,6 +538,26 @@ func check_game_over_conditions() -> void:
             if position.y > off_screen_threshold:
                 trigger_game_over("fell_off_screen")
 
+func _update_invincibility(delta: float) -> void:
+    if not is_invincible:
+        if animated_sprite:
+            animated_sprite.visible = true
+        return
+    invincible_timer = max(invincible_timer - delta, 0.0)
+    _blink_timer += delta
+    if _blink_timer >= hit_blink_interval_sec:
+        _blink_timer = 0.0
+        if animated_sprite:
+            animated_sprite.visible = not animated_sprite.visible
+    if invincible_timer <= 0.0:
+        is_invincible = false
+        if animated_sprite:
+            animated_sprite.visible = true
+
+func update_health_bar() -> void:
+    if game_manager and game_manager.has_method("set_player_health"):
+        game_manager.set_player_health(current_health, max_health)
+
 
 func update_animation_state() -> void:
     if not animated_sprite:
@@ -662,6 +695,30 @@ func _input(event: InputEvent) -> void:
     if event.is_action_released("attack"):
         attack_held = false
         return
+
+func apply_damage(amount: int) -> void:
+    if current_state == PlayerState.GAME_OVER:
+        return
+    if is_invincible:
+        return
+    current_health -= amount
+    if current_health < 0:
+        current_health = 0
+    update_health_bar()
+    if current_health <= 0:
+        trigger_game_over("health_depleted")
+
+func apply_hit_reaction(from_position: Vector2) -> void:
+    if current_state == PlayerState.GAME_OVER:
+        return
+    var dir: float = sign(global_position.x - from_position.x)
+    if dir == 0.0:
+        dir = 1.0
+    velocity.x = damage_knockback_horizontal * dir
+    velocity.y = damage_knockback_vertical
+    is_invincible = true
+    invincible_timer = hit_invincibility_sec
+    _blink_timer = 0.0
 func _update_attack_hitbox() -> void:
     if not attack_hitbox:
         return
@@ -701,6 +758,13 @@ func reset_player() -> void:
     velocity = Vector2.ZERO
     state_timer = 0.0
     _entry_start_position = Vector2.ZERO
+    current_health = starting_health
+    update_health_bar()
+    is_invincible = false
+    invincible_timer = 0.0
+    _blink_timer = 0.0
+    if animated_sprite:
+        animated_sprite.visible = true
     if enable_entry_sequence:
         set_state(PlayerState.ENTRY)
     else:

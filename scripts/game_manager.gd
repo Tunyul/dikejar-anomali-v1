@@ -53,6 +53,7 @@ var magnet_timer: float = 0.0
 var ads_shown_count: int = 0
 var continue_grace_timer: float = 0.0
 @onready var coin_hud_label: Label = $CanvasLayer/CoinHUD/Label
+@onready var health_bar: ProgressBar = $CanvasLayer/HealthBar
 @export var enemy_ramp_start_distance: float = 400.0
 @export var enemy_ramp_enabled: bool = true
 @export var countdown_duration_sec: float = 3.0
@@ -715,6 +716,13 @@ func on_coin_collected(segment: String) -> void:
         coin_collected_b += 1
     if missions_manager and missions_manager.has_method("add_coins"):
         missions_manager.add_coins(1)
+
+func set_player_health(current: int, maximum: int) -> void:
+    if health_bar == null:
+        return
+    health_bar.max_value = float(maximum)
+    var clamped: float = clamp(float(current), 0.0, float(maximum))
+    health_bar.value = clamped
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return

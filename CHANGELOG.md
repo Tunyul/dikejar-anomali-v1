@@ -8,6 +8,16 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 ## [Unreleased]
 
 
+## [1.3.8-beta] - 2025-12-25
+
+- UI: menambahkan `HealthBar.tscn` dan menampilkannya di HUD `Main.tscn` sebagai bar nyawa pemain
+- Gameplay: mengganti logika hit musuh/obstacle agar mengurangi health dulu sebelum game over
+- Gameplay: saat terkena enemy atau obstacle, pemain terpental (knockback) ke arah berlawanan dan mental sedikit ke atas
+- Gameplay: menambahkan periode invincibility singkat setelah terkena hit dengan efek sprite berkedip
+- Stabilitas: memperbaiki peringatan strict typing pada fungsi health HUD di `game_manager.gd`
+- Naik versi proyek ke 1.3.8-beta
+
+
 ## [1.3.7-beta] - 2025-12-24
 
 - Gameplay: menambahkan sistem serangan player (tombol `attack`/KEY_K) dengan state khusus dan hitbox serangan terpisah

@@ -1,7 +1,7 @@
-extends Area2D
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           extends Area2D
 
 @export var speed: float = 200.0
-@export var damage_on_hit: int = 100
+@export var damage_on_hit: int = 40
 
 func _ready() -> void:
     collision_layer = 4
@@ -21,5 +21,11 @@ func _physics_process(delta: float) -> void:
 
 func _on_body_entered(body: Node) -> void:
     if body is Player:
-        if body.has_method("trigger_game_over"):
-            body.trigger_game_over("hit_obstacle")
+        var player := body as Player
+        if player.has_method("apply_damage"):
+            player.apply_damage(damage_on_hit)
+        if player.has_method("apply_hit_reaction"):
+            player.apply_hit_reaction(global_position)
+        collision_layer = 0
+        collision_mask = 0
+        queue_free()

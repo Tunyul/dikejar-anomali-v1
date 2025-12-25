@@ -14,7 +14,7 @@ corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
-[node name="HealthBar" type="TextureProgressBar"]
+[node name="HealthBar" type="ProgressBar"]
 custom_minimum_size = Vector2(200, 24)
 offset_right = 200.0
 offset_bottom = 24.0
@@ -23,14 +23,7 @@ max_value = 100.0
 value = 100.0
 step = 1.0
 show_percentage = false
-fill_mode = 0
-nine_patch_stretch = true
 size_flags_horizontal = 4
 size_flags_vertical = 0
-texture_under = null
-texture_progress = null
-texture_over = null
-texture_back = null
-texture_fill = null
 theme_override_styles/background = SubResource("StyleBoxFlat_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
