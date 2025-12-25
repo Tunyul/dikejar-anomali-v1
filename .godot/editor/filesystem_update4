@@ -6,3 +6,4 @@ res://scripts/infinite_ground.gd
 res://scenes/Ground.tscn
 res://scenes/HeartPickup.tscn
 res://scripts/heart_pickup.gd
+res://scripts/GameOverMenu.gd

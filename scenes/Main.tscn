@@ -704,12 +704,12 @@ offset_bottom = 452.0
 [node name="RetryButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Play Again"
+text = "Lanjut (Mulai dari Awal)"
 
 [node name="ContinueButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Continue (Bonus)"
+text = "Kembali ke Menu Utama"
 
 [node name="HealthIcon" parent="CanvasLayer" instance=ExtResource("59_heart_hud")]
 position = Vector2(40, 24)

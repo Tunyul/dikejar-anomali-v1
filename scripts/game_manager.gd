@@ -343,10 +343,9 @@ func resume_game() -> void:
     _set_pause_menu_visible(false)
 
 func return_to_main_menu() -> void:
-    if Engine.has_singleton("TransitionManager"):
-        await TransitionManager.fade_to_scene("res://scenes/MainMenu.tscn", 0.4)
-    else:
-        get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+    if Preloader and Preloader.has_method("set_next_scene"):
+        Preloader.set_next_scene("res://scenes/MainMenu.tscn")
+    await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
 
 func try_rewarded_continue() -> void:
     if ads_shown_count >= ads_max_per_session:

@@ -10,12 +10,13 @@ func _ready() -> void:
         cont.pressed.connect(_on_continue_pressed)
 
 func _on_retry_pressed() -> void:
-    var main := get_tree().get_root().get_node_or_null("Main")
-    if main and main.has_method("restart_game"):
-        visible = false
-        main.restart_game()
+    visible = false
+    if Preloader and Preloader.has_method("set_next_scene"):
+        Preloader.set_next_scene("res://scenes/Main.tscn")
+    await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
 
 func _on_continue_pressed() -> void:
-    var main := get_tree().get_root().get_node_or_null("Main")
-    if main and main.has_method("try_rewarded_continue"):
-        main.try_rewarded_continue()
+    visible = false
+    if Preloader and Preloader.has_method("set_next_scene"):
+        Preloader.set_next_scene("res://scenes/MainMenu.tscn")
+    await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
