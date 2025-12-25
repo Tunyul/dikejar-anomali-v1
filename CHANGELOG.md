@@ -8,6 +8,16 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 ## [Unreleased]
 
 
+## [1.3.9-beta] - 2025-12-25
+
+- Hearts: menambahkan scene `HeartPickup.tscn` sebagai pickup nyawa di ground runner
+- Hearts: menambahkan animasi melayang sinusoidal untuk heart agar lebih terlihat dan hidup
+- Hearts: menambahkan pengaturan skala, jarak minimum antar heart, dan tinggi offset berbasis tile
+- Hearts: memperbaiki posisi spawn heart agar konsisten antara editor dan in-game (tidak lagi muncul jauh di atas layar)
+- Random: mengembalikan `fixed_seed` generator ground ke 0 agar pola heart kembali acak
+- Naik versi proyek ke 1.3.9-beta
+
+
 ## [1.3.8-beta] - 2025-12-25
 
 - UI: menambahkan `HealthBar.tscn` dan menampilkannya di HUD `Main.tscn` sebagai bar nyawa pemain

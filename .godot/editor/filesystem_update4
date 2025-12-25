@@ -1,2 +1,8 @@
 res://scripts/game_manager.gd
 res://scripts/player.gd
+res://scenes/Main.tscn
+res://scripts/collectible_heart.gd
+res://scripts/infinite_ground.gd
+res://scenes/Ground.tscn
+res://scenes/HeartPickup.tscn
+res://scripts/heart_pickup.gd

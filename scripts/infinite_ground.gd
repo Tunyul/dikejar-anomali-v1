@@ -78,6 +78,15 @@ extends Node2D
 @export var coin_flat_top_min_len: int = 2
 @export var coin_flat_top_max_len: int = 4
 @export_enum("RandomCampur", "LengkungNaikTurun", "NaikTanggaFlatAtas", "GarisDatar") var coin_pattern_mode: int = 0
+@export_group("Hearts")
+@export var heart_scene: PackedScene
+@export var heart_spawn_chance: float = 0.02
+@export var heart_max_children: int = 3
+@export var heart_height_offset_tiles: float = 2.0
+@export var heart_scale: float = 1.0
+@export var heart_osc_amplitude_tiles: float = 0.5
+@export var heart_osc_frequency: float = 1.0
+@export var heart_min_distance_tiles: float = 6.0
 @export_group("Enemies")
 @export var enemy_block_scene: PackedScene
 @export var enemy_cone_scene: PackedScene
@@ -93,17 +102,16 @@ extends Node2D
 @export var enemy_allow_block: bool = true
 @export var enemy_allow_cone: bool = true
 
-var _generate_now_button_internal: bool = false
+var _generate_now_internal: bool = false
 
-## Tombol editor untuk regenerate pola ground sekarang.
-@export var generate_now_button: bool:
+@export var generate_now: bool:
     set(value):
-        _generate_now_button_internal = value
+        _generate_now_internal = value
         if value:
-            generate_now(true, true)
-            _generate_now_button_internal = false
+            _run_generate_now(true, true)
+            _generate_now_internal = false
     get:
-        return _generate_now_button_internal
+        return _generate_now_internal
 
 var _tile_a: TileMapLayer = null
 var _tile_b: TileMapLayer = null
@@ -127,6 +135,7 @@ var _coin_pattern_index: int = 0
 var _coin_group_len_current: int = 0
 var _flat_top_start_index: int = 0
 var _flat_top_end_index: int = 0
+var _last_heart_x: float = -1.0e20
 
 func _setup_rng() -> void:
     if _rng == null:
@@ -179,6 +188,8 @@ func _ensure_initialized() -> void:
         _enemies_b = get_node_or_null("EnemiesB") as Node2D
     if coin_scene == null:
         coin_scene = load("res://scenes/Coin.tscn")
+    if heart_scene == null:
+        heart_scene = load("res://scenes/HeartPickup.tscn")
     if enemy_block_scene == null:
         enemy_block_scene = load("res://scenes/EnemyBlock.tscn")
     if enemy_cone_scene == null:
@@ -284,6 +295,7 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
     var coin_gap_remaining: int = 0
     var coin_pending_gap_len: int = 0
     var enemy_gap_remaining: int = 0
+    var heart_gap_remaining: int = 0
     var i: int = 0
     while i < segment_tile_count:
         var flat_override: bool = _flat_tiles_remaining > 0
@@ -390,6 +402,17 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
                         enemy_gap_remaining = max(enemy_min_gap_between, 0)
         if do_spawn_enemy:
             _spawn_enemy_for_column(tile, i, current_height)
+        var do_spawn_heart: bool = false
+        var hearts_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy
+        if hearts_allowed and heart_scene != null and heart_spawn_chance > 0.0:
+            if heart_gap_remaining > 0:
+                heart_gap_remaining -= 1
+            else:
+                if _rng.randf() <= heart_spawn_chance:
+                    do_spawn_heart = true
+                    heart_gap_remaining = 40
+        if do_spawn_heart:
+            _spawn_heart_for_column(tile, i, current_height)
         if flat_override and _flat_tiles_remaining > 0:
             _flat_tiles_remaining -= 1
         last_was_gap = false
@@ -415,6 +438,8 @@ func _clear_coins_for_tile(tile: TileMapLayer) -> void:
     if root == null:
         return
     for c in root.get_children():
+        if c is HeartPickup:
+            continue
         c.queue_free()
 
 func _get_enemies_root_for_tile(tile: TileMapLayer) -> Node2D:
@@ -440,6 +465,8 @@ func _clear_coins_near_gaps(tile: TileMapLayer, gap_edges: Array) -> void:
     var buffer: int = 2
     var nodes_by_x: Dictionary = {}
     for c in root.get_children():
+        if c is HeartPickup:
+            continue
         if not (c is Node2D):
             continue
         var coin_node := c as Node2D
@@ -498,6 +525,8 @@ func _clear_lonely_peak_coins(tile: TileMapLayer) -> void:
         return
     var nodes_by_x: Dictionary = {}
     for c in root.get_children():
+        if c is HeartPickup:
+            continue
         if not (c is Node2D):
             continue
         var coin_node := c as Node2D
@@ -551,6 +580,8 @@ func _clear_enemies_near_gaps(tile: TileMapLayer, gap_edges: Array) -> void:
     if gap_edges.is_empty():
         return
     for c in root.get_children():
+        if c is HeartPickup:
+            continue
         if not (c is Node2D):
             continue
         var enemy_node := c as Node2D
@@ -750,6 +781,47 @@ func _spawn_coin_for_column(tile: TileMapLayer, x: int, height: int) -> void:
     if main and main.has_method("on_coin_collected") and coin.has_signal("collected"):
         coin.collected.connect(Callable(main, "on_coin_collected"))
 
+func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int) -> void:
+    if heart_scene == null:
+        return
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return
+    if heart_max_children > 0:
+        var heart_count: int = 0
+        for c in root.get_children():
+            if c is HeartPickup:
+                heart_count += 1
+        if heart_count >= heart_max_children:
+            return
+    var top_y: int = -height
+    var offset_tiles: float = heart_height_offset_tiles
+    var whole_tiles: int = int(floor(offset_tiles))
+    var frac_tiles: float = offset_tiles - float(whole_tiles)
+    var heart_y: int = top_y - whole_tiles
+    var cell := Vector2i(x, heart_y)
+    var local_pos: Vector2 = tile.map_to_local(cell)
+    var world_pos: Vector2 = tile.to_global(local_pos)
+    if frac_tiles != 0.0:
+        world_pos.y -= frac_tiles * _tile_h_px
+    var min_dist_px: float = max(heart_min_distance_tiles * _tile_w_px, 0.0)
+    if min_dist_px > 0.0 and _last_heart_x > -1.0e19:
+        if abs(world_pos.x - _last_heart_x) < min_dist_px:
+            return
+    var heart := heart_scene.instantiate()
+    if heart == null:
+        return
+    if heart_scale != 1.0:
+        if heart is Node2D:
+            (heart as Node2D).scale = Vector2.ONE * heart_scale
+    if heart is HeartPickup:
+        var hp := heart as HeartPickup
+        hp.osc_amplitude = heart_osc_amplitude_tiles * _tile_h_px
+        hp.osc_frequency = heart_osc_frequency
+    root.add_child(heart)
+    heart.global_position = world_pos
+    _last_heart_x = world_pos.x
+
 func _spawn_enemy_for_column(tile: TileMapLayer, x: int, height: int) -> void:
     var root := _get_enemies_root_for_tile(tile)
     if root == null:
@@ -856,7 +928,7 @@ func _place_ground_column(tile: TileMapLayer, x: int, height: int) -> void:
         _add_collision_for_cell(tile, fill_cell)
         d += 1
 
-func generate_now(reset_flat: bool = false, reset_height: bool = false) -> void:
+func _run_generate_now(reset_flat: bool = false, reset_height: bool = false) -> void:
     _initialized = false
     _ensure_initialized()
     if reset_flat:

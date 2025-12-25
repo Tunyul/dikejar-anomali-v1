@@ -1,4 +1,4 @@
-[gd_scene load_steps=85 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene load_steps=84 format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -23,9 +23,7 @@
 [ext_resource type="Script" uid="uid://vy3s5tmkqslw" path="res://scripts/GameOverMenu.gd" id="34"]
 [ext_resource type="Script" uid="uid://cvivocoxcy2xo" path="res://scripts/AdManager.gd" id="35"]
 [ext_resource type="Script" uid="uid://dhacrgdwndgfc" path="res://scripts/MissionsManager.gd" id="36"]
-[ext_resource type="PackedScene" uid="uid://7k5iilghm0po" path="res://scenes/EnemyBlock.tscn" id="37_5grtr"]
 [ext_resource type="Texture2D" uid="uid://dwk3durbly5we" path="res://assets/generated/svg/coin_gold.svg" id="38"]
-[ext_resource type="PackedScene" uid="uid://dddfqh8a72i3q" path="res://scenes/EnemyCone.tscn" id="38_vua0o"]
 [ext_resource type="Texture2D" uid="uid://cv2m8ao6ea8dm" path="res://assets/Coin Animation/png/2x/image 1.png" id="40"]
 [ext_resource type="Texture2D" uid="uid://dn3ku63liodkk" path="res://assets/Coin Animation/png/2x/image 2.png" id="41"]
 [ext_resource type="Texture2D" uid="uid://cfrlo0ws5whgv" path="res://assets/Coin Animation/png/2x/image 3.png" id="42"]
@@ -45,6 +43,7 @@
 [ext_resource type="PackedScene" uid="uid://bdwwn7sxcph1g" path="res://scenes/Ground.tscn" id="56"]
 [ext_resource type="PackedScene" uid="uid://bj0vpeb24e585" path="res://scenes/MobileControls.tscn" id="57_mobile_controls"]
 [ext_resource type="PackedScene" path="res://scenes/HealthBar.tscn" id="58_healthbar"]
+[ext_resource type="PackedScene" path="res://scenes/CollectibleHeart.tscn" id="59_heart_hud"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_coin_hud"]
 animations = [{
@@ -674,6 +673,7 @@ layout_mode = 2
 text = "Misi:"
 
 [node name="GameOverMenu" type="Control" parent="CanvasLayer"]
+visible = false
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1024.0
@@ -711,6 +711,13 @@ layout_mode = 2
 size_flags_horizontal = 4
 text = "Continue (Bonus)"
 
+[node name="HealthIcon" parent="CanvasLayer" instance=ExtResource("59_heart_hud")]
+position = Vector2(40, 24)
+scale = Vector2(0.2, 0.2)
+bob_amplitude = 0.0
+enable_bobbing = false
+enable_pickup = false
+
 [node name="HealthBar" parent="CanvasLayer" instance=ExtResource("58_healthbar")]
 offset_left = 64.0
 offset_top = 12.0
@@ -745,25 +752,19 @@ sprite_frames = SubResource("SpriteFrames_coin_hud")
 animation = &"spin"
 
 [node name="CountdownLabel" type="Label" parent="CanvasLayer"]
+visible = false
 z_index = 200
-layout_mode = 0
-offset_left = 0.0
-offset_top = 0.0
 offset_right = 1024.0
 offset_bottom = 576.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 96
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 96
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = ""
-visible = false
 
 [node name="Ground" parent="." instance=ExtResource("56")]
 z_index = 5
 min_scroll_speed = 250.0
 debug_color_a = Color(0.7088994, 0, 0.12489515, 1)
-enemy_block_scene = ExtResource("37_5grtr")
-enemy_cone_scene = ExtResource("38_vua0o")
 
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
@@ -796,7 +797,7 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.5693199
+frame_progress = 0.46326768
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser"]
 shape = SubResource("RectangleShape2D_vua0o")

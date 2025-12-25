@@ -708,6 +708,16 @@ func apply_damage(amount: int) -> void:
     if current_health <= 0:
         trigger_game_over("health_depleted")
 
+func heal(amount: int) -> void:
+    if current_state == PlayerState.GAME_OVER:
+        return
+    if amount <= 0:
+        return
+    current_health += amount
+    if current_health > max_health:
+        current_health = max_health
+    update_health_bar()
+
 func apply_hit_reaction(from_position: Vector2) -> void:
     if current_state == PlayerState.GAME_OVER:
         return
