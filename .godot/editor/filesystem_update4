@@ -1,9 +1,5 @@
-res://scripts/game_manager.gd
-res://scripts/player.gd
-res://scenes/Main.tscn
-res://scripts/collectible_heart.gd
-res://scripts/infinite_ground.gd
-res://scenes/Ground.tscn
-res://scenes/HeartPickup.tscn
-res://scripts/heart_pickup.gd
-res://scripts/GameOverMenu.gd
+res://scripts/MainMenu.gd
+res://scripts/DailyMissionsMenu.gd
+res://scripts/SettingsMenu.gd
+res://scripts/ShopMenu.gd
+res://scenes/SettingsMenu.tscn

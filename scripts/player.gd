@@ -26,6 +26,8 @@ class_name Player
 @export var damage_knockback_vertical: float = -420.0
 @export var hit_invincibility_sec: float = 1.0
 @export var hit_blink_interval_sec: float = 0.1
+@export var anomaly_instant_game_over: bool = true
+@export var anomaly_damage: int = 20
 
 # ===== PERFORMANCE SETTINGS =====
 @export var position_adjustment_speed: float = 3.0
@@ -729,6 +731,16 @@ func apply_hit_reaction(from_position: Vector2) -> void:
     is_invincible = true
     invincible_timer = hit_invincibility_sec
     _blink_timer = 0.0
+func on_anomaly_contact() -> void:
+    if current_state != PlayerState.FULL_MOVEMENT:
+        return
+    if anomaly_instant_game_over:
+        trigger_game_over("caught_by_anomaly")
+    else:
+        apply_damage(anomaly_damage)
+        if current_state != PlayerState.GAME_OVER:
+            _set_to_entry_stop()
+            velocity = Vector2.ZERO
 func _update_attack_hitbox() -> void:
     if not attack_hitbox:
         return

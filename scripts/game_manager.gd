@@ -11,6 +11,9 @@ var coin_collected_b: int = 0
 var last_score: int = 0
 var last_coins: int = 0
 var total_coins: int = 0
+var player_level: int = 1
+var player_xp: int = 0
+var player_xp_required: int = 100
 var game_time_sec: float = 0.0
 var total_tiles_passed: int = 0
 var _tiles_passed_accum: float = 0.0
@@ -21,6 +24,8 @@ var _debug_time_accum: float = 0.0
 @export var max_speed: float = 300.0
 @export var speed_gain_per_meter: float = 0.02
 @export var score_per_meter: float = 0.1
+@export var xp_per_meter: float = 0.02
+@export var xp_per_coin: float = 0.2
 @export var debug_update_interval_sec: float = 0.25
 @export var scene_verify_on_start: bool = false
 @export var watchdog_fps_threshold: int = 15
@@ -47,6 +52,7 @@ var _scene_verify_start_ms: int = 0
 var bgm_muted: bool = false
 var sfx_muted: bool = false
 var magnet_timer: float = 0.0
+@export var powerup_magnet_duration_sec: float = 10.0
 @export var ads_enabled: bool = true
 @export var ads_max_per_session: int = 2
 @export var rewarded_continue_grace_sec: float = 5.0
@@ -120,6 +126,11 @@ func _ready() -> void:
 
     _connect_mobile_buttons()
 
+    if canvas:
+        var settings_button := canvas.get_node_or_null("SettingsButton") as BaseButton
+        if settings_button and settings_button.has_signal("pressed"):
+            settings_button.pressed.connect(_on_settings_button_pressed)
+
 func _connect_mobile_buttons() -> void:
     if not canvas or not player:
         return
@@ -146,6 +157,10 @@ func _on_attack_button_pressed() -> void:
     _debug_input("INPUT: attack_button")
     if player and player.has_method("request_attack"):
         player.request_attack()
+
+func _on_settings_button_pressed() -> void:
+    _debug_input("INPUT: settings_button")
+    pause_game()
 
 func _process(delta: float) -> void:
     if countdown_active:
@@ -191,11 +206,23 @@ func _process(delta: float) -> void:
         if player and player.has_method("set_run_anim_factor"):
             var anim_factor: float = max(0.1, target_speed / max(base_speed, 0.1))
             player.call("set_run_anim_factor", anim_factor)
-        if magnet_timer > 0.0:
-            magnet_timer = max(magnet_timer - delta, 0.0)
-            if magnet_timer <= 0.0:
-                magnet_enabled = false
-        _apply_enemy_ramp_if_needed()
+    if magnet_timer > 0.0:
+        magnet_timer = max(magnet_timer - delta, 0.0)
+        if magnet_timer <= 0.0:
+            magnet_enabled = false
+    if canvas:
+        var magnet_icon := canvas.get_node_or_null("MagnetIcon") as TextureRect
+        var magnet_label := canvas.get_node_or_null("MagnetTimerLabel") as Label
+        if magnet_icon:
+            magnet_icon.visible = magnet_enabled
+        if magnet_label:
+            magnet_label.visible = magnet_enabled
+            if magnet_enabled:
+                var sec_left: int = int(ceil(magnet_timer))
+                magnet_label.text = str(max(sec_left, 0))
+            else:
+                magnet_label.text = ""
+    _apply_enemy_ramp_if_needed()
     if OS.is_debug_build() and debug_info_enabled:
         _debug_time_accum += delta
         if _debug_time_accum >= debug_update_interval_sec:
@@ -431,7 +458,10 @@ func _set_pause_menu_visible(v: bool) -> void:
                 _refresh_missions_label()
 
 func activate_magnet(d: float) -> void:
-    magnet_timer = max(magnet_timer, max(d, 0.0))
+    var dur: float = d
+    if dur <= 0.0:
+        dur = powerup_magnet_duration_sec
+    magnet_timer = max(magnet_timer, max(dur, 0.0))
     magnet_enabled = true
 
 func _apply_enemy_ramp_if_needed() -> void:
@@ -512,6 +542,11 @@ func on_player_game_over(_cause: String) -> void:
     last_score = score
     last_coins = coin_collected_a + coin_collected_b
     total_coins += last_coins
+    var xp_gain_from_distance: int = int(distance * xp_per_meter)
+    var xp_gain_from_coins: int = int(float(last_coins) * xp_per_coin)
+    var xp_gain: int = xp_gain_from_distance + xp_gain_from_coins
+    if xp_gain > 0:
+        _apply_xp_gain(xp_gain)
     if missions_manager and missions_manager.has_method("update_distance"):
         missions_manager.update_distance(distance)
     if missions_manager and missions_manager.has_method("add_coins") and last_coins > 0:
@@ -631,9 +666,21 @@ func _load_progress() -> void:
         last_score = int(cfg.get_value("progress", "last_score", 0))
         last_coins = int(cfg.get_value("progress", "last_coins", 0))
         total_coins = int(cfg.get_value("progress", "total_coins", 0))
-
+        player_level = int(cfg.get_value("progress", "player_level", 1))
+        player_xp = int(cfg.get_value("progress", "player_xp", 0))
+        player_xp_required = int(cfg.get_value("progress", "player_xp_required", 100))
+        if player_xp_required <= 0:
+            player_xp_required = _calculate_xp_required(player_level)
         bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
         sfx_muted = bool(cfg.get_value("settings", "sfx_muted", false))
+        var bgm_volume: float = float(cfg.get_value("settings", "bgm_volume", 0.8))
+        var sfx_volume: float = float(cfg.get_value("settings", "sfx_volume", 0.8))
+        set_bgm_volume(bgm_volume)
+        set_sfx_volume(sfx_volume)
+        if bgm_muted:
+            set_bgm_muted(true)
+        if sfx_muted:
+            set_sfx_muted(true)
 
 func _save_progress() -> void:
     var cfg := ConfigFile.new()
@@ -644,9 +691,34 @@ func _save_progress() -> void:
     cfg.set_value("progress", "last_score", last_score)
     cfg.set_value("progress", "last_coins", last_coins)
     cfg.set_value("progress", "total_coins", total_coins)
+    cfg.set_value("progress", "player_level", player_level)
+    cfg.set_value("progress", "player_xp", player_xp)
+    cfg.set_value("progress", "player_xp_required", player_xp_required)
     cfg.set_value("settings", "bgm_muted", bgm_muted)
     cfg.set_value("settings", "sfx_muted", sfx_muted)
     cfg.save("user://save.cfg")
+
+
+func _calculate_xp_required(level: int) -> int:
+    var base_xp := 100
+    var step := 25
+    if level <= 1:
+        return base_xp
+    return base_xp + (level - 1) * step
+
+
+func _apply_xp_gain(amount: int) -> void:
+    if amount <= 0:
+        return
+    player_xp += amount
+    if player_level <= 0:
+        player_level = 1
+    if player_xp_required <= 0:
+        player_xp_required = _calculate_xp_required(player_level)
+    while player_xp >= player_xp_required:
+        player_xp -= player_xp_required
+        player_level += 1
+        player_xp_required = _calculate_xp_required(player_level)
 
 
 

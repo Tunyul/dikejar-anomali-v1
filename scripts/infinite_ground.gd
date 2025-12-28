@@ -65,7 +65,7 @@ extends Node2D
 @export var coin_scene: PackedScene
 @export var coin_spawn_chance: float = 1.0
 @export var coin_max_children: int = 40
-@export var coin_scale: float = 0.3
+@export var coin_scale: float = 1.0
 @export var coin_group_min_len: int = 3
 @export var coin_group_max_len: int = 6
 @export var coin_group_gap_min: int = 2
@@ -87,6 +87,13 @@ extends Node2D
 @export var heart_osc_amplitude_tiles: float = 0.5
 @export var heart_osc_frequency: float = 1.0
 @export var heart_min_distance_tiles: float = 6.0
+@export_group("Magnet")
+@export var magnet_scene: PackedScene
+@export var magnet_spawn_chance: float = 0.01
+@export var magnet_max_children: int = 1
+@export var magnet_height_offset_tiles: float = 2.0
+@export var magnet_min_distance_tiles: float = 12.0
+@export var magnet_gap_tiles: int = 80
 @export_group("Enemies")
 @export var enemy_block_scene: PackedScene
 @export var enemy_cone_scene: PackedScene
@@ -136,6 +143,7 @@ var _coin_group_len_current: int = 0
 var _flat_top_start_index: int = 0
 var _flat_top_end_index: int = 0
 var _last_heart_x: float = -1.0e20
+var _last_magnet_x: float = -1.0e20
 
 func _setup_rng() -> void:
     if _rng == null:
@@ -190,6 +198,8 @@ func _ensure_initialized() -> void:
         coin_scene = load("res://scenes/Coin.tscn")
     if heart_scene == null:
         heart_scene = load("res://scenes/HeartPickup.tscn")
+    if magnet_scene == null:
+        magnet_scene = load("res://scenes/MagnetPowerup.tscn")
     if enemy_block_scene == null:
         enemy_block_scene = load("res://scenes/EnemyBlock.tscn")
     if enemy_cone_scene == null:
@@ -296,6 +306,7 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
     var coin_pending_gap_len: int = 0
     var enemy_gap_remaining: int = 0
     var heart_gap_remaining: int = 0
+    var magnet_gap_remaining: int = 0
     var i: int = 0
     while i < segment_tile_count:
         var flat_override: bool = _flat_tiles_remaining > 0
@@ -413,6 +424,17 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
                     heart_gap_remaining = 40
         if do_spawn_heart:
             _spawn_heart_for_column(tile, i, current_height)
+        var do_spawn_magnet: bool = false
+        var magnets_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and not do_spawn_heart and magnet_scene != null and magnet_spawn_chance > 0.0
+        if magnets_allowed:
+            if magnet_gap_remaining > 0:
+                magnet_gap_remaining -= 1
+            else:
+                if _rng.randf() <= magnet_spawn_chance:
+                    do_spawn_magnet = true
+                    magnet_gap_remaining = max(magnet_gap_tiles, 0)
+        if do_spawn_magnet:
+            _spawn_magnet_for_column(tile, i, current_height)
         if flat_override and _flat_tiles_remaining > 0:
             _flat_tiles_remaining -= 1
         last_was_gap = false
@@ -440,6 +462,8 @@ func _clear_coins_for_tile(tile: TileMapLayer) -> void:
     for c in root.get_children():
         if c is HeartPickup:
             continue
+        if c is MagnetPowerup:
+            continue
         c.queue_free()
 
 func _get_enemies_root_for_tile(tile: TileMapLayer) -> Node2D:
@@ -466,6 +490,8 @@ func _clear_coins_near_gaps(tile: TileMapLayer, gap_edges: Array) -> void:
     var nodes_by_x: Dictionary = {}
     for c in root.get_children():
         if c is HeartPickup:
+            continue
+        if c is MagnetPowerup:
             continue
         if not (c is Node2D):
             continue
@@ -526,6 +552,8 @@ func _clear_lonely_peak_coins(tile: TileMapLayer) -> void:
     var nodes_by_x: Dictionary = {}
     for c in root.get_children():
         if c is HeartPickup:
+            continue
+        if c is MagnetPowerup:
             continue
         if not (c is Node2D):
             continue
@@ -617,6 +645,10 @@ func _clear_short_coin_groups(tile: TileMapLayer) -> void:
         return
     var nodes_by_x: Dictionary = {}
     for c in root.get_children():
+        if c is HeartPickup:
+            continue
+        if c is MagnetPowerup:
+            continue
         if not (c is Node2D):
             continue
         var coin_node := c as Node2D
@@ -821,6 +853,42 @@ func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int) -> void:
     root.add_child(heart)
     heart.global_position = world_pos
     _last_heart_x = world_pos.x
+
+func _spawn_magnet_for_column(tile: TileMapLayer, x: int, height: int) -> void:
+    if magnet_scene == null:
+        return
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return
+    if magnet_max_children > 0:
+        var magnet_count: int = 0
+        for c in root.get_children():
+            if c is MagnetPowerup:
+                magnet_count += 1
+        if magnet_count >= magnet_max_children:
+            return
+    var top_y: int = -height
+    var offset_tiles: float = magnet_height_offset_tiles
+    var whole_tiles: int = int(floor(offset_tiles))
+    var frac_tiles: float = offset_tiles - float(whole_tiles)
+    var magnet_y: int = top_y - whole_tiles
+    var cell := Vector2i(x, magnet_y)
+    var local_pos: Vector2 = tile.map_to_local(cell)
+    var world_pos: Vector2 = tile.to_global(local_pos)
+    if frac_tiles != 0.0:
+        world_pos.y -= frac_tiles * _tile_h_px
+    var min_dist_px: float = max(magnet_min_distance_tiles * _tile_w_px, 0.0)
+    if min_dist_px > 0.0 and _last_magnet_x > -1.0e19:
+        if abs(world_pos.x - _last_magnet_x) < min_dist_px:
+            return
+    var magnet := magnet_scene.instantiate()
+    if magnet == null:
+        return
+    if not (magnet is Node2D):
+        return
+    root.add_child(magnet)
+    (magnet as Node2D).global_position = world_pos
+    _last_magnet_x = world_pos.x
 
 func _spawn_enemy_for_column(tile: TileMapLayer, x: int, height: int) -> void:
     var root := _get_enemies_root_for_tile(tile)

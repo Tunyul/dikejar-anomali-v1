@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://c7ye5080oeksi"]
+[gd_scene load_steps=31 format=3 uid="uid://c7ye5080oeksi"]
 
 [ext_resource type="Script" uid="uid://noswsccs8n2x" path="res://scripts/MainMenu.gd" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://b8k0ak7ehq3a8" path="res://assets/Background/png/1920x1080/All/Mountain_3.png" id="7"]
 [ext_resource type="Texture2D" uid="uid://dbqhmqte5y0x7" path="res://assets/Background/png/1920x1080/All/Mountain_2.png" id="8"]
 [ext_resource type="Texture2D" uid="uid://p4vincqhmsp4" path="res://assets/Background/png/1920x1080/All/Mountain_1.png" id="9"]
+[ext_resource type="Texture2D" uid="uid://cb6ibjcmicdsw" path="res://assets/tombol/tombol_mulai_256x128.png" id="10_tombol_play"]
 [ext_resource type="Texture2D" uid="uid://cs57tqdxe7yjm" path="res://assets/title/title_game.png" id="11"]
 [ext_resource type="Texture2D" uid="uid://bel1e3nwey4da" path="res://assets/Background/png/Clouds/128x128/Cloud_1.png" id="12"]
 [ext_resource type="Texture2D" uid="uid://flq3uu2y83r4" path="res://assets/Background/png/Clouds/128x128/Cloud_2.png" id="13"]
@@ -16,6 +17,49 @@
 [ext_resource type="Texture2D" uid="uid://ba2hjmnmppick" path="res://assets/Background/png/Clouds/256x256/Cloud_2.png" id="15"]
 [ext_resource type="Texture2D" uid="uid://kpcwkxsrgbgi" path="res://assets/Background/png/1920x1080/All/Hills_2.png" id="16"]
 [ext_resource type="Texture2D" uid="uid://dcydd8r0n5c6f" path="res://assets/Background/png/1920x1080/All/Hills_1.png" id="17"]
+[ext_resource type="Texture2D" uid="uid://dcmw8cal1xu1v" path="res://assets/tombol/tombol_shop_256x128.png" id="18_tombol_shop"]
+[ext_resource type="Texture2D" uid="uid://bn2mxi2ykggix" path="res://assets/tombol/tombol_setting_256x128.png" id="19_tombol_setting"]
+[ext_resource type="Texture2D" uid="uid://7xrqfqhbeh37" path="res://assets/tombol/tombol_mission_202x168.png" id="20_tombol_mission"]
+[ext_resource type="Texture2D" uid="uid://brlwhbamogaai" path="res://assets/Coin Animation/png/2x/Coin.png" id="21_coin_icon"]
+[ext_resource type="Texture2D" uid="uid://dn5c37tdf5r0" path="res://assets/icon/icon_trophy_128x128.png" id="22_trophy_icon"]
+[ext_resource type="Texture2D" uid="uid://v21m5eac8ghe" path="res://assets/icon/icon_border_avatar_gold_128x128.png" id="23_avatar_border"]
+[ext_resource type="PackedScene" path="res://scenes/SettingsMenu.tscn" id="24_settings_scene"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_shop"]
+texture = ExtResource("18_tombol_shop")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_play"]
+texture = ExtResource("10_tombol_play")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_setting"]
+texture = ExtResource("19_tombol_setting")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mission"]
+texture = ExtResource("20_tombol_mission")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp_bg"]
+bg_color = Color(0, 0, 0, 0.4)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp_fill"]
+bg_color = Color(0.95, 0.78, 0.18, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_bg"]
+bg_color = Color(0, 0, 0, 0.35)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mission"]
+texture = ExtResource("20_tombol_mission")
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -40,31 +84,179 @@ layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="PlayButton" type="Button" parent="UI/CenterContainer/VBox"]
-custom_minimum_size = Vector2(340, 64)
+[node name="ButtonsRow" type="HBoxContainer" parent="UI/CenterContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="ShopButton" type="Button" parent="UI/CenterContainer/VBox/ButtonsRow"]
+texture_filter = 2
+custom_minimum_size = Vector2(256, 128)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 34
+theme_override_styles/normal = SubResource("StyleBoxTexture_shop")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_shop")
+theme_override_styles/hover = SubResource("StyleBoxTexture_shop")
+theme_override_styles/focus = SubResource("StyleBoxTexture_shop")
+
+[node name="PlayButton" type="Button" parent="UI/CenterContainer/VBox/ButtonsRow"]
+texture_filter = 2
+custom_minimum_size = Vector2(256, 128)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxTexture_play")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_play")
+theme_override_styles/hover = SubResource("StyleBoxTexture_play")
+theme_override_styles/focus = SubResource("StyleBoxTexture_play")
 text = "Play"
 
-[node name="QuitButton" type="Button" parent="UI/CenterContainer/VBox"]
-custom_minimum_size = Vector2(340, 64)
+[node name="SettingsButton" type="Button" parent="UI/CenterContainer/VBox/ButtonsRow"]
+texture_filter = 2
+custom_minimum_size = Vector2(256, 128)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 28
-text = "Keluar"
+theme_override_styles/normal = SubResource("StyleBoxTexture_setting")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_setting")
+theme_override_styles/hover = SubResource("StyleBoxTexture_setting")
+theme_override_styles/focus = SubResource("StyleBoxTexture_setting")
 
-[node name="StatsLabel" type="Label" parent="UI/CenterContainer/VBox"]
+[node name="PlayerHUD" type="HBoxContainer" parent="UI"]
+z_index = 100
+custom_minimum_size = Vector2(48, 48)
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 400.0
+offset_bottom = 58.0
+theme_override_constants/separation = 8
+
+[node name="AvatarIcon" type="TextureRect" parent="UI/PlayerHUD"]
+custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Best: 0 | Coins: 0"
-horizontal_alignment = 1
+size_flags_horizontal = 0
+size_flags_vertical = 4
+texture = ExtResource("23_avatar_border")
+expand_mode = 1
+
+[node name="LevelLabel" type="Label" parent="UI/PlayerHUD"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Lv 1"
+vertical_alignment = 1
+
+[node name="XPBar" type="ProgressBar" parent="UI/PlayerHUD"]
+custom_minimum_size = Vector2(180, 20)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_xp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_xp_fill")
+
+[node name="XPLabel" type="Label" parent="UI/PlayerHUD"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "0/100 XP"
+vertical_alignment = 1
+
+[node name="RewardIcon" type="TextureRect" parent="UI/PlayerHUD"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+expand_mode = 1
+
+[node name="CoinHUDBackground" type="Panel" parent="UI"]
+z_index = 90
+custom_minimum_size = Vector2(48, 48)
+offset_left = 16.0
+offset_top = 70.0
+offset_right = 188.0
+offset_bottom = 126.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
+
+[node name="CoinHUD" type="HBoxContainer" parent="UI"]
+z_index = 100
+custom_minimum_size = Vector2(48, 48)
+offset_left = 20.0
+offset_top = 74.0
+offset_right = 184.0
+offset_bottom = 122.0
+
+[node name="CoinIcon" type="TextureRect" parent="UI/CoinHUD"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+texture = ExtResource("21_coin_icon")
+expand_mode = 1
+
+[node name="CoinLabel" type="Label" parent="UI/CoinHUD"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "0"
+
+[node name="ScoreHUDBackground" type="Panel" parent="UI"]
+z_index = 90
+custom_minimum_size = Vector2(48, 48)
+offset_left = 16.0
+offset_top = 130.0
+offset_right = 188.0
+offset_bottom = 186.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
+
+[node name="ScoreHUD" type="HBoxContainer" parent="UI"]
+z_index = 100
+custom_minimum_size = Vector2(48, 48)
+offset_left = 20.0
+offset_top = 134.0
+offset_right = 184.0
+offset_bottom = 182.0
+
+[node name="ScoreIcon" type="TextureRect" parent="UI/ScoreHUD"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+texture = ExtResource("22_trophy_icon")
+expand_mode = 1
+
+[node name="ScoreLabel" type="Label" parent="UI/ScoreHUD"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "0"
+
+[node name="DailyButton" type="Button" parent="UI"]
+texture_filter = 2
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -95.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 75.0
+theme_override_styles/normal = SubResource("StyleBoxTexture_mission")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_mission")
+theme_override_styles/hover = SubResource("StyleBoxTexture_mission")
+theme_override_styles/focus = SubResource("StyleBoxTexture_mission")
+
+[node name="VersionLabel" type="Label" parent="UI"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -32.0
+offset_right = 216.0
+offset_bottom = -8.0
+text = "v0.1.0"
 
 [node name="TitleSprite" type="Sprite2D" parent="UI"]
 z_index = 100
 position = Vector2(512, 160)
 scale = Vector2(0.34, 0.34)
 texture = ExtResource("11")
+
+[node name="SettingsMenu" parent="." instance=ExtResource("24_settings_scene")]
+visible = false
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
 script = ExtResource("2")

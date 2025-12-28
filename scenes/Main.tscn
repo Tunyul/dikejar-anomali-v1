@@ -1,4 +1,4 @@
-[gd_scene load_steps=84 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene load_steps=86 format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -23,9 +23,9 @@
 [ext_resource type="Script" uid="uid://vy3s5tmkqslw" path="res://scripts/GameOverMenu.gd" id="34"]
 [ext_resource type="Script" uid="uid://cvivocoxcy2xo" path="res://scripts/AdManager.gd" id="35"]
 [ext_resource type="Script" uid="uid://dhacrgdwndgfc" path="res://scripts/MissionsManager.gd" id="36"]
-[ext_resource type="Texture2D" uid="uid://dwk3durbly5we" path="res://assets/generated/svg/coin_gold.svg" id="38"]
 [ext_resource type="Texture2D" uid="uid://cv2m8ao6ea8dm" path="res://assets/Coin Animation/png/2x/image 1.png" id="40"]
 [ext_resource type="Texture2D" uid="uid://dn3ku63liodkk" path="res://assets/Coin Animation/png/2x/image 2.png" id="41"]
+[ext_resource type="PackedScene" uid="uid://ckrxbg831c8qt" path="res://scenes/MagnetPowerup.tscn" id="41_8gny2"]
 [ext_resource type="Texture2D" uid="uid://cfrlo0ws5whgv" path="res://assets/Coin Animation/png/2x/image 3.png" id="42"]
 [ext_resource type="Texture2D" uid="uid://cifwv46e4gaeg" path="res://assets/Coin Animation/png/2x/image 4.png" id="43"]
 [ext_resource type="Texture2D" uid="uid://b0x6c8m348jl5" path="res://assets/Coin Animation/png/2x/image 5.png" id="44"]
@@ -44,6 +44,8 @@
 [ext_resource type="PackedScene" uid="uid://bj0vpeb24e585" path="res://scenes/MobileControls.tscn" id="57_mobile_controls"]
 [ext_resource type="PackedScene" path="res://scenes/HealthBar.tscn" id="58_healthbar"]
 [ext_resource type="PackedScene" path="res://scenes/CollectibleHeart.tscn" id="59_heart_hud"]
+[ext_resource type="Texture2D" uid="uid://c40kjq5gmlng0" path="res://assets/magnet/magnet-96.png" id="60_magnet_icon"]
+[ext_resource type="Texture2D" uid="uid://sgqo0atm3wrv" path="res://assets/icon/icon_setting.png" id="61_setting_icon"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_coin_hud"]
 animations = [{
@@ -366,7 +368,7 @@ animations = [{
 "speed": 12.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_vua0o"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8gny2"]
 size = Vector2(64, 64)
 
 [node name="Main" type="Node2D"]
@@ -598,11 +600,19 @@ layer = 100
 [node name="MobileControls" parent="CanvasLayer" instance=ExtResource("57_mobile_controls")]
 
 [node name="VersionLabel" type="Label" parent="CanvasLayer"]
-offset_left = 900.0
-offset_top = 10.0
-offset_right = 959.0
-offset_bottom = 33.0
+offset_left = 8.0
+offset_top = 544.0
+offset_right = 160.0
+offset_bottom = 568.0
 script = ExtResource("28")
+
+[node name="SettingsButton" type="TextureButton" parent="CanvasLayer"]
+offset_left = 968.0
+offset_top = 4.0
+offset_right = 1008.0
+offset_bottom = 44.0
+scale = Vector2(0.04, 0.04)
+texture_normal = ExtResource("61_setting_icon")
 
 [node name="PauseMenu" type="Control" parent="CanvasLayer"]
 visible = false
@@ -712,31 +722,25 @@ size_flags_horizontal = 4
 text = "Kembali ke Menu Utama"
 
 [node name="HealthIcon" parent="CanvasLayer" instance=ExtResource("59_heart_hud")]
-position = Vector2(40, 24)
+position = Vector2(20, 24)
 scale = Vector2(0.2, 0.2)
 bob_amplitude = 0.0
 enable_bobbing = false
 enable_pickup = false
 
 [node name="HealthBar" parent="CanvasLayer" instance=ExtResource("58_healthbar")]
-offset_left = 64.0
+offset_left = 40.0
 offset_top = 12.0
+offset_right = 240.0
+offset_bottom = 36.0
 
 [node name="CoinHUD" type="HBoxContainer" parent="CanvasLayer"]
 z_index = 100
 custom_minimum_size = Vector2(100, 32)
-offset_left = 46.0
+offset_left = 40.0
 offset_top = 52.0
-offset_right = 210.0
+offset_right = 204.0
 offset_bottom = 84.0
-
-[node name="Icon" type="TextureRect" parent="CanvasLayer/CoinHUD"]
-visible = false
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 0
-texture = ExtResource("38")
 
 [node name="Label" type="Label" parent="CanvasLayer/CoinHUD"]
 layout_mode = 2
@@ -746,10 +750,26 @@ text = "0"
 [node name="CoinIconAnim" type="AnimatedSprite2D" parent="CanvasLayer"]
 process_mode = 3
 z_index = 99
-position = Vector2(24, 68)
+position = Vector2(20, 68)
 scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_coin_hud")
 animation = &"spin"
+
+[node name="MagnetIcon" type="TextureRect" parent="CanvasLayer"]
+z_index = 100
+custom_minimum_size = Vector2(24, 24)
+offset_left = 7.0
+offset_top = 96.0
+offset_right = 103.0
+offset_bottom = 192.0
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("60_magnet_icon")
+
+[node name="MagnetTimerLabel" type="Label" parent="CanvasLayer"]
+z_index = 100
+offset_left = 48.0
+offset_top = 96.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 
 [node name="CountdownLabel" type="Label" parent="CanvasLayer"]
 visible = false
@@ -765,6 +785,7 @@ vertical_alignment = 1
 z_index = 5
 min_scroll_speed = 250.0
 debug_color_a = Color(0.7088994, 0, 0.12489515, 1)
+magnet_scene = ExtResource("41_8gny2")
 
 [node name="Player" parent="." instance=ExtResource("20")]
 z_index = 10
@@ -797,10 +818,10 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.46326768
+frame_progress = 0.6853744
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser"]
-shape = SubResource("RectangleShape2D_vua0o")
+shape = SubResource("RectangleShape2D_8gny2")
 
 [node name="GroundRay" type="RayCast2D" parent="AnomalyChaser"]
 target_position = Vector2(0, 200)

@@ -1,5 +1,7 @@
 extends Area2D
 
+class_name MagnetPowerup
+
 @export var duration_sec: float = 10.0
 
 func _ready() -> void:
