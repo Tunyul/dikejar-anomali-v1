@@ -15,7 +15,7 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body is Node:
-		var gm := get_tree().get_current_scene()
+		var gm := get_tree().get_root().get_node_or_null("Main")
 		if gm != null and gm.has_method("activate_magnet"):
 			gm.activate_magnet(duration_sec)
-		queue_free()
+	queue_free()

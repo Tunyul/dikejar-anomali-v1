@@ -703,6 +703,8 @@ func apply_damage(amount: int) -> void:
         return
     if is_invincible:
         return
+    if game_manager and game_manager.has_method("is_shield_active") and game_manager.is_shield_active():
+        return
     current_health -= amount
     if current_health < 0:
         current_health = 0

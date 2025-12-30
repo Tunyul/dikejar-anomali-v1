@@ -18,6 +18,7 @@ var game_time_sec: float = 0.0
 var total_tiles_passed: int = 0
 var _tiles_passed_accum: float = 0.0
 var _debug_time_accum: float = 0.0
+var powerups_data: Dictionary = {}
 
 @export var debug_info_enabled: bool = false
 @export var base_speed: float = 150.0
@@ -33,6 +34,9 @@ var _debug_time_accum: float = 0.0
 @export var watchdog_print_interval_sec: float = 2.0
 @export var perf_log_to_file: bool = false
 var magnet_enabled: bool = false
+var shield_enabled: bool = false
+var double_coins_run_active: bool = false
+var double_coins_timer: float = 0.0
 
 @onready var player: Player = $Player
 @onready var anomaly: Node2D = get_node_or_null("AnomalyChaser")
@@ -52,7 +56,10 @@ var _scene_verify_start_ms: int = 0
 var bgm_muted: bool = false
 var sfx_muted: bool = false
 var magnet_timer: float = 0.0
+var shield_timer: float = 0.0
 @export var powerup_magnet_duration_sec: float = 10.0
+@export var powerup_shield_duration_sec: float = 10.0
+@export var powerup_double_coins_duration_sec: float = 10.0
 @export var ads_enabled: bool = true
 @export var ads_max_per_session: int = 2
 @export var rewarded_continue_grace_sec: float = 5.0
@@ -210,6 +217,14 @@ func _process(delta: float) -> void:
         magnet_timer = max(magnet_timer - delta, 0.0)
         if magnet_timer <= 0.0:
             magnet_enabled = false
+    if shield_timer > 0.0:
+        shield_timer = max(shield_timer - delta, 0.0)
+        if shield_timer <= 0.0:
+            shield_enabled = false
+    if double_coins_timer > 0.0:
+        double_coins_timer = max(double_coins_timer - delta, 0.0)
+        if double_coins_timer <= 0.0:
+            double_coins_run_active = false
     if canvas:
         var magnet_icon := canvas.get_node_or_null("MagnetIcon") as TextureRect
         var magnet_label := canvas.get_node_or_null("MagnetTimerLabel") as Label
@@ -222,6 +237,28 @@ func _process(delta: float) -> void:
                 magnet_label.text = str(max(sec_left, 0))
             else:
                 magnet_label.text = ""
+        var shield_icon := canvas.get_node_or_null("ShieldIcon") as TextureRect
+        var shield_label := canvas.get_node_or_null("ShieldTimerLabel") as Label
+        if shield_icon:
+            shield_icon.visible = shield_enabled
+        if shield_label:
+            shield_label.visible = shield_enabled
+            if shield_enabled:
+                var shield_sec_left: int = int(ceil(shield_timer))
+                shield_label.text = str(max(shield_sec_left, 0))
+            else:
+                shield_label.text = ""
+        var double_icon := canvas.get_node_or_null("DoubleCoinsIcon") as TextureRect
+        var double_label := canvas.get_node_or_null("DoubleCoinsTimerLabel") as Label
+        if double_icon:
+            double_icon.visible = double_coins_run_active
+        if double_label:
+            double_label.visible = double_coins_run_active
+            if double_coins_run_active:
+                var dsec_left: int = int(ceil(double_coins_timer))
+                double_label.text = str(max(dsec_left, 0))
+            else:
+                double_label.text = ""
     _apply_enemy_ramp_if_needed()
     if OS.is_debug_build() and debug_info_enabled:
         _debug_time_accum += delta
@@ -463,6 +500,55 @@ func activate_magnet(d: float) -> void:
         dur = powerup_magnet_duration_sec
     magnet_timer = max(magnet_timer, max(dur, 0.0))
     magnet_enabled = true
+    _clear_existing_magnets_and_shields()
+
+func activate_shield(d: float) -> void:
+    var dur: float = d
+    if dur <= 0.0:
+        dur = powerup_shield_duration_sec
+    shield_timer = max(shield_timer, max(dur, 0.0))
+    shield_enabled = true
+    _clear_existing_magnets_and_shields()
+
+func is_magnet_active() -> bool:
+    return magnet_enabled
+
+func is_shield_active() -> bool:
+    return shield_enabled
+
+func _clear_existing_magnets_and_shields() -> void:
+    var grounds: Array = []
+    if ground_a != null:
+        grounds.append(ground_a)
+    if ground_b != null:
+        grounds.append(ground_b)
+    for g in grounds:
+        if g == null:
+            continue
+        for coins_root_name in ["CoinsA", "CoinsB"]:
+            var root: Node = g.get_node_or_null(coins_root_name)
+            if root == null:
+                continue
+            for c in root.get_children():
+                if (c is MagnetPowerup) or c.is_in_group("shield_powerup"):
+                    c.queue_free()
+
+func _clear_existing_hearts() -> void:
+    var grounds: Array = []
+    if ground_a != null:
+        grounds.append(ground_a)
+    if ground_b != null:
+        grounds.append(ground_b)
+    for g in grounds:
+        if g == null:
+            continue
+        for coins_root_name in ["CoinsA", "CoinsB"]:
+            var root: Node = g.get_node_or_null(coins_root_name)
+            if root == null:
+                continue
+            for c in root.get_children():
+                if c is HeartPickup:
+                    c.queue_free()
 
 func _apply_enemy_ramp_if_needed() -> void:
     return
@@ -560,12 +646,11 @@ func on_player_game_over(_cause: String) -> void:
     if anomaly:
         anomaly.hide()
     if debug_label != null:
-        debug_label.visible = true
-        debug_label.text = "GAME OVER\nScore: " + str(score) + "\nDistance: " + str(int(round(distance)))
+        debug_label.visible = false
     if canvas:
         var gom := canvas.get_node_or_null("GameOverMenu")
-        if gom:
-            gom.visible = true
+        if gom and gom.has_method("show_game_over"):
+            gom.show_game_over(score, distance)
 
 func restart_game() -> void:
     _start_play_phase()
@@ -681,6 +766,11 @@ func _load_progress() -> void:
             set_bgm_muted(true)
         if sfx_muted:
             set_sfx_muted(true)
+        var pd = cfg.get_value("powerups", "data", {})
+        if pd is Dictionary:
+            powerups_data = pd
+        else:
+            powerups_data = {}
 
 func _save_progress() -> void:
     var cfg := ConfigFile.new()
@@ -696,6 +786,10 @@ func _save_progress() -> void:
     cfg.set_value("progress", "player_xp_required", player_xp_required)
     cfg.set_value("settings", "bgm_muted", bgm_muted)
     cfg.set_value("settings", "sfx_muted", sfx_muted)
+    cfg.set_value("powerups", "data", powerups_data)
+    var ver = ProjectSettings.get_setting("application/config/version")
+    if ver != null:
+        cfg.set_value("meta", "version", String(ver))
     cfg.save("user://save.cfg")
 
 
@@ -781,12 +875,25 @@ func _unhandled_input(event: InputEvent) -> void:
                 resume_game()
 
 func on_coin_collected(segment: String) -> void:
+    var gain: int = 1
+    if double_coins_run_active:
+        gain = 2
     if segment == "A":
-        coin_collected_a += 1
+        coin_collected_a += gain
     else:
-        coin_collected_b += 1
+        coin_collected_b += gain
     if missions_manager and missions_manager.has_method("add_coins"):
-        missions_manager.add_coins(1)
+        missions_manager.add_coins(gain)
+
+func activate_double_coins_run(d: float = 0.0) -> void:
+    var dur: float = d
+    if dur <= 0.0:
+        dur = powerup_double_coins_duration_sec
+    double_coins_timer = max(dur, 0.0)
+    double_coins_run_active = double_coins_timer > 0.0
+
+func is_double_coins_active() -> bool:
+    return double_coins_run_active
 
 func set_player_health(current: int, maximum: int) -> void:
     if health_bar == null:
@@ -794,6 +901,8 @@ func set_player_health(current: int, maximum: int) -> void:
     health_bar.max_value = float(maximum)
     var clamped: float = clamp(float(current), 0.0, float(maximum))
     health_bar.value = clamped
+    if current >= maximum:
+        _clear_existing_hearts()
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return
@@ -806,6 +915,13 @@ func _start_play_phase() -> void:
     game_time_sec = 0.0
     _tiles_passed_accum = 0.0
     total_tiles_passed = 0
+    magnet_enabled = false
+    magnet_timer = 0.0
+    shield_enabled = false
+    shield_timer = 0.0
+    double_coins_run_active = false
+    double_coins_timer = 0.0
+    double_coins_run_active = false
     countdown_active = true
     countdown_timer = countdown_duration_sec
     entry_finished = false

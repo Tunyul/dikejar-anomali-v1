@@ -7,6 +7,43 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.15-beta] - 2025-12-30
+
+- Gameplay/UI: menyederhanakan flow game over sehingga tombol tidak perlu ditekan dua kali; semua aksi (ulang, lanjut bonus, kembali ke menu) sekarang memakai panel konfirmasi popup.
+- UI Game Over: mengganti tombol teks menjadi ikon datar tanpa background, disusun horizontal di bagian bawah panel.
+- UI Game Over: menyesuaikan posisi konten (score, jarak, tombol) agar lebih terpusat di kartu.
+- Stabilitas: memperbaiki peringatan `ext_resource invalid UID` untuk aset `tombol_home_96x96.png` di `Main.tscn` dan `GameOver.tscn`.
+- Save: menyimpan versi game aktif ke `user://save.cfg` pada kunci `meta/version` untuk keperluan debugging dan migrasi data di masa depan.
+- Naik versi proyek ke 1.3.15-beta
+
+## [1.3.14-beta] - 2025-12-30
+
+- Powerup: menambahkan countdown HUD untuk skill 2x coins, selaras dengan magnet/shield
+- Powerup: memindahkan ikon 2x coins ke bawah ikon skill lain di HUD
+- Powerup: menambahkan jarak minimum global antar powerup agar tidak spawn terlalu rapat
+- Powerup: mencegah spawn magnet/shield/2x coins terlalu dekat atau menempel dengan deretan coins
+- Powerup: memastikan heart hanya muncul saat health belum penuh dan tetap terpisah dari powerup lain
+- Ground runner: menambahkan jarak aman horizontal antar powerup berbasis tile di generator segmen
+- Fix: menghilangkan peringatan integer division di infinite_ground.gd dengan pembagian float
+- Fix: memastikan scene DoubleCoinsPowerup terhubung ke game_manager untuk mengaktifkan mode 2x coins
+- Naik versi proyek ke 1.3.14-beta
+
+## [1.3.13-beta] - 2025-12-29
+
+- Powerup: cegah spawn shield dan magnet saat efek masih aktif
+- Powerup: jangan spawn heart jika health pemain sudah penuh
+- Powerup: bersihkan semua magnet dan shield aktif saat powerup berjalan
+- Fix: perbaiki error strict typing dan shadowed variable di game_manager.gd
+- Naik versi proyek ke 1.3.13-beta
+
+## [1.3.12-beta] - 2025-12-28
+
+- Shop: mengganti layout menu Shop menjadi list horizontal penuh layar dengan grup produk per kategori
+- Shop: menambahkan contoh grup produk Power-ups, Upgrades, Cosmetics, Gem Packs, dan Bundles dengan harga coins dan real money (placeholder)
+- Shop: membuat kartu item dengan panel border sehingga setiap produk lebih jelas terpisah dari background
+- Shop: mengatur area scroll Shop agar bisa di-drag kiri–kanan (swipe-style) tanpa bergantung pada klik scrollbar
+- Shop: menghapus loading screen saat masuk dan keluar dari menu Shop sehingga transisi ke/dari Main Menu lebih cepat
+- Naik versi proyek ke 1.3.12-beta
 
 ## [1.3.11-beta] - 2025-12-28
 

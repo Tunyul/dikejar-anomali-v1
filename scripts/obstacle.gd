@@ -1,7 +1,13 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           extends Area2D
+extends Area2D
 
 @export var speed: float = 200.0
 @export var damage_on_hit: int = 40
+
+func _is_shield_active() -> bool:
+    var main := get_tree().get_root().get_node_or_null("Main")
+    if main and main.has_method("is_shield_active"):
+        return main.is_shield_active()
+    return false
 
 func _ready() -> void:
     collision_layer = 4
@@ -22,6 +28,12 @@ func _physics_process(delta: float) -> void:
 func _on_body_entered(body: Node) -> void:
     if body is Player:
         var player := body as Player
+        var shield_active := _is_shield_active()
+        if shield_active:
+            collision_layer = 0
+            collision_mask = 0
+            queue_free()
+            return
         if player.has_method("apply_damage"):
             player.apply_damage(damage_on_hit)
         if player.has_method("apply_hit_reaction"):

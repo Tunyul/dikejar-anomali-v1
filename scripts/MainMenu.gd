@@ -88,31 +88,21 @@ func _on_play_pressed() -> void:
 	await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
 
 func _on_shop_pressed() -> void:
-	var ui := get_node_or_null("UI")
-	if ui:
-		ui.visible = false
-	visible = false
-	process_mode = Node.PROCESS_MODE_DISABLED
-	if Preloader and Preloader.has_method("set_next_scene"):
-		Preloader.set_next_scene("res://scenes/ShopMenu.tscn")
-	await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
+	get_tree().change_scene_to_file("res://scenes/ShopMenu.tscn")
 
 func _on_settings_pressed() -> void:
 	var settings_menu := get_node_or_null("SettingsMenu")
+	if settings_menu == null:
+		var packed := load("res://scenes/SettingsMenu.tscn") as PackedScene
+		if packed:
+			settings_menu = packed.instantiate()
+			(settings_menu as Node).name = "SettingsMenu"
+			add_child(settings_menu)
 	if settings_menu:
 		if settings_menu.has_method("show_overlay"):
 			settings_menu.show_overlay()
 		else:
-			settings_menu.visible = true
-		return
-	var ui := get_node_or_null("UI")
-	if ui:
-		ui.visible = false
-	visible = false
-	process_mode = Node.PROCESS_MODE_DISABLED
-	if Preloader and Preloader.has_method("set_next_scene"):
-		Preloader.set_next_scene("res://scenes/SettingsMenu.tscn")
-	await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
+			(settings_menu as CanvasItem).visible = true
 
 func _on_daily_pressed() -> void:
 	var ui := get_node_or_null("UI")

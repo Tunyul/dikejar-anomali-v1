@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3 uid="uid://cq2f0cn2lkepl"]
 
-[ext_resource type="Script" path="res://scripts/ShopMenu.gd" id="1"]
+[ext_resource type="Script" uid="uid://b8wmwitad0u23" path="res://scripts/ShopMenu.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/ShopGroupsScroll.gd" id="2"]
+[ext_resource type="Texture2D" path="res://assets/bg/bg-shop.png" id="3"]
 
 [node name="ShopMenu" type="Control"]
 layout_mode = 3
@@ -11,23 +13,29 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
+[node name="ShopBG" type="Sprite2D" parent="."]
+position = Vector2(0, 0)
+scale = Vector2(0.6666667, 0.5625)
+texture = ExtResource("3")
+centered = false
+
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 100
 
 [node name="Panel" type="ColorRect" parent="UI"]
-layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
 offset_right = 1024.0
 offset_bottom = 576.0
-color = Color(0, 0, 0, 0.6)
+color = Color(0, 0, 0, 0.35)
 
 [node name="VBox" type="VBoxContainer" parent="UI"]
-layout_mode = 0
-offset_left = 312.0
-offset_top = 96.0
-offset_right = 712.0
-offset_bottom = 480.0
-theme_override_constants/separation = 24
-alignment = 1
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1024.0
+offset_bottom = 576.0
+theme_override_constants/separation = 16
+alignment = 0
 
 [node name="TitleLabel" type="Label" parent="UI/VBox"]
 layout_mode = 2
@@ -39,13 +47,28 @@ layout_mode = 2
 text = "Coins: 0"
 horizontal_alignment = 1
 
-[node name="ItemsLabel" type="Label" parent="UI/VBox"]
+[node name="StatusLabel" type="Label" parent="UI/VBox"]
+custom_minimum_size = Vector2(400, 24)
 layout_mode = 2
-text = "Item shop coming soon"
 horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="GroupsScroll" type="ScrollContainer" parent="UI/VBox"]
+custom_minimum_size = Vector2(1024, 260)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 0
+script = ExtResource("2")
+
+[node name="GroupsVBox" type="HBoxContainer" parent="UI/VBox/GroupsScroll"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 16
 
 [node name="BackButton" type="Button" parent="UI/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Back"
-

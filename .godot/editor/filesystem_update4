@@ -1,5 +1,5 @@
-res://scripts/MainMenu.gd
-res://scripts/DailyMissionsMenu.gd
-res://scripts/SettingsMenu.gd
-res://scripts/ShopMenu.gd
-res://scenes/SettingsMenu.tscn
+res://scripts/infinite_ground.gd
+res://scripts/game_manager.gd
+res://scenes/Ground.tscn
+res://scripts/GameOverMenu.gd
+res://scenes/GameOver.tscn

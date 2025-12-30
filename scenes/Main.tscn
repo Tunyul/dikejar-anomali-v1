@@ -1,4 +1,4 @@
-[gd_scene load_steps=86 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene load_steps=91 format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -46,6 +46,13 @@
 [ext_resource type="PackedScene" path="res://scenes/CollectibleHeart.tscn" id="59_heart_hud"]
 [ext_resource type="Texture2D" uid="uid://c40kjq5gmlng0" path="res://assets/magnet/magnet-96.png" id="60_magnet_icon"]
 [ext_resource type="Texture2D" uid="uid://sgqo0atm3wrv" path="res://assets/icon/icon_setting.png" id="61_setting_icon"]
+[ext_resource type="Texture2D" path="res://assets/icon/icon_shield.png" id="62_shield_icon"]
+[ext_resource type="Texture2D" path="res://assets/icon/icon_coin2x_96x96.png" id="63_double_coins_icon"]
+[ext_resource type="Texture2D" path="res://assets/panel/panel_gameover_685x356.png" id="64_gameover_panel"]
+[ext_resource type="FontFile" path="res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf" id="65_nunito_regular"]
+[ext_resource type="Texture2D" uid="uid://l1q21u47e1pc" path="res://assets/tombol/tombol_retry_96x96.png" id="66_retry_icon"]
+[ext_resource type="Texture2D" path="res://assets/tombol/tombol_home_96x96.png" id="67_home_icon"]
+[ext_resource type="Texture2D" uid="uid://b7gkng0ib4y4h" path="res://assets/tombol/tombol_play_96x96.png" id="68_play_icon"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_coin_hud"]
 animations = [{
@@ -696,30 +703,80 @@ offset_right = 1024.0
 offset_bottom = 576.0
 color = Color(0, 0, 0, 0.45)
 
+[node name="CardBackground" type="TextureRect" parent="CanvasLayer/GameOverMenu"]
+layout_mode = 0
+offset_left = 170.0
+offset_top = 110.0
+offset_right = 855.0
+offset_bottom = 466.0
+texture = ExtResource("64_gameover_panel")
+stretch_mode = 3
+
 [node name="Title" type="Label" parent="CanvasLayer/GameOverMenu"]
 layout_mode = 0
-offset_left = 216.0
-offset_top = 132.0
-offset_right = 808.0
-offset_bottom = 172.0
+offset_left = 170.0
+offset_top = 134.0
+offset_right = 855.0
+offset_bottom = 184.0
+theme_override_fonts/font = ExtResource("65_nunito_regular")
+theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Game Over"
+horizontal_alignment = 1
 
 [node name="VBox" type="VBoxContainer" parent="CanvasLayer/GameOverMenu"]
 layout_mode = 0
-offset_left = 216.0
-offset_top = 188.0
-offset_right = 808.0
-offset_bottom = 452.0
+offset_left = 170.0
+offset_top = 170.0
+offset_right = 855.0
+offset_bottom = 466.0
+alignment = 1
 
-[node name="RetryButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox"]
+[node name="ScoreLabel" type="Label" parent="CanvasLayer/GameOverMenu/VBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("65_nunito_regular")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Score: 0"
+horizontal_alignment = 1
+
+[node name="DistanceLabel" type="Label" parent="CanvasLayer/GameOverMenu/VBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("65_nunito_regular")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Distance: 0"
+horizontal_alignment = 1
+
+[node name="ButtonRow" type="HBoxContainer" parent="CanvasLayer/GameOverMenu/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Lanjut (Mulai dari Awal)"
 
-[node name="ContinueButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox"]
+[node name="RetryButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox/ButtonRow"]
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Kembali ke Menu Utama"
+flat = true
+icon = ExtResource("66_retry_icon")
+
+[node name="BonusContinueButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox/ButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 4
+flat = true
+icon = ExtResource("68_play_icon")
+
+[node name="ContinueButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox/ButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 4
+flat = true
+icon = ExtResource("67_home_icon")
+
+[node name="ConfirmDialog" type="ConfirmationDialog" parent="CanvasLayer/GameOverMenu"]
+layout_mode = 3
+anchors_preset = 8
+dialog_text = "Yakin?"
+ok_button_text = "Ya"
+cancel_button_text = "Tidak"
+visible = false
 
 [node name="HealthIcon" parent="CanvasLayer" instance=ExtResource("59_heart_hud")]
 position = Vector2(20, 24)
@@ -769,6 +826,38 @@ texture = ExtResource("60_magnet_icon")
 z_index = 100
 offset_left = 48.0
 offset_top = 96.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+
+[node name="ShieldIcon" type="TextureRect" parent="CanvasLayer"]
+z_index = 100
+custom_minimum_size = Vector2(24, 24)
+offset_left = 7.0
+offset_top = 128.0
+offset_right = 103.0
+offset_bottom = 224.0
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("62_shield_icon")
+
+[node name="ShieldTimerLabel" type="Label" parent="CanvasLayer"]
+z_index = 100
+offset_left = 48.0
+offset_top = 128.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+
+[node name="DoubleCoinsIcon" type="TextureRect" parent="CanvasLayer"]
+z_index = 100
+custom_minimum_size = Vector2(24, 24)
+offset_left = 7.0
+offset_top = 160.0
+offset_right = 103.0
+offset_bottom = 256.0
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("63_double_coins_icon")
+
+[node name="DoubleCoinsTimerLabel" type="Label" parent="CanvasLayer"]
+z_index = 100
+offset_left = 48.0
+offset_top = 160.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 
 [node name="CountdownLabel" type="Label" parent="CanvasLayer"]

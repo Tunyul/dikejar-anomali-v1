@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://c7ye5080oeksi"]
+[gd_scene load_steps=32 format=3 uid="uid://c7ye5080oeksi"]
 
 [ext_resource type="Script" uid="uid://noswsccs8n2x" path="res://scripts/MainMenu.gd" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -23,7 +23,7 @@
 [ext_resource type="Texture2D" uid="uid://brlwhbamogaai" path="res://assets/Coin Animation/png/2x/Coin.png" id="21_coin_icon"]
 [ext_resource type="Texture2D" uid="uid://dn5c37tdf5r0" path="res://assets/icon/icon_trophy_128x128.png" id="22_trophy_icon"]
 [ext_resource type="Texture2D" uid="uid://v21m5eac8ghe" path="res://assets/icon/icon_border_avatar_gold_128x128.png" id="23_avatar_border"]
-[ext_resource type="PackedScene" path="res://scenes/SettingsMenu.tscn" id="24_settings_scene"]
+[ext_resource type="PackedScene" uid="uid://c8rdylqpmqxtr" path="res://scenes/SettingsMenu.tscn" id="24_settings_scene"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_shop"]
 texture = ExtResource("18_tombol_shop")
@@ -33,9 +33,6 @@ texture = ExtResource("10_tombol_play")
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_setting"]
 texture = ExtResource("19_tombol_setting")
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mission"]
-texture = ExtResource("20_tombol_mission")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp_bg"]
 bg_color = Color(0, 0, 0, 0.4)
@@ -48,15 +45,15 @@ corner_radius_bottom_left = 6
 bg_color = Color(0.95, 0.78, 0.18, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
-corner_radius_bottom_left = 6
 corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_bg"]
 bg_color = Color(0, 0, 0, 0.35)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
-corner_radius_bottom_left = 12
 corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mission"]
 texture = ExtResource("20_tombol_mission")
@@ -254,9 +251,6 @@ z_index = 100
 position = Vector2(512, 160)
 scale = Vector2(0.34, 0.34)
 texture = ExtResource("11")
-
-[node name="SettingsMenu" parent="." instance=ExtResource("24_settings_scene")]
-visible = false
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
 script = ExtResource("2")

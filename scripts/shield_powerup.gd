@@ -1,0 +1,21 @@
+extends Area2D
+
+class_name ShieldPowerup
+
+@export var duration_sec: float = 10.0
+
+func _ready() -> void:
+	collision_layer = 8
+	collision_mask = 2
+	monitoring = true
+	var anim := get_node_or_null("AnimatedSprite2D")
+	if anim:
+		anim.play()
+	body_entered.connect(_on_body_entered)
+
+func _on_body_entered(body: Node) -> void:
+	if body is Node:
+		var gm := get_tree().get_root().get_node_or_null("Main")
+		if gm != null and gm.has_method("activate_shield"):
+			gm.activate_shield(duration_sec)
+	queue_free()
