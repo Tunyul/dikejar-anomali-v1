@@ -7,6 +7,15 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.16-beta] - 2026-01-03
+
+- UI Game Over: memisahkan panel konfirmasi (ConfirmPanel) ke scene terpisah agar mudah dipakai ulang dan lebih rapi di `Main.tscn`.
+- UI Game Over: mengganti ConfirmDialog bawaan Godot dengan panel kustom berukuran 350x244 yang selalu muncul di tengah layar.
+- UI Game Over: memperkecil dan mengganti tombol konfirmasi menjadi ikon checklist dan X versi 64x64, dengan jarak dan posisi yang konsisten di semua resolusi.
+- UI Game Over: memastikan teks konfirmasi selalu berwarna hitam dan tidak terkena override tema lain, baik di editor maupun saat runtime.
+- UX: mengubah flow sehingga panel konfirmasi hanya muncul saat pemain menekan tombol Lanjut ke Menu atau Bonus, bukan langsung ketika Game Over.
+- Naik versi proyek ke 1.3.16-beta
+
 ## [1.3.15-beta] - 2025-12-30
 
 - Gameplay/UI: menyederhanakan flow game over sehingga tombol tidak perlu ditekan dua kali; semua aksi (ulang, lanjut bonus, kembali ke menu) sekarang memakai panel konfirmasi popup.

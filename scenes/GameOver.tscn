@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://ns4st64im4qi" path="res://assets/panel/panel_gameover_685x356.png" id="2"]
 [ext_resource type="FontFile" uid="uid://did5ru2tyvvwu" path="res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf" id="3"]
 [ext_resource type="Texture2D" uid="uid://l1q21u47e1pc" path="res://assets/tombol/tombol_retry_96x96.png" id="4"]
-[ext_resource type="Texture2D" path="res://assets/tombol/tombol_home_96x96.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://dagxdwg0jt5xe" path="res://assets/tombol/tombol_home_96x96.png" id="5"]
 [ext_resource type="Texture2D" uid="uid://b7gkng0ib4y4h" path="res://assets/tombol/tombol_play_96x96.png" id="6"]
 
 [node name="GameOver" type="Control"]
@@ -49,14 +49,6 @@ offset_right = 855.0
 offset_bottom = 466.0
 alignment = 1
 
-[node name="ConfirmDialog" type="ConfirmationDialog" parent="."]
-layout_mode = 3
-anchors_preset = 8
-dialog_text = "Yakin?"
-ok_button_text = "Ya"
-cancel_button_text = "Tidak"
-visible = false
-
 [node name="ScoreLabel" type="Label" parent="VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -80,18 +72,17 @@ size_flags_horizontal = 4
 [node name="RetryButton" type="Button" parent="VBox/ButtonRow"]
 layout_mode = 2
 size_flags_horizontal = 4
-flat = true
 icon = ExtResource("4")
+flat = true
 
 [node name="BonusContinueButton" type="Button" parent="VBox/ButtonRow"]
 layout_mode = 2
 size_flags_horizontal = 4
-flat = true
 icon = ExtResource("6")
+flat = true
 
 [node name="ContinueButton" type="Button" parent="VBox/ButtonRow"]
 layout_mode = 2
 size_flags_horizontal = 4
+icon = ExtResource("5")
 flat = true
-icon = ExtResource("5")
-icon = ExtResource("5")

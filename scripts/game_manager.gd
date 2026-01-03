@@ -25,6 +25,7 @@ var powerups_data: Dictionary = {}
 @export var max_speed: float = 300.0
 @export var speed_gain_per_meter: float = 0.02
 @export var score_per_meter: float = 0.1
+@export var score_per_tile: int = 1
 @export var xp_per_meter: float = 0.02
 @export var xp_per_coin: float = 0.2
 @export var debug_update_interval_sec: float = 0.25
@@ -37,6 +38,8 @@ var magnet_enabled: bool = false
 var shield_enabled: bool = false
 var double_coins_run_active: bool = false
 var double_coins_timer: float = 0.0
+var speed_boost_timer: float = 0.0
+var speed_boost_multiplier: float = 1.0
 
 @onready var player: Player = $Player
 @onready var anomaly: Node2D = get_node_or_null("AnomalyChaser")
@@ -60,12 +63,15 @@ var shield_timer: float = 0.0
 @export var powerup_magnet_duration_sec: float = 10.0
 @export var powerup_shield_duration_sec: float = 10.0
 @export var powerup_double_coins_duration_sec: float = 10.0
+@export var powerup_speed_boost_duration_sec: float = 5.0
+@export var powerup_speed_boost_multiplier: float = 1.5
 @export var ads_enabled: bool = true
 @export var ads_max_per_session: int = 2
 @export var rewarded_continue_grace_sec: float = 5.0
 var ads_shown_count: int = 0
 var continue_grace_timer: float = 0.0
 @onready var coin_hud_label: Label = $CanvasLayer/CoinHUD/Label
+@onready var score_hud_label: Label = $CanvasLayer/ScoreHUD/ScoreLabel
 @onready var health_bar: ProgressBar = $CanvasLayer/HealthBar
 @export var enemy_ramp_start_distance: float = 400.0
 @export var enemy_ramp_enabled: bool = true
@@ -200,12 +206,16 @@ func _process(delta: float) -> void:
             _tiles_passed_accum += env_speed * delta / tile_w_px
             total_tiles_passed = int(_tiles_passed_accum)
         game_time_sec += delta
-        score = int(distance * score_per_meter)
+        score = int(total_tiles_passed * score_per_tile)
         if coin_hud_label != null:
             coin_hud_label.text = str(coin_collected_a + coin_collected_b)
+        if score_hud_label != null:
+            score_hud_label.text = str(score)
         if missions_manager and missions_manager.has_method("update_distance"):
             missions_manager.update_distance(distance)
         var target_speed: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
+        if speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0:
+            target_speed *= speed_boost_multiplier
         if ground_a and ground_a.has_method("set_speed"):
             ground_a.set_speed(target_speed)
         if ground_b and ground_b.has_method("set_speed"):
@@ -225,6 +235,10 @@ func _process(delta: float) -> void:
         double_coins_timer = max(double_coins_timer - delta, 0.0)
         if double_coins_timer <= 0.0:
             double_coins_run_active = false
+    if speed_boost_timer > 0.0:
+        speed_boost_timer = max(speed_boost_timer - delta, 0.0)
+        if speed_boost_timer <= 0.0:
+            speed_boost_multiplier = 1.0
     if canvas:
         var magnet_icon := canvas.get_node_or_null("MagnetIcon") as TextureRect
         var magnet_label := canvas.get_node_or_null("MagnetTimerLabel") as Label
@@ -259,6 +273,18 @@ func _process(delta: float) -> void:
                 double_label.text = str(max(dsec_left, 0))
             else:
                 double_label.text = ""
+        var speed_icon := canvas.get_node_or_null("SpeedBoostIcon") as TextureRect
+        var speed_label := canvas.get_node_or_null("SpeedBoostTimerLabel") as Label
+        var speed_active: bool = speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
+        if speed_icon:
+            speed_icon.visible = speed_active
+        if speed_label:
+            speed_label.visible = speed_active
+            if speed_active:
+                var speed_sec_left: int = int(ceil(speed_boost_timer))
+                speed_label.text = str(max(speed_sec_left, 0))
+            else:
+                speed_label.text = ""
     _apply_enemy_ramp_if_needed()
     if OS.is_debug_build() and debug_info_enabled:
         _debug_time_accum += delta
@@ -515,6 +541,19 @@ func is_magnet_active() -> bool:
 
 func is_shield_active() -> bool:
     return shield_enabled
+
+func activate_speed_boost(d: float = 0.0, m: float = 0.0) -> void:
+    var dur: float = d
+    if dur <= 0.0:
+        dur = powerup_speed_boost_duration_sec
+    var mul: float = m
+    if mul <= 0.0:
+        mul = powerup_speed_boost_multiplier
+    speed_boost_timer = max(dur, 0.0)
+    speed_boost_multiplier = max(mul, 1.0)
+
+func is_speed_boost_active() -> bool:
+    return speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
 
 func _clear_existing_magnets_and_shields() -> void:
     var grounds: Array = []
@@ -901,8 +940,6 @@ func set_player_health(current: int, maximum: int) -> void:
     health_bar.max_value = float(maximum)
     var clamped: float = clamp(float(current), 0.0, float(maximum))
     health_bar.value = clamped
-    if current >= maximum:
-        _clear_existing_hearts()
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return

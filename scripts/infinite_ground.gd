@@ -108,7 +108,14 @@ extends Node2D
 @export var double_coins_height_offset_tiles: float = 2.0
 @export var double_coins_min_distance_tiles: float = 24.0
 @export var double_coins_gap_tiles: int = 80
-@export var powerup_min_distance_tiles: float = 24.0
+@export_group("SpeedBoost")
+@export var speed_boost_scene: PackedScene
+@export var speed_boost_spawn_chance: float = 0.02
+@export var speed_boost_max_children: int = 1
+@export var speed_boost_height_offset_tiles: float = 2.0
+@export var speed_boost_min_distance_tiles: float = 24.0
+@export var speed_boost_gap_tiles: int = 80
+@export var powerup_min_distance_tiles: float = 12.0
 @export var powerup_coin_avoid_radius_tiles: int = 0
 @export_group("Enemies")
 @export var enemy_block_scene: PackedScene
@@ -162,6 +169,7 @@ var _last_heart_x: float = -1.0e20
 var _last_magnet_x: float = -1.0e20
 var _last_shield_x: float = -1.0e20
 var _last_double_coins_x: float = -1.0e20
+var _last_speed_boost_x: float = -1.0e20
 var _last_powerup_x: float = -1.0e20
 
 const _BASE_SEGMENT_TILES: int = 64
@@ -234,6 +242,8 @@ func _ensure_initialized() -> void:
         shield_scene = load("res://scenes/ShieldPowerup.tscn")
     if double_coins_scene == null:
         double_coins_scene = load("res://scenes/DoubleCoinsPowerup.tscn")
+    if speed_boost_scene == null:
+        speed_boost_scene = load("res://scenes/SpeedBoostPowerup.tscn")
     if enemy_block_scene == null:
         enemy_block_scene = load("res://scenes/EnemyBlock.tscn")
     if enemy_cone_scene == null:
@@ -343,6 +353,7 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
     var magnet_gap_remaining: int = 0
     var shield_gap_remaining: int = 0
     var double_coins_gap_remaining: int = 0
+    var speed_boost_gap_remaining: int = 0
     var powerup_gap_remaining: int = 0
     var enemy_columns: Array = []
     var i: int = 0
@@ -453,21 +464,21 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
             _spawn_enemy_for_column(tile, i, current_height)
             enemy_columns.append(i)
         var do_spawn_heart: bool = false
-        var hearts_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and not _is_near_enemy(i, enemy_columns, 1) and not _is_player_health_full()
-        if hearts_allowed and heart_scene != null and heart_spawn_chance > 0.0:
+        var hearts_allowed: bool = not flat_override and not _is_near_enemy(i, enemy_columns, 1) and not _is_player_health_full()
+        if hearts_allowed and heart_scene != null:
             if heart_gap_remaining > 0:
                 heart_gap_remaining -= 1
             else:
-                if _rng.randf() <= heart_spawn_chance:
+                if heart_spawn_chance <= 0.0 or _rng.randf() <= heart_spawn_chance:
                     do_spawn_heart = true
-                    heart_gap_remaining = 40
+                    heart_gap_remaining = int(max(heart_min_distance_tiles, 0.0))
         var do_spawn_shield: bool = false
         var shields_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and shield_scene != null and shield_spawn_chance > 0.0 and not _is_near_enemy(i, enemy_columns, 1) and not _has_coin_near_x(tile, i, powerup_coin_avoid_radius_tiles)
         if shields_allowed:
             if shield_gap_remaining > 0:
                 shield_gap_remaining -= 1
             else:
-                if _rng.randf() <= shield_spawn_chance:
+                if not _too_close_to_last_powerup(_column_world_x(tile, i)) and _rng.randf() <= shield_spawn_chance:
                     do_spawn_shield = true
                     shield_gap_remaining = max(shield_gap_tiles, 0)
         var do_spawn_magnet: bool = false
@@ -476,24 +487,33 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
             if magnet_gap_remaining > 0:
                 magnet_gap_remaining -= 1
             else:
-                if _rng.randf() <= magnet_spawn_chance:
+                if not _too_close_to_last_powerup(_column_world_x(tile, i)) and _rng.randf() <= magnet_spawn_chance:
                     do_spawn_magnet = true
                     magnet_gap_remaining = max(magnet_gap_tiles, 0)
+        var do_spawn_speed_boost: bool = false
+        var speed_boost_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and not do_spawn_heart and not do_spawn_magnet and not do_spawn_shield and speed_boost_scene != null and speed_boost_spawn_chance > 0.0 and not _is_near_enemy(i, enemy_columns, 1) and not _is_speed_boost_active() and not _has_coin_near_x(tile, i, powerup_coin_avoid_radius_tiles)
+        if speed_boost_allowed:
+            if speed_boost_gap_remaining > 0:
+                speed_boost_gap_remaining -= 1
+            else:
+                if not _too_close_to_last_powerup(_column_world_x(tile, i)) and _rng.randf() <= speed_boost_spawn_chance:
+                    do_spawn_speed_boost = true
+                    speed_boost_gap_remaining = max(speed_boost_gap_tiles, 0)
         var do_spawn_double_coins: bool = false
-        var double_coins_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and not do_spawn_heart and not do_spawn_magnet and not do_spawn_shield and double_coins_scene != null and double_coins_spawn_chance > 0.0 and not _is_near_enemy(i, enemy_columns, 1) and not _is_double_coins_active() and not _has_coin_near_x(tile, i, powerup_coin_avoid_radius_tiles)
+        var double_coins_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and not do_spawn_heart and not do_spawn_magnet and not do_spawn_shield and not do_spawn_speed_boost and double_coins_scene != null and double_coins_spawn_chance > 0.0 and not _is_near_enemy(i, enemy_columns, 1) and not _is_double_coins_active() and not _has_coin_near_x(tile, i, powerup_coin_avoid_radius_tiles)
         if double_coins_allowed:
             if double_coins_gap_remaining > 0:
                 double_coins_gap_remaining -= 1
             else:
-                if _rng.randf() <= double_coins_spawn_chance:
+                if not _too_close_to_last_powerup(_column_world_x(tile, i)) and _rng.randf() <= double_coins_spawn_chance:
                     do_spawn_double_coins = true
                     double_coins_gap_remaining = max(double_coins_gap_tiles, 0)
         var any_powerup_spawned: bool = false
         if powerup_gap_remaining > 0:
-            if do_spawn_heart or do_spawn_shield or do_spawn_magnet or do_spawn_double_coins:
-                do_spawn_heart = false
+            if do_spawn_shield or do_spawn_magnet or do_spawn_speed_boost or do_spawn_double_coins:
                 do_spawn_shield = false
                 do_spawn_magnet = false
+                do_spawn_speed_boost = false
                 do_spawn_double_coins = false
             powerup_gap_remaining -= 1
         if do_spawn_heart:
@@ -504,6 +524,9 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
             any_powerup_spawned = true
         if do_spawn_magnet:
             _spawn_magnet_for_column(tile, i, current_height)
+            any_powerup_spawned = true
+        if do_spawn_speed_boost:
+            _spawn_speed_boost_for_column(tile, i, current_height)
             any_powerup_spawned = true
         if do_spawn_double_coins:
             _spawn_double_coins_for_column(tile, i, current_height)
@@ -551,6 +574,14 @@ func _is_player_health_full() -> bool:
         return false
     return cur_h >= max_h
 
+func _is_speed_boost_active() -> bool:
+    var gm := _get_main_node()
+    if gm == null:
+        return false
+    if gm.has_method("is_speed_boost_active"):
+        return gm.is_speed_boost_active()
+    return false
+
 func _is_double_coins_active() -> bool:
     var gm := _get_main_node()
     if gm == null:
@@ -568,6 +599,14 @@ func _too_close_to_last_powerup(world_x: float) -> bool:
     if _last_powerup_x <= -1.0e19:
         return false
     return abs(world_x - _last_powerup_x) < min_px
+
+func _column_world_x(tile: TileMapLayer, x: int) -> float:
+    if tile == null:
+        return 0.0
+    var cell := Vector2i(x, 0)
+    var local_pos: Vector2 = tile.map_to_local(cell)
+    var world_pos: Vector2 = tile.to_global(local_pos)
+    return world_pos.x
 
 func _get_main_node() -> Node:
     return get_tree().get_root().get_node_or_null("Main")
@@ -865,12 +904,14 @@ func _ensure_editor_preview_for_tile(tile: TileMapLayer) -> void:
     var x_magnet: int = clamp(mid + 8, 0, max(segment_tile_count - 1, 0))
     var x_shield: int = clamp(mid - 8, 0, max(segment_tile_count - 1, 0))
     var x_double: int = clamp(mid, 0, max(segment_tile_count - 1, 0))
+    var x_speed: int = clamp(mid + 12, 0, max(segment_tile_count - 1, 0))
     _spawn_coin_for_column(tile, x_coin, h_base)
     _spawn_enemy_for_column(tile, x_enemy, h_base)
     _spawn_heart_for_column(tile, x_heart, h_base)
     _spawn_magnet_for_column(tile, x_magnet, h_base)
     _spawn_shield_for_column(tile, x_shield, h_base)
     _spawn_double_coins_for_column(tile, x_double, h_base)
+    _spawn_speed_boost_for_column(tile, x_speed, h_base)
 
 func _select_coin_pattern() -> void:
     _coin_pattern_index = 0
@@ -1173,6 +1214,48 @@ func _spawn_double_coins_for_column(tile: TileMapLayer, x: int, height: int) -> 
     root.add_child(node)
     (node as Node2D).global_position = world_pos
     _last_double_coins_x = world_pos.x
+    _last_powerup_x = world_pos.x
+
+func _spawn_speed_boost_for_column(tile: TileMapLayer, x: int, height: int) -> void:
+    var gm := _get_main_node()
+    if gm != null:
+        if gm.has_method("is_speed_boost_active") and gm.is_speed_boost_active():
+            return
+    if speed_boost_scene == null:
+        return
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return
+    var max_boosts: int = _scale_max_children(speed_boost_max_children)
+    if max_boosts > 0:
+        var boost_count: int = 0
+        for c in root.get_children():
+            if c is SpeedBoostPowerup:
+                boost_count += 1
+        if boost_count >= max_boosts:
+            return
+    var top_y: int = -height
+    var offset_tiles: float = speed_boost_height_offset_tiles
+    var whole_tiles: int = int(floor(offset_tiles))
+    var frac_tiles: float = offset_tiles - float(whole_tiles)
+    var boost_y: int = top_y - whole_tiles
+    var cell := Vector2i(x, boost_y)
+    var local_pos: Vector2 = tile.map_to_local(cell)
+    var world_pos: Vector2 = tile.to_global(local_pos)
+    if frac_tiles != 0.0:
+        world_pos.y -= frac_tiles * _tile_h_px
+    var min_dist_px: float = max(speed_boost_min_distance_tiles * _tile_w_px, 0.0)
+    if min_dist_px > 0.0 and _last_speed_boost_x > -1.0e19:
+        if abs(world_pos.x - _last_speed_boost_x) < min_dist_px:
+            return
+    var node := speed_boost_scene.instantiate()
+    if node == null:
+        return
+    if not (node is Node2D):
+        return
+    root.add_child(node)
+    (node as Node2D).global_position = world_pos
+    _last_speed_boost_x = world_pos.x
     _last_powerup_x = world_pos.x
 
 func _spawn_enemy_for_column(tile: TileMapLayer, x: int, height: int) -> void:

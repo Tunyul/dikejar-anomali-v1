@@ -1,0 +1,67 @@
+[gd_scene load_steps=5 format=3 uid="uid://civfdm736wgj6"]
+
+[ext_resource type="Texture2D" uid="uid://c62i8j3nb4fol" path="res://assets/panel/panel_confirmation_tandatanya_350x244.png" id="1_confirm_panel"]
+[ext_resource type="Texture2D" uid="uid://cfmpi222ivqv6" path="res://assets/tombol/tombol_checklis_green_border_orange_64.png" id="2_check_button"]
+[ext_resource type="Texture2D" uid="uid://dcb47xddqo0bi" path="res://assets/tombol/tombol_x_red_border_blue_64.png" id="3_x_button"]
+[ext_resource type="FontFile" uid="uid://did5ru2tyvvwu" path="res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf" id="4_nunito_regular"]
+
+[node name="ConfirmPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -175.0
+offset_top = -122.0
+offset_right = 175.0
+offset_bottom = 122.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelTexture" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 350.0
+offset_bottom = 244.0
+texture = ExtResource("1_confirm_panel")
+stretch_mode = 3
+
+[node name="Message" type="Label" parent="."]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 40.0
+offset_right = 318.0
+offset_bottom = 140.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("4_nunito_regular")
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "Lanjut dengan bonus?\nTonton iklan untuk lanjut run ini."
+
+[node name="Buttons" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 160.0
+offset_right = 286.0
+offset_bottom = 228.0
+theme_override_constants/separation = 32
+alignment = 1
+
+[node name="YesButton" type="TextureButton" parent="Buttons"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+size_flags_horizontal = 0
+tooltip_text = "Lanjut"
+texture_normal = ExtResource("2_check_button")
+ignore_texture_size = true
+stretch_mode = 3
+
+[node name="NoButton" type="TextureButton" parent="Buttons"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+size_flags_horizontal = 0
+tooltip_text = "Batalkan"
+texture_normal = ExtResource("3_x_button")
+ignore_texture_size = true
+stretch_mode = 3
