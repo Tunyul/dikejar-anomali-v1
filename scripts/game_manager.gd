@@ -21,9 +21,9 @@ var _debug_time_accum: float = 0.0
 var powerups_data: Dictionary = {}
 
 @export var debug_info_enabled: bool = false
-@export var base_speed: float = 150.0
-@export var max_speed: float = 300.0
-@export var speed_gain_per_meter: float = 0.02
+@export var base_speed: float = 180.0
+@export var max_speed: float = 360.0
+@export var speed_gain_per_meter: float = 0.015
 @export var score_per_meter: float = 0.1
 @export var score_per_tile: int = 1
 @export var xp_per_meter: float = 0.02
@@ -41,6 +41,7 @@ var double_coins_timer: float = 0.0
 var speed_boost_timer: float = 0.0
 var speed_boost_multiplier: float = 1.0
 
+
 @onready var player: Player = $Player
 @onready var anomaly: Node2D = get_node_or_null("AnomalyChaser")
 @onready var terrain = get_node_or_null("Terrain")
@@ -50,6 +51,8 @@ var speed_boost_multiplier: float = 1.0
 @onready var parallax = $ParallaxBackground
 @onready var canvas = $CanvasLayer
 var debug_label: Label
+var spawn_status_label: Label
+var speed_info_label: Label
 var _jump_button: TouchScreenButton
 var _attack_button: TouchScreenButton
 var _ga_layer: Node = null
@@ -60,11 +63,13 @@ var bgm_muted: bool = false
 var sfx_muted: bool = false
 var magnet_timer: float = 0.0
 var shield_timer: float = 0.0
+var _last_health_current: int = -1
+var _last_health_max: int = -1
 @export var powerup_magnet_duration_sec: float = 10.0
 @export var powerup_shield_duration_sec: float = 10.0
 @export var powerup_double_coins_duration_sec: float = 10.0
 @export var powerup_speed_boost_duration_sec: float = 5.0
-@export var powerup_speed_boost_multiplier: float = 1.5
+@export var powerup_speed_boost_multiplier: float = 2.5
 @export var ads_enabled: bool = true
 @export var ads_max_per_session: int = 2
 @export var rewarded_continue_grace_sec: float = 5.0
@@ -102,7 +107,7 @@ func _ready() -> void:
     if OS.is_debug_build() and canvas and debug_label == null:
         var dl := Label.new()
         dl.name = "DebugInfoLabel"
-        dl.visible = debug_info_enabled
+        dl.visible = false
         dl.z_index = 999
         dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
         dl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
@@ -123,6 +128,50 @@ func _ready() -> void:
         dl.mouse_filter = Control.MOUSE_FILTER_IGNORE
         canvas.add_child(dl)
         debug_label = dl
+    if canvas and spawn_status_label == null:
+        var sl := Label.new()
+        sl.name = "SpawnStatusLabel"
+        sl.visible = false
+        sl.z_index = 998
+        sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+        sl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+        sl.add_theme_font_size_override("font_size", 16)
+        sl.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+        var sb2 := StyleBoxFlat.new()
+        sb2.bg_color = Color(0, 0, 0, 0.4)
+        sb2.corner_radius_top_left = 4
+        sb2.corner_radius_top_right = 4
+        sb2.corner_radius_bottom_left = 4
+        sb2.corner_radius_bottom_right = 4
+        sl.add_theme_stylebox_override("normal", sb2)
+        sl.set_anchors_preset(Control.PRESET_TOP_LEFT)
+        sl.offset_left = 8
+        sl.offset_top = 120
+        sl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        canvas.add_child(sl)
+        spawn_status_label = sl
+    if canvas and speed_info_label == null:
+        var sil := Label.new()
+        sil.name = "SpeedInfoLabel"
+        sil.visible = false
+        sil.z_index = 998
+        sil.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+        sil.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+        sil.add_theme_font_size_override("font_size", 16)
+        sil.add_theme_color_override("font_color", Color(1, 1, 0, 1))
+        var sb3 := StyleBoxFlat.new()
+        sb3.bg_color = Color(0, 0, 0, 0.5)
+        sb3.corner_radius_top_left = 4
+        sb3.corner_radius_top_right = 4
+        sb3.corner_radius_bottom_left = 4
+        sb3.corner_radius_bottom_right = 4
+        sil.add_theme_stylebox_override("normal", sb3)
+        sil.set_anchors_preset(Control.PRESET_TOP_LEFT)
+        sil.offset_left = 8
+        sil.offset_top = 160
+        sil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        canvas.add_child(sil)
+        speed_info_label = sil
     if canvas:
         var pm := canvas.get_node_or_null("PauseMenu")
         if pm:
@@ -155,11 +204,11 @@ func _connect_mobile_buttons() -> void:
         _attack_button.pressed.connect(_on_attack_button_pressed)
 
 func _debug_input(msg: String) -> void:
-    if OS.is_debug_build():
+    if OS.is_debug_build() and debug_info_enabled:
         print(msg)
-    if OS.is_debug_build() and debug_label != null and debug_info_enabled:
-        debug_label.visible = true
-        debug_label.text = msg
+        if debug_label != null:
+            debug_label.visible = true
+            debug_label.text = msg
 
 func _on_jump_button_pressed() -> void:
     _debug_input("INPUT: jump_button")
@@ -191,6 +240,11 @@ func _process(delta: float) -> void:
             if phase == Phase.ENTRY and entry_finished:
                 set_playing_phase()
 
+    var magnet_was_enabled: bool = magnet_enabled
+    var shield_was_enabled: bool = shield_enabled
+    var double_was_active: bool = double_coins_run_active
+    var speed_was_active: bool = speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
+
     if phase == Phase.PLAYING:
         var env_speed: float = base_speed
         if ground_a and ground_a.has_method("get_speed"):
@@ -214,31 +268,52 @@ func _process(delta: float) -> void:
         if missions_manager and missions_manager.has_method("update_distance"):
             missions_manager.update_distance(distance)
         var target_speed: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
-        if speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0:
+        var boost_active: bool = speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
+        if boost_active:
             target_speed *= speed_boost_multiplier
         if ground_a and ground_a.has_method("set_speed"):
             ground_a.set_speed(target_speed)
         if ground_b and ground_b.has_method("set_speed"):
             ground_b.set_speed(target_speed)
+        if parallax and parallax.has_method("set_speed"):
+            parallax.set_speed(target_speed)
+        if ground_a and ground_a.has_method("set_instant_speed_mode"):
+            ground_a.set_instant_speed_mode(boost_active)
+        if ground_b and ground_b.has_method("set_instant_speed_mode"):
+            ground_b.set_instant_speed_mode(boost_active)
+        if player:
+            player.run_speed = target_speed
         if player and player.has_method("set_run_anim_factor"):
             var anim_factor: float = max(0.1, target_speed / max(base_speed, 0.1))
             player.call("set_run_anim_factor", anim_factor)
+        _update_speed_info_label(env_speed, target_speed)
     if magnet_timer > 0.0:
         magnet_timer = max(magnet_timer - delta, 0.0)
         if magnet_timer <= 0.0:
             magnet_enabled = false
+            if magnet_was_enabled:
+                _ensure_skill_after_power_end("magnet")
     if shield_timer > 0.0:
         shield_timer = max(shield_timer - delta, 0.0)
         if shield_timer <= 0.0:
             shield_enabled = false
+            if shield_was_enabled:
+                _ensure_skill_after_power_end("shield")
     if double_coins_timer > 0.0:
         double_coins_timer = max(double_coins_timer - delta, 0.0)
         if double_coins_timer <= 0.0:
+            if double_was_active:
+                _ensure_skill_after_power_end("double_coins")
             double_coins_run_active = false
+    _recycle_powerups_behind_player()
+    _ensure_skills_ahead_of_player()
+    _ensure_hearts_for_low_health()
     if speed_boost_timer > 0.0:
         speed_boost_timer = max(speed_boost_timer - delta, 0.0)
         if speed_boost_timer <= 0.0:
             speed_boost_multiplier = 1.0
+            if speed_was_active and not is_speed_boost_active():
+                _ensure_skill_after_power_end("speed_boost")
     if canvas:
         var magnet_icon := canvas.get_node_or_null("MagnetIcon") as TextureRect
         var magnet_label := canvas.get_node_or_null("MagnetTimerLabel") as Label
@@ -285,19 +360,41 @@ func _process(delta: float) -> void:
                 speed_label.text = str(max(speed_sec_left, 0))
             else:
                 speed_label.text = ""
+        var heart_spawn_label := canvas.get_node_or_null("HeartSpawnLabel") as Label
+        if heart_spawn_label:
+            heart_spawn_label.visible = false
     _apply_enemy_ramp_if_needed()
     if OS.is_debug_build() and debug_info_enabled:
         _debug_time_accum += delta
         if _debug_time_accum >= debug_update_interval_sec:
             _debug_time_accum = 0.0
             _update_debug_label()
-    if continue_grace_timer > 0.0:
-        continue_grace_timer = max(continue_grace_timer - delta, 0.0)
-        if player:
-            player.enable_fall_death = false
-    else:
-        if player:
-            player.enable_fall_death = true
+    _update_spawn_status_label()
+
+func _update_speed_info_label(env_speed: float, target_speed: float) -> void:
+    if speed_info_label == null:
+        return
+    if not debug_info_enabled:
+        speed_info_label.visible = false
+        return
+    var boost_active: bool = is_speed_boost_active()
+    speed_info_label.visible = boost_active
+    if not boost_active:
+        return
+    var ground_speed: float = env_speed
+    if ground_a and ground_a.has_method("get_speed"):
+        ground_speed = float(ground_a.call("get_speed"))
+    var parallax_speed: float = 0.0
+    if parallax and parallax.has_method("get_layer_speed"):
+        parallax_speed = float(parallax.call("get_layer_speed", 0))
+    var player_speed: float = 0.0
+    if player:
+        player_speed = player.run_speed
+    var txt: String = "BOOST SPEED\n"
+    txt += "Env: " + str(int(env_speed)) + " | Target: " + str(int(target_speed)) + "\n"
+    txt += "Ground: " + str(int(ground_speed)) + " | Parallax: " + str(int(parallax_speed)) + "\n"
+    txt += "Player: " + str(int(player_speed)) + " x" + str(powerup_speed_boost_multiplier)
+    speed_info_label.text = txt
 
 func _update_debug_label() -> void:
     if debug_label == null or not debug_info_enabled:
@@ -322,6 +419,7 @@ func _update_debug_label() -> void:
     var coins_cnt_b: int = 0
     var enemies_cnt_a: int = 0
     var enemies_cnt_b: int = 0
+    var nearest_heart_dist_px: float = _get_nearest_heart_distance_px()
     if ground_a:
         var coins_a_node := ground_a.get_node_or_null("CoinsA")
         if coins_a_node:
@@ -382,9 +480,62 @@ func _update_debug_label() -> void:
     txt += "\nGrounded: " + str(player_grounded) + " | State: " + (player_state_text if player_state_text != "" else "-") + " | EnvMove: " + str(env_move)
     txt += "\nGround Tiles Run: " + str(total_tiles_passed) + " | L/R: 0/0"
     txt += "\nJumpBtn X/Y: " + str(int(jump_pos.x)) + "/" + str(int(jump_pos.y)) + " | AtkBtn X/Y: " + str(int(attack_pos.x)) + "/" + str(int(attack_pos.y))
+    if nearest_heart_dist_px >= 0.0:
+        txt += "\nHeartDistPx: " + str(int(nearest_heart_dist_px))
     txt += "\nCamCenter X/Y: " + str(int(cam_center.x)) + "/" + str(int(cam_center.y)) + " | FPS: " + str(fps)
     debug_label.visible = true
     debug_label.text = txt
+
+func _update_spawn_status_label() -> void:
+    if spawn_status_label == null:
+        return
+    if not debug_info_enabled:
+        spawn_status_label.visible = false
+        return
+    if not ground_a or not ground_a.has_method("get_spawn_status"):
+        spawn_status_label.text = "Spawn: -"
+        return
+    var st: Dictionary = ground_a.call("get_spawn_status")
+    var coin_on: bool = bool(st.get("coins", false))
+    var heart_on: bool = bool(st.get("hearts", false))
+    var enemy_on: bool = bool(st.get("enemies", false))
+    var magnet_on: bool = bool(st.get("magnet", false)) or magnet_enabled
+    var shield_on: bool = bool(st.get("shield", false)) or shield_enabled
+    var double_on: bool = bool(st.get("double_coins", false)) or double_coins_run_active
+    var speed_on: bool = bool(st.get("speed_boost", false)) or (speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0)
+    var t: String = "Spawn: Coin " + ("Aktif" if coin_on else "Non")
+    t += " | Heart " + ("Aktif" if heart_on else "Non")
+    t += " | Enemy " + ("Aktif" if enemy_on else "Non")
+    t += " | Magnet " + ("Aktif" if magnet_on else "Non")
+    t += " | Shield " + ("Aktif" if shield_on else "Non")
+    t += " | Double " + ("Aktif" if double_on else "Non")
+    t += " | Speed " + ("Aktif" if speed_on else "Non")
+    var dist_text: String = ""
+    if player != null and ground_a.has_method("get_powerup_distances"):
+        var pd: Dictionary = ground_a.call("get_powerup_distances", player.global_position.x)
+        var dh: float = float(pd.get("heart", -1.0))
+        var dm: float = float(pd.get("magnet", -1.0))
+        var ds: float = float(pd.get("shield", -1.0))
+        var dd: float = float(pd.get("double_coins", -1.0))
+        var dv: float = float(pd.get("speed_boost", -1.0))
+        var sh: String = (str(int(round(dh))) if dh >= 0.0 else "-")
+        var sm: String = (str(int(round(dm))) if dm >= 0.0 else "-")
+        var ss: String = (str(int(round(ds))) if ds >= 0.0 else "-")
+        var sd: String = (str(int(round(dd))) if dd >= 0.0 else "-")
+        var sv: String = (str(int(round(dv))) if dv >= 0.0 else "-")
+        dist_text = "\nDistTile: H " + sh + " | M " + sm + " | S " + ss + " | D " + sd + " | Sp " + sv
+        var heart_px: float = _get_nearest_heart_distance_px()
+        if heart_px >= 0.0:
+            var tile_w_px: float = 64.0
+            if ground_a.has_method("get_tile_width_px"):
+                tile_w_px = float(ground_a.call("get_tile_width_px"))
+                if tile_w_px <= 0.0:
+                    tile_w_px = 64.0
+            var heart_tiles: float = heart_px
+            if tile_w_px > 0.0:
+                heart_tiles = heart_px / tile_w_px
+            dist_text += "\nHeartTile: " + str(int(round(heart_tiles)))
+    spawn_status_label.text = t + dist_text
 
 func on_quit_game() -> void:
     get_tree().quit()
@@ -524,23 +675,71 @@ func activate_magnet(d: float) -> void:
     var dur: float = d
     if dur <= 0.0:
         dur = powerup_magnet_duration_sec
-    magnet_timer = max(magnet_timer, max(dur, 0.0))
-    magnet_enabled = true
-    _clear_existing_magnets_and_shields()
+    magnet_timer = max(dur, 0.0)
+    magnet_enabled = magnet_timer > 0.0
+    shield_timer = 0.0
+    shield_enabled = false
+    speed_boost_timer = 0.0
+    speed_boost_multiplier = 1.0
+    double_coins_timer = 0.0
+    double_coins_run_active = false
 
 func activate_shield(d: float) -> void:
     var dur: float = d
     if dur <= 0.0:
         dur = powerup_shield_duration_sec
-    shield_timer = max(shield_timer, max(dur, 0.0))
-    shield_enabled = true
-    _clear_existing_magnets_and_shields()
+    shield_timer = max(dur, 0.0)
+    shield_enabled = shield_timer > 0.0
+    magnet_timer = 0.0
+    magnet_enabled = false
+    speed_boost_timer = 0.0
+    speed_boost_multiplier = 1.0
+    double_coins_timer = 0.0
+    double_coins_run_active = false
 
 func is_magnet_active() -> bool:
     return magnet_enabled
 
 func is_shield_active() -> bool:
     return shield_enabled
+
+func _has_any_heart_on_ground() -> bool:
+    var d: float = _get_nearest_heart_distance_px()
+    return d >= 0.0
+
+func can_spawn_hearts() -> bool:
+    if phase != Phase.PLAYING:
+        return false
+    if _last_health_max <= 0:
+        return false
+    return _last_health_current < _last_health_max
+
+func _get_nearest_heart_distance_px() -> float:
+    if player == null:
+        return -1.0
+    var p_pos: Vector2 = player.global_position
+    var best: float = -1.0
+    var grounds: Array = []
+    if ground_a != null:
+        grounds.append(ground_a)
+    if ground_b != null:
+        grounds.append(ground_b)
+    for g in grounds:
+        if g == null:
+            continue
+        for coins_root_name in ["CoinsA", "CoinsB"]:
+            var root: Node = g.get_node_or_null(coins_root_name)
+            if root == null:
+                continue
+            for c in root.get_children():
+                if c is HeartPickup and c is Node2D:
+                    var n2 := c as Node2D
+                    if n2.global_position.x < p_pos.x:
+                        continue
+                    var d: float = p_pos.distance_to(n2.global_position)
+                    if best < 0.0 or d < best:
+                        best = d
+    return best
 
 func activate_speed_boost(d: float = 0.0, m: float = 0.0) -> void:
     var dur: float = d
@@ -551,6 +750,12 @@ func activate_speed_boost(d: float = 0.0, m: float = 0.0) -> void:
         mul = powerup_speed_boost_multiplier
     speed_boost_timer = max(dur, 0.0)
     speed_boost_multiplier = max(mul, 1.0)
+    magnet_timer = 0.0
+    magnet_enabled = false
+    shield_timer = 0.0
+    shield_enabled = false
+    double_coins_timer = 0.0
+    double_coins_run_active = false
 
 func is_speed_boost_active() -> bool:
     return speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
@@ -569,7 +774,24 @@ func _clear_existing_magnets_and_shields() -> void:
             if root == null:
                 continue
             for c in root.get_children():
-                if (c is MagnetPowerup) or c.is_in_group("shield_powerup"):
+                if (c is MagnetPowerup) or (c is ShieldPowerup) or c.is_in_group("shield_powerup"):
+                    c.queue_free()
+
+func _clear_existing_speed_boosts() -> void:
+    var grounds: Array = []
+    if ground_a != null:
+        grounds.append(ground_a)
+    if ground_b != null:
+        grounds.append(ground_b)
+    for g in grounds:
+        if g == null:
+            continue
+        for coins_root_name in ["CoinsA", "CoinsB"]:
+            var root: Node = g.get_node_or_null(coins_root_name)
+            if root == null:
+                continue
+            for c in root.get_children():
+                if c is SpeedBoostPowerup:
                     c.queue_free()
 
 func _clear_existing_hearts() -> void:
@@ -589,6 +811,155 @@ func _clear_existing_hearts() -> void:
                 if c is HeartPickup:
                     c.queue_free()
 
+func _recycle_powerups_behind_player() -> void:
+    if phase != Phase.PLAYING:
+        return
+    if player == null:
+        return
+    var cam := get_viewport().get_camera_2d()
+    var view_rect := get_viewport().get_visible_rect()
+    var left_limit: float
+    if cam != null:
+        left_limit = cam.global_position.x - float(view_rect.size.x) * 0.5 - 64.0
+    else:
+        left_limit = player.global_position.x - float(view_rect.size.x) * 0.6
+    var grounds: Array = []
+    if ground_a != null:
+        grounds.append(ground_a)
+    if ground_b != null:
+        grounds.append(ground_b)
+    for g in grounds:
+        if g == null:
+            continue
+        for coins_root_name in ["CoinsA", "CoinsB"]:
+            var root: Node = g.get_node_or_null(coins_root_name)
+            if root == null:
+                continue
+            for c in root.get_children():
+                if c == null:
+                    continue
+                var is_powerup: bool = false
+                if c is HeartPickup:
+                    is_powerup = true
+                elif c is MagnetPowerup:
+                    is_powerup = true
+                elif (c is ShieldPowerup) or c.is_in_group("shield_powerup"):
+                    is_powerup = true
+                elif c is DoubleCoinsPowerup:
+                    is_powerup = true
+                elif c is SpeedBoostPowerup:
+                    is_powerup = true
+                if not is_powerup:
+                    continue
+                if not (c is Node2D):
+                    continue
+                var n2 := c as Node2D
+                if n2.global_position.x < left_limit:
+                    n2.queue_free()
+
+func _ensure_skills_ahead_of_player() -> void:
+    if phase != Phase.PLAYING:
+        return
+    if player == null:
+        return
+    if ground_a == null:
+        return
+    var px: float = player.global_position.x
+    var min_skill_dist_tiles: float = 70.0
+    var max_skill_dist_tiles: float = 100.0
+    var tile_w_px: float = 64.0
+    if ground_a.has_method("get_tile_width_px"):
+        tile_w_px = float(ground_a.call("get_tile_width_px"))
+        if tile_w_px <= 0.0:
+            tile_w_px = 64.0
+    var min_skill_dist_px: float = min_skill_dist_tiles * tile_w_px
+    var max_skill_dist_px: float = max_skill_dist_tiles * tile_w_px
+    var any_skill_ahead: bool = false
+    if ground_a.has_method("get_powerup_distances"):
+        var pd: Dictionary = ground_a.call("get_powerup_distances", px)
+        for key in ["magnet", "shield", "double_coins", "speed_boost"]:
+            var d: float = float(pd.get(key, -1.0))
+            if d >= 0.0:
+                any_skill_ahead = true
+                break
+    if any_skill_ahead:
+        return
+    _spawn_random_skill_ahead(px, min_skill_dist_px, max_skill_dist_px)
+
+func _ensure_hearts_for_low_health() -> void:
+    if phase != Phase.PLAYING:
+        return
+    if player == null:
+        return
+    if ground_a == null:
+        return
+    if _last_health_max <= 0:
+        return
+    if _last_health_current >= _last_health_max:
+        return
+    if _has_any_heart_on_ground():
+        return
+    if not ground_a.has_method("request_emergency_heart"):
+        return
+    var px: float = player.global_position.x
+    var cam := get_viewport().get_camera_2d()
+    var view_rect := get_viewport().get_visible_rect()
+    if cam != null:
+        px = cam.global_position.x + float(view_rect.size.x) * 0.5
+    var min_heart_dist_px: float = 500.0
+    var max_heart_dist_px: float = 700.0
+    ground_a.call("request_emergency_heart", px, min_heart_dist_px, max_heart_dist_px)
+
+func _ensure_skill_after_power_end(_kind: String) -> void:
+    if phase != Phase.PLAYING:
+        return
+    if player == null:
+        return
+    if ground_a == null:
+        return
+    var px: float = player.global_position.x
+    var min_skill_dist_tiles: float = 70.0
+    var max_skill_dist_tiles: float = 100.0
+    var tile_w_px: float = 64.0
+    if ground_a.has_method("get_tile_width_px"):
+        tile_w_px = float(ground_a.call("get_tile_width_px"))
+        if tile_w_px <= 0.0:
+            tile_w_px = 64.0
+    var min_skill_dist_px: float = min_skill_dist_tiles * tile_w_px
+    var max_skill_dist_px: float = max_skill_dist_tiles * tile_w_px
+    _spawn_random_skill_ahead(px, min_skill_dist_px, max_skill_dist_px)
+
+func _spawn_random_skill_ahead(px: float, min_skill_dist_px: float, max_skill_dist_px: float) -> void:
+    if ground_a == null:
+        return
+    var candidates: Array[String] = []
+    if ground_a.has_method("request_emergency_magnet"):
+        candidates.append("magnet")
+    if ground_a.has_method("request_emergency_shield"):
+        candidates.append("shield")
+    if ground_a.has_method("request_emergency_double_coins"):
+        candidates.append("double_coins")
+    if ground_a.has_method("request_emergency_speed_boost"):
+        candidates.append("speed_boost")
+    if candidates.is_empty():
+        return
+    var rng := RandomNumberGenerator.new()
+    rng.randomize()
+    var idx: int = rng.randi_range(0, candidates.size() - 1)
+    var kind: String = candidates[idx]
+    match kind:
+        "magnet":
+            ground_a.call("request_emergency_magnet", px, min_skill_dist_px, max_skill_dist_px)
+        "shield":
+            ground_a.call("request_emergency_shield", px, min_skill_dist_px, max_skill_dist_px)
+        "double_coins":
+            ground_a.call("request_emergency_double_coins", px, min_skill_dist_px, max_skill_dist_px)
+        "speed_boost":
+            ground_a.call("request_emergency_speed_boost", px, min_skill_dist_px, max_skill_dist_px)
+
+func _on_player_health_decreased(_current: int, _maximum: int) -> void:
+    call_deferred("_ensure_hearts_for_low_health")
+
 func _apply_enemy_ramp_if_needed() -> void:
     return
 
@@ -598,9 +969,15 @@ func set_playing_phase() -> void:
     game_active = true
     _apply_spawn_safety_limits()
     if ground_a and ground_a.has_method("set_speed_limits"):
-        ground_a.set_speed_limits(0.0, max_speed)
+        var max_with_boost: float = max_speed
+        if powerup_speed_boost_multiplier > 1.0:
+            max_with_boost = max_speed * powerup_speed_boost_multiplier
+        ground_a.set_speed_limits(0.0, max_with_boost)
     if ground_b and ground_b.has_method("set_speed_limits"):
-        ground_b.set_speed_limits(0.0, max_speed)
+        var max_with_boost_b: float = max_speed
+        if powerup_speed_boost_multiplier > 1.0:
+            max_with_boost_b = max_speed * powerup_speed_boost_multiplier
+        ground_b.set_speed_limits(0.0, max_with_boost_b)
     if parallax and parallax.has_method("set_movement_enabled"):
         parallax.set_movement_enabled(true)
     if terrain and terrain.has_method("set_movement_enabled"):
@@ -930,16 +1307,45 @@ func activate_double_coins_run(d: float = 0.0) -> void:
         dur = powerup_double_coins_duration_sec
     double_coins_timer = max(dur, 0.0)
     double_coins_run_active = double_coins_timer > 0.0
+    magnet_timer = 0.0
+    magnet_enabled = false
+    shield_timer = 0.0
+    shield_enabled = false
+    speed_boost_timer = 0.0
+    speed_boost_multiplier = 1.0
 
 func is_double_coins_active() -> bool:
     return double_coins_run_active
 
+func _clear_existing_double_coins() -> void:
+    var grounds: Array = []
+    if ground_a != null:
+        grounds.append(ground_a)
+    if ground_b != null:
+        grounds.append(ground_b)
+    for g in grounds:
+        if g == null:
+            continue
+        for coins_root_name in ["CoinsA", "CoinsB"]:
+            var root: Node = g.get_node_or_null(coins_root_name)
+            if root == null:
+                continue
+            for c in root.get_children():
+                if c is DoubleCoinsPowerup:
+                    c.queue_free()
+
 func set_player_health(current: int, maximum: int) -> void:
+    var prev_current: int = _last_health_current
     if health_bar == null:
         return
     health_bar.max_value = float(maximum)
     var clamped: float = clamp(float(current), 0.0, float(maximum))
+    var new_current: int = int(clamped)
     health_bar.value = clamped
+    _last_health_current = new_current
+    _last_health_max = maximum
+    if prev_current >= 0 and new_current != prev_current:
+        _on_player_health_decreased(new_current, maximum)
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return
@@ -959,11 +1365,14 @@ func _start_play_phase() -> void:
     double_coins_run_active = false
     double_coins_timer = 0.0
     double_coins_run_active = false
+    _last_health_current = -1
+    _last_health_max = -1
     countdown_active = true
     countdown_timer = countdown_duration_sec
     entry_finished = false
     if player and player.has_method("reset_player"):
         player.reset_player()
+    _clear_existing_hearts()
     _next_coin_burst_distance = 300
     _apply_spawn_safety_limits()
     if parallax and parallax.has_method("set_movement_enabled"):

@@ -17,6 +17,8 @@ class_name Player
 @export var enable_fall_death: bool = true
 @export var gap_fall_threshold: float = 300.0
 @export var gap_fall_grace_time: float = 0.25
+@export var speed_boost_fly_height: float = 120.0
+@export var speed_boost_ceiling_y: float = 50.0
 @export var lock_environment_speed_to_player: bool = true
 @export var terrain_paths: Array[NodePath] = []
 @export var attack_duration: float = 0.3
@@ -122,6 +124,7 @@ var countdown_active: bool = false
 var _anim_scales: Dictionary = {}
 var _anim_offsets: Dictionary = {}
 var _run_anim_factor: float = 1.0
+var _boost_safe_fall_pending: bool = false
 
 func request_jump() -> void:
     jump_buffer_timer = jump_buffer_time
@@ -399,21 +402,44 @@ func apply_physics(delta: float) -> void:
     if current_state == PlayerState.GAME_OVER:
         velocity = Vector2.ZERO
         return
-    # Apply gravity
-    if not is_on_floor():
-        var g := gravity
-        if velocity.y < 0.0:
-            var hold := Input.is_action_pressed("jump")
-            g = gravity * (jump_hold_gravity_scale if hold else low_jump_multiplier)
-        else:
-            g = gravity * fall_multiplier
-        velocity.y += g * delta
-        if max_fall_speed > 0.0 and velocity.y > max_fall_speed:
-            velocity.y = max_fall_speed
+    var speed_fly: bool = false
+    if game_manager == null or not is_instance_valid(game_manager):
+        var main_node = get_tree().get_root().get_node_or_null("Main")
+        if main_node != null:
+            game_manager = main_node
+    if game_manager != null and game_manager.has_method("is_speed_boost_active"):
+        speed_fly = game_manager.is_speed_boost_active()
+    if speed_fly:
+        _boost_safe_fall_pending = true
+        var target_y: float = min(entry_stop_y - speed_boost_fly_height, speed_boost_ceiling_y)
+        var t_adj: float = clampf(position_adjustment_speed * delta, 0.0, 1.0)
+        position.y = lerpf(position.y, target_y, t_adj)
+        global_position.y = position.y
+        velocity.y = 0.0
+    else:
+        var apply_gravity: bool = true
+        if _boost_safe_fall_pending:
+            var gap_below := _has_gap_below_long(gap_fall_threshold * 2.0)
+            if gap_below:
+                apply_gravity = false
+                velocity.y = 0.0
+            else:
+                _boost_safe_fall_pending = false
+        if apply_gravity:
+            if not is_on_floor():
+                var g := gravity
+                if velocity.y < 0.0:
+                    var hold := Input.is_action_pressed("jump")
+                    g = gravity * (jump_hold_gravity_scale if hold else low_jump_multiplier)
+                else:
+                    g = gravity * fall_multiplier
+                velocity.y += g * delta
+                if max_fall_speed > 0.0 and velocity.y > max_fall_speed:
+                    velocity.y = max_fall_speed
 
     # Prevent ceiling collision
-    if position.y < 50:
-        position.y = 50
+    if position.y < speed_boost_ceiling_y:
+        position.y = speed_boost_ceiling_y
         velocity.y = max(velocity.y, 0)
 
     # Move with collision - use proper floor detection
@@ -494,6 +520,25 @@ func _has_gap_below(ray_len: float) -> bool:
     var half_w := collision_size.x * 0.5
     var foot_y := global_position.y + collision_size.y * 0.5 - 1.0
     var ray_len_clamped: float = min(ray_len, collision_size.y * 1.2)
+    var start_left := Vector2(global_position.x - half_w + 2.0, foot_y)
+    var start_mid := Vector2(global_position.x, foot_y)
+    var start_right := Vector2(global_position.x + half_w - 2.0, foot_y)
+    var end_left := start_left + Vector2(0, max(ray_len_clamped, 1.0))
+    var end_mid := start_mid + Vector2(0, max(ray_len_clamped, 1.0))
+    var end_right := start_right + Vector2(0, max(ray_len_clamped, 1.0))
+    var pleft := PhysicsRayQueryParameters2D.create(start_left, end_left, 1, [self])
+    var pmid := PhysicsRayQueryParameters2D.create(start_mid, end_mid, 1, [self])
+    var pright := PhysicsRayQueryParameters2D.create(start_right, end_right, 1, [self])
+    var r1 := space.intersect_ray(pleft)
+    var r2 := space.intersect_ray(pmid)
+    var r3 := space.intersect_ray(pright)
+    return r1.is_empty() and r2.is_empty() and r3.is_empty()
+
+func _has_gap_below_long(ray_len: float) -> bool:
+    var space := get_world_2d().direct_space_state
+    var half_w := collision_size.x * 0.5
+    var foot_y := global_position.y + collision_size.y * 0.5 - 1.0
+    var ray_len_clamped: float = max(ray_len, collision_size.y * 1.2)
     var start_left := Vector2(global_position.x - half_w + 2.0, foot_y)
     var start_mid := Vector2(global_position.x, foot_y)
     var start_right := Vector2(global_position.x + half_w - 2.0, foot_y)
@@ -638,6 +683,18 @@ func set_environment_speed(speed: float) -> void:
 func sync_environment_speed_if_needed() -> void:
     if not lock_environment_speed_to_player:
         return
+
+    var boost_active: bool = false
+    if game_manager == null or not is_instance_valid(game_manager):
+        var main_node = get_tree().get_root().get_node_or_null("Main")
+        if main_node != null:
+            game_manager = main_node
+    if game_manager != null and game_manager.has_method("is_speed_boost_active"):
+        boost_active = game_manager.is_speed_boost_active()
+
+    if boost_active:
+        return
+
     if current_state == PlayerState.FULL_MOVEMENT:
         if _last_env_speed != run_speed:
             set_environment_speed(run_speed)
@@ -706,9 +763,13 @@ func apply_damage(amount: int) -> void:
     if game_manager and game_manager.has_method("is_shield_active") and game_manager.is_shield_active():
         return
     current_health -= amount
+
     if current_health < 0:
+
         current_health = 0
+
     update_health_bar()
+
     if current_health <= 0:
         trigger_game_over("health_depleted")
 

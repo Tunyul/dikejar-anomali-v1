@@ -5,25 +5,23 @@ extends Node2D
 @export var movement_enabled: bool = true
 @export var regenerate_on_start: bool = true
 ## Kecepatan scroll ground (px/detik).
-@export var scroll_speed: float = 250.0
+@export var scroll_speed: float = 220.0
 ## Percepatan menuju kecepatan target.
-@export var acceleration: float = 24.0
+@export var acceleration: float = 18.0
 ## Jika true, perubahan kecepatan halus memakai acceleration.
 @export var use_acceleration: bool = true
 ## Batas bawah kecepatan scroll.
 @export var min_scroll_speed: float = 0.0
 ## Batas atas kecepatan scroll.
-@export var max_scroll_speed: float = 600.0
+@export var max_scroll_speed: float = 480.0
 ## Jika true, segmen ground di-wrap tak hingga.
 @export var wrap_infinite: bool = true
 ## Jika true, segmen yang di-wrap digenerate ulang polanya.
 @export var regenerate_on_wrap: bool = true
-## Jumlah tile awal yang dipaksa rata (tanpa gap/step).
-@export var flat_start_tiles: int = 24
 ## Panjang satu segmen ground (A dan B) dalam jumlah tile.
-@export var segment_tile_count: int = 612
-@export var segment_tile_count_min: int = 612
-@export var segment_tile_count_max: int = 612
+@export var segment_tile_count: int = 320
+@export var segment_tile_count_min: int = 320
+@export var segment_tile_count_max: int = 320
 ## Langkah vertikal MAKSIMUM naik/turun per kolom (dalam tile).
 @export var max_step_height: int = 2
 ## Langkah vertikal MINIMUM naik/turun per kolom (dalam tile).
@@ -59,12 +57,28 @@ extends Node2D
 @export var debug_color_a: Color = Color(0.7, 0.0, 0.12, 1.0)
 ## Warna tint untuk TileMapLayerB saat debug tint aktif.
 @export var debug_color_b: Color = Color(1.0, 0.95, 0.0, 1.0)
+@export var debug_color_flat_start: Color = Color(0.7, 0.0, 0.12, 1.0)
+@export var flat_start_length_tiles: int = 32
 ## Seed tetap untuk RNG; 0 berarti acak setiap init.
 @export var fixed_seed: int = 0
+
+var _generate_now_internal: bool = false
+var _runtime_use_acceleration: bool = true
+var _base_use_acceleration: bool = true
+
+@export var generate_now: bool:
+    set(value):
+        _generate_now_internal = value
+        if value:
+            _run_generate_now(true, true)
+            _generate_now_internal = false
+    get:
+        return _generate_now_internal
+
 @export_group("Coins")
 @export var coin_scene: PackedScene
 @export var coin_spawn_chance: float = 1.0
-@export var coin_max_children: int = 40
+@export var coin_max_children: int = 30
 @export var coin_scale: float = 1.0
 @export var coin_group_min_len: int = 3
 @export var coin_group_max_len: int = 6
@@ -78,52 +92,38 @@ extends Node2D
 @export var coin_flat_top_min_len: int = 2
 @export var coin_flat_top_max_len: int = 4
 @export_enum("RandomCampur", "LengkungNaikTurun", "NaikTanggaFlatAtas", "GarisDatar") var coin_pattern_mode: int = 0
+@export var powerup_min_distance_tiles: float = 64.0
+@export var powerup_coin_avoid_radius_tiles: int = 2
 @export_group("Hearts")
 @export var heart_scene: PackedScene
-@export var heart_spawn_chance: float = 0.02
-@export var heart_max_children: int = 3
-@export var heart_height_offset_tiles: float = 2.0
+@export var heart_spawn_chance: float = 0.08
+@export var heart_max_children: int = 5
 @export var heart_scale: float = 1.0
-@export var heart_osc_amplitude_tiles: float = 0.5
-@export var heart_osc_frequency: float = 1.0
-@export var heart_min_distance_tiles: float = 6.0
-@export_group("Magnet")
-@export var magnet_scene: PackedScene
-@export var magnet_spawn_chance: float = 0.05
-@export var magnet_max_children: int = 1
+@export var heart_height_offset_tiles: float = 2.0
+@export_group("Powerups")
+@export var magnet_powerup_scene: PackedScene
+@export var magnet_max_children: int = 3
+@export var magnet_scale: float = 1.0
 @export var magnet_height_offset_tiles: float = 2.0
-@export var magnet_min_distance_tiles: float = 12.0
-@export var magnet_gap_tiles: int = 40
-@export_group("Shield")
-@export var shield_scene: PackedScene
-@export var shield_spawn_chance: float = 0.05
-@export var shield_max_children: int = 1
+@export var shield_powerup_scene: PackedScene
+@export var shield_max_children: int = 2
+@export var shield_scale: float = 1.0
 @export var shield_height_offset_tiles: float = 2.0
-@export var shield_min_distance_tiles: float = 12.0
-@export var shield_gap_tiles: int = 40
-@export_group("DoubleCoins")
-@export var double_coins_scene: PackedScene
-@export var double_coins_spawn_chance: float = 0.02
-@export var double_coins_max_children: int = 1
+@export var double_coins_powerup_scene: PackedScene
+@export var double_coins_max_children: int = 2
+@export var double_coins_scale: float = 1.0
 @export var double_coins_height_offset_tiles: float = 2.0
-@export var double_coins_min_distance_tiles: float = 24.0
-@export var double_coins_gap_tiles: int = 80
-@export_group("SpeedBoost")
-@export var speed_boost_scene: PackedScene
-@export var speed_boost_spawn_chance: float = 0.02
-@export var speed_boost_max_children: int = 1
+@export var speed_boost_powerup_scene: PackedScene
+@export var speed_boost_max_children: int = 2
+@export var speed_boost_scale: float = 1.0
 @export var speed_boost_height_offset_tiles: float = 2.0
-@export var speed_boost_min_distance_tiles: float = 24.0
-@export var speed_boost_gap_tiles: int = 80
-@export var powerup_min_distance_tiles: float = 12.0
-@export var powerup_coin_avoid_radius_tiles: int = 0
 @export_group("Enemies")
 @export var enemy_block_scene: PackedScene
 @export var enemy_cone_scene: PackedScene
-@export var enemy_spawn_chance: float = 0.25
-@export var enemy_max_children: int = 20
-@export var enemy_min_platform_len: int = 4
-@export var enemy_min_gap_between: int = 6
+@export var enemy_spawn_chance: float = 0.3
+@export var enemy_max_children: int = 15
+@export var enemy_min_platform_len: int = 5
+@export var enemy_min_gap_between: int = 8
 @export var enemy_y_offset_tiles: float = 0.0
 @export var enemy_gap_safe_buffer_block: int = 2
 @export var enemy_gap_safe_buffer_cone: int = 2
@@ -132,17 +132,7 @@ extends Node2D
 @export var enemy_allow_block: bool = true
 @export var enemy_allow_cone: bool = true
 
-var _generate_now_internal: bool = false
-
-@export var generate_now: bool:
-    set(value):
-        _generate_now_internal = value
-        if value:
-            _run_generate_now(true, true)
-            _generate_now_internal = false
-    get:
-        return _generate_now_internal
-
+var _tile_flat_start: TileMapLayer = null
 var _tile_a: TileMapLayer = null
 var _tile_b: TileMapLayer = null
 var _coins_a: Node2D = null
@@ -154,7 +144,6 @@ var _seg_overlap_px: float = 1.0
 var _tile_w_px: float = 0.0
 var _tile_h_px: float = 0.0
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
-var _flat_tiles_remaining: int = 0
 var _height_a: int = 0
 var _height_b: int = 0
 var _target_speed: float = 250.0
@@ -165,12 +154,8 @@ var _coin_pattern_index: int = 0
 var _coin_group_len_current: int = 0
 var _flat_top_start_index: int = 0
 var _flat_top_end_index: int = 0
-var _last_heart_x: float = -1.0e20
-var _last_magnet_x: float = -1.0e20
-var _last_shield_x: float = -1.0e20
-var _last_double_coins_x: float = -1.0e20
-var _last_speed_boost_x: float = -1.0e20
-var _last_powerup_x: float = -1.0e20
+var _runtime_seed: int = 0
+var _flat_start_runtime_initialized: bool = false
 
 const _BASE_SEGMENT_TILES: int = 64
 
@@ -186,14 +171,31 @@ func _scale_max_children(base: int) -> int:
 func _setup_rng() -> void:
     if _rng == null:
         _rng = RandomNumberGenerator.new()
-    if fixed_seed != 0:
-        _rng.seed = fixed_seed
-    else:
-        _rng.randomize()
+    if Engine.is_editor_hint():
+        if fixed_seed != 0:
+            _rng.seed = fixed_seed
+        else:
+            _rng.randomize()
+        return
+    if _runtime_seed == 0:
+        var base: int = fixed_seed
+        if base == 0:
+            base = 1
+        var t: int = int(Time.get_unix_time_from_system())
+        var path_hash: int = 0
+        var cs := get_tree().get_current_scene()
+        if cs != null:
+            var p: String = cs.get_scene_file_path()
+            path_hash = hash(p)
+        _runtime_seed = base ^ t ^ path_hash
+    _rng.seed = _runtime_seed
 
 func _ready() -> void:
+    _base_use_acceleration = use_acceleration
+    _runtime_use_acceleration = use_acceleration
     _initialized = false
     _ensure_initialized()
+    _ensure_flat_start_tiles()
     if Engine.is_editor_hint():
         if _tile_a:
             _height_a = 0
@@ -203,6 +205,7 @@ func _ready() -> void:
             _height_b = 0
             _generate_segment(_tile_b, _height_b)
             _tile_b.position.x = _seg_width_px - _seg_overlap_px
+        _align_segments_with_flat_start()
         _apply_debug_tint()
         return
     if regenerate_on_start:
@@ -214,12 +217,15 @@ func _ready() -> void:
             _height_b = 0
             _generate_segment(_tile_b, _height_b)
             _tile_b.position.x = _seg_width_px - _seg_overlap_px
+    _align_segments_with_flat_start()
     _apply_debug_tint()
 
 func _ensure_initialized() -> void:
     if _initialized:
         return
     _setup_rng()
+    if _tile_flat_start == null:
+        _tile_flat_start = get_node_or_null("TileMapLayerFlatStart") as TileMapLayer
     if _tile_a == null:
         _tile_a = get_node_or_null("TileMapLayerA") as TileMapLayer
     if _tile_b == null:
@@ -236,18 +242,18 @@ func _ensure_initialized() -> void:
         coin_scene = load("res://scenes/Coin.tscn")
     if heart_scene == null:
         heart_scene = load("res://scenes/HeartPickup.tscn")
-    if magnet_scene == null:
-        magnet_scene = load("res://scenes/MagnetPowerup.tscn")
-    if shield_scene == null:
-        shield_scene = load("res://scenes/ShieldPowerup.tscn")
-    if double_coins_scene == null:
-        double_coins_scene = load("res://scenes/DoubleCoinsPowerup.tscn")
-    if speed_boost_scene == null:
-        speed_boost_scene = load("res://scenes/SpeedBoostPowerup.tscn")
     if enemy_block_scene == null:
         enemy_block_scene = load("res://scenes/EnemyBlock.tscn")
     if enemy_cone_scene == null:
         enemy_cone_scene = load("res://scenes/EnemyCone.tscn")
+    if magnet_powerup_scene == null:
+        magnet_powerup_scene = load("res://scenes/MagnetPowerup.tscn")
+    if shield_powerup_scene == null:
+        shield_powerup_scene = load("res://scenes/ShieldPowerup.tscn")
+    if double_coins_powerup_scene == null:
+        double_coins_powerup_scene = load("res://scenes/DoubleCoinsPowerup.tscn")
+    if speed_boost_powerup_scene == null:
+        speed_boost_powerup_scene = load("res://scenes/SpeedBoostPowerup.tscn")
     if _tile_a and _tile_a.tile_set and (_tile_w_px <= 0.0 or _tile_h_px <= 0.0):
         var cell := _tile_a.tile_set.tile_size
         _tile_w_px = float(cell.x) * _tile_a.scale.x
@@ -256,26 +262,89 @@ func _ensure_initialized() -> void:
         _tile_w_px = 128.0
     if _tile_h_px <= 0.0:
         _tile_h_px = 128.0
+    if segment_tile_count <= 0:
+        if _tile_a != null:
+            var used_a: Rect2i = _tile_a.get_used_rect()
+            if used_a.size.x > 0:
+                segment_tile_count = used_a.size.x
+        elif _tile_b != null:
+            var used_b: Rect2i = _tile_b.get_used_rect()
+            if used_b.size.x > 0:
+                segment_tile_count = used_b.size.x
     if segment_tile_count_min <= 0:
         segment_tile_count_min = max(segment_tile_count, 1)
     if segment_tile_count_max < segment_tile_count_min:
         segment_tile_count_max = segment_tile_count_min
-    segment_tile_count = _rng.randi_range(segment_tile_count_min, segment_tile_count_max)
+    if not Engine.is_editor_hint():
+        segment_tile_count = _rng.randi_range(segment_tile_count_min, segment_tile_count_max)
     if min_step_run_len < 1:
         min_step_run_len = 1
     if max_step_run_len < min_step_run_len:
         max_step_run_len = min_step_run_len
     _seg_width_px = _tile_w_px * float(segment_tile_count)
-    _flat_tiles_remaining = max(flat_start_tiles, 0)
     _target_speed = scroll_speed
     _initialized = true
+
+func _ensure_flat_start_tiles() -> void:
+    if _tile_flat_start == null:
+        return
+    if not Engine.is_editor_hint():
+        if _flat_start_runtime_initialized:
+            return
+    var len_cells: int = flat_start_length_tiles
+    if len_cells <= 0:
+        _tile_flat_start.clear()
+        _clear_collision_for_tile(_tile_flat_start)
+        return
+    var h_base: int = clamp(0, min_height_tiles, max_height_tiles)
+    _tile_flat_start.clear()
+    _clear_collision_for_tile(_tile_flat_start)
+    var x: int = 0
+    while x < len_cells:
+        _place_ground_column(_tile_flat_start, x, h_base)
+        x += 1
+    if not Engine.is_editor_hint():
+        _flat_start_runtime_initialized = true
+
+func _align_segments_with_flat_start() -> void:
+    if _tile_flat_start == null:
+        return
+    if _tile_a == null:
+        return
+    var rect: Rect2i = _tile_flat_start.get_used_rect()
+    if rect.size.x <= 0 and flat_start_length_tiles <= 0:
+        return
+    var cell_size: Vector2 = Vector2.ZERO
+    if _tile_flat_start.tile_set != null:
+        cell_size = Vector2(_tile_flat_start.tile_set.tile_size)
+    elif _tile_a.tile_set != null:
+        cell_size = Vector2(_tile_a.tile_set.tile_size)
+    else:
+        cell_size = Vector2(_tile_w_px, _tile_h_px)
+    var scale_x: float = _tile_flat_start.scale.x
+    var start_cell_x: int = rect.position.x
+    var len_cells: int = rect.size.x
+    if flat_start_length_tiles > 0:
+        if len_cells <= 0:
+            len_cells = flat_start_length_tiles
+        else:
+            len_cells = min(len_cells, flat_start_length_tiles)
+    if len_cells <= 0:
+        return
+    var end_cells: int = start_cell_x + len_cells
+    var length_px: float = float(end_cells) * cell_size.x * scale_x
+    var start_x: float = _tile_flat_start.position.x + length_px
+    var pos_a: Vector2 = _tile_a.position
+    _tile_a.position = Vector2(start_x, pos_a.y)
+    if _tile_b != null:
+        _tile_b.position.x = _tile_a.position.x + _seg_width_px - _seg_overlap_px
 
 func _physics_process(delta: float) -> void:
     if Engine.is_editor_hint():
         return
     if not movement_enabled:
         return
-    if use_acceleration:
+    if _runtime_use_acceleration:
         if scroll_speed < _target_speed:
             scroll_speed = min(scroll_speed + acceleration * delta, _target_speed)
         elif scroll_speed > _target_speed:
@@ -283,6 +352,8 @@ func _physics_process(delta: float) -> void:
     if scroll_speed == 0.0:
         return
     var dx: float = scroll_speed * delta
+    if _tile_flat_start:
+        _tile_flat_start.position.x -= dx
     if _tile_a:
         _tile_a.position.x -= dx
     if _tile_b:
@@ -349,16 +420,11 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
     var coin_gap_remaining: int = 0
     var coin_pending_gap_len: int = 0
     var enemy_gap_remaining: int = 0
-    var heart_gap_remaining: int = 0
-    var magnet_gap_remaining: int = 0
-    var shield_gap_remaining: int = 0
-    var double_coins_gap_remaining: int = 0
-    var speed_boost_gap_remaining: int = 0
-    var powerup_gap_remaining: int = 0
     var enemy_columns: Array = []
+    var last_heart_x: int = -1024
     var i: int = 0
     while i < segment_tile_count:
-        var flat_override: bool = _flat_tiles_remaining > 0
+        var flat_override: bool = false
         if flat_override:
             gap_remaining = 0
         else:
@@ -412,9 +478,9 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
                     _height_lock_remaining = _rng.randi_range(lock_min_d, lock_max_d)
         _place_ground_column(tile, i, current_height)
         var do_spawn_coin: bool = false
-        var coins_allowed: bool = not flat_override
+        var coins_allowed: bool = true
         if coins_allowed:
-            var group_enabled: bool = coin_group_max_len >= coin_group_min_len and coin_group_max_len > 0 and coin_spawn_chance > 0.0
+            var group_enabled: bool = coin_group_max_len >= coin_group_min_len and coin_group_max_len > 0
             if group_enabled:
                 if coin_group_remaining > 0:
                     do_spawn_coin = true
@@ -425,116 +491,67 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
                 elif coin_gap_remaining > 0:
                     coin_gap_remaining -= 1
                 else:
-                    var rc: float = _rng.randf()
-                    if rc <= coin_spawn_chance:
-                        var gmin: int = max(coin_group_min_len, 1)
-                        var gmax: int = max(coin_group_max_len, gmin)
-                        var cols_for_group: int = cols_remaining
-                        if cols_for_group >= gmin:
-                            gmax = min(gmax, cols_for_group)
-                            coin_group_remaining = _rng.randi_range(gmin, gmax)
-                            _coin_group_len_current = coin_group_remaining
-                        var gap_min_c: int = max(coin_group_gap_min, 0)
-                        var gap_max_c: int = max(coin_group_gap_max, gap_min_c)
-                        if gap_max_c > 0:
-                            coin_pending_gap_len = _rng.randi_range(gap_min_c, gap_max_c)
-                        _select_coin_pattern()
-                        do_spawn_coin = true
-                        coin_group_remaining -= 1
-                        if coin_group_remaining == 0 and coin_pending_gap_len > 0:
-                            coin_gap_remaining = coin_pending_gap_len
-                            coin_pending_gap_len = 0
+                    if coin_spawn_chance > 0.0:
+                        var roll: float = _rng.randf()
+                        if roll < coin_spawn_chance:
+                            var gmin: int = max(coin_group_min_len, 1)
+                            var gmax: int = max(coin_group_max_len, gmin)
+                            var cols_for_group: int = cols_remaining
+                            if cols_for_group >= gmin:
+                                gmax = min(gmax, cols_for_group)
+                                coin_group_remaining = _rng.randi_range(gmin, gmax)
+                                _coin_group_len_current = coin_group_remaining
+                            var gap_min_c: int = max(coin_group_gap_min, 0)
+                            var gap_max_c: int = max(coin_group_gap_max, gap_min_c)
+                            if gap_max_c > 0:
+                                coin_pending_gap_len = _rng.randi_range(gap_min_c, gap_max_c)
+                            _select_coin_pattern()
+                            do_spawn_coin = true
+                            coin_group_remaining -= 1
+                            if coin_group_remaining == 0 and coin_pending_gap_len > 0:
+                                coin_gap_remaining = coin_pending_gap_len
+                                coin_pending_gap_len = 0
             else:
-                if coin_spawn_chance > 0.0 and _rng.randf() <= coin_spawn_chance:
-                    do_spawn_coin = true
+                do_spawn_coin = true
         if do_spawn_coin:
             _spawn_coin_for_column(tile, i, current_height)
         var do_spawn_enemy: bool = false
         var enemies_allowed: bool = not flat_override and not do_spawn_coin
-        if enemies_allowed and enemy_spawn_chance > 0.0:
+        if enemies_allowed:
             if enemy_gap_remaining > 0:
                 enemy_gap_remaining -= 1
             else:
                 var run_len_after: int = ground_run_len + 1
                 if run_len_after >= enemy_min_platform_len:
-                    if _rng.randf() <= enemy_spawn_chance:
-                        do_spawn_enemy = true
-                        enemy_gap_remaining = max(enemy_min_gap_between, 0)
+                    do_spawn_enemy = true
+                    enemy_gap_remaining = max(enemy_min_gap_between, 0)
         if do_spawn_enemy:
             _spawn_enemy_for_column(tile, i, current_height)
             enemy_columns.append(i)
-        var do_spawn_heart: bool = false
-        var hearts_allowed: bool = not flat_override and not _is_near_enemy(i, enemy_columns, 1) and not _is_player_health_full()
-        if hearts_allowed and heart_scene != null:
-            if heart_gap_remaining > 0:
-                heart_gap_remaining -= 1
-            else:
-                if heart_spawn_chance <= 0.0 or _rng.randf() <= heart_spawn_chance:
-                    do_spawn_heart = true
-                    heart_gap_remaining = int(max(heart_min_distance_tiles, 0.0))
-        var do_spawn_shield: bool = false
-        var shields_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and shield_scene != null and shield_spawn_chance > 0.0 and not _is_near_enemy(i, enemy_columns, 1) and not _has_coin_near_x(tile, i, powerup_coin_avoid_radius_tiles)
-        if shields_allowed:
-            if shield_gap_remaining > 0:
-                shield_gap_remaining -= 1
-            else:
-                if not _too_close_to_last_powerup(_column_world_x(tile, i)) and _rng.randf() <= shield_spawn_chance:
-                    do_spawn_shield = true
-                    shield_gap_remaining = max(shield_gap_tiles, 0)
-        var do_spawn_magnet: bool = false
-        var magnets_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and not do_spawn_heart and not do_spawn_shield and magnet_scene != null and magnet_spawn_chance > 0.0 and not _is_near_enemy(i, enemy_columns, 1) and not _has_coin_near_x(tile, i, powerup_coin_avoid_radius_tiles)
-        if magnets_allowed:
-            if magnet_gap_remaining > 0:
-                magnet_gap_remaining -= 1
-            else:
-                if not _too_close_to_last_powerup(_column_world_x(tile, i)) and _rng.randf() <= magnet_spawn_chance:
-                    do_spawn_magnet = true
-                    magnet_gap_remaining = max(magnet_gap_tiles, 0)
-        var do_spawn_speed_boost: bool = false
-        var speed_boost_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and not do_spawn_heart and not do_spawn_magnet and not do_spawn_shield and speed_boost_scene != null and speed_boost_spawn_chance > 0.0 and not _is_near_enemy(i, enemy_columns, 1) and not _is_speed_boost_active() and not _has_coin_near_x(tile, i, powerup_coin_avoid_radius_tiles)
-        if speed_boost_allowed:
-            if speed_boost_gap_remaining > 0:
-                speed_boost_gap_remaining -= 1
-            else:
-                if not _too_close_to_last_powerup(_column_world_x(tile, i)) and _rng.randf() <= speed_boost_spawn_chance:
-                    do_spawn_speed_boost = true
-                    speed_boost_gap_remaining = max(speed_boost_gap_tiles, 0)
-        var do_spawn_double_coins: bool = false
-        var double_coins_allowed: bool = not flat_override and not do_spawn_coin and not do_spawn_enemy and not do_spawn_heart and not do_spawn_magnet and not do_spawn_shield and not do_spawn_speed_boost and double_coins_scene != null and double_coins_spawn_chance > 0.0 and not _is_near_enemy(i, enemy_columns, 1) and not _is_double_coins_active() and not _has_coin_near_x(tile, i, powerup_coin_avoid_radius_tiles)
-        if double_coins_allowed:
-            if double_coins_gap_remaining > 0:
-                double_coins_gap_remaining -= 1
-            else:
-                if not _too_close_to_last_powerup(_column_world_x(tile, i)) and _rng.randf() <= double_coins_spawn_chance:
-                    do_spawn_double_coins = true
-                    double_coins_gap_remaining = max(double_coins_gap_tiles, 0)
-        var any_powerup_spawned: bool = false
-        if powerup_gap_remaining > 0:
-            if do_spawn_shield or do_spawn_magnet or do_spawn_speed_boost or do_spawn_double_coins:
-                do_spawn_shield = false
-                do_spawn_magnet = false
-                do_spawn_speed_boost = false
-                do_spawn_double_coins = false
-            powerup_gap_remaining -= 1
-        if do_spawn_heart:
-            _spawn_heart_for_column(tile, i, current_height)
-            any_powerup_spawned = true
-        if do_spawn_shield:
-            _spawn_shield_for_column(tile, i, current_height)
-            any_powerup_spawned = true
-        if do_spawn_magnet:
-            _spawn_magnet_for_column(tile, i, current_height)
-            any_powerup_spawned = true
-        if do_spawn_speed_boost:
-            _spawn_speed_boost_for_column(tile, i, current_height)
-            any_powerup_spawned = true
-        if do_spawn_double_coins:
-            _spawn_double_coins_for_column(tile, i, current_height)
-            any_powerup_spawned = true
-        if any_powerup_spawned:
-            powerup_gap_remaining = max(int(powerup_min_distance_tiles), 0)
-        if flat_override and _flat_tiles_remaining > 0:
-            _flat_tiles_remaining -= 1
+
+        var can_spawn_heart: bool = true
+        if heart_scene == null:
+            can_spawn_heart = false
+        elif heart_spawn_chance <= 0.0:
+            can_spawn_heart = false
+        if can_spawn_heart:
+            var main := get_tree().get_root().get_node_or_null("Main")
+            if main != null and main.has_method("can_spawn_hearts"):
+                if not main.can_spawn_hearts():
+                    can_spawn_heart = false
+        if can_spawn_heart:
+            var min_dist: float = max(powerup_min_distance_tiles, 0.0)
+            if min_dist > 0.0 and last_heart_x >= 0 and float(i - last_heart_x) < min_dist:
+                can_spawn_heart = false
+        if can_spawn_heart:
+            var has_enemy_here: bool = _has_enemy_near_x(tile, i, 0)
+            if has_enemy_here:
+                can_spawn_heart = false
+        if can_spawn_heart:
+            var rh: float = _rng.randf()
+            if rh < heart_spawn_chance:
+                _spawn_heart_for_column(tile, i, current_height)
+                last_heart_x = i
         last_was_gap = false
         ground_run_len += 1
         height_run_len += 1
@@ -544,9 +561,63 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
         _clear_enemies_near_gaps(tile, gap_edges)
     _clear_lonely_peak_coins(tile)
     _clear_short_coin_groups(tile)
-    if Engine.is_editor_hint():
-        _ensure_editor_preview_for_tile(tile)
+    _ensure_trailing_coins(tile)
+    _ensure_min_spawn_density(tile)
     return current_height
+
+func _ensure_trailing_coins(tile: TileMapLayer) -> void:
+    if tile == null:
+        return
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return
+    var last_ground_x: int = -1
+    var x: int = segment_tile_count - 1
+    while x >= 0:
+        var h: int = _get_ground_height_for_column(tile, x)
+        if h >= 0:
+            last_ground_x = x
+            break
+        x -= 1
+    if last_ground_x < 0:
+        return
+    var has_coin: bool = false
+    var radius_tiles: int = 3
+    for c in root.get_children():
+        if not (c is Node2D):
+            continue
+        var coin_node := c as Node2D
+        var local_pos: Vector2 = tile.to_local(coin_node.global_position)
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        if abs(cell.x - last_ground_x) <= radius_tiles:
+            has_coin = true
+            break
+    if has_coin:
+        return
+    var start_x: int = max(last_ground_x - radius_tiles, 0)
+    for sx in range(start_x, last_ground_x + 1):
+        var h2: int = _get_ground_height_for_column(tile, sx)
+        if h2 < 0:
+            continue
+        var has_enemy_trail: bool = _has_enemy_near_x(tile, sx, 1)
+        if has_enemy_trail:
+            continue
+        _spawn_coin_for_column(tile, sx, h2)
+
+func _has_enemy_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
+    var root := _get_enemies_root_for_tile(tile)
+    if root == null:
+        return false
+    var r: int = max(radius, 0)
+    for c in root.get_children():
+        if not (c is Node2D):
+            continue
+        var enemy_node := c as Node2D
+        var local_pos: Vector2 = tile.to_local(enemy_node.global_position)
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        if abs(cell.x - x) <= r:
+            return true
+    return false
 
 func _is_near_enemy(tile_x: int, enemy_columns: Array, buffer: int) -> bool:
     var b: int = max(buffer, 0)
@@ -557,48 +628,6 @@ func _is_near_enemy(tile_x: int, enemy_columns: Array, buffer: int) -> bool:
         if abs(tile_x - e) <= b:
             return true
     return false
-
-func _is_player_health_full() -> bool:
-    var gm := _get_main_node()
-    if gm == null:
-        return false
-    var p := gm.get_node_or_null("Player")
-    if p == null:
-        return false
-    var max_h: int = 0
-    var cur_h: int = 0
-    if p.has_method("get"):
-        max_h = int(p.get("max_health"))
-        cur_h = int(p.get("current_health"))
-    if max_h <= 0:
-        return false
-    return cur_h >= max_h
-
-func _is_speed_boost_active() -> bool:
-    var gm := _get_main_node()
-    if gm == null:
-        return false
-    if gm.has_method("is_speed_boost_active"):
-        return gm.is_speed_boost_active()
-    return false
-
-func _is_double_coins_active() -> bool:
-    var gm := _get_main_node()
-    if gm == null:
-        return false
-    if gm.has_method("is_double_coins_active"):
-        return gm.is_double_coins_active()
-    return false
-
-func _too_close_to_last_powerup(world_x: float) -> bool:
-    if powerup_min_distance_tiles <= 0.0:
-        return false
-    var min_px: float = powerup_min_distance_tiles * _tile_w_px
-    if min_px <= 0.0:
-        return false
-    if _last_powerup_x <= -1.0e19:
-        return false
-    return abs(world_x - _last_powerup_x) < min_px
 
 func _column_world_x(tile: TileMapLayer, x: int) -> float:
     if tile == null:
@@ -618,32 +647,156 @@ func _get_coins_root_for_tile(tile: TileMapLayer) -> Node2D:
         return _coins_b
     return null
 
+func get_powerup_distances(from_world_x: float) -> Dictionary:
+    _ensure_initialized()
+    var result: Dictionary = {}
+    result["magnet"] = -1.0
+    result["shield"] = -1.0
+    result["double_coins"] = -1.0
+    result["speed_boost"] = -1.0
+    var tiles: Array = []
+    if _tile_a != null:
+        tiles.append(_tile_a)
+    if _tile_b != null:
+        tiles.append(_tile_b)
+    for tile in tiles:
+        if tile == null:
+            continue
+        var root := _get_coins_root_for_tile(tile)
+        if root == null:
+            continue
+        for c in root.get_children():
+            if not (c is Node2D):
+                continue
+            var kind: String = ""
+            if c is MagnetPowerup:
+                kind = "magnet"
+            elif c is ShieldPowerup or c.is_in_group("shield_powerup"):
+                kind = "shield"
+            elif c is DoubleCoinsPowerup:
+                kind = "double_coins"
+            elif c is SpeedBoostPowerup:
+                kind = "speed_boost"
+            if kind == "":
+                continue
+            var n2d := c as Node2D
+            var dx: float = n2d.global_position.x - from_world_x
+            if dx < 0.0:
+                continue
+            var dist_tiles: float = dx
+            if _tile_w_px > 0.0:
+                dist_tiles = dx / _tile_w_px
+            var prev: float = float(result.get(kind, -1.0))
+            if prev < 0.0 or dist_tiles < prev:
+                result[kind] = dist_tiles
+    return result
+
+func get_tile_width_px() -> float:
+    _ensure_initialized()
+    return _tile_w_px
+
 func _has_coin_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
     var root := _get_coins_root_for_tile(tile)
     if root == null:
         return false
     var r: int = max(radius, 0)
     for c in root.get_children():
-        if c is HeartPickup:
-            continue
-        if c is MagnetPowerup:
-            continue
-        if c.is_in_group("shield_powerup"):
-            continue
-        if c is DoubleCoinsPowerup:
-            continue
         if not (c is Node2D):
             continue
         var coin_node := c as Node2D
         var local_pos: Vector2 = tile.to_local(coin_node.global_position)
         var cell: Vector2i = tile.local_to_map(local_pos)
-        if r <= 0:
-            if cell.x == x:
-                return true
-        else:
-            if abs(cell.x - x) <= r:
-                return true
+        if abs(cell.x - x) <= r:
+            return true
     return false
+
+func _has_heart_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return false
+    var r: int = max(radius, 0)
+    for c in root.get_children():
+        if not (c is HeartPickup):
+            continue
+        if not (c is Node2D):
+            continue
+        var heart_node := c as Node2D
+        var local_pos: Vector2 = tile.to_local(heart_node.global_position)
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        if abs(cell.x - x) <= r:
+            return true
+    return false
+
+func _has_magnet_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return false
+    var r: int = max(radius, 0)
+    for c in root.get_children():
+        if not (c is MagnetPowerup):
+            continue
+        if not (c is Node2D):
+            continue
+        var magnet_node := c as Node2D
+        var local_pos: Vector2 = tile.to_local(magnet_node.global_position)
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        if abs(cell.x - x) <= r:
+            return true
+    return false
+
+func _has_shield_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return false
+    var r: int = max(radius, 0)
+    for c in root.get_children():
+        if not (c is ShieldPowerup) and not c.is_in_group("shield_powerup"):
+            continue
+        if not (c is Node2D):
+            continue
+        var node2d := c as Node2D
+        var local_pos: Vector2 = tile.to_local(node2d.global_position)
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        if abs(cell.x - x) <= r:
+            return true
+    return false
+
+func _has_double_coins_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return false
+    var r: int = max(radius, 0)
+    for c in root.get_children():
+        if not (c is DoubleCoinsPowerup):
+            continue
+        if not (c is Node2D):
+            continue
+        var node2d := c as Node2D
+        var local_pos: Vector2 = tile.to_local(node2d.global_position)
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        if abs(cell.x - x) <= r:
+            return true
+    return false
+
+func _has_speed_boost_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
+    var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return false
+    var r: int = max(radius, 0)
+    for c in root.get_children():
+        if not (c is SpeedBoostPowerup):
+            continue
+        if not (c is Node2D):
+            continue
+        var node2d := c as Node2D
+        var local_pos: Vector2 = tile.to_local(node2d.global_position)
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        if abs(cell.x - x) <= r:
+            return true
+    return false
+
+func _ensure_min_spawn_density(_tile: TileMapLayer) -> void:
+    return
 
 func _clear_coins_for_tile(tile: TileMapLayer) -> void:
     var root := _get_coins_root_for_tile(tile)
@@ -666,6 +819,274 @@ func _clear_enemies_for_tile(tile: TileMapLayer) -> void:
     for c in root.get_children():
         c.queue_free()
 
+func request_emergency_heart(from_world_x: float, min_dist_px: float, max_dist_px: float) -> void:
+    _ensure_initialized()
+    if heart_scene == null:
+        return
+    var min_world: float = from_world_x + max(min_dist_px, 0.0)
+    var max_world: float = from_world_x + max(max_dist_px, min_dist_px)
+    if max_world <= min_world:
+        max_world = min_world + _tile_w_px
+    var tiles: Array = []
+    if _tile_a != null:
+        tiles.append(_tile_a)
+    if _tile_b != null:
+        tiles.append(_tile_b)
+    for tile in tiles:
+        if tile == null:
+            continue
+        var best_x: int = -1
+        var x: int = 0
+        while x < segment_tile_count:
+            var h: int = _get_ground_height_for_column(tile, x)
+            if h >= 0:
+                var wx: float = _column_world_x(tile, x)
+                if wx >= min_world and wx <= max_world:
+                    var has_enemy: bool = _has_enemy_near_x(tile, x, 0)
+                    if has_enemy:
+                        x += 1
+                        continue
+                    var has_heart: bool = _has_heart_near_x(tile, x, 1)
+                    if has_heart:
+                        x += 1
+                        continue
+                    best_x = x
+                    break
+            x += 1
+        if best_x >= 0:
+            var h_best: int = _get_ground_height_for_column(tile, best_x)
+            if h_best >= 0:
+                _spawn_heart_for_column(tile, best_x, h_best, true)
+                return
+
+func _count_powerups_of_type() -> Dictionary:
+    var counts: Dictionary = {}
+    counts["magnet"] = 0
+    counts["shield"] = 0
+    counts["double_coins"] = 0
+    counts["speed_boost"] = 0
+    var tiles: Array = []
+    if _tile_a != null:
+        tiles.append(_tile_a)
+    if _tile_b != null:
+        tiles.append(_tile_b)
+    for tile in tiles:
+        if tile == null:
+            continue
+        var root := _get_coins_root_for_tile(tile)
+        if root == null:
+            continue
+        for c in root.get_children():
+            if c is MagnetPowerup:
+                counts["magnet"] = int(counts["magnet"]) + 1
+            elif (c is ShieldPowerup) or c.is_in_group("shield_powerup"):
+                counts["shield"] = int(counts["shield"]) + 1
+            elif c is DoubleCoinsPowerup:
+                counts["double_coins"] = int(counts["double_coins"]) + 1
+            elif c is SpeedBoostPowerup:
+                counts["speed_boost"] = int(counts["speed_boost"]) + 1
+    return counts
+
+func request_emergency_magnet(from_world_x: float, min_dist_px: float, max_dist_px: float) -> void:
+    _ensure_initialized()
+    if magnet_powerup_scene == null:
+        return
+    var main := _get_main_node()
+    if main != null and main.has_method("is_magnet_active"):
+        if main.is_magnet_active():
+            return
+    var min_world: float = from_world_x + max(min_dist_px, 0.0)
+    var max_world: float = from_world_x + max(max_dist_px, min_dist_px)
+    if max_world <= min_world:
+        max_world = min_world + _tile_w_px
+    var tiles: Array = []
+    if _tile_a != null:
+        tiles.append(_tile_a)
+    if _tile_b != null:
+        tiles.append(_tile_b)
+    var counts := _count_powerups_of_type()
+    var total_magnets: int = int(counts["magnet"])
+    if magnet_max_children > 0 and total_magnets >= magnet_max_children:
+        return
+    for tile in tiles:
+        if tile == null:
+            continue
+        var root := _get_coins_root_for_tile(tile)
+        if root == null:
+            continue
+        var best_x: int = -1
+        var x: int = 0
+        while x < segment_tile_count:
+            var h: int = _get_ground_height_for_column(tile, x)
+            if h >= 0:
+                var wx: float = _column_world_x(tile, x)
+                if wx >= min_world and wx <= max_world:
+                    var has_enemy: bool = _has_enemy_near_x(tile, x, 0)
+                    if has_enemy:
+                        x += 1
+                        continue
+                    var has_heart: bool = _has_heart_near_x(tile, x, 1)
+                    if has_heart:
+                        x += 1
+                        continue
+                    var has_magnet: bool = _has_magnet_near_x(tile, x, 1)
+                    if has_magnet:
+                        x += 1
+                        continue
+                    var has_coin: bool = _has_coin_near_x(tile, x, powerup_coin_avoid_radius_tiles)
+                    if has_coin:
+                        x += 1
+                        continue
+                    best_x = x
+                    break
+            x += 1
+        if best_x >= 0:
+            var h_best: int = _get_ground_height_for_column(tile, best_x)
+            if h_best >= 0:
+                var top_y: int = -h_best
+                var offset_tiles: float = max(magnet_height_offset_tiles, 0.0)
+                var whole_tiles: int = int(floor(offset_tiles))
+                var frac_tiles: float = offset_tiles - float(whole_tiles)
+                var magnet_y: int = top_y - whole_tiles
+                var cell := Vector2i(best_x, magnet_y)
+                var local_pos: Vector2 = tile.map_to_local(cell)
+                var world_pos: Vector2 = tile.to_global(local_pos)
+                if frac_tiles != 0.0:
+                    world_pos.y -= frac_tiles * _tile_h_px
+                var magnet := magnet_powerup_scene.instantiate()
+                if magnet == null:
+                    return
+                if not (magnet is Node2D):
+                    return
+                var n2d := magnet as Node2D
+                n2d.scale = Vector2.ONE * magnet_scale
+                root.add_child(n2d)
+                n2d.global_position = world_pos
+                return
+
+func _request_emergency_powerup(from_world_x: float, min_dist_px: float, max_dist_px: float, kind: String) -> void:
+    _ensure_initialized()
+    var scene: PackedScene = null
+    var max_children: int = 0
+    var height_offset: float = 0.0
+    var scale_value: float = 1.0
+    var main := _get_main_node()
+    if kind == "shield":
+        scene = shield_powerup_scene
+        max_children = shield_max_children
+        height_offset = shield_height_offset_tiles
+        scale_value = shield_scale
+        if main != null and main.has_method("is_shield_active"):
+            if main.is_shield_active():
+                return
+    elif kind == "double_coins":
+        scene = double_coins_powerup_scene
+        max_children = double_coins_max_children
+        height_offset = double_coins_height_offset_tiles
+        scale_value = double_coins_scale
+        if main != null and main.has_method("is_double_coins_active"):
+            if main.is_double_coins_active():
+                return
+    elif kind == "speed_boost":
+        scene = speed_boost_powerup_scene
+        max_children = speed_boost_max_children
+        height_offset = speed_boost_height_offset_tiles
+        scale_value = speed_boost_scale
+        if main != null and main.has_method("is_speed_boost_active"):
+            if main.is_speed_boost_active():
+                return
+    if scene == null:
+        return
+    var min_world: float = from_world_x + max(min_dist_px, 0.0)
+    var max_world: float = from_world_x + max(max_dist_px, min_dist_px)
+    if max_world <= min_world:
+        max_world = min_world + _tile_w_px
+    var tiles: Array = []
+    if _tile_a != null:
+        tiles.append(_tile_a)
+    if _tile_b != null:
+        tiles.append(_tile_b)
+    var counts := _count_powerups_of_type()
+    var current: int = int(counts[kind])
+    if max_children > 0 and current >= max_children:
+        return
+    for tile in tiles:
+        if tile == null:
+            continue
+        var root := _get_coins_root_for_tile(tile)
+        if root == null:
+            continue
+        var best_x: int = -1
+        var x: int = 0
+        while x < segment_tile_count:
+            var h: int = _get_ground_height_for_column(tile, x)
+            if h >= 0:
+                var wx: float = _column_world_x(tile, x)
+                if wx >= min_world and wx <= max_world:
+                    var has_enemy: bool = _has_enemy_near_x(tile, x, 0)
+                    if has_enemy:
+                        x += 1
+                        continue
+                    var has_heart: bool = _has_heart_near_x(tile, x, 1)
+                    if has_heart:
+                        x += 1
+                        continue
+                    var has_magnet: bool = _has_magnet_near_x(tile, x, 1)
+                    if has_magnet:
+                        x += 1
+                        continue
+                    var has_shield: bool = _has_shield_near_x(tile, x, 1)
+                    if has_shield:
+                        x += 1
+                        continue
+                    var has_double: bool = _has_double_coins_near_x(tile, x, 1)
+                    if has_double:
+                        x += 1
+                        continue
+                    var has_speed: bool = _has_speed_boost_near_x(tile, x, 1)
+                    if has_speed:
+                        x += 1
+                        continue
+                    var has_coin: bool = _has_coin_near_x(tile, x, powerup_coin_avoid_radius_tiles)
+                    if has_coin:
+                        x += 1
+                        continue
+                    best_x = x
+                    break
+            x += 1
+        if best_x >= 0:
+            var h_best: int = _get_ground_height_for_column(tile, best_x)
+            if h_best >= 0:
+                var top_y: int = -h_best
+                var offset_tiles: float = max(height_offset, 0.0)
+                var whole_tiles: int = int(floor(offset_tiles))
+                var frac_tiles: float = offset_tiles - float(whole_tiles)
+                var py: int = top_y - whole_tiles
+                var cell := Vector2i(best_x, py)
+                var local_pos: Vector2 = tile.map_to_local(cell)
+                var world_pos: Vector2 = tile.to_global(local_pos)
+                if frac_tiles != 0.0:
+                    world_pos.y -= frac_tiles * _tile_h_px
+                var inst := scene.instantiate()
+                if inst == null:
+                    return
+                if not (inst is Node2D):
+                    return
+                var n2d := inst as Node2D
+                n2d.scale = Vector2.ONE * scale_value
+                root.add_child(n2d)
+                n2d.global_position = world_pos
+                return
+
+func request_emergency_shield(from_world_x: float, min_dist_px: float, max_dist_px: float) -> void:
+    _request_emergency_powerup(from_world_x, min_dist_px, max_dist_px, "shield")
+
+func request_emergency_double_coins(from_world_x: float, min_dist_px: float, max_dist_px: float) -> void:
+    _request_emergency_powerup(from_world_x, min_dist_px, max_dist_px, "double_coins")
+
+func request_emergency_speed_boost(from_world_x: float, min_dist_px: float, max_dist_px: float) -> void:
+    _request_emergency_powerup(from_world_x, min_dist_px, max_dist_px, "speed_boost")
+
 func _clear_coins_near_gaps(tile: TileMapLayer, gap_edges: Array) -> void:
     var root := _get_coins_root_for_tile(tile)
     if root == null:
@@ -675,14 +1096,6 @@ func _clear_coins_near_gaps(tile: TileMapLayer, gap_edges: Array) -> void:
     var buffer: int = 2
     var nodes_by_x: Dictionary = {}
     for c in root.get_children():
-        if c is HeartPickup:
-            continue
-        if c is MagnetPowerup:
-            continue
-        if c.is_in_group("shield_powerup"):
-            continue
-        if c is DoubleCoinsPowerup:
-            continue
         if not (c is Node2D):
             continue
         var coin_node := c as Node2D
@@ -741,14 +1154,6 @@ func _clear_lonely_peak_coins(tile: TileMapLayer) -> void:
         return
     var nodes_by_x: Dictionary = {}
     for c in root.get_children():
-        if c is HeartPickup:
-            continue
-        if c is MagnetPowerup:
-            continue
-        if c.is_in_group("shield_powerup"):
-            continue
-        if c is DoubleCoinsPowerup:
-            continue
         if not (c is Node2D):
             continue
         var coin_node := c as Node2D
@@ -802,8 +1207,6 @@ func _clear_enemies_near_gaps(tile: TileMapLayer, gap_edges: Array) -> void:
     if gap_edges.is_empty():
         return
     for c in root.get_children():
-        if c is HeartPickup:
-            continue
         if not (c is Node2D):
             continue
         var enemy_node := c as Node2D
@@ -839,14 +1242,6 @@ func _clear_short_coin_groups(tile: TileMapLayer) -> void:
         return
     var nodes_by_x: Dictionary = {}
     for c in root.get_children():
-        if c is HeartPickup:
-            continue
-        if c is MagnetPowerup:
-            continue
-        if c.is_in_group("shield_powerup"):
-            continue
-        if c is DoubleCoinsPowerup:
-            continue
         if not (c is Node2D):
             continue
         var coin_node := c as Node2D
@@ -900,18 +1295,8 @@ func _ensure_editor_preview_for_tile(tile: TileMapLayer) -> void:
     var mid: int = int(segment_tile_count / 2.0)
     var x_coin: int = clamp(mid, 0, max(segment_tile_count - 1, 0))
     var x_enemy: int = clamp(mid + 4, 0, max(segment_tile_count - 1, 0))
-    var x_heart: int = clamp(mid - 4, 0, max(segment_tile_count - 1, 0))
-    var x_magnet: int = clamp(mid + 8, 0, max(segment_tile_count - 1, 0))
-    var x_shield: int = clamp(mid - 8, 0, max(segment_tile_count - 1, 0))
-    var x_double: int = clamp(mid, 0, max(segment_tile_count - 1, 0))
-    var x_speed: int = clamp(mid + 12, 0, max(segment_tile_count - 1, 0))
     _spawn_coin_for_column(tile, x_coin, h_base)
     _spawn_enemy_for_column(tile, x_enemy, h_base)
-    _spawn_heart_for_column(tile, x_heart, h_base)
-    _spawn_magnet_for_column(tile, x_magnet, h_base)
-    _spawn_shield_for_column(tile, x_shield, h_base)
-    _spawn_double_coins_for_column(tile, x_double, h_base)
-    _spawn_speed_boost_for_column(tile, x_speed, h_base)
 
 func _select_coin_pattern() -> void:
     _coin_pattern_index = 0
@@ -956,14 +1341,14 @@ func _select_coin_pattern() -> void:
             _flat_top_start_index = flat_start
             _flat_top_end_index = flat_end
 
-func _spawn_coin_for_column(tile: TileMapLayer, x: int, height: int) -> void:
+func _spawn_coin_for_column(tile: TileMapLayer, x: int, height: int, ignore_max_limit: bool = false) -> void:
     if coin_scene == null:
         return
     var root := _get_coins_root_for_tile(tile)
     if root == null:
         return
     var max_coins: int = _scale_max_children(coin_max_children)
-    if max_coins > 0 and root.get_child_count() >= max_coins:
+    if not ignore_max_limit and max_coins > 0 and root.get_child_count() >= max_coins:
         return
     var seg_id := "A"
     if tile == _tile_b:
@@ -1025,6 +1410,12 @@ func _spawn_coin_for_column(tile: TileMapLayer, x: int, height: int) -> void:
     var world_pos: Vector2 = tile.to_global(local_pos)
     if frac_tiles != 0.0:
         world_pos.y -= frac_tiles * _tile_h_px
+    for c in root.get_children():
+        if not (c is Node2D):
+            continue
+        var existing := c as Node2D
+        if existing.global_position.distance_to(world_pos) < 1.0:
+            return
     var coin := coin_scene.instantiate()
     if coin == null:
         return
@@ -1039,22 +1430,22 @@ func _spawn_coin_for_column(tile: TileMapLayer, x: int, height: int) -> void:
     if main and main.has_method("on_coin_collected") and coin.has_signal("collected"):
         coin.collected.connect(Callable(main, "on_coin_collected"))
 
-func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int) -> void:
+func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int, ignore_limit: bool = false) -> void:
     if heart_scene == null:
         return
     var root := _get_coins_root_for_tile(tile)
     if root == null:
         return
     var max_hearts: int = _scale_max_children(heart_max_children)
-    if max_hearts > 0:
-        var heart_count: int = 0
+    if max_hearts > 0 and not ignore_limit:
+        var count: int = 0
         for c in root.get_children():
             if c is HeartPickup:
-                heart_count += 1
-        if heart_count >= max_hearts:
+                count += 1
+        if count >= max_hearts:
             return
     var top_y: int = -height
-    var offset_tiles: float = heart_height_offset_tiles
+    var offset_tiles: float = max(heart_height_offset_tiles, 0.0)
     var whole_tiles: int = int(floor(offset_tiles))
     var frac_tiles: float = offset_tiles - float(whole_tiles)
     var heart_y: int = top_y - whole_tiles
@@ -1063,200 +1454,21 @@ func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int) -> void:
     var world_pos: Vector2 = tile.to_global(local_pos)
     if frac_tiles != 0.0:
         world_pos.y -= frac_tiles * _tile_h_px
-    var min_dist_px: float = max(heart_min_distance_tiles * _tile_w_px, 0.0)
-    if min_dist_px > 0.0 and _last_heart_x > -1.0e19:
-        if abs(world_pos.x - _last_heart_x) < min_dist_px:
+    for c2 in root.get_children():
+        if not (c2 is Node2D):
+            continue
+        var existing := c2 as Node2D
+        if existing.global_position.distance_to(world_pos) < 1.0:
             return
     var heart := heart_scene.instantiate()
     if heart == null:
         return
-    if heart_scale != 1.0:
-        if heart is Node2D:
-            (heart as Node2D).scale = Vector2.ONE * heart_scale
-    if heart is HeartPickup:
-        var hp := heart as HeartPickup
-        hp.osc_amplitude = heart_osc_amplitude_tiles * _tile_h_px
-        hp.osc_frequency = heart_osc_frequency
-    root.add_child(heart)
-    heart.global_position = world_pos
-    _last_heart_x = world_pos.x
-    _last_powerup_x = world_pos.x
-
-func _spawn_shield_for_column(tile: TileMapLayer, x: int, height: int) -> void:
-    var gm := _get_main_node()
-    if gm != null:
-        var magnet_active: bool = false
-        var shield_active: bool = false
-        if gm.has_method("is_magnet_active"):
-            magnet_active = gm.is_magnet_active()
-        if gm.has_method("is_shield_active"):
-            shield_active = gm.is_shield_active()
-        if magnet_active or shield_active:
-            return
-    if shield_scene == null:
+    if not (heart is Node2D):
         return
-    var root := _get_coins_root_for_tile(tile)
-    if root == null:
-        return
-    var max_shields: int = _scale_max_children(shield_max_children)
-    if max_shields > 0:
-        var shield_count: int = 0
-        for c in root.get_children():
-            if c.is_in_group("shield_powerup"):
-                shield_count += 1
-        if shield_count >= max_shields:
-            return
-    var top_y: int = -height
-    var offset_tiles: float = shield_height_offset_tiles
-    var whole_tiles: int = int(floor(offset_tiles))
-    var frac_tiles: float = offset_tiles - float(whole_tiles)
-    var shield_y: int = top_y - whole_tiles
-    var cell := Vector2i(x, shield_y)
-    var local_pos: Vector2 = tile.map_to_local(cell)
-    var world_pos: Vector2 = tile.to_global(local_pos)
-    if frac_tiles != 0.0:
-        world_pos.y -= frac_tiles * _tile_h_px
-    var min_dist_px: float = max(shield_min_distance_tiles * _tile_w_px, 0.0)
-    if min_dist_px > 0.0 and _last_shield_x > -1.0e19:
-        if abs(world_pos.x - _last_shield_x) < min_dist_px:
-            return
-    var shield := shield_scene.instantiate()
-    if shield == null:
-        return
-    if not (shield is Node2D):
-        return
-    root.add_child(shield)
-    (shield as Node2D).global_position = world_pos
-    _last_shield_x = world_pos.x
-    _last_powerup_x = world_pos.x
-
-func _spawn_magnet_for_column(tile: TileMapLayer, x: int, height: int) -> void:
-    var gm := _get_main_node()
-    if gm != null:
-        var magnet_active: bool = false
-        var shield_active: bool = false
-        if gm.has_method("is_magnet_active"):
-            magnet_active = gm.is_magnet_active()
-        if gm.has_method("is_shield_active"):
-            shield_active = gm.is_shield_active()
-        if magnet_active or shield_active:
-            return
-    if magnet_scene == null:
-        return
-    var root := _get_coins_root_for_tile(tile)
-    if root == null:
-        return
-    var max_magnets: int = _scale_max_children(magnet_max_children)
-    if max_magnets > 0:
-        var magnet_count: int = 0
-        for c in root.get_children():
-            if c is MagnetPowerup:
-                magnet_count += 1
-        if magnet_count >= max_magnets:
-            return
-    var top_y: int = -height
-    var offset_tiles: float = magnet_height_offset_tiles
-    var whole_tiles: int = int(floor(offset_tiles))
-    var frac_tiles: float = offset_tiles - float(whole_tiles)
-    var magnet_y: int = top_y - whole_tiles
-    var cell := Vector2i(x, magnet_y)
-    var local_pos: Vector2 = tile.map_to_local(cell)
-    var world_pos: Vector2 = tile.to_global(local_pos)
-    if frac_tiles != 0.0:
-        world_pos.y -= frac_tiles * _tile_h_px
-    var min_dist_px: float = max(magnet_min_distance_tiles * _tile_w_px, 0.0)
-    if min_dist_px > 0.0 and _last_magnet_x > -1.0e19:
-        if abs(world_pos.x - _last_magnet_x) < min_dist_px:
-            return
-    var magnet := magnet_scene.instantiate()
-    if magnet == null:
-        return
-    if not (magnet is Node2D):
-        return
-    root.add_child(magnet)
-    (magnet as Node2D).global_position = world_pos
-    _last_magnet_x = world_pos.x
-    _last_powerup_x = world_pos.x
-
-func _spawn_double_coins_for_column(tile: TileMapLayer, x: int, height: int) -> void:
-    if double_coins_scene == null:
-        return
-    var root := _get_coins_root_for_tile(tile)
-    if root == null:
-        return
-    var max_double: int = _scale_max_children(double_coins_max_children)
-    if max_double > 0:
-        var count: int = 0
-        for c in root.get_children():
-            if c is DoubleCoinsPowerup:
-                count += 1
-        if count >= max_double:
-            return
-    var top_y: int = -height
-    var offset_tiles: float = double_coins_height_offset_tiles
-    var whole_tiles: int = int(floor(offset_tiles))
-    var frac_tiles: float = offset_tiles - float(whole_tiles)
-    var dc_y: int = top_y - whole_tiles
-    var cell := Vector2i(x, dc_y)
-    var local_pos: Vector2 = tile.map_to_local(cell)
-    var world_pos: Vector2 = tile.to_global(local_pos)
-    if frac_tiles != 0.0:
-        world_pos.y -= frac_tiles * _tile_h_px
-    var min_dist_px: float = max(double_coins_min_distance_tiles * _tile_w_px, 0.0)
-    if min_dist_px > 0.0 and _last_double_coins_x > -1.0e19:
-        if abs(world_pos.x - _last_double_coins_x) < min_dist_px:
-            return
-    var node := double_coins_scene.instantiate()
-    if node == null:
-        return
-    if not (node is Node2D):
-        return
-    root.add_child(node)
-    (node as Node2D).global_position = world_pos
-    _last_double_coins_x = world_pos.x
-    _last_powerup_x = world_pos.x
-
-func _spawn_speed_boost_for_column(tile: TileMapLayer, x: int, height: int) -> void:
-    var gm := _get_main_node()
-    if gm != null:
-        if gm.has_method("is_speed_boost_active") and gm.is_speed_boost_active():
-            return
-    if speed_boost_scene == null:
-        return
-    var root := _get_coins_root_for_tile(tile)
-    if root == null:
-        return
-    var max_boosts: int = _scale_max_children(speed_boost_max_children)
-    if max_boosts > 0:
-        var boost_count: int = 0
-        for c in root.get_children():
-            if c is SpeedBoostPowerup:
-                boost_count += 1
-        if boost_count >= max_boosts:
-            return
-    var top_y: int = -height
-    var offset_tiles: float = speed_boost_height_offset_tiles
-    var whole_tiles: int = int(floor(offset_tiles))
-    var frac_tiles: float = offset_tiles - float(whole_tiles)
-    var boost_y: int = top_y - whole_tiles
-    var cell := Vector2i(x, boost_y)
-    var local_pos: Vector2 = tile.map_to_local(cell)
-    var world_pos: Vector2 = tile.to_global(local_pos)
-    if frac_tiles != 0.0:
-        world_pos.y -= frac_tiles * _tile_h_px
-    var min_dist_px: float = max(speed_boost_min_distance_tiles * _tile_w_px, 0.0)
-    if min_dist_px > 0.0 and _last_speed_boost_x > -1.0e19:
-        if abs(world_pos.x - _last_speed_boost_x) < min_dist_px:
-            return
-    var node := speed_boost_scene.instantiate()
-    if node == null:
-        return
-    if not (node is Node2D):
-        return
-    root.add_child(node)
-    (node as Node2D).global_position = world_pos
-    _last_speed_boost_x = world_pos.x
-    _last_powerup_x = world_pos.x
+    var n2d := heart as Node2D
+    n2d.scale = Vector2.ONE * (coin_scale * heart_scale)
+    root.add_child(n2d)
+    n2d.global_position = world_pos
 
 func _spawn_enemy_for_column(tile: TileMapLayer, x: int, height: int) -> void:
     var root := _get_enemies_root_for_tile(tile)
@@ -1365,11 +1577,31 @@ func _place_ground_column(tile: TileMapLayer, x: int, height: int) -> void:
         _add_collision_for_cell(tile, fill_cell)
         d += 1
 
+func _get_ground_height_for_column(tile: TileMapLayer, x: int) -> int:
+    if tile == null:
+        return -1
+    var max_h: int = max_height_tiles
+    var min_h: int = min_height_tiles
+    if max_h < min_h:
+        var tmp: int = max_h
+        max_h = min_h
+        min_h = tmp
+    var h: int = max_h
+    while h >= min_h:
+        var top_y: int = -h
+        var cell := Vector2i(x, top_y)
+        var src_id: int = tile.get_cell_source_id(cell)
+        if src_id != -1:
+            return h
+        h -= 1
+    return -1
+
 func _run_generate_now(reset_flat: bool = false, reset_height: bool = false) -> void:
     _initialized = false
     _ensure_initialized()
+    _ensure_flat_start_tiles()
     if reset_flat:
-        _flat_tiles_remaining = max(flat_start_tiles, 0)
+        pass
     if reset_height:
         _height_a = 0
         _height_b = 0
@@ -1379,12 +1611,13 @@ func _run_generate_now(reset_flat: bool = false, reset_height: bool = false) -> 
     if _tile_b:
         _height_b = _generate_segment(_tile_b, _height_b)
         _tile_b.position.x = _seg_width_px
+    _align_segments_with_flat_start()
     _apply_debug_tint()
 
 func set_speed(new_speed: float) -> void:
     var v: float = clamp(new_speed, min_scroll_speed, max_scroll_speed)
     _target_speed = v
-    if not use_acceleration:
+    if not _runtime_use_acceleration:
         scroll_speed = v
 
 func get_speed() -> float:
@@ -1395,6 +1628,12 @@ func set_speed_limits(min_s: float, max_s: float) -> void:
     max_scroll_speed = max_s
     _target_speed = clamp(_target_speed, min_scroll_speed, max_scroll_speed)
     scroll_speed = clamp(scroll_speed, min_scroll_speed, max_scroll_speed)
+
+func set_instant_speed_mode(enabled: bool) -> void:
+    if enabled:
+        _runtime_use_acceleration = false
+    else:
+        _runtime_use_acceleration = _base_use_acceleration
 
 func set_movement_enabled(enabled: bool) -> void:
     movement_enabled = enabled
@@ -1421,14 +1660,53 @@ func get_active_segment_name() -> String:
         return ""
     return seg.name
 
+func get_spawn_status() -> Dictionary:
+    var s: Dictionary = {}
+    var coins_root_a := _coins_a
+    var coins_root_b := _coins_b
+    var enemies_root_a := _enemies_a
+    var enemies_root_b := _enemies_b
+    var coins_spawned: bool = false
+    var hearts_spawned: bool = false
+    var enemies_spawned: bool = false
+    var coin_roots: Array = []
+    if coins_root_a != null:
+        coin_roots.append(coins_root_a)
+    if coins_root_b != null:
+        coin_roots.append(coins_root_b)
+    for r in coin_roots:
+        for c in r.get_children():
+            if c is Node2D:
+                if c is HeartPickup:
+                    hearts_spawned = true
+                else:
+                    coins_spawned = true
+    var enemy_roots: Array = []
+    if enemies_root_a != null:
+        enemy_roots.append(enemies_root_a)
+    if enemies_root_b != null:
+        enemy_roots.append(enemies_root_b)
+    for er in enemy_roots:
+        if er.get_child_count() > 0:
+            enemies_spawned = true
+            break
+    s["coins"] = coins_spawned
+    s["hearts"] = hearts_spawned
+    s["enemies"] = enemies_spawned
+    return s
+
 func _apply_debug_tint() -> void:
     if not debug_tint_enabled:
         if _tile_a:
             _tile_a.modulate = Color(1, 1, 1, 1)
         if _tile_b:
             _tile_b.modulate = Color(1, 1, 1, 1)
+        if _tile_flat_start:
+            _tile_flat_start.modulate = Color(1, 1, 1, 1)
         return
     if _tile_a:
         _tile_a.modulate = debug_color_a
     if _tile_b:
         _tile_b.modulate = debug_color_b
+    if _tile_flat_start:
+        _tile_flat_start.modulate = debug_color_flat_start

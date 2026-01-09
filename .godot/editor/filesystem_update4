@@ -1,7 +1,3 @@
-res://scenes/GameOver.tscn
-res://scripts/GameOverMenu.gd
-res://scenes/Main.tscn
-res://scenes/ConfirmPanel.tscn
 res://scripts/game_manager.gd
+res://scripts/player.gd
 res://scripts/infinite_ground.gd
-res://scenes/Ground.tscn

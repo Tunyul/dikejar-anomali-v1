@@ -7,6 +7,24 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.18-beta] - 2026-01-09
+
+- Speed Boost: membuat efek boostspeed benar-benar mempercepat ground, parallax, dan run speed player secara instan selama durasi skill.
+- Speed Boost: menambahkan mode terbang (fly) dengan ketinggian yang bisa diatur dan memastikan player turun kembali dengan aman.
+- Speed Boost: mencegah player jatuh langsung ke jurang ketika countdown boost berakhir tepat di atas gap, dengan menahan gravitasi hingga ada ground di bawah.
+- HUD: menambahkan label internal untuk memantau kecepatan environment, parallax, dan player saat boost (hanya aktif saat debug).
+- HUD: mematikan kembali semua label debug dan informasi spawn untuk build normal agar tampilan lebih bersih.
+- Naik versi proyek ke 1.3.18-beta
+
+## [1.3.17-beta] - 2026-01-08
+
+- Coins: mengurangi densitas coins dengan menerapkan peluang nyata pada awal grup (`coin_spawn_chance`) dan juga pada fallback isi-kolom kosong di `infinite_ground.gd`, sehingga jalur tidak lagi dipenuhi coins di hampir setiap kolom.
+- Coins: mempertahankan pola grup dan gap berbasis tile (min/max panjang grup dan jarak antar grup) sehingga feel lari tetap variatif, tapi dengan jumlah coins yang lebih wajar.
+- Hearts: mengunci perilaku agar heart darurat hanya muncul saat HP berkurang dan tidak ada heart lain di depan, dengan jarak spawn 500–700px di depan kamera.
+- Hearts: memblokir semua spawn heart dari generator ground ketika HP player sudah penuh dengan memanggil `Main.can_spawn_hearts()` dari `infinite_ground.gd`, sehingga heart tidak lagi terbuang saat HP full.
+- Game over: memastikan dunia berhenti (ground, terrain, parallax) dan tidak lagi men‑spawn heart setelah status game over aktif.
+- Naik versi proyek ke 1.3.17-beta
+
 ## [1.3.16-beta] - 2026-01-03
 
 - UI Game Over: memisahkan panel konfirmasi (ConfirmPanel) ke scene terpisah agar mudah dipakai ulang dan lebih rapi di `Main.tscn`.

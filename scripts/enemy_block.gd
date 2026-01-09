@@ -70,7 +70,7 @@ func _spawn_coins() -> void:
         var coin := coin_scene.instantiate()
         if coin == null:
             continue
-        coin.scale = Vector2.ONE * enemy_coin_scale
+        coin.scale = Vector2.ONE * _get_coin_scale_from_ground()
         coin.z_index = 100
         coin.set("magnet_speed", enemy_coin_magnet_speed)
         coin.set("source_segment", seg)
@@ -97,3 +97,15 @@ func _spawn_coins() -> void:
         var radius := rng.randf_range(radius_min, radius_max)
         var offset := dir * radius
         coin.global_position = origin + offset
+
+func _get_coin_scale_from_ground() -> float:
+    var root := get_tree().get_root()
+    var main := root.get_node_or_null("Main")
+    if main != null:
+        var ground := main.get_node_or_null("Ground")
+        if ground != null:
+            if ground.has_method("get"):
+                var value = ground.get("coin_scale")
+                if typeof(value) == TYPE_FLOAT:
+                    return float(value)
+    return enemy_coin_scale
