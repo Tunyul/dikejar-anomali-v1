@@ -44,7 +44,7 @@
 
 ## Implementasi Pemain (Godot 4.5)
 - File utama: `scripts/player.gd` (class `Player` pada `CharacterBody2D`).
-- Integrasi: `scripts/simple_game_manager.gd` mengelola fase bermain/game over serta sinkronisasi environment.
+- Integrasi: `scripts/game_manager.gd` mengelola fase ENTRY/PLAYING/GAME_OVER, skor, jarak, coin, XP, dan sinkronisasi environment.
 
 ### Fitur Inti
 - Auto-run in-place: pemain terkunci pada `entry_stop_x` (default 280), lingkungan yang bergerak.
@@ -96,11 +96,21 @@
 ---
 
 ## Roadmap Teknis Singkat
+
+Status per: 1.3.18-beta (2026-01-09)
+
+- Flow runtime lengkap (LoadingScreen → MainMenu → Main → Game Over → Retry/Menu) sudah aktif.
+- Sistem skor, jarak, coin, health, heart pickup, dan XP dasar sudah terhubung ke save.
+- Power-up magnet, double coins, shield, dan speed boost sudah berjalan di gameplay.
+- UI utama (Main Menu, Settings overlay, Shop dasar, Game Over) sudah tersedia dan terhubung.
+
+Roadmap lanjutan:
+
 - Animasi lengkap pemain (run/jump/fall) dengan asset final.
-- Power-up: Bubble Shield, Speed Boost, Sticker Magnet.
+- Pengembangan power lain (giant, ghost) dan integrasinya.
 - Varian Anomali tambahan dan efek suara khas.
-- UI: menu utama, game over, kostum & koleksi.
-- Integrasi rewarded ads dan optimasi Android.
+- UI koleksi/kostum dan integrasi penuh dengan Shop.
+- Integrasi rewarded ads lanjutan dan optimasi Android.
 
 ## Catatan
 - Dokumen ini menggabungkan `GAME_CONCEPT.md` (konsep/tema) dan `PLAYER_IMPLEMENTATION.md` (implementasi pemain) dengan penyesuaian agar selaras dengan kode aktual.

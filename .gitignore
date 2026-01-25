@@ -1,0 +1,16 @@
+.godot/
+.import/
+
+android/build/.gradle/
+android/build/build/
+android/build/.idea/
+
+*.apk
+*.aab
+*.keystore
+*.jks
+
+*.tmp
+*.bak
+*~
+

@@ -1,5 +1,7 @@
 # Player Implementation - Godot 4.5
 
+Status: dokumen historis untuk implementasi awal; untuk desain dan runtime terbaru lihat `GAME_CONCEPT_AND_PLAYER_IMPLEMENTATION.md` dan `PLAYER_POWER_SYSTEM.md`.
+
 ## Overview
 Complete player implementation with auto-run, jump mechanics, collision detection, and game state management.
 
@@ -33,7 +35,7 @@ Complete player implementation with auto-run, jump mechanics, collision detectio
 ### Core Implementation
 - `scripts/player.gd` - Main player logic and physics
 - `scenes/Player.tscn` - Player scene with collision and visuals
-- `scripts/game_manager.gd` - Game state and UI management
+- `scripts/game_manager.gd` - Game state and UI management (versi terbaru menggantikan `simple_game_manager.gd`)
 - `scenes/Main.tscn` - Updated with player integration
 
 ### Testing

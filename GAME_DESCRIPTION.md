@@ -82,8 +82,16 @@ Misi yang selesai akan tersimpan dan dapat dikaitkan ke **reward** (skin, boost,
 
 ## Arah Pengembangan Lanjut (Ringkas)
 
-- Lengkapi konten **Shop** (skin, efek trail, power-up).
-- Kuatkan sistem **missions** (daily, weekly, event) dengan reward nyata.
+Status per: 1.3.19-beta (2026-01-09)
+
+- Loop utama, sistem skor/jarak/coin, health, heart, dan beberapa power-up (magnet, double coins, shield, speed boost) sudah aktif.
+- Missions dasar sudah terhubung lewat `MissionsManager.gd`, dengan UI misi tabbed (daily/weekly/challenge) dan reward coins yang bisa di-claim dari Main Menu.
+- Shop dan Settings sudah memiliki scene dan UI dasar; integrasi inventory, upgrade, dan IAP belum penuh.
+- Level/biome masih satu tema utama (Hills) dan belum memakai sistem Level Dunia.
+
+Fokus pengembangan berikut:
+
+- Lengkapi konten **Shop** (skin, efek trail, power-up) dan hubungkan ke save.
+- Kuatkan sistem **missions** (daily, weekly, event) dengan reward nyata dan UI claim yang jelas.
 - Implementasi penuh konsep **Level/Biome** (Hills, City, Lab) berdasarkan jarak.
 - Poles animasi, efek suara, dan performa untuk rilis mobile.
-

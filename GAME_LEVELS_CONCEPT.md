@@ -3,6 +3,11 @@
 Game ini dasarnya endless runner: satu run bisa lanjut terus sampai player gagal.
 "Level" dipakai sebagai lapisan progres di atas run tersebut.
 
+Status implementasi per 1.3.18-beta:
+
+- Generator ground dan parallax sudah berjalan untuk satu tema utama (Hills).
+- Sistem Level Dunia/biome dan chapter masih di level desain, belum aktif di gameplay.
+
 ## 1. Level sebagai Dunia / Biome
 
 - Level = perubahan dunia saat jarak tertentu tercapai.
@@ -49,4 +54,3 @@ Game ini dasarnya endless runner: satu run bisa lanjut terus sampai player gagal
 - Rancang minimal 3 Level Dunia pertama (Hills, City, Lab Anomali).
 - Desain 3–5 chapter yang memakai target jarak, coin, dan biome.
 - Simpan progres level/chapter di save file.
-
