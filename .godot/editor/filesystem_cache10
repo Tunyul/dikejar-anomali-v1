@@ -1,20 +1,37 @@
 72322a848ab928aa5c89f0cb78209805
-::res://::1767922268
-CHANGELOG.md::TextFile::-1::1767858151::0::1::::<><><>0<>0<><>::
+::res://::1769307244
+CHANGELOG.md::TextFile::-1::1769225878::0::1::::<><><>0<>0<><>::
 CONTRIBUTING.md::TextFile::-1::1764658818::0::1::::<><><>0<>0<><>::
-export_presets.cfg::TextFile::-1::1766991949::0::1::::<><><>0<>0<><>::
-GAME_CONCEPT_AND_PLAYER_IMPLEMENTATION.md::TextFile::-1::1765955105::0::1::::<><><>0<>0<><>::
-GAME_DESCRIPTION.md::TextFile::-1::1766816620::0::1::::<><><>0<>0<><>::
-GAME_LEVELS_CONCEPT.md::TextFile::-1::1766808420::0::1::::<><><>0<>0<><>::
-GAME_SKILLS_AND_FEATURES.md::TextFile::-1::1766807957::0::1::::<><><>0<>0<><>::
-MAIN_MENU_FEATURES.md::TextFile::-1::1766808605::0::1::::<><><>0<>0<><>::
-PLAYER_IMPLEMENTATION.md::TextFile::-1::1763123810::0::1::::<><><>0<>0<><>::
-PLAYER_POWER_SYSTEM.md::TextFile::-1::1766997396::0::1::::<><><>0<>0<><>::
-PLAYER_XP_AND_REWARD_SYSTEM.md::TextFile::-1::1766826180::0::1::::<><><>0<>0<><>::
-README.md::TextFile::-1::1764478888::0::1::::<><><>0<>0<><>::
-SHOP_SHOP_DESIGN.md::TextFile::-1::1766908874::0::1::::<><><>0<>0<><>::
+export_presets.cfg::TextFile::-1::1768635056::0::1::::<><><>0<>0<><>::
+GAME_CONCEPT_AND_PLAYER_IMPLEMENTATION.md::TextFile::-1::1769076029::0::1::::<><><>0<>0<><>::
+GAME_DESCRIPTION.md::TextFile::-1::1767954065::0::1::::<><><>0<>0<><>::
+GAME_LEVELS_CONCEPT.md::TextFile::-1::1767944715::0::1::::<><><>0<>0<><>::
+GAME_SKILLS_AND_FEATURES.md::TextFile::-1::1769136057::0::1::::<><><>0<>0<><>::
+MAIN_MENU_FEATURES.md::TextFile::-1::1767944642::0::1::::<><><>0<>0<><>::
+MISSIONS_PANEL_STRUCTURE.md::TextFile::-1::1768967081::0::1::::<><><>0<>0<><>::
+PLAYER_IMPLEMENTATION.md::TextFile::-1::1767944723::0::1::::<><><>0<>0<><>::
+PLAYER_POWER_SYSTEM.md::TextFile::-1::1769136059::0::1::::<><><>0<>0<><>::
+PLAYER_XP_AND_REWARD_SYSTEM.md::TextFile::-1::1767944706::0::1::::<><><>0<>0<><>::
+README.md::TextFile::-1::1767944744::0::1::::<><><>0<>0<><>::
+SHOP_SHOP_DESIGN.md::TextFile::-1::1767944731::0::1::::<><><>0<>0<><>::
 ::res://android/::1766982706
-::res://assets/::1766995653
+::res://assets/::1768717437
+::res://assets/audio/::1768632688
+::res://assets/audio/backsound/::1768631282
+backsound-mainmenu-1.mp3::AudioStreamMP3::2695705905213076734::1768631282::1768631282::1::::<><><>0<>0<>a227f4d58029e5a2bdb0873fb7c302ea<>res://.godot/imported/backsound-mainmenu-1.mp3-ccf97cc909119b5d0c7abe88b38a541b.mp3str::
+backsound-mainmenu-2.mp3::AudioStreamMP3::6836688845182890174::1768631282::1768631282::1::::<><><>0<>0<>e1f9e43e359a3096b3a1af8986156c41<>res://.godot/imported/backsound-mainmenu-2.mp3-f24c15611267a419c4c19955e6ae5a94.mp3str::
+::res://assets/audio/bgm/::1768634194
+::res://assets/audio/bgm/bukit/::1768633139
+bgm-bukit-1.mp3::AudioStreamMP3::5549189396215324793::1768632735::1768632736::1::::<><><>0<>0<>dad5374b801f5b2670f9d1fd5c4a4ef1<>res://.godot/imported/bgm-bukit-1.mp3-9d8cff9fa0982067ab0aac4494ce4a64.mp3str::
+bgm-bukit-2.mp3::AudioStreamMP3::7682524487804558301::1768632735::1768632736::1::::<><><>0<>0<>ac7a8927ceed0d70f05c768a51654965<>res://.godot/imported/bgm-bukit-2.mp3-1c5f3a011d29f871ec578a34835f6598.mp3str::
+bgm-bukit-3.mp3::AudioStreamMP3::7093752353369464731::1768633139::1768633139::1::::<><><>0<>0<>25f0cbeaa999071265df8bd07bfd33e5<>res://.godot/imported/bgm-bukit-3.mp3-599afa2bcc7a03db98a20b2ce2ff9f1f.mp3str::
+bgm-bukit-4.mp3::AudioStreamMP3::8101669628489708956::1768633139::1768633139::1::::<><><>0<>0<>78fd1e1041b4f9d244231b8d3cb5cfa2<>res://.godot/imported/bgm-bukit-4.mp3-8a980ff2e8a10635786c574db42595c0.mp3str::
+::res://assets/audio/bgm/gameover/::1768634194
+bgm-gameover-1.mp3::AudioStreamMP3::6946269574286825873::1768634182::1768634194::1::::<><><>0<>0<>23183d0a15c0656349a2a25a4209029a<>res://.godot/imported/bgm-gameover-1.mp3-320b1191364a259cffb4c59bf731b2e0.mp3str::
+::res://assets/audio/bgm/ingame/::1768632696
+::res://assets/audio/sfx/::1768624324
+audio-One-shot-SFX-only-not-music-Coin-pickup-chain-3-mi.mp3::AudioStreamMP3::4529269795964888267::1768624324::1768624324::1::::<><><>0<>0<>161ae49d1d487c549289608d9e244fe3<>res://.godot/imported/audio-One-shot-SFX-only-not-music-Coin-pickup-chain-3-mi.mp3-1f7b42bc34909a5ea0b34b68ba27449c.mp3str::
+audio-SFX-only-not-a-song-Coin-pickup-two-quick-pings-90.mp3::AudioStreamMP3::1789318206493418488::1768623999::1768623999::1::::<><><>0<>0<>5eb923919b135454932fb21b43c19a84<>res://.godot/imported/audio-SFX-only-not-a-song-Coin-pickup-two-quick-pings-90.mp3-b9a923a41e55a9a6f8591508bfd79bcd.mp3str::
 ::res://assets/Background/::1766995646
 ::res://assets/Background/png/::1762508382
 ::res://assets/Background/png/1920x1080/::1762508382
@@ -69,7 +86,8 @@ Mid.png::CompressedTexture2D::8675578189747074353::1527393336::1762508793::1::::
 ::res://assets/background v1/png/2048x1024/backgraound/::1762508793
 NewBackgraound 2048x1024 (2).png::CompressedTexture2D::512621934792142727::1527393228::1762508793::1::::<><><>0<>0<>559565e30992580ee852d96068d0d2b2<>res://.godot/imported/NewBackgraound 2048x1024 (2).png-7bfc64e4ca5be27a0e5462a046cc3a28.ctex::
 NewBackgraound 2048x1024.png::CompressedTexture2D::7982450939846170932::1527393064::1762508793::1::::<><><>0<>0<>e5f7a52832e24effe5a9aa441ecf784b<>res://.godot/imported/NewBackgraound 2048x1024.png-f6f398b8e502a082f6ce5daa60318b57.ctex::
-::res://assets/bg/::1766995659
+::res://assets/bg/::1768982008
+bg-shop-2.png::CompressedTexture2D::4966401806373398111::1768982000::1768982008::1::::<><><>0<>0<>11a91335ad676e4fb82a5401ed6f9d25<>res://.godot/imported/bg-shop-2.png-adb355bdaeeed9bda60e486729d65a01.ctex::
 bg-shop.png::CompressedTexture2D::5182215628201580672::1766995658::1766995659::1::::<><><>0<>0<>0902f81e5dd365033d47ca44f74d1d4a<>res://.godot/imported/bg-shop.png-96611f9a301ffff97d6b921419719d44.ctex::
 ::res://assets/Character/::1762508363
 ::res://assets/Character/ai/::1762508363
@@ -240,7 +258,7 @@ headWithoutInnerPiece-6-4x.png::CompressedTexture2D::272633462060992936::1578372
 ::res://assets/Coin Animation/png/::1762508794
 1024x128.png::CompressedTexture2D::6565838718841902780::1490260884::1762508794::1::::<><><>0<>0<>6c7afd1b3072a072fba0e2ccb0411fff<>res://.godot/imported/1024x128.png-a57c59f4cc448311c957c0fafc3df0da.ctex::
 2048x256.png::CompressedTexture2D::7600588057171461345::1490260924::1762508794::1::::<><><>0<>0<>5312024e04550ea2f876095d9646b403<>res://.godot/imported/2048x256.png-0169c742abdbdd716dceee0f240cdc76.ctex::
-::res://assets/Coin Animation/png/2x/::1762508794
+::res://assets/Coin Animation/png/2x/::1768979209
 Coin.png::CompressedTexture2D::3603687508320025368::1489749256::1762508794::1::::<><><>0<>0<>474f83e3edef0c2272e516ae7b7dec64<>res://.godot/imported/Coin.png-b697e4eaee0b7988eb15d77497151fc7.ctex::
 image 1.png::CompressedTexture2D::6303332841297698838::1489048710::1762508794::1::::<><><>0<>0<>971b9879a92177f17929f6bd1388f5d7<>res://.godot/imported/image 1.png-aebd9d0a4f98bc0c3ccb45a68a5951bc.ctex::
 image 2.png::CompressedTexture2D::8130164153282572986::1489048710::1762508794::1::::<><><>0<>0<>a52e2599892cbdbafdaad5ed7f2c9d02<>res://.godot/imported/image 2.png-6a219e637ff3b2f8bfd6014e53cba686.ctex::
@@ -258,6 +276,7 @@ image 13.png::CompressedTexture2D::5744315619555409336::1489048710::1762508793::
 image 14.png::CompressedTexture2D::603722853175508928::1489048710::1762508793::1::::<><><>0<>0<>fc3c45596ca2c44881ac02d27c8b90e9<>res://.godot/imported/image 14.png-8a72ecd45960e7e2107888d2358bb03f.ctex::
 image 15.png::CompressedTexture2D::1760841532529521248::1489048710::1762508793::1::::<><><>0<>0<>3688b4599021f3c5d3dc5790954b56d7<>res://.godot/imported/image 15.png-fcd58fdd836b93951dc88506ffc85e73.ctex::
 image 16.png::CompressedTexture2D::7172403954969110066::1489048710::1762508793::1::::<><><>0<>0<>2135eff9cc37303253aeccf52fd1fe3e<>res://.godot/imported/image 16.png-e37eac23b8358511486c5e7319fd1ab6.ctex::
+spriteframes.tres::SpriteFrames::-1::1768979209::0::1::::<><><>0<>0<><>::
 ::res://assets/Coin Animation/png/4x/::1762508794
 Coin.png::CompressedTexture2D::1827432922962542709::1489749196::1762508793::1::::<><><>0<>0<>08961e7c2d85f351a1ce50b521dce0ec<>res://.godot/imported/Coin.png-b6881d9a3d7e9c391b2471b6a07f3d63.ctex::
 image 1.png::CompressedTexture2D::753466783084241189::1489238042::1762508793::1::::<><><>0<>0<>1ba768f5ac3aed4956f0056bad62f411<>res://.godot/imported/image 1.png-232c84a84f69489b6f8149a8c88821d6.ctex::
@@ -304,6 +323,9 @@ Flower-2.png::CompressedTexture2D::3436596433329090199::1529032922::1762508794::
 Flower-3.png::CompressedTexture2D::1080594429993914519::1529032922::1762508794::1::::<><><>0<>0<>abea1a496022a330ffd9562f359550c3<>res://.godot/imported/Flower-3.png-045ca3d9b901c1899aa5ee84313681ba.ctex::
 Tree.png::CompressedTexture2D::2786951192102513010::1529032924::1762508794::1::::<><><>0<>0<>e4e8ec1dab59bf3dc1399a46faf9e94c<>res://.godot/imported/Tree.png-84d7e907fcc6fc9a66e7a604eab255f6.ctex::
 Winter Tree.png::CompressedTexture2D::754033648658833458::1529033538::1762508794::1::::<><><>0<>0<>23594b4ef259f4ba6e79a1e29fbc7498<>res://.godot/imported/Winter Tree.png-bdd2a5d87db6a004fe54d3186835d15d.ctex::
+::res://assets/diamond animation/::1768719127
+diamond-1024x1024.png::CompressedTexture2D::2889558253262442874::1768719102::1768719127::1::::<><><>0<>0<>969a632f1e6370b34ecbe8874ed6ef42<>res://.godot/imported/diamond-1024x1024.png-37489865da61810039a54328d594b43a.ctex::
+diamond-sprite-256px-36.png::CompressedTexture2D::1696810018877643056::1768717443::1768717443::1::::<><><>0<>0<>761c24a233bdcbbf4b3b733ea925f2c5<>res://.godot/imported/diamond-sprite-256px-36.png-fefae78de3e463eb41b6b757cce29d75.ctex::
 ::res://assets/Enemies/::1762508362
 ::res://assets/Enemies/ai/::1762508362
 ::res://assets/Enemies/eps/::1762508362
@@ -550,11 +572,12 @@ izan_run0004.png::CompressedTexture2D::5378817967095244474::1762500412::17625087
 izan_run0005.png::CompressedTexture2D::1075875720739491515::1762500412::1762508792::1::::<><><>0<>0<>a43962c615928eeaf7ed99a28f92f98b<>res://.godot/imported/izan_run0005.png-67eac274f23f23e35f909a0a21f6ac4d.ctex::
 izan_run0006.png::CompressedTexture2D::2249344210925648855::1762500412::1762508792::1::::<><><>0<>0<>e20e0ed1df8aac0fb09b26a0c21ab935<>res://.godot/imported/izan_run0006.png-60438fe552af56a58a0ce50a0383657f.ctex::
 izan_run0007.png::CompressedTexture2D::3726115178970955614::1762500412::1762508792::1::::<><><>0<>0<>0dd5079799fea09ab833f4bc66a6cce1<>res://.godot/imported/izan_run0007.png-fd913b61f065f1a4da070436ed8501c2.ctex::
-::res://assets/panel/::1767412430
+::res://assets/panel/::1768115162
 panel_confirmation.png::CompressedTexture2D::4049303458586213903::1767411755::1767412430::1::::<><><>0<>0<>c0f32cf5255c35085f81c1b715a13bff<>res://.godot/imported/panel_confirmation.png-d92aab9ac90cc3a0c7626ad611291683.ctex::
 panel_confirmation_tandatanya_350x244.png::CompressedTexture2D::7004978903223631123::1767412273::1767412430::1::::<><><>0<>0<>9c388281b28cc01c8aac6c27ced627e3<>res://.godot/imported/panel_confirmation_tandatanya_350x244.png-de3b9c17787ad1d2053a5f97985ab476.ctex::
 panel_gameover.png::CompressedTexture2D::2598004357299533664::1767081338::1767081385::1::::<><><>0<>0<>4e6b75d9318fecc4f715d9db65cf4c0f<>res://.godot/imported/panel_gameover.png-afb8dd1dd03a101279702a5cc1082837.ctex::
 panel_gameover_685x356.png::CompressedTexture2D::951407751109425884::1767082433::1767082491::1::::<><><>0<>0<>2cb96f12696a14b7ac14ed1580e4fabb<>res://.godot/imported/panel_gameover_685x356.png-9a4fbf361d38747e1648acd15ed9462b.ctex::
+panel_mission.png::CompressedTexture2D::2875206526074589939::1768114431::1768115162::1::::<><><>0<>0<>acfbf8cad4400ab884a6d4a52faf021e<>res://.godot/imported/panel_mission.png-800edec6bf22a96a270f27f207d4701e.ctex::
 panel_setting.png::CompressedTexture2D::8595169273536119752::1766897905::1766897935::1::::<><><>0<>0<>9ffb9c536f42a7a93fe3057fe8c22d21<>res://.godot/imported/panel_setting.png-8b72363262a60d706caad63480536ff0.ctex::
 panel_setting_685x356.png::CompressedTexture2D::7457275088118715537::1766903417::1766903634::1::::<><><>0<>0<>2bc9c5ab5d3d8868f129ae7d0588a0f8<>res://.godot/imported/panel_setting_685x356.png-03015d85fe5ff6388c94d095a6896dec.ctex::
 ::res://assets/Preview/::1762508363
@@ -866,11 +889,13 @@ GrassMid.png::CompressedTexture2D::2891991368477276025::1527396916::1763292974::
 GrassRight.png::CompressedTexture2D::3105539494782321764::1527396916::1763292974::1::::<><><>0<>0<>5294a83d6aca6b9ff6dfe1897b14db33<>res://.godot/imported/GrassRight.png-dcf25903b90021e1bc943e4318249fae.ctex::
 ::res://assets/title/::1764401407
 title_game.png::CompressedTexture2D::6100149605404959614::1764401367::1764401407::1::::<><><>0<>0<>a9c0c952648fcf51d64208fe4f826180<>res://.godot/imported/title_game.png-a8cca8f0b1bced7d3b0066ecc88f7caa.ctex::
-::res://assets/tombol/::1767423744
+::res://assets/tombol/::1768462290
 tombol_atk.png::CompressedTexture2D::1503694517904750247::1764233547::1764233694::1::::<><><>0<>0<>f7ae29299d93bd524ac2ec08a74e4c86<>res://.godot/imported/tombol_atk.png-fdd92f11489dafd418ece20f53b38962.ctex::
 tombol_atk_96.png::CompressedTexture2D::2025209819510747449::1766286894::1766287246::1::::<><><>0<>0<>784fd2d3290932f6d15c01b4d716542e<>res://.godot/imported/tombol_atk_96.png-f241635e3fc2996e2a2c6747ca7cf2cc.ctex::
 tombol_checklis_green_border_orange_64.png::CompressedTexture2D::5149484620946282353::1767423651::1767423744::1::::<><><>0<>0<>bbc0ec8c2c0927196537dd3ff710e255<>res://.godot/imported/tombol_checklis_green_border_orange_64.png-ebb85c9116691f0dbdcd01ecde5a0001.ctex::
 tombol_checklis_green_border_orange_96.png::CompressedTexture2D::1048563131607396386::1767415682::1767415794::1::::<><><>0<>0<>721872417a2c14c495f00549757dc26b<>res://.godot/imported/tombol_checklis_green_border_orange_96.png-cc311bf2090b71f9445d29d0d90fad35.ctex::
+tombol_claim_aktif_108x64.png::CompressedTexture2D::5872202422476163540::1768461022::1768462290::1::::<><><>0<>0<>8e52d41aa99d03bd2f75afe860a19b01<>res://.godot/imported/tombol_claim_aktif_108x64.png-e022cd77233bf17765b5bb2b782f34ae.ctex::
+tombol_claim_nonaktif_108x64.png::CompressedTexture2D::8273778864567070912::1768461257::1768462290::1::::<><><>0<>0<>334015ba0a38ec4ceeda37fbd41a4036<>res://.godot/imported/tombol_claim_nonaktif_108x64.png-fe852ce3b8c29d4b123ffbdabddfe3ce.ctex::
 tombol_home_96x96.png::CompressedTexture2D::7173051331750229714::1767087302::1767087515::1::::<><><>0<>0<>ccbbf8351d4926387dfbf33171dd7709<>res://.godot/imported/tombol_home_96x96.png-6f025c6ff2e4d0d32c8f7448c4df276f.ctex::
 tombol_jump.png::CompressedTexture2D::2105624387755650764::1764233664::1764233694::1::::<><><>0<>0<>ca3d0ba13c9a22b9b5bfd63ef9f82a08<>res://.godot/imported/tombol_jump.png-b9796c1e01a48dfc389fc22563b61c90.ctex::
 tombol_jump_96.png::CompressedTexture2D::5432428203978467690::1766287235::1766287246::1::::<><><>0<>0<>40a687c5241df117ce1c6c7f8c48177e<>res://.godot/imported/tombol_jump_96.png-402bf2fd1201927f93f8ff57b6992fe8.ctex::
@@ -884,6 +909,8 @@ tombol_play_96x96.png::CompressedTexture2D::4645480686009123833::1767087135::176
 tombol_retry_96x96.png::CompressedTexture2D::826772187807375912::1767088742::1767088757::1::::<><><>0<>0<>6ec20236768f0d6812759fcfcf9095fb<>res://.godot/imported/tombol_retry_96x96.png-66f0b93f6e4a124149680e2ecf3d9523.ctex::
 tombol_setting_256x128.png::CompressedTexture2D::3355383990520723151::1766805576::1766805603::1::::<><><>0<>0<>15a76071a459d1a1cd0a643b9c307143<>res://.godot/imported/tombol_setting_256x128.png-85ea96ea659e0d9f019de50bfbe5dab5.ctex::
 tombol_shop_256x128.png::CompressedTexture2D::7325807082025971729::1766745966::1766746025::1::::<><><>0<>0<>b035e01e2f7649ba9dafdb7a60e154e5<>res://.godot/imported/tombol_shop_256x128.png-a78331394d3bd17e7b94f8dc0afe3c7d.ctex::
+tombol_tab_mission_120x48.png::CompressedTexture2D::7585858954463705683::1768123608::1768123629::1::::<><><>0<>0<>4016a666dabf74eadb15891bc309df51<>res://.godot/imported/tombol_tab_mission_120x48.png-0774f041d564e53bbb285f7946be2651.ctex::
+tombol_tab_mission_hijau_120x48.png::CompressedTexture2D::7165389120621928048::1768125444::1768125480::1::::<><><>0<>0<>d714da87d0321a7f070cddb1ec115777<>res://.godot/imported/tombol_tab_mission_hijau_120x48.png-68a069c387ccf4620c4d5972eeb34d4f.ctex::
 tombol_x_96.png::CompressedTexture2D::1719809581769254389::1766907035::1766907043::1::::<><><>0<>0<>e66b2d2c00a4cee8fc3dec6009b54480<>res://.godot/imported/tombol_x_96.png-a89c8deaf03a45ec54684f8d613ae282.ctex::
 tombol_x_red_border_blue_64.png::CompressedTexture2D::7303523267134345246::1767423584::1767423744::1::::<><><>0<>0<>f489cccf4659053e5128c382b838cc09<>res://.godot/imported/tombol_x_red_border_blue_64.png-ffd6939e17a77888c4860e3b0e7c7946.ctex::
 tombol_x_red_border_blue_96.png::CompressedTexture2D::5530259385349742741::1767415754::1767415794::1::::<><><>0<>0<>d0e4a5276825678dd78951ec559274a8<>res://.godot/imported/tombol_x_red_border_blue_96.png-380ee1a364ea38717a585092ce685ed4.ctex::
@@ -927,61 +954,64 @@ image 14.png::CompressedTexture2D::1149054794536906744::1489238274::1762508791::
 image 15.png::CompressedTexture2D::584632613397726979::1489238274::1762508791::1::::<><><>0<>0<>1013de4230afd4f2295bd013f63c1ee9<>res://.godot/imported/image 15.png-621d81611b278f13af07da50a0d7a875.ctex::
 image 16.png::CompressedTexture2D::98722255984188755::1489238274::1762508791::1::::<><><>0<>0<>150576ab0f611ae55d6a8efa5d05ecc3<>res://.godot/imported/image 16.png-bf9f28b11c3334da8fe76873053b8ded.ctex::
 image 17.png::CompressedTexture2D::8222179478458637501::1489238274::1762508791::1::::<><><>0<>0<>5dcf5c57122ec6e600f758a2b534c775<>res://.godot/imported/image 17.png-4f0d08357d1e8134456faeacad1f1292.ctex::
-::res://docs/::1762917832
-CHANGELOG.md::TextFile::-1::1762917832::0::1::::<><><>0<>0<><>::
-::res://scenes/::1767861033
+::res://docs/::1767945085
+CHANGELOG.md::TextFile::-1::1767944755::0::1::::<><><>0<>0<><>::
+XP_MISSIONS_REWARD_STEPS.md::TextFile::-1::1767954074::0::1::::<><><>0<>0<><>::
+::res://scenes/::1769236520
 Coin.tscn::PackedScene::7401809015587866471::1766817981::0::1::::<><><>0<>0<><>::uid://o4caeywihapp::::res://scripts/coin.gd<>uid://cv2m8ao6ea8dm::::res://assets/Coin Animation/png/2x/image 1.png<>uid://dn3ku63liodkk::::res://assets/Coin Animation/png/2x/image 2.png<>uid://cfrlo0ws5whgv::::res://assets/Coin Animation/png/2x/image 3.png<>uid://cifwv46e4gaeg::::res://assets/Coin Animation/png/2x/image 4.png<>uid://b0x6c8m348jl5::::res://assets/Coin Animation/png/2x/image 5.png<>uid://cw4hfsbbwkngd::::res://assets/Coin Animation/png/2x/image 6.png<>uid://bjukd7xpvam0::::res://assets/Coin Animation/png/2x/image 7.png<>uid://ce0mg72tyvouo::::res://assets/Coin Animation/png/2x/image 8.png<>uid://chpvmfc6irdbt::::res://assets/Coin Animation/png/2x/image 9.png<>uid://bk5mt3hw3feq2::::res://assets/Coin Animation/png/2x/image 10.png<>uid://csrq1iqliyc7n::::res://assets/Coin Animation/png/2x/image 11.png<>uid://ckcpojxdc3ueg::::res://assets/Coin Animation/png/2x/image 12.png<>uid://cn3ublc236wf5::::res://assets/Coin Animation/png/2x/image 13.png<>uid://iuphyvl5bg2k::::res://assets/Coin Animation/png/2x/image 14.png<>uid://0c72kan61tye::::res://assets/Coin Animation/png/2x/image 15.png<>uid://dagmpexuijtgs::::res://assets/Coin Animation/png/2x/image 16.png
 CollectibleHeart.tscn::PackedScene::-1::1765083194::0::1::::<><><>0<>0<><>::res://scripts/collectible_heart.gd<>res://assets/generated/svg/heart.svg<>res://assets/generated/svg/heart_glow.svg
-ConfirmPanel.tscn::PackedScene::5378013672699696777::1767424006::0::1::::<><><>0<>0<><>::uid://c62i8j3nb4fol::::res://assets/panel/panel_confirmation_tandatanya_350x244.png<>uid://cfmpi222ivqv6::::res://assets/tombol/tombol_checklis_green_border_orange_64.png<>uid://dcb47xddqo0bi::::res://assets/tombol/tombol_x_red_border_blue_64.png<>uid://did5ru2tyvvwu::::res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf
-DailyMissionsMenu.tscn::PackedScene::-1::1766809427::0::1::::<><><>0<>0<><>::
+ConfirmPanel.tscn::PackedScene::5378013672699696777::1768641724::0::1::::<><><>0<>0<><>::uid://c62i8j3nb4fol::::res://assets/panel/panel_confirmation_tandatanya_350x244.png<>uid://cfmpi222ivqv6::::res://assets/tombol/tombol_checklis_green_border_orange_64.png<>uid://dcb47xddqo0bi::::res://assets/tombol/tombol_x_red_border_blue_64.png<>uid://did5ru2tyvvwu::::res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf
+DailyMissionsMenu.tscn::PackedScene::1039476108429112283::1768967072::0::1::::<><><>0<>0<><>::uid://b2xdttjwbstit::::res://scripts/DailyMissionsMenu.gd<>uid://bg71h4rnsov6r::::res://assets/panel/panel_mission.png<>uid://did5ru2tyvvwu::::res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf<>uid://o0jysom6laxf::::res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf<>uid://dgcv8u51gqyj8::::res://assets/tombol/tombol_tab_mission_120x48.png<>uid://orp0numx46q2::::res://scripts/MissionsListScroll.gd<>uid://cpwsk0io7g2su::::res://assets/tombol/tombol_claim_aktif_108x64.png<>uid://yrdaorbs24i0::::res://assets/tombol/tombol_x_96.png<>uid://civfdm736wgj6::::res://scenes/ConfirmPanel.tscn<>uid://cvivocoxcy2xo::::res://scripts/AdManager.gd<>uid://dhacrgdwndgfc::::res://scripts/MissionsManager.gd
+Diamond.tscn::PackedScene::7694546418597803384::1768719064::0::1::::<><><>0<>0<><>::uid://o4caeywihapp::::res://scripts/coin.gd<>uid://yf7hil3mvcpc::::res://assets/diamond animation/diamond-sprite-256px-36.png
 DoubleCoinsPowerup.tscn::PackedScene::-1::1767075429::0::1::::<><><>0<>0<><>::
 EnemyBlock.tscn::PackedScene::2268523007553984832::1766562175::0::1::::<><><>0<>0<><>::uid://dv6p2xhswcg0v::::res://assets/enemy/enemy_block.png<>uid://kyvx8ta7pabe::::res://scripts/enemy_block.gd<>uid://c7kctfbimhmtu::::res://scripts/enemy_hitbox.gd
 EnemyCone.tscn::PackedScene::7376354291607721216::1766562185::0::1::::<><><>0<>0<><>::uid://dun051qtppput::::res://assets/enemy/enemy_cone.png<>uid://kyvx8ta7pabe::::res://scripts/enemy_block.gd<>uid://c7kctfbimhmtu::::res://scripts/enemy_hitbox.gd
-GameOver.tscn::PackedScene::869086516088313214::1767414643::0::1::::<><><>0<>0<><>::uid://vy3s5tmkqslw::::res://scripts/GameOverMenu.gd<>uid://ns4st64im4qi::::res://assets/panel/panel_gameover_685x356.png<>uid://did5ru2tyvvwu::::res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf<>uid://l1q21u47e1pc::::res://assets/tombol/tombol_retry_96x96.png<>uid://dagxdwg0jt5xe::::res://assets/tombol/tombol_home_96x96.png<>uid://b7gkng0ib4y4h::::res://assets/tombol/tombol_play_96x96.png
-Ground.tscn::PackedScene::2643764223960109198::1767861033::0::1::::<><><>0<>0<><>::uid://ddpqyikpv4h24::::res://scenes/Coin.tscn<>uid://dthntxgdb4ycj::::res://assets/Tiles/png/tiles 2d/Spring/128x128/GrassMid.png<>uid://blpxq3xkivtob::::res://assets/Tiles/png/tiles 2d/Spring/128x128/Dirt.png<>res://scenes/HeartPickup.tscn<>uid://7k5iilghm0po::::res://scenes/EnemyBlock.tscn<>uid://dddfqh8a72i3q::::res://scenes/EnemyCone.tscn<>uid://bj1cetfknxpp4::::res://scripts/infinite_ground.gd<>uid://ckrxbg831c8qt::::res://scenes/MagnetPowerup.tscn<>res://scenes/ShieldPowerup.tscn<>res://scenes/DoubleCoinsPowerup.tscn<>res://scenes/SpeedBoostPowerup.tscn
+GameOver.tscn::PackedScene::869086516088313214::1768641034::0::1::::<><><>0<>0<><>::uid://vy3s5tmkqslw::::res://scripts/GameOverMenu.gd<>uid://ns4st64im4qi::::res://assets/panel/panel_gameover_685x356.png<>uid://did5ru2tyvvwu::::res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf<>uid://l1q21u47e1pc::::res://assets/tombol/tombol_retry_96x96.png<>uid://dagxdwg0jt5xe::::res://assets/tombol/tombol_home_96x96.png<>uid://b7gkng0ib4y4h::::res://assets/tombol/tombol_play_96x96.png
+Ground.tscn::PackedScene::2643764223960109198::1768718885::0::1::::<><><>0<>0<><>::uid://ddpqyikpv4h24::::res://scenes/Coin.tscn<>uid://dthntxgdb4ycj::::res://assets/Tiles/png/tiles 2d/Spring/128x128/GrassMid.png<>uid://blpxq3xkivtob::::res://assets/Tiles/png/tiles 2d/Spring/128x128/Dirt.png<>res://scenes/HeartPickup.tscn<>uid://7k5iilghm0po::::res://scenes/EnemyBlock.tscn<>uid://dddfqh8a72i3q::::res://scenes/EnemyCone.tscn<>uid://bj1cetfknxpp4::::res://scripts/infinite_ground.gd<>uid://ckrxbg831c8qt::::res://scenes/MagnetPowerup.tscn<>res://scenes/ShieldPowerup.tscn<>res://scenes/DoubleCoinsPowerup.tscn<>res://scenes/SpeedBoostPowerup.tscn
 HealthBar.tscn::PackedScene::-1::1766632055::0::1::::<><><>0<>0<><>::
 HeartPickup.tscn::PackedScene::-1::1766638210::0::1::::<><><>0<>0<><>::res://scripts/heart_pickup.gd<>res://assets/generated/svg/heart.svg
-LoadingScreen.tscn::PackedScene::6012324189497604019::1765954404::0::1::::<><><>0<>0<><>::uid://c3bwrfvu0o1ep::::res://assets/mc/run/idle run.png<>uid://dqmmglr4yqrso::::res://assets/enemy/sprite-256px-36.png<>res://scripts/LoadingScreen.gd
-MagnetPowerup.tscn::PackedScene::5511222869638776231::1766735021::0::1::::<><><>0<>0<><>::uid://cw88mdfdtn5ex::::res://scripts/magnet_powerup.gd<>uid://b5bxymavnfjed::::res://assets/generated/svg/magnet.svg<>uid://bsy4odjcxhuae::::res://assets/generated/svg/magnet_glow.svg<>uid://choe1o1k43ubo::::res://assets/generated/svg/magnet_aura.svg
-Main.tscn::PackedScene::102025529394890178::1767501049::0::1::::<><><>0<>0<><>::uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://b8il18k1d04wg::::res://scenes/player.tscn<>uid://baxidkq4mikew::::res://scripts/game_manager.gd<>uid://dqmmglr4yqrso::::res://assets/enemy/sprite-256px-36.png<>uid://tarkx6h70bep::::res://scripts/anomaly_chaser.gd<>uid://cabvraniau87d::::res://scripts/version_label.gd<>uid://bqtf5uji02hgv::::res://scripts/PauseMenu.gd<>uid://vy3s5tmkqslw::::res://scripts/GameOverMenu.gd<>uid://cvivocoxcy2xo::::res://scripts/AdManager.gd<>uid://dhacrgdwndgfc::::res://scripts/MissionsManager.gd<>uid://cv2m8ao6ea8dm::::res://assets/Coin Animation/png/2x/image 1.png<>uid://dn3ku63liodkk::::res://assets/Coin Animation/png/2x/image 2.png<>uid://cfrlo0ws5whgv::::res://assets/Coin Animation/png/2x/image 3.png<>uid://cifwv46e4gaeg::::res://assets/Coin Animation/png/2x/image 4.png<>uid://b0x6c8m348jl5::::res://assets/Coin Animation/png/2x/image 5.png<>uid://cw4hfsbbwkngd::::res://assets/Coin Animation/png/2x/image 6.png<>uid://bjukd7xpvam0::::res://assets/Coin Animation/png/2x/image 7.png<>uid://ce0mg72tyvouo::::res://assets/Coin Animation/png/2x/image 8.png<>uid://chpvmfc6irdbt::::res://assets/Coin Animation/png/2x/image 9.png<>uid://bk5mt3hw3feq2::::res://assets/Coin Animation/png/2x/image 10.png<>uid://csrq1iqliyc7n::::res://assets/Coin Animation/png/2x/image 11.png<>uid://ckcpojxdc3ueg::::res://assets/Coin Animation/png/2x/image 12.png<>uid://cn3ublc236wf5::::res://assets/Coin Animation/png/2x/image 13.png<>uid://iuphyvl5bg2k::::res://assets/Coin Animation/png/2x/image 14.png<>uid://0c72kan61tye::::res://assets/Coin Animation/png/2x/image 15.png<>uid://dagmpexuijtgs::::res://assets/Coin Animation/png/2x/image 16.png<>uid://bdwwn7sxcph1g::::res://scenes/Ground.tscn<>uid://bj0vpeb24e585::::res://scenes/MobileControls.tscn<>res://scenes/HealthBar.tscn<>res://scenes/CollectibleHeart.tscn<>uid://c40kjq5gmlng0::::res://assets/magnet/magnet-96.png<>uid://sgqo0atm3wrv::::res://assets/icon/icon_setting.png<>uid://cgqcf0k0g66wp::::res://assets/icon/icon_shield.png<>uid://cis3quibaooqs::::res://assets/icon/icon_coin2x_96x96.png<>uid://ns4st64im4qi::::res://assets/panel/panel_gameover_685x356.png<>uid://did5ru2tyvvwu::::res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf<>uid://l1q21u47e1pc::::res://assets/tombol/tombol_retry_96x96.png<>uid://dagxdwg0jt5xe::::res://assets/tombol/tombol_home_96x96.png<>uid://b7gkng0ib4y4h::::res://assets/tombol/tombol_play_96x96.png<>uid://civfdm736wgj6::::res://scenes/ConfirmPanel.tscn<>uid://dwa1i8s1cdeq2::::res://assets/icon/icon_boost_96x96.png<>uid://dn5c37tdf5r0::::res://assets/icon/icon_trophy_128x128.png
-MainMenu.tscn::PackedScene::7068727236905948788::1766994407::0::1::::<><><>0<>0<><>::uid://noswsccs8n2x::::res://scripts/MainMenu.gd<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://cb6ibjcmicdsw::::res://assets/tombol/tombol_mulai_256x128.png<>uid://cs57tqdxe7yjm::::res://assets/title/title_game.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://dcmw8cal1xu1v::::res://assets/tombol/tombol_shop_256x128.png<>uid://bn2mxi2ykggix::::res://assets/tombol/tombol_setting_256x128.png<>uid://7xrqfqhbeh37::::res://assets/tombol/tombol_mission_202x168.png<>uid://brlwhbamogaai::::res://assets/Coin Animation/png/2x/Coin.png<>uid://dn5c37tdf5r0::::res://assets/icon/icon_trophy_128x128.png<>uid://v21m5eac8ghe::::res://assets/icon/icon_border_avatar_gold_128x128.png<>uid://c8rdylqpmqxtr::::res://scenes/SettingsMenu.tscn
-MobileControls.tscn::PackedScene::3071031776947464328::1766407992::0::1::::<><><>0<>0<><>::uid://cjnrkfpjy8lru::::res://assets/tombol/tombol_jump_96.png<>uid://34a561mugc7b::::res://assets/tombol/tombol_atk_96.png<>uid://cssv5cq62heo5::::res://shape/tombol_circle.tres
+LoadingScreen.tscn::PackedScene::6012324189497604019::1768641014::0::1::::<><><>0<>0<><>::uid://c3bwrfvu0o1ep::::res://assets/mc/run/idle run.png<>uid://dqmmglr4yqrso::::res://assets/enemy/sprite-256px-36.png<>res://scripts/LoadingScreen.gd
+MagnetPowerup.tscn::PackedScene::5511222869638776231::1769139026::0::1::::<><><>0<>0<><>::uid://cw88mdfdtn5ex::::res://scripts/magnet_powerup.gd<>uid://c40kjq5gmlng0::::res://assets/magnet/magnet-96.png
+Main.tscn::PackedScene::102025529394890178::1769138073::0::1::::<><><>0<>0<><>::uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://b8il18k1d04wg::::res://scenes/player.tscn<>uid://baxidkq4mikew::::res://scripts/game_manager.gd<>uid://dqmmglr4yqrso::::res://assets/enemy/sprite-256px-36.png<>uid://tarkx6h70bep::::res://scripts/anomaly_chaser.gd<>uid://cabvraniau87d::::res://scripts/version_label.gd<>uid://bqtf5uji02hgv::::res://scripts/PauseMenu.gd<>uid://vy3s5tmkqslw::::res://scripts/GameOverMenu.gd<>uid://cvivocoxcy2xo::::res://scripts/AdManager.gd<>uid://dhacrgdwndgfc::::res://scripts/MissionsManager.gd<>uid://cv2m8ao6ea8dm::::res://assets/Coin Animation/png/2x/image 1.png<>uid://dn3ku63liodkk::::res://assets/Coin Animation/png/2x/image 2.png<>uid://cfrlo0ws5whgv::::res://assets/Coin Animation/png/2x/image 3.png<>uid://cifwv46e4gaeg::::res://assets/Coin Animation/png/2x/image 4.png<>uid://b0x6c8m348jl5::::res://assets/Coin Animation/png/2x/image 5.png<>uid://cw4hfsbbwkngd::::res://assets/Coin Animation/png/2x/image 6.png<>uid://bjukd7xpvam0::::res://assets/Coin Animation/png/2x/image 7.png<>uid://ce0mg72tyvouo::::res://assets/Coin Animation/png/2x/image 8.png<>uid://chpvmfc6irdbt::::res://assets/Coin Animation/png/2x/image 9.png<>uid://bk5mt3hw3feq2::::res://assets/Coin Animation/png/2x/image 10.png<>uid://csrq1iqliyc7n::::res://assets/Coin Animation/png/2x/image 11.png<>uid://ckcpojxdc3ueg::::res://assets/Coin Animation/png/2x/image 12.png<>uid://cn3ublc236wf5::::res://assets/Coin Animation/png/2x/image 13.png<>uid://iuphyvl5bg2k::::res://assets/Coin Animation/png/2x/image 14.png<>uid://0c72kan61tye::::res://assets/Coin Animation/png/2x/image 15.png<>uid://dagmpexuijtgs::::res://assets/Coin Animation/png/2x/image 16.png<>uid://bdwwn7sxcph1g::::res://scenes/Ground.tscn<>uid://bj0vpeb24e585::::res://scenes/MobileControls.tscn<>res://scenes/HealthBar.tscn<>res://scenes/CollectibleHeart.tscn<>uid://c40kjq5gmlng0::::res://assets/magnet/magnet-96.png<>uid://sgqo0atm3wrv::::res://assets/icon/icon_setting.png<>uid://cgqcf0k0g66wp::::res://assets/icon/icon_shield.png<>uid://cis3quibaooqs::::res://assets/icon/icon_coin2x_96x96.png<>uid://ns4st64im4qi::::res://assets/panel/panel_gameover_685x356.png<>uid://did5ru2tyvvwu::::res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf<>uid://l1q21u47e1pc::::res://assets/tombol/tombol_retry_96x96.png<>uid://dagxdwg0jt5xe::::res://assets/tombol/tombol_home_96x96.png<>uid://b7gkng0ib4y4h::::res://assets/tombol/tombol_play_96x96.png<>uid://civfdm736wgj6::::res://scenes/ConfirmPanel.tscn<>uid://dwa1i8s1cdeq2::::res://assets/icon/icon_boost_96x96.png<>uid://dn5c37tdf5r0::::res://assets/icon/icon_trophy_128x128.png<>res://assets/diamond animation/diamond-1024x1024.png
+MainMenu.tscn::PackedScene::7068727236905948788::1768719335::0::1::::<><><>0<>0<><>::uid://noswsccs8n2x::::res://scripts/MainMenu.gd<>uid://bd4py7a4neowx::::res://scripts/parallax_auto_scroll.gd<>uid://defhj3k14gbs7::::res://assets/Background/png/1920x1080/All/Sky.png<>uid://1d818ghi2rdd::::res://assets/Background/png/Clouds/512x512/Cloud_1.png<>uid://cyv2v7og50o2r::::res://assets/Background/png/Clouds/512x512/Cloud_2.png<>uid://bo2bu1k452xov::::res://assets/Background/png/1920x1080/All/Mountain_4.png<>uid://b8k0ak7ehq3a8::::res://assets/Background/png/1920x1080/All/Mountain_3.png<>uid://dbqhmqte5y0x7::::res://assets/Background/png/1920x1080/All/Mountain_2.png<>uid://p4vincqhmsp4::::res://assets/Background/png/1920x1080/All/Mountain_1.png<>uid://cb6ibjcmicdsw::::res://assets/tombol/tombol_mulai_256x128.png<>uid://cs57tqdxe7yjm::::res://assets/title/title_game.png<>uid://bel1e3nwey4da::::res://assets/Background/png/Clouds/128x128/Cloud_1.png<>uid://flq3uu2y83r4::::res://assets/Background/png/Clouds/128x128/Cloud_2.png<>uid://dim1q61iuk8kk::::res://assets/Background/png/Clouds/256x256/Cloud_1.png<>uid://ba2hjmnmppick::::res://assets/Background/png/Clouds/256x256/Cloud_2.png<>uid://kpcwkxsrgbgi::::res://assets/Background/png/1920x1080/All/Hills_2.png<>uid://dcydd8r0n5c6f::::res://assets/Background/png/1920x1080/All/Hills_1.png<>uid://dcmw8cal1xu1v::::res://assets/tombol/tombol_shop_256x128.png<>uid://bn2mxi2ykggix::::res://assets/tombol/tombol_setting_256x128.png<>uid://7xrqfqhbeh37::::res://assets/tombol/tombol_mission_202x168.png<>uid://brlwhbamogaai::::res://assets/Coin Animation/png/2x/Coin.png<>res://assets/diamond animation/diamond-1024x1024.png<>uid://dn5c37tdf5r0::::res://assets/icon/icon_trophy_128x128.png<>uid://v21m5eac8ghe::::res://assets/icon/icon_border_avatar_gold_128x128.png<>uid://c8rdylqpmqxtr::::res://scenes/SettingsMenu.tscn
+MobileControls.tscn::PackedScene::3071031776947464328::1768706498::0::1::::<><><>0<>0<><>::uid://cjnrkfpjy8lru::::res://assets/tombol/tombol_jump_96.png<>uid://34a561mugc7b::::res://assets/tombol/tombol_atk_96.png<>uid://cssv5cq62heo5::::res://shape/tombol_circle.tres
 Obstacle.tscn::PackedScene::-1::1765083194::0::1::::<><><>0<>0<><>::res://scripts/obstacle.gd<>res://assets/enemy/4x/Mace.png
 player.tscn::PackedScene::4719883613247552158::1766560212::0::1::::<><><>0<>0<><>::uid://ckj0xodrxp5ve::::res://scripts/player.gd<>uid://kk0pfxyiymp8::::res://assets/mc/attack/sprite-attack-256px-36-3.png<>uid://c3bwrfvu0o1ep::::res://assets/mc/run/idle run.png<>uid://3xlqyfjldyvw::::res://assets/mc/jump/sprite-jump-256px-16-v2.png
-SettingsMenu.tscn::PackedScene::7124393242464249619::1766907235::0::1::::<><><>0<>0<><>::uid://dxjs68b8i4t6v::::res://scripts/SettingsMenu.gd<>uid://deimh4ij40yld::::res://assets/panel/panel_setting_685x356.png<>uid://yrdaorbs24i0::::res://assets/tombol/tombol_x_96.png
+SettingsMenu.tscn::PackedScene::7124393242464249619::1768641650::0::1::::<><><>0<>0<><>::uid://dxjs68b8i4t6v::::res://scripts/SettingsMenu.gd<>uid://deimh4ij40yld::::res://assets/panel/panel_setting_685x356.png<>uid://yrdaorbs24i0::::res://assets/tombol/tombol_x_96.png
 ShieldPowerup.tscn::PackedScene::-1::1766999171::0::1::::<><><>0<>0<><>::res://scripts/shield_powerup.gd<>res://assets/icon/icon_shield.png
-ShopMenu.tscn::PackedScene::5951949421136800953::1766996157::0::1::::<><><>0<>0<><>::uid://b8wmwitad0u23::::res://scripts/ShopMenu.gd<>res://scripts/ShopGroupsScroll.gd
+ShopMenu.tscn::PackedScene::5951949421136800953::1769243877::0::1::::<><><>0<>0<><>::uid://b8wmwitad0u23::::res://scripts/ShopMenu.gd<>uid://cc006apfwt4l4::::res://assets/bg/bg-shop-2.png<>uid://o0jysom6laxf::::res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf<>uid://cv2m8ao6ea8dm::::res://assets/Coin Animation/png/2x/image 1.png<>uid://bhfyuqhjycryw::::res://assets/diamond animation/diamond-1024x1024.png<>uid://did5ru2tyvvwu::::res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf
 SpeedBoostPowerup.tscn::PackedScene::-1::1767426498::0::1::::<><><>0<>0<><>::
 TransitionManager.tscn::PackedScene::3736247733428566584::1765015106::0::1::::<><><>0<>0<><>::uid://14iw1axtjldr::::res://scripts/TransitionManager.gd
-::res://scripts/::1767854014
+::res://scripts/::1769244114
 AdManager.gd::GDScript::6264622291502749512::1765082672::0::1::::<>Node<><>0<>0<><>::
 anomaly_chaser.gd::GDScript::1334639332226478979::1766655893::0::1::::<>CharacterBody2D<><>0<>1<><>::
-coin.gd::GDScript::1042632447964972037::1766569381::0::1::::<>Area2D<><>0<>0<><>::
+coin.gd::GDScript::1042632447964972037::1768874689::0::1::::<>Area2D<><>0<>0<><>::
 collectible_heart.gd::GDScript::8477262759075539895::1766635703::0::1::::<>Area2D<><>0<>0<><>::
-DailyMissionsMenu.gd::GDScript::4329217244174380559::1766905228::0::1::::<>Control<><>0<>0<><>::
-double_coins_powerup.gd::GDScript::8867984553295618451::1767075420::0::1::::DoubleCoinsPowerup<>Area2D<><>0<>0<><>::
-enemy_block.gd::GDScript::752751395250857822::1767843208::0::1::::<>Node2D<><>0<>0<><>::
-enemy_hitbox.gd::GDScript::7039683769954926338::1767008498::0::1::::<>Area2D<><>0<>0<><>::
-GameOverMenu.gd::GDScript::1525244608194890548::1767424198::0::1::::<>Control<><>0<>0<><>::
-game_manager.gd::GDScript::2434393016644683878::1767863139::0::1::::<>Node2D<><>0<>0<><>::
-heart_pickup.gd::GDScript::994675627936168386::1767500402::0::1::::HeartPickup<>Area2D<><>0<>0<><>::
-infinite_ground.gd::GDScript::3071923681342422495::1767862439::0::1::::<>Node2D<><>0<>1<><>::
-LoadingScreen.gd::GDScript::7689459756431302583::1766217295::0::1::::<>Control<><>0<>0<><>::
-magnet_powerup.gd::GDScript::6387145649051354191::1767009348::0::1::::MagnetPowerup<>Area2D<><>0<>0<><>::
-MainMenu.gd::GDScript::942489397813111241::1766994380::0::1::::<>Control<><>0<>0<><>::
-MissionsManager.gd::GDScript::7650736069819036844::1765868754::0::1::::<>Node<><>0<>0<><>::
-obstacle.gd::GDScript::955592497033360665::1767065644::0::1::::<>Area2D<><>0<>0<><>::
+DailyMissionsMenu.gd::GDScript::4329217244174380559::1768969413::0::1::::<>Control<><>0<>0<><>::
+double_coins_powerup.gd::GDScript::8867984553295618451::1768630611::0::1::::DoubleCoinsPowerup<>Area2D<><>0<>0<><>::
+enemy_block.gd::GDScript::752751395250857822::1768717973::0::1::::<>Node2D<><>0<>0<><>::
+enemy_hitbox.gd::GDScript::7039683769954926338::1768874656::0::1::::<>Area2D<><>0<>0<><>::
+GameOverMenu.gd::GDScript::1525244608194890548::1768644114::0::1::::<>Control<><>0<>0<><>::
+game_manager.gd::GDScript::2434393016644683878::1769141050::0::1::::<>Node2D<><>0<>0<><>::
+heart_pickup.gd::GDScript::994675627936168386::1768630617::0::1::::HeartPickup<>Area2D<><>0<>0<><>::
+infinite_ground.gd::GDScript::3071923681342422495::1768723323::0::1::::<>Node2D<><>0<>1<><>::
+LoadingScreen.gd::GDScript::7689459756431302583::1768641375::0::1::::<>Control<><>0<>0<><>::
+magnet_powerup.gd::GDScript::6387145649051354191::1769140527::0::1::::MagnetPowerup<>Area2D<><>0<>0<><>::
+MainMenu.gd::GDScript::942489397813111241::1768719318::0::1::::<>Control<><>0<>0<><>::
+MissionsListScroll.gd::GDScript::1018694346767366159::1768890125::0::1::::<>ScrollContainer<><>0<>1<><>::
+MissionsManager.gd::GDScript::7650736069819036844::1768724298::0::1::::MissionsManager<>Node<><>0<>0<><>::
+obstacle.gd::GDScript::955592497033360665::1768874665::0::1::::<>Area2D<><>0<>0<><>::
 parallax_auto_scroll.gd::GDScript::2657809465502524619::1763194341::0::1::::<>ParallaxBackground<><>0<>0<><>::
 PauseButton.gd::GDScript::8286600243261767836::1766305092::0::1::::<>Button<><>0<>0<><>::
-PauseMenu.gd::GDScript::3549023582777938085::1765082672::0::1::::<>Control<><>0<>0<><>::
-player.gd::GDScript::5494868942397116302::1767517348::0::1::::Player<>CharacterBody2D<><>0<>0<><>::
-Preloader.gd::GDScript::2428271818273431302::1765956879::0::1::::<>Node<><>0<>0<><>::
-SettingsMenu.gd::GDScript::8793334856348015815::1766907247::0::1::::<>Control<><>0<>0<><>::
-shield_powerup.gd::GDScript::4139989738180586712::1767009355::0::1::::ShieldPowerup<>Area2D<><>0<>0<><>::
-ShopGroupsScroll.gd::GDScript::3579524280939368443::1766914918::0::1::::<>ScrollContainer<><>0<>0<><>::
-ShopMenu.gd::GDScript::4748837175259690810::1766912265::0::1::::<>Control<><>0<>0<><>::
-speed_boost_powerup.gd::GDScript::5140092682114446573::1767426161::0::1::::SpeedBoostPowerup<>Area2D<><>0<>0<><>::
-TransitionManager.gd::GDScript::1885303279542490363::1765085156::0::1::::<>CanvasLayer<><>0<>0<><>::
+PauseMenu.gd::GDScript::3549023582777938085::1768643017::0::1::::<>Control<><>0<>0<><>::
+player.gd::GDScript::5494868942397116302::1769136881::0::1::::Player<>CharacterBody2D<><>0<>0<><>::
+Preloader.gd::GDScript::2428271818273431302::1768721496::0::1::::<>Node<><>0<>0<><>::
+SettingsMenu.gd::GDScript::8793334856348015815::1768705186::0::1::::<>Control<><>0<>0<><>::
+shield_powerup.gd::GDScript::4139989738180586712::1768630596::0::1::::ShieldPowerup<>Area2D<><>0<>0<><>::
+ShopMenu.gd::GDScript::4748837175259690810::1769248631::0::1::::<>Control<><>0<>1<><>::
+smoke_check_runner.gd::GDScript::5405237786511461947::1768718001::0::1::::<>SceneTree<><>0<>0<><>::
+speed_boost_powerup.gd::GDScript::5140092682114446573::1768630605::0::1::::SpeedBoostPowerup<>Area2D<><>0<>0<><>::
+TransitionManager.gd::GDScript::1885303279542490363::1768639040::0::1::::<>CanvasLayer<><>0<>0<><>::
 version_label.gd::GDScript::4776211180931506983::1766652955::0::1::::<>Label<><>0<>0<><>::
 ::res://shape/::1766307412
 tombol_circle.tres::CircleShape2D::6074728114317534034::1766308288::0::1::::<><><>0<>0<><>::
