@@ -27,57 +27,68 @@ offset_top = -224.0
 offset_right = 352.0
 offset_bottom = 224.0
 texture = ExtResource("2_panel_setting")
-stretch_mode = 4
+stretch_mode = 5
 
 [node name="CloseButton" type="TextureButton" parent="UI/Panel"]
 layout_mode = 0
-offset_left = 610.0
-offset_top = -7.0
-offset_right = 706.0
-offset_bottom = 89.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -92.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = 92.0
 texture_normal = ExtResource("3_tombol_close")
 
-[node name="VBox" type="VBoxContainer" parent="UI"]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -170.0
-offset_top = -168.0
-offset_right = 170.0
-offset_bottom = 110.0
+[node name="Scroll" type="ScrollContainer" parent="UI/Panel"]
+anchors_preset = 15
+offset_left = 56.0
+offset_top = 96.0
+offset_right = -40.0
+offset_bottom = -40.0
+custom_minimum_size = Vector2(600, 260)
+
+[node name="VBox" type="VBoxContainer" parent="UI/Panel/Scroll"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="UI/VBox"]
+[node name="TitleLabel" type="Label" parent="UI/Panel/Scroll/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Settings"
 horizontal_alignment = 1
 
-[node name="BGMLabel" type="Label" parent="UI/VBox"]
+[node name="LanguageLabel" type="Label" parent="UI/Panel/Scroll/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Language"
+
+[node name="LanguageOption" type="OptionButton" parent="UI/Panel/Scroll/VBox"]
+layout_mode = 2
+
+[node name="BGMLabel" type="Label" parent="UI/Panel/Scroll/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "BGM Volume"
 
-[node name="BGMSlider" type="HSlider" parent="UI/VBox"]
+[node name="BGMSlider" type="HSlider" parent="UI/Panel/Scroll/VBox"]
 layout_mode = 2
 
-[node name="BGMMute" type="CheckBox" parent="UI/VBox"]
+[node name="BGMMute" type="CheckBox" parent="UI/Panel/Scroll/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Mute BGM"
 
-[node name="SFXLabel" type="Label" parent="UI/VBox"]
+[node name="SFXLabel" type="Label" parent="UI/Panel/Scroll/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "SFX Volume"
 
-[node name="SFXSlider" type="HSlider" parent="UI/VBox"]
+[node name="SFXSlider" type="HSlider" parent="UI/Panel/Scroll/VBox"]
 layout_mode = 2
 
-[node name="SFXMute" type="CheckBox" parent="UI/VBox"]
+[node name="SFXMute" type="CheckBox" parent="UI/Panel/Scroll/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Mute SFX"

@@ -7,6 +7,83 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+- Build: menyamakan versi Android export (version name/code) dengan versi proyek.
+- Shop: menambahkan label "Coming Soon" pada Cosmetics, Gem Packs, dan Bundles.
+- Shop: tampilkan full item shop di editor (data runtime + non-clip).
+
+## [1.3.27-beta] - 2026-02-10
+
+- Settings: memperbaiki pembukaan menu Settings di main menu dan in-game agar overlay tampil.
+- Settings: menghubungkan sinyal Settings ke audio game saat overlay dibuka in-game.
+- UI Settings: memastikan isi panel tampil dengan layout scroll yang benar.
+- Naik versi proyek ke 1.3.27-beta
+
+## [1.3.26-beta] - 2026-01-30
+
+- Shop: menambahkan label "Coming Soon" pada Cosmetics, Gem Packs, dan Bundles.
+- Shop: tampilkan full item shop di editor (data runtime + non-clip).
+- Naik versi proyek ke 1.3.26-beta
+
+## [1.3.25-beta] - 2026-01-28
+
+- Shop: menyamakan daftar skill dan upgrade (magnet, shield, double coins, speed boost) antara runtime dan dummy editor, termasuk kategori coins/gems.
+- Shop: mengganti font angka (koin, gems, harga item) agar memakai font yang sama dengan judul "Shop" dan menambahkan outline hitam untuk keterbacaan.
+- Shop: menambahkan tampilan angka uji `123456789` di editor untuk memeriksa bentuk semua digit.
+- Speed Boost: membuat pickup Speed Boost in-game ikut terpengaruh upgrade durasi dan multiplier dari Shop sehingga efek sesuai deskripsi upgrade.
+- Naik versi proyek ke 1.3.25-beta
+
+## [1.3.24-beta] - 2026-01-24
+
+- Shop: menambahkan menu Shop baru dengan kategori Skills & Power-ups, Upgrades, Cosmetics, Gem Packs, dan Bundles.
+- Shop: memakai koin/gems dari save (`progress/total_coins` dan `progress/total_gems`) dengan tampilan ikon dan harga yang jelas.
+- Shop: menampilkan jumlah item/power-up yang sudah dimiliki dan menonaktifkan tombol beli jika saldo tidak cukup atau skin sudah dimiliki.
+- Shop: setiap pembelian langsung menyimpan perubahan ke `user://save.cfg` (coins/gems, powerups, dan data cosmetics/skin) serta me-refresh UI Shop.
+- Save: memastikan `meta/version` di `user://save.cfg` mengikuti `application/config/version` aktif untuk keperluan debug/migrasi.
+- Naik versi proyek ke 1.3.24-beta
+
+## [1.3.23-beta] - 2026-01-17
+
+- Audio: menambahkan BGM khusus saat Game Over.
+- Audio: BGM tidak stop dan tidak restart saat Pause/Settings.
+- Audio: menambahkan ducking BGM otomatis saat SFX penting.
+- Fix: perbaiki strict typing warning (shadowed variable + Variant inference).
+- Naik versi proyek ke 1.3.23-beta
+
+## [1.3.22-beta] - 2026-01-17
+
+- SFX: tambah SFX baru untuk enemy kill, game over, dan pickup powerup/heart.
+- Gameplay: trigger SFX pada kill enemy, game over, dan pickup magnet/shield/double coins/speed boost/heart.
+- Main Menu: menambahkan rotasi backsound + toast judul track.
+- Naik versi proyek ke 1.3.22-beta
+
+## [1.3.21-beta] - 2026-01-15
+
+- Missions UI: merapikan alignment row misi (label Name expand + clip).
+- Missions UI: memastikan scrollbar list misi tidak tampil tapi tetap bisa drag-scroll.
+- Fix: merapikan indentasi `MissionsListScroll.gd`.
+- Naik versi proyek ke 1.3.21-beta
+
+## [1.3.20-beta] - 2026-01-14
+
+- Missions UI: merapikan layout panel misi (tab naik, lebar list konsisten, tanpa background hitam transparan).
+- Missions UI: memperjelas label reset (format per tipe reset) dan memastikan warna teks hitam.
+- Missions UI: membatasi area tampil list misi agar misi ke-5+ masuk scroll (clip + viewport).
+- Missions UI: menambahkan drag-scroll pada list misi (tap/drag di area list, tanpa perlu scrollbar).
+- Missions UI: mendukung jumlah misi > 5 dengan duplikasi row otomatis dan koneksi tombol Claim aman.
+- Fix: perbaiki path refresh panel setelah Claim agar UI langsung ter-update.
+- Naik versi proyek ke 1.3.20-beta
+
+## [1.3.19-beta] - 2026-01-09
+
+- Missions: menambahkan struktur misi lengkap (daily, mission, week, month, challenge) dengan field `reward` per misi yang tersimpan di `user://save.cfg`.
+- Missions: memastikan progres misi distance dan coins tetap kompatibel dengan save lama dengan fungsi upgrade di `MissionsManager.gd`.
+- Missions UI: memperluas scene `DailyMissionsMenu.tscn` menjadi panel tabbed (Daily/Mission/Week/Month/Challenge) dengan tiga slot misi yang menampilkan nama, progress bar, dan reward coins.
+- Missions UI: menambahkan tombol `Claim` per misi yang sudah selesai, hanya aktif jika target tercapai, memiliki reward, dan belum diklaim.
+- Rewards: saat reward misi di-claim, coins langsung ditambahkan ke `progress/total_coins` di save dan HUD koin di Main Menu ikut ter-update.
+- Rewards: menyimpan status reward misi yang sudah diklaim di section `missions/reward_claimed` sehingga tidak bisa diambil dua kali.
+- UX: memperbaiki error koneksi sinyal ganda pada tombol Daily/Reward di `MainMenu.gd` dengan guard `is_connected`.
+- Naik versi proyek ke 1.3.19-beta
+
 ## [1.3.18-beta] - 2026-01-09
 
 - Speed Boost: membuat efek boostspeed benar-benar mempercepat ground, parallax, dan run speed player secara instan selama durasi skill.
@@ -179,7 +256,7 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Ground runner: memperbaiki agar `min_gap_len`/`max_gap_len` benar-benar membuat jurang
 - Ground runner: mengisi sisa kolom segmen supaya tidak ada "ujung dunia" di akhir
 - Ground runner: memastikan kombinasi grass/dirt tetap konsisten di platform dan jurang
-- Ground title: tetap flat tanpa jurang melalui konfigurasi `GroundController.gd`
+- Ground title: tetap flat tanpa jurang melalui konfigurasi generator ground
 - Naik versi proyek ke 1.3.1-beta
 
 ## [1.3.0-beta] - 2025-12-16
@@ -187,7 +264,7 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Dokumentasi flow teknis runtime dan rekomendasi fitur/flow di `GAME_CONCEPT_AND_PLAYER_IMPLEMENTATION.md`
 - Penjelasan step-by-step MainMenu → Main → gameplay → game over
 - Rekomendasi profil kesulitan, Super Easy mode, power-up magnet, dan biome
-- Perbaikan bug: ground awal kini mengikuti konfigurasi `TileMapGenerator` (flat_start) di `GroundController.gd`
+- Perbaikan bug: ground awal kini mengikuti konfigurasi flat start pada generator ground
 - Naik versi proyek ke 1.3.0-beta
 
 ## [1.2.6] - 2025-12-06

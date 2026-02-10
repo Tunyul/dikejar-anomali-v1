@@ -39,6 +39,13 @@ var _music_toast: Label = null
 var _music_toast_tween: Tween = null
 var _title_sprite: Sprite2D = null
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
+var _lang_button: TextureButton = null
+var _flag_id: Texture2D = null
+var _flag_en: Texture2D = null
+var _flag_zh: Texture2D = null
+var _lang_confirm_popup: Node = null
+var _lang_popup: PopupMenu = null
+var _settings_menu: Node = null
 
 
 func _ready() -> void:
@@ -52,6 +59,7 @@ func _ready() -> void:
     var gem_hud := get_node_or_null("UI/GemHUD")
     var score_hud := get_node_or_null("UI/ScoreHUD")
     var daily_button := get_node_or_null("UI/DailyButton")
+    _lang_button = get_node_or_null("UI/LanguageButton") as TextureButton
     _missions_badge = get_node_or_null("UI/DailyButton/MissionsBadge") as Control
     if daily_button:
         _daily_button_animator = daily_button.get_node_or_null("AnimationPlayer")
@@ -76,6 +84,25 @@ func _ready() -> void:
         settings.pressed.connect(_on_settings_pressed)
     if daily_button:
         (daily_button as BaseButton).pressed.connect(_on_daily_pressed)
+    _settings_menu = get_node_or_null("SettingsMenu")
+    if _settings_menu == null:
+        var packed_settings := load("res://scenes/SettingsMenu.tscn") as PackedScene
+        if packed_settings:
+            _settings_menu = packed_settings.instantiate()
+            (_settings_menu as Node).name = "SettingsMenu"
+            add_child(_settings_menu)
+    if _settings_menu:
+        _wire_settings_menu_signals(_settings_menu as Node)
+    if _lang_button:
+        _init_language_icons()
+        _refresh_language_button()
+        _ensure_language_popup()
+        _refresh_language_popup_items()
+        _lang_button.pressed.connect(_on_language_button_pressed)
+        if TransitionManager and TransitionManager.has_signal("language_changed"):
+            var cb := Callable(self, "_on_language_changed")
+            if not TransitionManager.language_changed.is_connected(cb):
+                TransitionManager.language_changed.connect(cb)
     if coin_hud or gem_hud or score_hud or player_hud:
         var cfg := ConfigFile.new()
         var err := cfg.load("user://save.cfg")
@@ -176,6 +203,248 @@ func _ready() -> void:
     _connect_viewport_resize()
 
     _init_menu_bgm()
+
+
+func _init_language_icons() -> void:
+    if DisplayServer.get_name() == "headless":
+        return
+    if _flag_id == null:
+        _flag_id = _load_flag_texture("res://assets/icon/icon_flag_INA.png")
+    if _flag_en == null:
+        _flag_en = _load_flag_texture("res://assets/icon/icon_flag_US.png")
+    if _flag_zh == null:
+        _flag_zh = _load_flag_texture("res://assets/icon/icon_flag_CN.png")
+
+
+func _load_flag_texture(path: String) -> Texture2D:
+    if not ResourceLoader.exists(path):
+        return null
+    return load(path) as Texture2D
+
+
+func _normalize_locale(locale: String) -> String:
+    var lc := locale.strip_edges().to_lower()
+    if lc.begins_with("en"):
+        return "en"
+    if lc.begins_with("id"):
+        return "id"
+    if lc.begins_with("zh"):
+        return "zh"
+    return "en"
+
+
+func _get_current_language() -> String:
+    if TransitionManager and TransitionManager.has_method("get_language"):
+        return _normalize_locale(str(TransitionManager.get_language()))
+    return _normalize_locale(str(TranslationServer.get_locale()))
+
+
+func _refresh_language_button(_locale: String = "") -> void:
+    if _lang_button == null:
+        return
+    var lc := (_normalize_locale(_locale) if _locale != "" else _get_current_language())
+    var tex: Texture2D = null
+    if lc == "id":
+        tex = _flag_id
+    elif lc == "zh":
+        tex = _flag_zh
+    else:
+        tex = _flag_en
+    if tex:
+        _lang_button.texture_normal = tex
+        _lang_button.texture_pressed = tex
+        _lang_button.texture_hover = tex
+        _lang_button.texture_disabled = tex
+
+
+func _on_language_changed(locale: String) -> void:
+    _refresh_language_button(locale)
+    _refresh_language_popup_items(locale)
+
+
+func _on_language_button_pressed() -> void:
+    TransitionManager.play_sfx(&"click")
+    _show_language_popup()
+
+
+func _ensure_language_popup() -> void:
+    if _lang_popup != null and is_instance_valid(_lang_popup):
+        return
+
+    var ui := get_node_or_null("UI") as Node
+    _lang_popup = PopupMenu.new()
+    _lang_popup.name = "LanguagePopup"
+    _lang_popup.hide_on_item_selection = true
+    _lang_popup.hide_on_checkable_item_selection = true
+    _lang_popup.transparent = true
+    _lang_popup.id_pressed.connect(_on_language_popup_id_pressed)
+
+    if ui:
+        ui.add_child(_lang_popup)
+    else:
+        add_child(_lang_popup)
+
+
+func _refresh_language_popup_items(_locale: String = "") -> void:
+    if _lang_popup == null or not is_instance_valid(_lang_popup):
+        return
+
+    var lc := (_normalize_locale(_locale) if _locale != "" else _get_current_language())
+
+    _lang_popup.clear()
+
+    if _flag_id:
+        _lang_popup.add_icon_item(_flag_id, _locale_to_display_name("id"), 0)
+    else:
+        _lang_popup.add_item(_locale_to_display_name("id"), 0)
+    if _flag_en:
+        _lang_popup.add_icon_item(_flag_en, _locale_to_display_name("en"), 1)
+    else:
+        _lang_popup.add_item(_locale_to_display_name("en"), 1)
+    if _flag_zh:
+        _lang_popup.add_icon_item(_flag_zh, _locale_to_display_name("zh"), 2)
+    else:
+        _lang_popup.add_item(_locale_to_display_name("zh"), 2)
+
+    for i in range(_lang_popup.item_count):
+        _lang_popup.set_item_as_radio_checkable(i, true)
+        _lang_popup.set_item_checked(i, false)
+
+    var checked_index := 1
+    if lc == "id":
+        checked_index = 0
+    elif lc == "zh":
+        checked_index = 2
+    _lang_popup.set_item_checked(checked_index, true)
+
+
+func _show_language_popup() -> void:
+    _ensure_language_popup()
+    _refresh_language_popup_items()
+    if _lang_popup == null or not is_instance_valid(_lang_popup):
+        return
+    if _lang_button == null or not is_instance_valid(_lang_button):
+        return
+
+    if _lang_popup.visible:
+        _lang_popup.hide()
+        return
+
+    var rect := _lang_button.get_global_rect()
+    var pos := rect.position + Vector2(0.0, rect.size.y)
+
+    var vp := get_viewport()
+    var vp_rect := (vp.get_visible_rect() if vp else Rect2(Vector2.ZERO, Vector2(1920, 1080)))
+    var popup_min_size: Vector2 = Vector2(220.0, 160.0)
+    pos.x = clampf(pos.x, 8.0, vp_rect.size.x - popup_min_size.x - 8.0)
+    pos.y = clampf(pos.y, 8.0, vp_rect.size.y - popup_min_size.y - 8.0)
+
+    _lang_popup.popup(Rect2i(Vector2i(int(pos.x), int(pos.y)), Vector2i(1, 1)))
+
+
+func _on_language_popup_id_pressed(id: int) -> void:
+    var locale := "en"
+    match id:
+        0:
+            locale = "id"
+        1:
+            locale = "en"
+        2:
+            locale = "zh"
+        _:
+            locale = "en"
+    if TransitionManager and TransitionManager.has_method("set_language"):
+        TransitionManager.set_language(locale)
+    _refresh_language_button(locale)
+    _refresh_language_popup_items(locale)
+
+
+func _locale_to_display_name(locale: String) -> String:
+    var lc := _normalize_locale(locale)
+    if lc == "id":
+        return tr("Indonesian")
+    if lc == "zh":
+        return tr("Chinese")
+    return tr("English")
+
+
+func _show_language_confirm(target_locale: String) -> void:
+    var ui := get_node_or_null("UI")
+    if ui == null:
+        if TransitionManager and TransitionManager.has_method("set_language"):
+            TransitionManager.set_language(target_locale)
+        _refresh_language_button(target_locale)
+        return
+
+    if _lang_confirm_popup and is_instance_valid(_lang_confirm_popup):
+        _lang_confirm_popup.queue_free()
+        _lang_confirm_popup = null
+
+    var confirm_scene := load("res://scenes/ConfirmPanel.tscn") as PackedScene
+    if confirm_scene == null:
+        if TransitionManager and TransitionManager.has_method("set_language"):
+            TransitionManager.set_language(target_locale)
+        _refresh_language_button(target_locale)
+        return
+
+    var popup := confirm_scene.instantiate()
+    _lang_confirm_popup = popup
+    ui.add_child(popup)
+
+    if popup is Control:
+        call_deferred("_position_language_confirm_popup", popup as Control)
+
+    var msg := popup.get_node_or_null("Message") as Label
+    if msg:
+        msg.text = tr("Change language to %s?") % [_locale_to_display_name(target_locale)]
+
+    var yes := popup.get_node_or_null("Buttons/YesButton") as BaseButton
+    var no := popup.get_node_or_null("Buttons/NoButton") as BaseButton
+
+    if yes:
+        yes.pressed.connect(func():
+            if is_instance_valid(popup):
+                popup.queue_free()
+            if TransitionManager and TransitionManager.has_method("set_language"):
+                TransitionManager.set_language(target_locale)
+            _refresh_language_button(target_locale)
+        )
+    if no:
+        no.pressed.connect(func():
+            if is_instance_valid(popup):
+                popup.queue_free()
+        )
+
+
+func _position_language_confirm_popup(c: Control) -> void:
+    if c == null or not is_instance_valid(c):
+        return
+    await get_tree().process_frame
+    if c == null or not is_instance_valid(c):
+        return
+
+    var vp: Viewport = get_viewport()
+    var vp_rect: Rect2 = vp.get_visible_rect()
+    var vp_size: Vector2 = vp_rect.size
+
+    var title_bottom := vp_size.y * 0.22
+    if _title_sprite and _title_sprite.texture:
+        var sz := _title_sprite.texture.get_size() * _title_sprite.scale
+        title_bottom = _title_sprite.global_position.y + sz.y * 0.5
+
+    var popup_size := c.size
+    if popup_size == Vector2.ZERO:
+        popup_size = c.get_combined_minimum_size()
+
+    var margin := 24.0
+    var desired_center_y: float = maxf(vp_size.y * 0.5, title_bottom + margin + popup_size.y * 0.5)
+    var desired_top_left := Vector2(vp_size.x * 0.5 - popup_size.x * 0.5, desired_center_y - popup_size.y * 0.5)
+
+    var clamp_margin := 16.0
+    desired_top_left.x = clampf(desired_top_left.x, clamp_margin, vp_size.x - popup_size.x - clamp_margin)
+    desired_top_left.y = clampf(desired_top_left.y, clamp_margin, vp_size.y - popup_size.y - clamp_margin)
+
+    c.global_position = desired_top_left
 
 
 func _reset_main_menu_stats_to_default(coin_hud: Node, gem_hud: Node, score_hud: Node, player_hud: Node) -> void:
@@ -280,18 +549,20 @@ func _on_shop_pressed() -> void:
 
 func _on_settings_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    var settings_menu := get_node_or_null("SettingsMenu")
+    var settings_menu := _settings_menu
+    if settings_menu == null or not is_instance_valid(settings_menu):
+        settings_menu = get_node_or_null("SettingsMenu")
     if settings_menu == null:
         var packed := load("res://scenes/SettingsMenu.tscn") as PackedScene
         if packed:
             settings_menu = packed.instantiate()
             (settings_menu as Node).name = "SettingsMenu"
             add_child(settings_menu)
+    _settings_menu = settings_menu
     if settings_menu:
         _wire_settings_menu_signals(settings_menu as Node)
-    if settings_menu:
         if settings_menu.has_method("show_overlay"):
-            settings_menu.show_overlay()
+            settings_menu.call_deferred("show_overlay")
         else:
             (settings_menu as CanvasItem).visible = true
 
@@ -653,7 +924,7 @@ func _on_menu_bgm_finished() -> void:
 func _show_music_toast(title: String) -> void:
     if _music_toast == null:
         return
-    _music_toast.text = "Backsound: " + title
+    _music_toast.text = "%s: %s" % [tr("Backsound"), title]
 
     var target: CanvasItem = _music_toast
     if _music_toast_panel and _music_toast_panel is CanvasItem:

@@ -8,9 +8,13 @@ var distance: float = 0.0
 var best_score: int = 0
 var coin_collected_a: int = 0
 var coin_collected_b: int = 0
+var gem_collected_a: int = 0
+var gem_collected_b: int = 0
 var last_score: int = 0
 var last_coins: int = 0
+var last_gems: int = 0
 var total_coins: int = 0
+var total_gems: int = 0
 var player_level: int = 1
 var player_xp: int = 0
 var player_xp_required: int = 100
@@ -19,6 +23,25 @@ var total_tiles_passed: int = 0
 var _tiles_passed_accum: float = 0.0
 var _debug_time_accum: float = 0.0
 var powerups_data: Dictionary = {}
+var pending_level_rewards: Array = []
+var max_heart_bonus: int = 0
+var magnet_duration_multiplier: float = 1.0
+var shield_duration_multiplier: float = 1.0
+var pickup_range_bonus: float = 0.0
+var double_coins_duration_multiplier: float = 1.0
+var double_coins_gain_multiplier: float = 2.0
+var speed_boost_duration_multiplier: float = 1.0
+var speed_boost_multiplier_multiplier: float = 1.0
+var shield_hit_charges_run: int = 0
+var _base_powerup_magnet_duration_sec: float = -1.0
+var _base_powerup_shield_duration_sec: float = -1.0
+var _base_powerup_double_coins_duration_sec: float = -1.0
+var _base_powerup_speed_boost_duration_sec: float = -1.0
+var _base_powerup_speed_boost_multiplier: float = -1.0
+var _base_player_max_health: int = -1
+
+const _SPEED_BOOST_PRE_RUN_DURATION_SEC: float = 15.0
+const _SPEED_BOOST_PRE_RUN_MULTIPLIER: float = 1.5
 
 @export var debug_info_enabled: bool = false
 @export var base_speed: float = 180.0
@@ -55,17 +78,39 @@ var spawn_status_label: Label
 var speed_info_label: Label
 var _jump_button: TouchScreenButton
 var _attack_button: TouchScreenButton
+var _jump_button_tint: Panel
+var _attack_button_tint: Panel
+var _last_viewport_size: Vector2i = Vector2i(-1, -1)
+var _last_safe_area: Rect2i = Rect2i()
 var _ga_layer: Node = null
 var _gb_layer: Node = null
 var _scene_verify_running: bool = false
 var _scene_verify_start_ms: int = 0
 var bgm_muted: bool = false
 var sfx_muted: bool = false
+const _BUKIT_BGM_DIR := "res://assets/audio/bgm/bukit"
+const _BUKIT_BGM_PREFIX := "bgm-bukit-"
+const _GAMEOVER_BGM_DIR := "res://assets/audio/bgm/gameover"
+const _GAMEOVER_BGM_PREFIX := "bgm-gameover-"
+var _bukit_bgm_paths: Array[String] = []
+var _bukit_bgm_index: int = 0
+var _bukit_bgm_initialized: bool = false
+var _gameover_bgm_paths: Array[String] = []
+var _gameover_bgm_index: int = 0
+var _gameover_bgm_initialized: bool = false
+enum BgmMode { RUN, GAME_OVER }
+var _bgm_mode: BgmMode = BgmMode.RUN
+var _bgm_user_volume: float = 0.8
+var _bgm_base_db: float = 0.0
+var _bgm_duck_db: float = 0.0
+const _RUN_BGM_OFFSET_DB: float = -2.0
+var _bgm_duck_tween: Tween = null
+var _bgm_fade_tween: Tween = null
 var magnet_timer: float = 0.0
 var shield_timer: float = 0.0
 var _last_health_current: int = -1
 var _last_health_max: int = -1
-@export var powerup_magnet_duration_sec: float = 10.0
+@export var powerup_magnet_duration_sec: float = 30.0
 @export var powerup_shield_duration_sec: float = 10.0
 @export var powerup_double_coins_duration_sec: float = 10.0
 @export var powerup_speed_boost_duration_sec: float = 5.0
@@ -76,8 +121,29 @@ var _last_health_max: int = -1
 var ads_shown_count: int = 0
 var continue_grace_timer: float = 0.0
 @onready var coin_hud_label: Label = $CanvasLayer/CoinHUD/Label
+@onready var gem_hud_label: Label = $CanvasLayer/GemHUD/Label
 @onready var score_hud_label: Label = $CanvasLayer/ScoreHUD/ScoreLabel
 @onready var health_bar: ProgressBar = $CanvasLayer/HealthBar
+@onready var missions_toast: Control = $CanvasLayer/MissionsToast
+@onready var missions_toast_text: Label = $CanvasLayer/MissionsToast/Text
+@onready var bgm_toast: Control = $CanvasLayer/BGMToast
+@onready var bgm_toast_text: Label = $CanvasLayer/BGMToast/Text
+@onready var version_label: Label = $CanvasLayer/VersionLabel
+@onready var settings_button: Control = $CanvasLayer/SettingsButton
+@onready var health_icon: Node2D = $CanvasLayer/HealthIcon
+@onready var heart_spawn_label: Label = $CanvasLayer/HeartSpawnLabel
+@onready var coin_hud: Control = $CanvasLayer/CoinHUD
+@onready var coin_icon_anim: Node2D = $CanvasLayer/CoinIconAnim
+@onready var score_hud: Control = $CanvasLayer/ScoreHUD
+@onready var gem_hud: Control = $CanvasLayer/GemHUD
+@onready var magnet_icon: TextureRect = $CanvasLayer/MagnetIcon
+@onready var magnet_timer_label: Label = $CanvasLayer/MagnetTimerLabel
+@onready var shield_icon: TextureRect = $CanvasLayer/ShieldIcon
+@onready var shield_timer_label: Label = $CanvasLayer/ShieldTimerLabel
+@onready var double_coins_icon: TextureRect = $CanvasLayer/DoubleCoinsIcon
+@onready var double_coins_timer_label: Label = $CanvasLayer/DoubleCoinsTimerLabel
+@onready var speed_boost_icon: TextureRect = $CanvasLayer/SpeedBoostIcon
+@onready var speed_boost_timer_label: Label = $CanvasLayer/SpeedBoostTimerLabel
 @export var enemy_ramp_start_distance: float = 400.0
 @export var enemy_ramp_enabled: bool = true
 @export var countdown_duration_sec: float = 3.0
@@ -86,7 +152,28 @@ var countdown_active: bool = false
 var countdown_timer: float = 0.0
 var entry_finished: bool = false
 
+var _missions_toast_shown: bool = false
+var _missions_toast_queue: Array[String] = []
+var _suppress_ready_to_claim_toast: bool = false
+var _missions_completed_type_toasted: Dictionary = {}
+var _missions_toast_tween: Tween = null
+var _bgm_toast_tween: Tween = null
+var _missions_menu_opened_from_playing: bool = false
+var _settings_menu_opened_from_playing: bool = false
+
 func _ready() -> void:
+    if _base_powerup_magnet_duration_sec < 0.0:
+        _base_powerup_magnet_duration_sec = powerup_magnet_duration_sec
+    if _base_powerup_shield_duration_sec < 0.0:
+        _base_powerup_shield_duration_sec = powerup_shield_duration_sec
+    if _base_powerup_double_coins_duration_sec < 0.0:
+        _base_powerup_double_coins_duration_sec = powerup_double_coins_duration_sec
+    if _base_powerup_speed_boost_duration_sec < 0.0:
+        _base_powerup_speed_boost_duration_sec = powerup_speed_boost_duration_sec
+    if _base_powerup_speed_boost_multiplier < 0.0:
+        _base_powerup_speed_boost_multiplier = powerup_speed_boost_multiplier
+    if _base_player_max_health < 0 and player:
+        _base_player_max_health = int(player.max_health)
     if player:
         player.connect("game_over_signal", Callable(self, "on_player_game_over"))
     if OS.is_debug_build():
@@ -101,6 +188,22 @@ func _ready() -> void:
             ev3.physical_keycode = KEY_F3
             InputMap.action_add_event("toggle_debug", ev3)
     _load_progress()
+
+    var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
+    var title_font := load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf") as Font
+    if ui_font and canvas:
+        _apply_ui_font(canvas, ui_font)
+    if title_font:
+        _apply_shop_number_font(coin_hud_label, title_font)
+        _apply_shop_number_font(gem_hud_label, title_font)
+        _apply_shop_number_font(score_hud_label, title_font)
+        _apply_shop_number_font(magnet_timer_label, title_font)
+        _apply_shop_number_font(shield_timer_label, title_font)
+        _apply_shop_number_font(double_coins_timer_label, title_font)
+        _apply_shop_number_font(speed_boost_timer_label, title_font)
+
+    _init_bukit_bgm()
+    _init_gameover_bgm()
     call_deferred("_start_play_phase")
     if scene_verify_on_start and OS.is_debug_build():
         call_deferred("_verify_player_scenes")
@@ -187,11 +290,339 @@ func _ready() -> void:
         _gb_layer = ground_b.get_node_or_null("TileMapLayerB")
 
     _connect_mobile_buttons()
+    _connect_viewport_resize()
 
     if canvas:
-        var settings_button := canvas.get_node_or_null("SettingsButton") as BaseButton
-        if settings_button and settings_button.has_signal("pressed"):
-            settings_button.pressed.connect(_on_settings_button_pressed)
+        var settings_btn := canvas.get_node_or_null("SettingsButton") as BaseButton
+        if settings_btn and settings_btn.has_signal("pressed"):
+            settings_btn.pressed.connect(_on_settings_button_pressed)
+        if missions_toast:
+            missions_toast.mouse_filter = Control.MOUSE_FILTER_STOP
+            var cb3 := Callable(self, "_on_missions_toast_gui_input")
+            if not missions_toast.gui_input.is_connected(cb3):
+                missions_toast.gui_input.connect(cb3)
+
+    if missions_manager and missions_manager.has_signal("ready_to_claim_changed"):
+        var cb := Callable(self, "_on_ready_to_claim_changed")
+        if not missions_manager.is_connected("ready_to_claim_changed", cb):
+            missions_manager.connect("ready_to_claim_changed", cb)
+
+    if missions_manager and missions_manager.has_signal("mission_became_ready"):
+        var cb2 := Callable(self, "_on_mission_became_ready")
+        if not missions_manager.is_connected("mission_became_ready", cb2):
+            missions_manager.connect("mission_became_ready", cb2)
+
+
+func _apply_ui_font(node: Node, font: Font) -> void:
+    if node is Label:
+        (node as Label).add_theme_font_override("font", font)
+    elif node is BaseButton:
+        (node as BaseButton).add_theme_font_override("font", font)
+    for child in node.get_children():
+        if child is Node:
+            _apply_ui_font(child, font)
+
+
+func _apply_shop_number_font(lbl: Label, title_font: Font) -> void:
+    if lbl == null:
+        return
+    if title_font:
+        lbl.add_theme_font_override("font", title_font)
+    lbl.add_theme_constant_override("outline_size", 3)
+    lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+
+
+func _on_ready_to_claim_changed(can_claim: bool) -> void:
+    if not can_claim:
+        return
+    if _suppress_ready_to_claim_toast:
+        _suppress_ready_to_claim_toast = false
+        return
+    _enqueue_missions_toast(tr("Mission reward ready! Click toast / press M."))
+
+
+func _on_mission_became_ready(_mission_id: String, mission_name: String) -> void:
+    _suppress_ready_to_claim_toast = true
+    var mission_title := mission_name.strip_edges()
+    if mission_title.is_empty():
+        _enqueue_missions_toast(tr("Mission reward ready! Click toast / press M."))
+        return
+    _enqueue_missions_toast(tr("Mission complete: %s (click/press M)") % tr(mission_title))
+    var mt: String = ""
+    if missions_manager and missions_manager.has_method("get_mission_type"):
+        mt = String(missions_manager.call("get_mission_type", _mission_id))
+    if mt.is_empty():
+        return
+    if _missions_completed_type_toasted.has(mt) and bool(_missions_completed_type_toasted[mt]):
+        return
+    if missions_manager and missions_manager.has_method("is_type_fully_completed"):
+        var all_done: bool = bool(missions_manager.call("is_type_fully_completed", mt))
+        if all_done:
+            _missions_completed_type_toasted[mt] = true
+            var title: String = mt
+            if missions_manager.has_method("get_type_title"):
+                title = String(missions_manager.call("get_type_title", mt))
+            _enqueue_missions_toast(tr("%s completed!") % tr(title))
+
+
+func _enqueue_missions_toast(msg: String) -> void:
+    if _missions_toast_shown:
+        _missions_toast_queue.append(msg)
+        return
+    _show_missions_toast(msg)
+
+
+func _show_missions_toast(msg: String) -> void:
+    if _missions_toast_shown:
+        return
+    _missions_toast_shown = true
+    if missions_toast == null:
+        return
+    if missions_toast_text:
+        missions_toast_text.text = msg
+    missions_toast.visible = true
+    missions_toast.modulate = Color(1, 1, 1, 0)
+    if _missions_toast_tween != null:
+        _missions_toast_tween.kill()
+        _missions_toast_tween = null
+    var tween := create_tween()
+    _missions_toast_tween = tween
+    tween.tween_property(missions_toast, "modulate:a", 1.0, 0.2)
+    tween.tween_interval(2.2)
+    tween.tween_property(missions_toast, "modulate:a", 0.0, 0.2)
+    tween.finished.connect(func():
+        if missions_toast:
+            missions_toast.visible = false
+        _missions_toast_tween = null
+        _missions_toast_shown = false
+        if _missions_toast_queue.size() > 0:
+            var next_msg: String = _missions_toast_queue.pop_front()
+            call_deferred("_show_missions_toast", next_msg)
+    )
+
+func _on_missions_toast_gui_input(event: InputEvent) -> void:
+    if missions_toast == null or not missions_toast.visible:
+        return
+    var pressed := false
+    if event is InputEventMouseButton:
+        var mb := event as InputEventMouseButton
+        pressed = mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT
+    elif event is InputEventScreenTouch:
+        var st := event as InputEventScreenTouch
+        pressed = st.pressed
+    if not pressed:
+        return
+    if _missions_toast_tween != null:
+        _missions_toast_tween.kill()
+        _missions_toast_tween = null
+    missions_toast.visible = false
+    _missions_toast_shown = false
+    if _missions_toast_queue.size() > 0:
+        var next_msg: String = _missions_toast_queue.pop_front()
+        call_deferred("_show_missions_toast", next_msg)
+    open_missions_menu()
+
+
+func _init_bukit_bgm() -> void:
+    if _bukit_bgm_initialized:
+        return
+    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
+    if bgm == null:
+        return
+    _bukit_bgm_paths = _load_bukit_bgm_paths()
+    if _bukit_bgm_paths.is_empty():
+        return
+    var cb := Callable(self, "_on_bukit_bgm_finished")
+    if not bgm.finished.is_connected(cb):
+        bgm.finished.connect(cb)
+    _bukit_bgm_initialized = true
+
+
+func _init_gameover_bgm() -> void:
+    if _gameover_bgm_initialized:
+        return
+    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
+    if bgm == null:
+        return
+    _gameover_bgm_paths = _load_gameover_bgm_paths()
+    if _gameover_bgm_paths.is_empty():
+        return
+    var cb := Callable(self, "_on_gameover_bgm_finished")
+    if not bgm.finished.is_connected(cb):
+        bgm.finished.connect(cb)
+    _gameover_bgm_initialized = true
+
+
+func _load_gameover_bgm_paths() -> Array[String]:
+    var out: Array[String] = []
+    var dir := DirAccess.open(_GAMEOVER_BGM_DIR)
+    if dir == null:
+        return out
+    var files := dir.get_files()
+    for f in files:
+        var fs := String(f)
+        var lower := fs.to_lower()
+        if not lower.ends_with(".mp3"):
+            continue
+        if not fs.begins_with(_GAMEOVER_BGM_PREFIX):
+            continue
+        out.append(_GAMEOVER_BGM_DIR + "/" + fs)
+    out.sort()
+    return out
+
+
+func _consume_next_gameover_bgm_index(size: int) -> int:
+    if size <= 0:
+        return 0
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK:
+        cfg = ConfigFile.new()
+    var last := int(cfg.get_value("settings", "gameover_bgm_index", -1))
+    var next := (last + 1) % size
+    cfg.set_value("settings", "gameover_bgm_index", next)
+    cfg.save("user://save.cfg")
+    return next
+
+
+func _save_gameover_bgm_index(i: int) -> void:
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK:
+        cfg = ConfigFile.new()
+    cfg.set_value("settings", "gameover_bgm_index", i)
+    cfg.save("user://save.cfg")
+
+
+func _pick_gameover_bgm_path() -> String:
+    _init_gameover_bgm()
+    if _gameover_bgm_paths.is_empty():
+        return ""
+    if _gameover_bgm_index < 0 or _gameover_bgm_index >= _gameover_bgm_paths.size():
+        _gameover_bgm_index = _consume_next_gameover_bgm_index(_gameover_bgm_paths.size())
+    return _gameover_bgm_paths[_gameover_bgm_index]
+
+
+func _on_gameover_bgm_finished() -> void:
+    if phase != Phase.GAME_OVER:
+        return
+    if bgm_muted:
+        return
+    if _gameover_bgm_paths.is_empty():
+        return
+    _gameover_bgm_index = (_gameover_bgm_index + 1) % _gameover_bgm_paths.size()
+    _save_gameover_bgm_index(_gameover_bgm_index)
+    _play_game_over_bgm()
+
+
+func _load_bukit_bgm_paths() -> Array[String]:
+    var out: Array[String] = []
+    var dir := DirAccess.open(_BUKIT_BGM_DIR)
+    if dir == null:
+        return out
+    var files := dir.get_files()
+    for f in files:
+        var fs := String(f)
+        var lower := fs.to_lower()
+        if not lower.ends_with(".mp3"):
+            continue
+        if not fs.begins_with(_BUKIT_BGM_PREFIX):
+            continue
+        out.append(_BUKIT_BGM_DIR + "/" + fs)
+    out.sort()
+    return out
+
+
+func _consume_next_bukit_bgm_index(size: int) -> int:
+    if size <= 0:
+        return 0
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK:
+        cfg = ConfigFile.new()
+    var last := int(cfg.get_value("settings", "bukit_bgm_index", -1))
+    var next := (last + 1) % size
+    cfg.set_value("settings", "bukit_bgm_index", next)
+    cfg.save("user://save.cfg")
+    return next
+
+
+func _save_bukit_bgm_index(i: int) -> void:
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK:
+        cfg = ConfigFile.new()
+    cfg.set_value("settings", "bukit_bgm_index", i)
+    cfg.save("user://save.cfg")
+
+
+func _play_bukit_bgm_index(i: int) -> void:
+    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
+    if bgm == null:
+        return
+    if _bukit_bgm_paths.is_empty():
+        return
+    _bukit_bgm_index = clampi(i, 0, _bukit_bgm_paths.size() - 1)
+    var path := _bukit_bgm_paths[_bukit_bgm_index]
+    var stream := load(path) as AudioStream
+    if stream == null:
+        return
+    bgm.stream = stream
+    _apply_bgm_mix()
+    if not bgm_muted:
+        bgm.play()
+        _show_bgm_toast(_format_track_name(path))
+
+
+func _start_bukit_bgm_rotation() -> void:
+    _init_bukit_bgm()
+    if _bukit_bgm_paths.is_empty():
+        return
+    _bukit_bgm_index = _consume_next_bukit_bgm_index(_bukit_bgm_paths.size())
+    _play_bukit_bgm_index(_bukit_bgm_index)
+
+
+func _on_bukit_bgm_finished() -> void:
+    if phase != Phase.PLAYING:
+        return
+    if bgm_muted:
+        return
+    if _bukit_bgm_paths.is_empty():
+        return
+    _bukit_bgm_index = (_bukit_bgm_index + 1) % _bukit_bgm_paths.size()
+    _save_bukit_bgm_index(_bukit_bgm_index)
+    _play_bukit_bgm_index(_bukit_bgm_index)
+
+
+func _show_bgm_toast(title: String) -> void:
+    if bgm_toast == null:
+        return
+    if bgm_toast_text:
+        bgm_toast_text.text = "BGM: " + title
+    bgm_toast.visible = true
+    bgm_toast.modulate = Color(1, 1, 1, 0)
+    if _bgm_toast_tween != null:
+        _bgm_toast_tween.kill()
+        _bgm_toast_tween = null
+    var tween := create_tween()
+    _bgm_toast_tween = tween
+    tween.tween_property(bgm_toast, "modulate:a", 1.0, 0.18)
+    tween.tween_interval(2.2)
+    tween.tween_property(bgm_toast, "modulate:a", 0.0, 0.22)
+    tween.finished.connect(func():
+        if bgm_toast:
+            bgm_toast.visible = false
+        _bgm_toast_tween = null
+    )
+
+
+func _format_track_name(path: String) -> String:
+    var base := path.get_file().get_basename()
+    base = base.replace("_", " ")
+    base = base.replace("-", " ")
+    base = base.strip_edges()
+    return base
+
 
 func _connect_mobile_buttons() -> void:
     if not canvas or not player:
@@ -202,6 +633,200 @@ func _connect_mobile_buttons() -> void:
     _attack_button = canvas.get_node_or_null("MobileControls/AttackButton") as TouchScreenButton
     if _attack_button and _attack_button.has_signal("pressed"):
         _attack_button.pressed.connect(_on_attack_button_pressed)
+    _ensure_mobile_button_tints()
+    _update_mobile_controls_layout(true)
+
+
+func _ensure_mobile_button_tints() -> void:
+    if canvas == null:
+        return
+    var mc := canvas.get_node_or_null("MobileControls") as Control
+    if mc == null:
+        return
+    if _jump_button_tint == null:
+        _jump_button_tint = Panel.new()
+        _jump_button_tint.name = "JumpButtonTint"
+        _jump_button_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        _jump_button_tint.z_index = 0
+        mc.add_child(_jump_button_tint)
+    if _attack_button_tint == null:
+        _attack_button_tint = Panel.new()
+        _attack_button_tint.name = "AttackButtonTint"
+        _attack_button_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        _attack_button_tint.z_index = 0
+        mc.add_child(_attack_button_tint)
+    _update_mobile_button_tints()
+
+
+func _update_mobile_button_tints() -> void:
+    if _jump_button == null or _attack_button == null:
+        return
+    if _jump_button_tint == null or _attack_button_tint == null:
+        return
+    var jt := _jump_button.texture_normal
+    var at := _attack_button.texture_normal
+    if jt == null or at == null:
+        return
+    var js: Vector2 = jt.get_size()
+    var asz: Vector2 = at.get_size()
+
+    _jump_button_tint.size = js
+    _jump_button_tint.position = _jump_button.position
+    _jump_button_tint.visible = _jump_button.visible
+    var sj := StyleBoxFlat.new()
+    sj.bg_color = Color(0.2, 0.8, 1.0, 0.14)
+    sj.border_width_left = 2
+    sj.border_width_top = 2
+    sj.border_width_right = 2
+    sj.border_width_bottom = 2
+    sj.border_color = Color(0.2, 0.8, 1.0, 0.35)
+    var rj: int = int(round(minf(js.x, js.y) * 0.5))
+    sj.corner_radius_top_left = rj
+    sj.corner_radius_top_right = rj
+    sj.corner_radius_bottom_left = rj
+    sj.corner_radius_bottom_right = rj
+    _jump_button_tint.add_theme_stylebox_override("panel", sj)
+
+    _attack_button_tint.size = asz
+    _attack_button_tint.position = _attack_button.position
+    _attack_button_tint.visible = _attack_button.visible
+    var sa := StyleBoxFlat.new()
+    sa.bg_color = Color(1.0, 0.72, 0.25, 0.14)
+    sa.border_width_left = 2
+    sa.border_width_top = 2
+    sa.border_width_right = 2
+    sa.border_width_bottom = 2
+    sa.border_color = Color(1.0, 0.72, 0.25, 0.35)
+    var ra: int = int(round(minf(asz.x, asz.y) * 0.5))
+    sa.corner_radius_top_left = ra
+    sa.corner_radius_top_right = ra
+    sa.corner_radius_bottom_left = ra
+    sa.corner_radius_bottom_right = ra
+    _attack_button_tint.add_theme_stylebox_override("panel", sa)
+
+
+func _connect_viewport_resize() -> void:
+    var vp := get_viewport()
+    if vp == null:
+        return
+    var cb := Callable(self, "_on_viewport_size_changed")
+    if not vp.size_changed.is_connected(cb):
+        vp.size_changed.connect(cb)
+    call_deferred("_on_viewport_size_changed")
+
+
+func _on_viewport_size_changed() -> void:
+    _update_mobile_controls_layout(false)
+
+
+func _compute_safe_area_rect() -> Rect2:
+    var vp_size := get_viewport().get_visible_rect().size
+    var out := Rect2(Vector2.ZERO, vp_size)
+    if OS.has_feature("android") or OS.has_feature("ios"):
+        var sa := DisplayServer.get_display_safe_area()
+        if sa.size.x > 0 and sa.size.y > 0:
+            out = Rect2(Vector2(sa.position), Vector2(sa.size))
+    return out
+
+
+func _update_mobile_controls_layout(force: bool) -> void:
+    var vp := get_viewport().get_visible_rect().size
+    var vp_i := Vector2i(int(vp.x), int(vp.y))
+    var sa_i := Rect2i()
+    if OS.has_feature("android") or OS.has_feature("ios"):
+        sa_i = DisplayServer.get_display_safe_area()
+    if not force and vp_i == _last_viewport_size and sa_i == _last_safe_area:
+        return
+    _last_viewport_size = vp_i
+    _last_safe_area = sa_i
+
+    var safe := _compute_safe_area_rect()
+    _update_safe_ui_layout(safe, vp)
+
+    if _jump_button != null and _attack_button != null:
+        var margin: float = 24.0
+        var spacing: float = 16.0
+
+        var jt := _jump_button.texture_normal
+        var at := _attack_button.texture_normal
+        if jt == null or at == null:
+            return
+        var js := jt.get_size()
+        var asz := at.get_size()
+
+        var jump_pos := Vector2(
+            safe.position.x + safe.size.x - margin - js.x,
+            safe.position.y + safe.size.y - margin - js.y
+        )
+        var attack_pos := Vector2(
+            jump_pos.x - spacing - asz.x,
+            safe.position.y + safe.size.y - margin - asz.y
+        )
+        _jump_button.position = jump_pos
+        _attack_button.position = attack_pos
+        _update_mobile_button_tints()
+
+
+func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
+    var inset_top: float = safe.position.y
+    var inset_right: float = maxf(viewport_size.x - (safe.position.x + safe.size.x), 0.0)
+    var inset_bottom: float = maxf(viewport_size.y - (safe.position.y + safe.size.y), 0.0)
+
+    if settings_button:
+        settings_button.offset_left = -52.0 - inset_right
+        settings_button.offset_right = -12.0 - inset_right
+        settings_button.offset_top = 8.0 + inset_top
+        settings_button.offset_bottom = 48.0 + inset_top
+
+    if version_label:
+        version_label.offset_top = -32.0 - inset_bottom
+        version_label.offset_bottom = -8.0 - inset_bottom
+
+    if bgm_toast:
+        bgm_toast.offset_top = 10.0 + inset_top
+        bgm_toast.offset_bottom = 50.0 + inset_top
+
+    if missions_toast:
+        missions_toast.offset_top = 48.0 + inset_top
+        missions_toast.offset_bottom = 92.0 + inset_top
+
+    var sx := safe.position.x
+    var sy := safe.position.y
+
+    if health_icon:
+        health_icon.position = Vector2(sx + 20.0, sy + 24.0)
+    if health_bar:
+        health_bar.position = Vector2(sx + 40.0, sy + 12.0)
+    if heart_spawn_label:
+        heart_spawn_label.position = Vector2(sx + 248.0, sy + 12.0)
+    if coin_hud:
+        coin_hud.position = Vector2(sx + 40.0, sy + 52.0)
+    if coin_icon_anim:
+        coin_icon_anim.position = Vector2(sx + 20.0, sy + 68.0)
+    if score_hud:
+        score_hud.position = Vector2(sx + 220.0, sy + 52.0)
+    if gem_hud:
+        gem_hud.position = Vector2(sx + 220.0, sy + 84.0)
+
+    var icon_x := sx + 16.0
+    var label_x := sx + 56.0
+
+    if magnet_icon:
+        magnet_icon.position = Vector2(icon_x, sy + 96.0)
+    if magnet_timer_label:
+        magnet_timer_label.position = Vector2(label_x, sy + 96.0)
+    if shield_icon:
+        shield_icon.position = Vector2(icon_x, sy + 128.0)
+    if shield_timer_label:
+        shield_timer_label.position = Vector2(label_x, sy + 128.0)
+    if double_coins_icon:
+        double_coins_icon.position = Vector2(icon_x, sy + 160.0)
+    if double_coins_timer_label:
+        double_coins_timer_label.position = Vector2(label_x, sy + 160.0)
+    if speed_boost_icon:
+        speed_boost_icon.position = Vector2(icon_x, sy + 192.0)
+    if speed_boost_timer_label:
+        speed_boost_timer_label.position = Vector2(label_x, sy + 192.0)
 
 func _debug_input(msg: String) -> void:
     if OS.is_debug_build() and debug_info_enabled:
@@ -222,7 +847,24 @@ func _on_attack_button_pressed() -> void:
 
 func _on_settings_button_pressed() -> void:
     _debug_input("INPUT: settings_button")
-    pause_game()
+    open_settings_menu()
+
+
+func _wire_settings_menu_signals(settings_menu: Node) -> void:
+    if settings_menu == null:
+        return
+    var c_bgm_vol := Callable(self, "set_bgm_volume")
+    if settings_menu.has_signal("bgm_volume_changed") and not settings_menu.is_connected("bgm_volume_changed", c_bgm_vol):
+        settings_menu.connect("bgm_volume_changed", c_bgm_vol)
+    var c_sfx_vol := Callable(self, "set_sfx_volume")
+    if settings_menu.has_signal("sfx_volume_changed") and not settings_menu.is_connected("sfx_volume_changed", c_sfx_vol):
+        settings_menu.connect("sfx_volume_changed", c_sfx_vol)
+    var c_bgm_mute := Callable(self, "set_bgm_muted")
+    if settings_menu.has_signal("bgm_mute_changed") and not settings_menu.is_connected("bgm_mute_changed", c_bgm_mute):
+        settings_menu.connect("bgm_mute_changed", c_bgm_mute)
+    var c_sfx_mute := Callable(self, "set_sfx_muted")
+    if settings_menu.has_signal("sfx_mute_changed") and not settings_menu.is_connected("sfx_mute_changed", c_sfx_mute):
+        settings_menu.connect("sfx_mute_changed", c_sfx_mute)
 
 func _process(delta: float) -> void:
     if countdown_active:
@@ -263,6 +905,8 @@ func _process(delta: float) -> void:
         score = int(total_tiles_passed * score_per_tile)
         if coin_hud_label != null:
             coin_hud_label.text = str(coin_collected_a + coin_collected_b)
+        if gem_hud_label != null:
+            gem_hud_label.text = str(gem_collected_a + gem_collected_b)
         if score_hud_label != null:
             score_hud_label.text = str(score)
         if missions_manager and missions_manager.has_method("update_distance"):
@@ -315,52 +959,46 @@ func _process(delta: float) -> void:
             if speed_was_active and not is_speed_boost_active():
                 _ensure_skill_after_power_end("speed_boost")
     if canvas:
-        var magnet_icon := canvas.get_node_or_null("MagnetIcon") as TextureRect
-        var magnet_label := canvas.get_node_or_null("MagnetTimerLabel") as Label
         if magnet_icon:
             magnet_icon.visible = magnet_enabled
-        if magnet_label:
-            magnet_label.visible = magnet_enabled
+        if magnet_timer_label:
+            magnet_timer_label.visible = magnet_enabled
             if magnet_enabled:
                 var sec_left: int = int(ceil(magnet_timer))
-                magnet_label.text = str(max(sec_left, 0))
+                magnet_timer_label.text = str(max(sec_left, 0))
             else:
-                magnet_label.text = ""
-        var shield_icon := canvas.get_node_or_null("ShieldIcon") as TextureRect
-        var shield_label := canvas.get_node_or_null("ShieldTimerLabel") as Label
+                magnet_timer_label.text = ""
+        var shield_protection_active: bool = shield_enabled or shield_hit_charges_run > 0
         if shield_icon:
-            shield_icon.visible = shield_enabled
-        if shield_label:
-            shield_label.visible = shield_enabled
+            shield_icon.visible = shield_protection_active
+        if shield_timer_label:
+            shield_timer_label.visible = shield_protection_active
             if shield_enabled:
                 var shield_sec_left: int = int(ceil(shield_timer))
-                shield_label.text = str(max(shield_sec_left, 0))
+                shield_timer_label.text = str(max(shield_sec_left, 0))
+            elif shield_hit_charges_run > 0:
+                shield_timer_label.text = "x" + str(shield_hit_charges_run)
             else:
-                shield_label.text = ""
-        var double_icon := canvas.get_node_or_null("DoubleCoinsIcon") as TextureRect
-        var double_label := canvas.get_node_or_null("DoubleCoinsTimerLabel") as Label
-        if double_icon:
-            double_icon.visible = double_coins_run_active
-        if double_label:
-            double_label.visible = double_coins_run_active
+                shield_timer_label.text = ""
+        if double_coins_icon:
+            double_coins_icon.visible = double_coins_run_active
+        if double_coins_timer_label:
+            double_coins_timer_label.visible = double_coins_run_active
             if double_coins_run_active:
                 var dsec_left: int = int(ceil(double_coins_timer))
-                double_label.text = str(max(dsec_left, 0))
+                double_coins_timer_label.text = str(max(dsec_left, 0))
             else:
-                double_label.text = ""
-        var speed_icon := canvas.get_node_or_null("SpeedBoostIcon") as TextureRect
-        var speed_label := canvas.get_node_or_null("SpeedBoostTimerLabel") as Label
+                double_coins_timer_label.text = ""
         var speed_active: bool = speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
-        if speed_icon:
-            speed_icon.visible = speed_active
-        if speed_label:
-            speed_label.visible = speed_active
+        if speed_boost_icon:
+            speed_boost_icon.visible = speed_active
+        if speed_boost_timer_label:
+            speed_boost_timer_label.visible = speed_active
             if speed_active:
                 var speed_sec_left: int = int(ceil(speed_boost_timer))
-                speed_label.text = str(max(speed_sec_left, 0))
+                speed_boost_timer_label.text = str(max(speed_sec_left, 0))
             else:
-                speed_label.text = ""
-        var heart_spawn_label := canvas.get_node_or_null("HeartSpawnLabel") as Label
+                speed_boost_timer_label.text = ""
         if heart_spawn_label:
             heart_spawn_label.visible = false
     _apply_enemy_ramp_if_needed()
@@ -552,9 +1190,6 @@ func pause_game() -> void:
         ground_a.set_movement_enabled(false)
     if ground_b and ground_b.has_method("set_movement_enabled"):
         ground_b.set_movement_enabled(false)
-    var bgm := get_node_or_null("BGM")
-    if bgm and bgm is AudioStreamPlayer:
-        (bgm as AudioStreamPlayer).stop()
     _set_pause_menu_visible(true)
     _refresh_missions_label()
 
@@ -577,16 +1212,76 @@ func resume_game() -> void:
         ground_a.set_speed(tgt)
     if ground_b and ground_b.has_method("set_speed"):
         ground_b.set_speed(tgt)
-    var bgm := get_node_or_null("BGM")
-    if bgm and bgm is AudioStreamPlayer and (bgm as AudioStreamPlayer).stream != null:
-        if not bgm_muted:
-            (bgm as AudioStreamPlayer).play()
     _set_pause_menu_visible(false)
 
 func return_to_main_menu() -> void:
     if Preloader and Preloader.has_method("set_next_scene"):
         Preloader.set_next_scene("res://scenes/MainMenu.tscn")
     await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
+
+func open_missions_menu() -> void:
+    _missions_menu_opened_from_playing = false
+    if game_active:
+        _missions_menu_opened_from_playing = true
+        pause_game()
+        _set_pause_menu_visible(false)
+    var missions_menu := get_node_or_null("DailyMissionsMenu")
+    if missions_menu == null:
+        var packed := load("res://scenes/DailyMissionsMenu.tscn") as PackedScene
+        if packed:
+            missions_menu = packed.instantiate()
+            (missions_menu as Node).name = "DailyMissionsMenu"
+            add_child(missions_menu)
+    if missions_menu:
+        var cb := Callable(self, "_on_missions_overlay_closed")
+        if missions_menu.has_signal("overlay_closed") and not missions_menu.is_connected("overlay_closed", cb):
+            missions_menu.connect("overlay_closed", cb)
+        if missions_menu.has_method("show_overlay"):
+            missions_menu.call("show_overlay")
+        elif missions_menu is CanvasItem:
+            (missions_menu as CanvasItem).visible = true
+
+
+func open_settings_menu() -> void:
+    _settings_menu_opened_from_playing = false
+    if game_active:
+        _settings_menu_opened_from_playing = true
+        pause_game()
+        _set_pause_menu_visible(false)
+    else:
+        _set_pause_menu_visible(false)
+    var settings_menu := get_node_or_null("SettingsMenu")
+    if settings_menu == null:
+        var packed := load("res://scenes/SettingsMenu.tscn") as PackedScene
+        if packed:
+            settings_menu = packed.instantiate()
+            (settings_menu as Node).name = "SettingsMenu"
+            add_child(settings_menu)
+    if settings_menu:
+        var cb := Callable(self, "_on_settings_overlay_closed")
+        if settings_menu.has_signal("overlay_closed") and not settings_menu.is_connected("overlay_closed", cb):
+            settings_menu.connect("overlay_closed", cb)
+        _wire_settings_menu_signals(settings_menu as Node)
+        if settings_menu.has_method("show_overlay"):
+            settings_menu.call("show_overlay")
+        elif settings_menu is CanvasItem:
+            (settings_menu as CanvasItem).visible = true
+
+
+func _on_missions_overlay_closed() -> void:
+    if _missions_menu_opened_from_playing:
+        _missions_menu_opened_from_playing = false
+        resume_game()
+        return
+    _set_pause_menu_visible(true)
+
+
+func _on_settings_overlay_closed() -> void:
+    if _settings_menu_opened_from_playing:
+        _settings_menu_opened_from_playing = false
+        resume_game()
+        return
+    _set_pause_menu_visible(true)
 
 func try_rewarded_continue() -> void:
     if ads_shown_count >= ads_max_per_session:
@@ -596,7 +1291,9 @@ func try_rewarded_continue() -> void:
         if adm.has_method("is_rewarded_available") and not adm.is_rewarded_available():
             return
         if adm.has_signal("reward_granted"):
-            adm.reward_granted.connect(_on_reward_granted)
+            var cb := Callable(self, "_on_reward_granted")
+            if not adm.reward_granted.is_connected(cb):
+                adm.reward_granted.connect(cb)
         adm.show_rewarded("continue")
 
 func _on_reward_granted(reason: String) -> void:
@@ -632,13 +1329,37 @@ func grant_continue() -> void:
             gom.visible = false
 
 func set_bgm_volume(v: float) -> void:
-    var bgm := get_node_or_null("BGM")
-    if bgm and bgm is AudioStreamPlayer:
-        var lin: float = clampf(v, 0.0, 1.0)
-        var db: float = (-60.0 if lin <= 0.0 else 20.0 * log(lin) / log(10.0))
-        (bgm as AudioStreamPlayer).volume_db = db
+    _bgm_user_volume = clampf(v, 0.0, 1.0)
+    _bgm_base_db = (-60.0 if _bgm_user_volume <= 0.0 else 20.0 * log(_bgm_user_volume) / log(10.0))
+    _apply_bgm_mix()
+
+func duck_bgm(reduction_db: float = 6.0, duration_sec: float = 0.22) -> void:
+    if bgm_muted:
+        return
+    if _bgm_mode != BgmMode.RUN:
+        return
+    var d := -absf(reduction_db)
+    _bgm_duck_db = minf(_bgm_duck_db, d)
+    _apply_bgm_mix()
+    if _bgm_duck_tween and _bgm_duck_tween.is_running():
+        _bgm_duck_tween.kill()
+    var dur: float = maxf(duration_sec, 0.02)
+    _bgm_duck_tween = create_tween()
+    _bgm_duck_tween.tween_method(func(v2: float) -> void:
+        _bgm_duck_db = v2
+        _apply_bgm_mix()
+    , _bgm_duck_db, 0.0, dur)
+
+func _apply_bgm_mix() -> void:
+    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
+    if bgm == null:
+        return
+    var mode_offset := (_RUN_BGM_OFFSET_DB if _bgm_mode == BgmMode.RUN else 0.0)
+    bgm.volume_db = (-60.0 if bgm_muted else (_bgm_base_db + mode_offset + _bgm_duck_db))
 
 func set_sfx_volume(v: float) -> void:
+    if TransitionManager and TransitionManager.has_method("set_sfx_volume"):
+        TransitionManager.set_sfx_volume(v)
     var sfx := get_node_or_null("SFXJump")
     if sfx and sfx is AudioStreamPlayer:
         var lin: float = clampf(v, 0.0, 1.0)
@@ -654,10 +1375,13 @@ func set_bgm_muted(m: bool) -> void:
         else:
             if (bgm as AudioStreamPlayer).stream != null:
                 (bgm as AudioStreamPlayer).play()
+    _apply_bgm_mix()
     _save_progress()
 
 func set_sfx_muted(m: bool) -> void:
     sfx_muted = m
+    if TransitionManager and TransitionManager.has_method("set_sfx_muted"):
+        TransitionManager.set_sfx_muted(m)
     var sfx := get_node_or_null("SFXJump")
     if sfx and sfx is AudioStreamPlayer:
         (sfx as AudioStreamPlayer).volume_db = (-60.0 if m else (sfx as AudioStreamPlayer).volume_db)
@@ -675,6 +1399,8 @@ func activate_magnet(d: float) -> void:
     var dur: float = d
     if dur <= 0.0:
         dur = powerup_magnet_duration_sec
+    else:
+        dur *= max(magnet_duration_multiplier, 0.1)
     magnet_timer = max(dur, 0.0)
     magnet_enabled = magnet_timer > 0.0
     shield_timer = 0.0
@@ -683,11 +1409,15 @@ func activate_magnet(d: float) -> void:
     speed_boost_multiplier = 1.0
     double_coins_timer = 0.0
     double_coins_run_active = false
+    if missions_manager and missions_manager.has_method("add_skill"):
+        missions_manager.add_skill()
 
 func activate_shield(d: float) -> void:
     var dur: float = d
     if dur <= 0.0:
         dur = powerup_shield_duration_sec
+    else:
+        dur *= max(shield_duration_multiplier, 0.1)
     shield_timer = max(dur, 0.0)
     shield_enabled = shield_timer > 0.0
     magnet_timer = 0.0
@@ -696,12 +1426,26 @@ func activate_shield(d: float) -> void:
     speed_boost_multiplier = 1.0
     double_coins_timer = 0.0
     double_coins_run_active = false
+    if missions_manager and missions_manager.has_method("add_skill"):
+        missions_manager.add_skill()
+    if missions_manager and missions_manager.has_method("add_shield_skill"):
+        missions_manager.add_shield_skill()
 
 func is_magnet_active() -> bool:
     return magnet_enabled
 
 func is_shield_active() -> bool:
     return shield_enabled
+
+func try_consume_shield_hit() -> bool:
+    if shield_enabled:
+        return true
+    if shield_hit_charges_run <= 0:
+        return false
+    shield_hit_charges_run = max(shield_hit_charges_run - 1, 0)
+    powerups_data["shield_1hit_charges"] = shield_hit_charges_run
+    _save_progress()
+    return true
 
 func _has_any_heart_on_ground() -> bool:
     var d: float = _get_nearest_heart_distance_px()
@@ -742,20 +1486,29 @@ func _get_nearest_heart_distance_px() -> float:
     return best
 
 func activate_speed_boost(d: float = 0.0, m: float = 0.0) -> void:
+    var was_active := speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
     var dur: float = d
     if dur <= 0.0:
         dur = powerup_speed_boost_duration_sec
+    else:
+        dur *= max(speed_boost_duration_multiplier, 0.1)
     var mul: float = m
     if mul <= 0.0:
         mul = powerup_speed_boost_multiplier
+    else:
+        mul *= max(speed_boost_multiplier_multiplier, 0.1)
     speed_boost_timer = max(dur, 0.0)
     speed_boost_multiplier = max(mul, 1.0)
+    if (not was_active) and (speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0):
+        TransitionManager.play_sfx(&"speed_boost_start")
     magnet_timer = 0.0
     magnet_enabled = false
     shield_timer = 0.0
     shield_enabled = false
     double_coins_timer = 0.0
     double_coins_run_active = false
+    if missions_manager and missions_manager.has_method("add_skill"):
+        missions_manager.add_skill()
 
 func is_speed_boost_active() -> bool:
     return speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
@@ -967,6 +1720,8 @@ func _apply_enemy_ramp_if_needed() -> void:
 func set_playing_phase() -> void:
     phase = Phase.PLAYING
     game_active = true
+    _bgm_mode = BgmMode.RUN
+    _bgm_duck_db = 0.0
     _apply_spawn_safety_limits()
     if ground_a and ground_a.has_method("set_speed_limits"):
         var max_with_boost: float = max_speed
@@ -998,9 +1753,7 @@ func set_playing_phase() -> void:
         if player.has_method("enable_environment_movement"):
             player.enable_environment_movement(true)
 
-    var bgm2 := get_node_or_null("BGM")
-    if bgm2 and bgm2 is AudioStreamPlayer and (bgm2 as AudioStreamPlayer).stream != null:
-        (bgm2 as AudioStreamPlayer).play()
+    _start_bukit_bgm_rotation()
     if anomaly:
         if anomaly.has_method("start_appear"):
             anomaly.start_appear()
@@ -1014,6 +1767,63 @@ func set_playing_phase() -> void:
             gom2.visible = false
 
 
+func _apply_powerups_for_new_run() -> void:
+    if powerups_data.is_empty():
+        shield_hit_charges_run = 0
+    else:
+        shield_hit_charges_run = int(powerups_data.get("shield_1hit_charges", 0))
+
+    var changed := false
+    var double_tokens: int = int(powerups_data.get("double_coins_run_tokens", 0))
+    if double_tokens > 0:
+        activate_double_coins_run()
+        powerups_data["double_coins_run_tokens"] = max(double_tokens - 1, 0)
+        changed = true
+
+    # 4. Magnet Run (Pre-active)
+    var magnet_run_tokens: int = int(powerups_data.get("magnet_30s_tokens", 0))
+    if magnet_run_tokens > 0:
+        powerup_magnet_duration_sec = _base_powerup_magnet_duration_sec * max(magnet_duration_multiplier, 0.1)
+        magnet_timer = powerup_magnet_duration_sec
+        magnet_enabled = true
+        powerups_data["magnet_30s_tokens"] = max(magnet_run_tokens - 1, 0)
+        changed = true
+
+    # 5. Speed Boost Run (Pre-active)
+    var speed_boost_tokens: int = int(powerups_data.get("speed_boost_tokens", 0))
+    if speed_boost_tokens > 0:
+        var dur_mul: float = max(speed_boost_duration_multiplier, 0.1)
+        var mul_mul: float = max(speed_boost_multiplier_multiplier, 0.1)
+        speed_boost_timer = _SPEED_BOOST_PRE_RUN_DURATION_SEC * dur_mul
+        speed_boost_multiplier = max(_SPEED_BOOST_PRE_RUN_MULTIPLIER * mul_mul, 1.0)
+        powerups_data["speed_boost_tokens"] = max(speed_boost_tokens - 1, 0)
+        changed = true
+
+    if player and player is Player:
+        var p := player as Player
+        var base_max: int = (_base_player_max_health if _base_player_max_health > 0 else int(p.max_health))
+        var effective_max: int = base_max + max_heart_bonus
+        p.max_health = effective_max
+        p.starting_health = effective_max
+        p.current_health = effective_max
+
+        set_player_health(effective_max, effective_max)
+
+    powerup_magnet_duration_sec = _base_powerup_magnet_duration_sec * max(magnet_duration_multiplier, 0.1)
+    powerup_shield_duration_sec = _base_powerup_shield_duration_sec * max(shield_duration_multiplier, 0.1)
+    if _base_powerup_double_coins_duration_sec < 0.0:
+        _base_powerup_double_coins_duration_sec = powerup_double_coins_duration_sec
+    if _base_powerup_speed_boost_duration_sec < 0.0:
+        _base_powerup_speed_boost_duration_sec = powerup_speed_boost_duration_sec
+    if _base_powerup_speed_boost_multiplier < 0.0:
+        _base_powerup_speed_boost_multiplier = powerup_speed_boost_multiplier
+    powerup_double_coins_duration_sec = _base_powerup_double_coins_duration_sec * max(double_coins_duration_multiplier, 0.1)
+    powerup_speed_boost_duration_sec = _base_powerup_speed_boost_duration_sec * max(speed_boost_duration_multiplier, 0.1)
+    powerup_speed_boost_multiplier = _base_powerup_speed_boost_multiplier * max(speed_boost_multiplier_multiplier, 0.1)
+    if changed:
+        _save_progress()
+
+
 func on_player_entry_finished() -> void:
     if phase != Phase.ENTRY:
         return
@@ -1022,8 +1832,11 @@ func on_player_entry_finished() -> void:
         set_playing_phase()
 
 func on_player_game_over(_cause: String) -> void:
+    if phase == Phase.GAME_OVER:
+        return
     phase = Phase.GAME_OVER
     game_active = false
+    TransitionManager.play_sfx(&"game_over")
     if parallax and parallax.has_method("set_movement_enabled"):
         parallax.set_movement_enabled(false)
     if terrain and terrain.has_method("set_movement_enabled"):
@@ -1043,7 +1856,9 @@ func on_player_game_over(_cause: String) -> void:
 
     last_score = score
     last_coins = coin_collected_a + coin_collected_b
+    last_gems = gem_collected_a + gem_collected_b
     total_coins += last_coins
+    total_gems += last_gems
     var xp_gain_from_distance: int = int(distance * xp_per_meter)
     var xp_gain_from_coins: int = int(float(last_coins) * xp_per_coin)
     var xp_gain: int = xp_gain_from_distance + xp_gain_from_coins
@@ -1051,14 +1866,12 @@ func on_player_game_over(_cause: String) -> void:
         _apply_xp_gain(xp_gain)
     if missions_manager and missions_manager.has_method("update_distance"):
         missions_manager.update_distance(distance)
-    if missions_manager and missions_manager.has_method("add_coins") and last_coins > 0:
-        missions_manager.add_coins(last_coins)
+    if missions_manager and missions_manager.has_method("add_run_played"):
+        missions_manager.add_run_played()
     if score > best_score:
         best_score = score
     _save_progress()
-    var bgm3 := get_node_or_null("BGM")
-    if bgm3 and bgm3 is AudioStreamPlayer:
-        (bgm3 as AudioStreamPlayer).stop()
+    _play_game_over_bgm()
     if anomaly:
         anomaly.hide()
     if debug_label != null:
@@ -1067,6 +1880,38 @@ func on_player_game_over(_cause: String) -> void:
         var gom := canvas.get_node_or_null("GameOverMenu")
         if gom and gom.has_method("show_game_over"):
             gom.show_game_over(score, distance)
+
+func _play_game_over_bgm() -> void:
+    _bgm_mode = BgmMode.GAME_OVER
+    _bgm_duck_db = 0.0
+    if _bgm_duck_tween and _bgm_duck_tween.is_running():
+        _bgm_duck_tween.kill()
+    if bgm_muted:
+        return
+    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
+    if bgm == null:
+        return
+    var path := _pick_gameover_bgm_path()
+    if path.is_empty():
+        return
+    var stream := load(path) as AudioStream
+    if stream == null:
+        return
+    if stream is AudioStreamMP3:
+        (stream as AudioStreamMP3).loop = false
+    if _bgm_fade_tween and _bgm_fade_tween.is_running():
+        _bgm_fade_tween.kill()
+    _bgm_fade_tween = create_tween()
+    _bgm_fade_tween.tween_property(bgm, "volume_db", -60.0, 0.18)
+    _bgm_fade_tween.tween_callback(func() -> void:
+        if bgm:
+            bgm.stop()
+            bgm.stream = stream
+            bgm.play()
+            _apply_bgm_mix()
+            bgm.volume_db = -60.0
+    )
+    _bgm_fade_tween.tween_property(bgm, "volume_db", (_bgm_base_db if not bgm_muted else -60.0), 0.22)
 
 func restart_game() -> void:
     _start_play_phase()
@@ -1162,31 +2007,53 @@ func _verify_player_scenes() -> void:
 func _load_progress() -> void:
     var cfg := ConfigFile.new()
     var err := cfg.load("user://save.cfg")
-    if err == OK:
-        best_score = int(cfg.get_value("progress", "best_score", 0))
-        last_score = int(cfg.get_value("progress", "last_score", 0))
-        last_coins = int(cfg.get_value("progress", "last_coins", 0))
-        total_coins = int(cfg.get_value("progress", "total_coins", 0))
-        player_level = int(cfg.get_value("progress", "player_level", 1))
-        player_xp = int(cfg.get_value("progress", "player_xp", 0))
-        player_xp_required = int(cfg.get_value("progress", "player_xp_required", 100))
-        if player_xp_required <= 0:
-            player_xp_required = _calculate_xp_required(player_level)
-        bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
-        sfx_muted = bool(cfg.get_value("settings", "sfx_muted", false))
-        var bgm_volume: float = float(cfg.get_value("settings", "bgm_volume", 0.8))
-        var sfx_volume: float = float(cfg.get_value("settings", "sfx_volume", 0.8))
-        set_bgm_volume(bgm_volume)
-        set_sfx_volume(sfx_volume)
-        if bgm_muted:
-            set_bgm_muted(true)
-        if sfx_muted:
-            set_sfx_muted(true)
-        var pd = cfg.get_value("powerups", "data", {})
-        if pd is Dictionary:
-            powerups_data = pd
-        else:
-            powerups_data = {}
+    if err != OK:
+        bgm_muted = false
+        sfx_muted = false
+        set_bgm_volume(0.8)
+        set_sfx_volume(0.8)
+        return
+    best_score = int(cfg.get_value("progress", "best_score", 0))
+    last_score = int(cfg.get_value("progress", "last_score", 0))
+    last_coins = int(cfg.get_value("progress", "last_coins", 0))
+    last_gems = int(cfg.get_value("progress", "last_gems", 0))
+    total_coins = int(cfg.get_value("progress", "total_coins", 0))
+    total_gems = int(cfg.get_value("progress", "total_gems", 0))
+    player_level = int(cfg.get_value("progress", "player_level", 1))
+    player_xp = int(cfg.get_value("progress", "player_xp", 0))
+    player_xp_required = int(cfg.get_value("progress", "player_xp_required", 100))
+    if player_xp_required <= 0:
+        player_xp_required = _calculate_xp_required(player_level)
+    bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
+    sfx_muted = bool(cfg.get_value("settings", "sfx_muted", false))
+    var bgm_volume: float = float(cfg.get_value("settings", "bgm_volume", 0.8))
+    var sfx_volume: float = float(cfg.get_value("settings", "sfx_volume", 0.8))
+    set_bgm_volume(bgm_volume)
+    set_sfx_volume(sfx_volume)
+    if TransitionManager and TransitionManager.has_method("set_sfx_muted"):
+        TransitionManager.set_sfx_muted(sfx_muted)
+    if bgm_muted:
+        var bgm := get_node_or_null("BGM") as AudioStreamPlayer
+        if bgm:
+            bgm.stop()
+    var pd: Variant = cfg.get_value("powerups", "data", {})
+    if pd is Dictionary:
+        powerups_data = pd
+    else:
+        powerups_data = {}
+    max_heart_bonus = int(powerups_data.get("max_heart_bonus", 0))
+    magnet_duration_multiplier = float(powerups_data.get("magnet_duration_multiplier", 1.0))
+    shield_duration_multiplier = float(powerups_data.get("shield_duration_multiplier", 1.0))
+    pickup_range_bonus = float(powerups_data.get("pickup_range_bonus", 0.0))
+    double_coins_duration_multiplier = float(powerups_data.get("double_coins_duration_multiplier", 1.0))
+    double_coins_gain_multiplier = float(powerups_data.get("double_coins_gain_multiplier", 2.0))
+    speed_boost_duration_multiplier = float(powerups_data.get("speed_boost_duration_multiplier", 1.0))
+    speed_boost_multiplier_multiplier = float(powerups_data.get("speed_boost_multiplier_multiplier", 1.0))
+    var plr_value: Variant = cfg.get_value("rewards", "pending_level_rewards", [])
+    if plr_value is Array:
+        pending_level_rewards = plr_value
+    else:
+        pending_level_rewards = []
 
 func _save_progress() -> void:
     var cfg := ConfigFile.new()
@@ -1196,13 +2063,16 @@ func _save_progress() -> void:
     cfg.set_value("progress", "best_score", best_score)
     cfg.set_value("progress", "last_score", last_score)
     cfg.set_value("progress", "last_coins", last_coins)
+    cfg.set_value("progress", "last_gems", last_gems)
     cfg.set_value("progress", "total_coins", total_coins)
+    cfg.set_value("progress", "total_gems", total_gems)
     cfg.set_value("progress", "player_level", player_level)
     cfg.set_value("progress", "player_xp", player_xp)
     cfg.set_value("progress", "player_xp_required", player_xp_required)
     cfg.set_value("settings", "bgm_muted", bgm_muted)
     cfg.set_value("settings", "sfx_muted", sfx_muted)
     cfg.set_value("powerups", "data", powerups_data)
+    cfg.set_value("rewards", "pending_level_rewards", pending_level_rewards)
     var ver = ProjectSettings.get_setting("application/config/version")
     if ver != null:
         cfg.set_value("meta", "version", String(ver))
@@ -1220,6 +2090,7 @@ func _calculate_xp_required(level: int) -> int:
 func _apply_xp_gain(amount: int) -> void:
     if amount <= 0:
         return
+    var old_level: int = player_level
     player_xp += amount
     if player_level <= 0:
         player_level = 1
@@ -1229,6 +2100,45 @@ func _apply_xp_gain(amount: int) -> void:
         player_xp -= player_xp_required
         player_level += 1
         player_xp_required = _calculate_xp_required(player_level)
+    if player_level > old_level:
+        var new_rewards: Array = _get_pending_level_rewards_for_range(old_level, player_level)
+        if new_rewards.size() > 0:
+            var merged: Array = []
+            for r in pending_level_rewards:
+                merged.append(r)
+            for r2 in new_rewards:
+                if not merged.has(r2):
+                    merged.append(r2)
+            pending_level_rewards = merged
+
+
+func _get_pending_level_rewards_for_range(old_level: int, new_level: int) -> Array:
+    var result: Array = []
+    if new_level <= old_level:
+        return result
+    for lvl in range(old_level + 1, new_level + 1):
+        var reward_type: String = ""
+        match lvl:
+            2:
+                reward_type = "coins_50"
+            3:
+                reward_type = "coins_100"
+            4:
+                reward_type = "coins_150"
+            5:
+                reward_type = "coins_200"
+            6:
+                reward_type = "gems_5"
+            7:
+                reward_type = "coins_250"
+            8:
+                reward_type = "gems_10"
+            _:
+                reward_type = ""
+        if reward_type != "":
+            var entry := {"level": lvl, "type": reward_type}
+            result.append(entry)
+    return result
 
 
 
@@ -1277,6 +2187,9 @@ func _unhandled_input(event: InputEvent) -> void:
                     player.request_attack()
                 return
     if event is InputEventKey and event.pressed and not event.echo:
+        if Input.is_action_just_pressed("open_missions_menu"):
+            open_missions_menu()
+            return
         if OS.is_debug_build() and (Input.is_action_just_pressed("toggle_debug") or event.keycode == KEY_F3):
             debug_info_enabled = not debug_info_enabled
             if debug_label != null:
@@ -1290,10 +2203,26 @@ func _unhandled_input(event: InputEvent) -> void:
             else:
                 resume_game()
 
-func on_coin_collected(segment: String) -> void:
-    var gain: int = 1
+func on_coin_collected(segment: String, currency: String = "coins", amount: int = 1) -> void:
+    var a := amount
+    if a <= 0:
+        a = 1
+    var c := currency
+    if c.is_empty():
+        c = "coins"
+
+    if c == "gems":
+        if segment == "A":
+            gem_collected_a += a
+        else:
+            gem_collected_b += a
+        if gem_hud_label != null:
+            gem_hud_label.text = str(gem_collected_a + gem_collected_b)
+        return
+
+    var gain: int = a
     if double_coins_run_active:
-        gain = 2
+        gain = int(round(float(a) * max(double_coins_gain_multiplier, 1.0)))
     if segment == "A":
         coin_collected_a += gain
     else:
@@ -1313,6 +2242,10 @@ func activate_double_coins_run(d: float = 0.0) -> void:
     shield_enabled = false
     speed_boost_timer = 0.0
     speed_boost_multiplier = 1.0
+    if missions_manager and missions_manager.has_method("add_skill"):
+        missions_manager.add_skill()
+    if missions_manager and missions_manager.has_method("add_double_coins_skill"):
+        missions_manager.add_double_coins_skill()
 
 func is_double_coins_active() -> bool:
     return double_coins_run_active
@@ -1351,10 +2284,16 @@ func _start_play_phase() -> void:
         return
     phase = Phase.ENTRY
     game_active = false
+    _bgm_mode = BgmMode.RUN
+    _bgm_duck_db = 0.0
     distance = 0.0
     score = 0
     coin_collected_a = 0
     coin_collected_b = 0
+    gem_collected_a = 0
+    gem_collected_b = 0
+    if gem_hud_label != null:
+        gem_hud_label.text = "0"
     game_time_sec = 0.0
     _tiles_passed_accum = 0.0
     total_tiles_passed = 0
@@ -1370,6 +2309,8 @@ func _start_play_phase() -> void:
     countdown_active = true
     countdown_timer = countdown_duration_sec
     entry_finished = false
+    _missions_completed_type_toasted.clear()
+    _apply_powerups_for_new_run()
     if player and player.has_method("reset_player"):
         player.reset_player()
     _clear_existing_hearts()
@@ -1420,8 +2361,12 @@ func _refresh_missions_label() -> void:
     if not canvas:
         return
     var label := canvas.get_node_or_null("PauseMenu/VBox/MissionsLabel")
-    if label and missions_manager and missions_manager.has_method("get_missions_text"):
-        var txt: String = missions_manager.get_missions_text()
+    if label and missions_manager:
+        var txt: String = ""
+        if missions_manager.has_method("get_ingame_missions_text"):
+            txt = String(missions_manager.call("get_ingame_missions_text"))
+        elif missions_manager.has_method("get_missions_text"):
+            txt = String(missions_manager.call("get_missions_text"))
         (label as Label).text = "Misi:\n" + txt
 
 func _trigger_coin_burst() -> void:
@@ -1433,3 +2378,13 @@ func _trigger_coin_burst() -> void:
     for tl in layers:
         if tl != null and tl.has_method("spawn_bonus_coins"):
             tl.spawn_bonus_coins(2)
+
+
+func on_enemy_killed_by_player() -> void:
+    if missions_manager and missions_manager.has_method("add_enemy_kill"):
+        missions_manager.add_enemy_kill()
+
+
+func on_player_jump() -> void:
+    if missions_manager and missions_manager.has_method("add_jump"):
+        missions_manager.add_jump()

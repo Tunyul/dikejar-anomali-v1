@@ -8,24 +8,30 @@
 
 config_version=5
 
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
 
 config/name="Dikejar Anomali"
-config/version="1.3.18-beta"
+config/version="1.3.27-beta"
 run/main_scene="res://scenes/LoadingScreen.tscn"
-config/features=PackedStringArray("4.5")
+config/features=PackedStringArray("4.6")
 config/icon="uid://cs8vxi0qroewf"
 
 [autoload]
 
 TransitionManager="*res://scenes/TransitionManager.tscn"
 Preloader="*res://scripts/Preloader.gd"
+RemoteContent="*res://scripts/RemoteContent.gd"
 
 [display]
 
 window/size/viewport_width=1024
 window/size/viewport_height=576
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [input]
 
@@ -40,6 +46,24 @@ attack={
 , Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":75,"key_label":0,"unicode":75,"location":0,"echo":false,"script":null)
 ]
 }
+open_missions_menu={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":77,"key_label":0,"unicode":77,"location":0,"echo":false,"script":null)
+, Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":16777217,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[remote_content]
+
+base_url=""
+manifest_name="manifest.json"
+packs_dir="user://remote_content/packs"
+required=false
+force_redownload=false
 
 [rendering]
 
