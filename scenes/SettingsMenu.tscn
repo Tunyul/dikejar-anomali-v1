@@ -3,6 +3,10 @@
 [ext_resource type="Script" uid="uid://dxjs68b8i4t6v" path="res://scripts/SettingsMenu.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://deimh4ij40yld" path="res://assets/panel/panel_setting_685x356.png" id="2_panel_setting"]
 [ext_resource type="Texture2D" uid="uid://yrdaorbs24i0" path="res://assets/tombol/tombol_x_96.png" id="3_tombol_close"]
+[ext_resource type="Texture2D" uid="uid://dagxdwg0jt5xe" path="res://assets/tombol/tombol_home_96x96.png" id="4_home"]
+[ext_resource type="Texture2D" uid="uid://l1q21u47e1pc" path="res://assets/tombol/tombol_retry_96x96.png" id="5_retry"]
+[ext_resource type="Texture2D" uid="uid://b7gkng0ib4y4h" path="res://assets/tombol/tombol_play_96x96.png" id="6_resume"]
+[ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="7_fredoka_bold"]
 
 [node name="SettingsMenu" type="Control"]
 layout_mode = 3
@@ -16,6 +20,14 @@ script = ExtResource("1")
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 200
 
+[node name="Background" type="ColorRect" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
 [node name="Panel" type="TextureRect" parent="UI"]
 anchors_preset = 8
 anchor_left = 0.5
@@ -23,72 +35,148 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -352.0
-offset_top = -224.0
+offset_top = -180.0
 offset_right = 352.0
-offset_bottom = 224.0
+offset_bottom = 268.0
 texture = ExtResource("2_panel_setting")
 stretch_mode = 5
 
 [node name="CloseButton" type="TextureButton" parent="UI/Panel"]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -92.0
-offset_top = 4.0
+offset_top = -24.0
 offset_right = -4.0
-offset_bottom = 92.0
+offset_bottom = 64.0
+grow_horizontal = 0
 texture_normal = ExtResource("3_tombol_close")
 
 [node name="Scroll" type="ScrollContainer" parent="UI/Panel"]
+layout_mode = 1
 anchors_preset = 15
-offset_left = 56.0
-offset_top = 96.0
-offset_right = -40.0
-offset_bottom = -40.0
-custom_minimum_size = Vector2(600, 260)
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = 80.0
+offset_right = -64.0
+offset_bottom = -130.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="UI/Panel/Scroll"]
+[node name="Margin" type="MarginContainer" parent="UI/Panel/Scroll"]
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 12
-alignment = 1
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="TitleLabel" type="Label" parent="UI/Panel/Scroll/VBox"]
+[node name="VBox" type="VBoxContainer" parent="UI/Panel/Scroll/Margin"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "Settings"
-horizontal_alignment = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 20
 
-[node name="LanguageLabel" type="Label" parent="UI/Panel/Scroll/VBox"]
+[node name="LanguageGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LanguageLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/LanguageGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Language"
 
-[node name="LanguageOption" type="OptionButton" parent="UI/Panel/Scroll/VBox"]
+[node name="LanguageOption" type="OptionButton" parent="UI/Panel/Scroll/Margin/VBox/LanguageGroup"]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 
-[node name="BGMLabel" type="Label" parent="UI/Panel/Scroll/VBox"]
+[node name="BGMGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BGMLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "BGM Volume"
 
-[node name="BGMSlider" type="HSlider" parent="UI/Panel/Scroll/VBox"]
+[node name="BGMSlider" type="HSlider" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup"]
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
+size_flags_vertical = 4
 
-[node name="BGMMute" type="CheckBox" parent="UI/Panel/Scroll/VBox"]
+[node name="BGMMute" type="CheckBox" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_constants/h_separation = 10
 text = "Mute BGM"
 
-[node name="SFXLabel" type="Label" parent="UI/Panel/Scroll/VBox"]
+[node name="SFXGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SFXLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "SFX Volume"
 
-[node name="SFXSlider" type="HSlider" parent="UI/Panel/Scroll/VBox"]
+[node name="SFXSlider" type="HSlider" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup"]
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
+size_flags_vertical = 4
 
-[node name="SFXMute" type="CheckBox" parent="UI/Panel/Scroll/VBox"]
+[node name="SFXMute" type="CheckBox" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_constants/h_separation = 10
 text = "Mute SFX"
+
+[node name="ButtonRow" type="HBoxContainer" parent="UI/Panel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -160.0
+offset_top = -110.0
+offset_right = 160.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="MenuButton" type="Button" parent="UI/Panel/ButtonRow"]
+layout_mode = 2
+icon = ExtResource("4_home")
+flat = true
+
+[node name="RestartButton" type="Button" parent="UI/Panel/ButtonRow"]
+layout_mode = 2
+icon = ExtResource("5_retry")
+flat = true
+
+[node name="ResumeButton" type="Button" parent="UI/Panel/ButtonRow"]
+layout_mode = 2
+icon = ExtResource("6_resume")
+flat = true
+
+[node name="TitleLabel" type="Label" parent="UI"]
+anchors_preset = -1
+anchor_left = 0.25
+anchor_top = 0.17
+anchor_right = 0.75
+anchor_bottom = 0.26
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("7_fredoka_bold")
+theme_override_font_sizes/font_size = 36
+text = "Settings"
+horizontal_alignment = 1
+vertical_alignment = 1

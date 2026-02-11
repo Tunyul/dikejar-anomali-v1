@@ -37,7 +37,53 @@ var _daily_all_reward_label: Label = null
 var _daily_all_claim_button: BaseButton = null
 
 
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_TRANSLATION_CHANGED:
+        _refresh_all_ui_texts()
+
+func _refresh_all_ui_texts() -> void:
+    # Update Judul
+    var title_label := get_node_or_null("UI/TitleLabel") as Label
+    if title_label:
+        title_label.text = tr("MISSIONS")
+
+    # Update Tab Buttons
+    var daily_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/DailyButton") as BaseButton
+    if daily_btn: daily_btn.text = tr("DAILY")
+    var mission_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MissionButton") as BaseButton
+    if mission_btn: mission_btn.text = tr("MISSION")
+    var weekly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/WeeklyButton") as BaseButton
+    if weekly_btn: weekly_btn.text = tr("WEEKLY")
+    var monthly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MonthlyButton") as BaseButton
+    if monthly_btn: monthly_btn.text = tr("MONTHLY")
+    var challenge_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/ChallengeButton") as BaseButton
+    if challenge_btn: challenge_btn.text = tr("CHALLENGE")
+
+    # Update Back Button
+    var back := get_node_or_null("UI/MissionPanel/PanelContent/VBox/BackButton") as BaseButton
+    if back: back.text = tr("BACK")
+
+    # Update Reset Label
+    if _reset_label:
+        # Reset label text biasanya diupdate di _process, tapi kita panggil manual jika perlu
+        pass
+
+    # Update Mission List
+    var missions_panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
+    if missions_panel:
+        _refresh_missions_panel(missions_panel)
+
+    # Update Daily Summary
+    if _daily_summary and _daily_summary.visible:
+        var cfg := ConfigFile.new()
+        cfg.load("user://save.cfg")
+        var missions_value = cfg.get_value("missions", "list", [])
+        if missions_value is Array:
+            _update_daily_summary(cfg, missions_value)
+
 func _ready() -> void:
+    process_mode = Node.PROCESS_MODE_ALWAYS
+    _refresh_all_ui_texts()
     var back := get_node_or_null("UI/MissionPanel/PanelContent/VBox/BackButton") as BaseButton
     if back:
         back.pressed.connect(_on_back_pressed)
@@ -158,6 +204,7 @@ func _ready() -> void:
 
 
 func _on_language_changed(_locale: String) -> void:
+    _refresh_all_ui_texts()
     _update_reset_time_label()
     var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
     if panel:
@@ -327,6 +374,8 @@ func show_overlay() -> void:
         ui.visible = true
     visible = true
 
+    _refresh_all_ui_texts()
+
     if _mission_panel:
         _mission_panel.modulate.a = 0.0
         _mission_panel.scale = Vector2(0.8, 0.8)
@@ -439,7 +488,7 @@ func _on_reset_daily_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     _pending_action = "reset_daily"
     if _confirm_panel and _confirm_message:
-        _confirm_message.text = "Reset misi harian?\nTonton iklan untuk reset."
+        _confirm_message.text = tr("Reset misi harian?\nTonton iklan untuk reset.")
         _confirm_panel.visible = true
 
 
@@ -553,13 +602,13 @@ func _update_daily_summary(cfg: ConfigFile, missions: Array) -> void:
         if reward_claimed:
             if _daily_all_reward_label:
                 _daily_all_reward_label.visible = true
-                _daily_all_reward_label.text = tr("Diamond: SUDAH")
+                _daily_all_reward_label.text = tr("Gems") + ": " + tr("Owned")
             if _daily_all_claim_button:
                 _daily_all_claim_button.visible = false
         else:
             if _daily_all_reward_label:
                 _daily_all_reward_label.visible = true
-                _daily_all_reward_label.text = "+%d " % reward_amt + tr("Diamond")
+                _daily_all_reward_label.text = "+%d " % reward_amt + tr("Gems")
             if _daily_all_claim_button:
                 _daily_all_claim_button.visible = true
                 _daily_all_claim_button.disabled = false
@@ -650,6 +699,7 @@ func _update_tab_buttons() -> void:
     var weekly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/WeeklyButton") as BaseButton
     var monthly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MonthlyButton") as BaseButton
     var challenge_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/ChallengeButton") as BaseButton
+
     _apply_tab_style(daily_btn, _current_tab == "daily")
     _apply_tab_style(mission_btn, _current_tab == "mission")
     _apply_tab_style(weekly_btn, _current_tab == "week")
@@ -720,6 +770,53 @@ func _refresh_missions_panel(panel: Node) -> void:
     var missions: Array = []
     if missions_value is Array:
         missions = missions_value
+
+    # Fix: Force update mission names for localization if they are still hardcoded Indonesian
+    var needs_save_fix := false
+    for m_idx in range(missions.size()):
+        var m_dict = missions[m_idx] as Dictionary
+        if m_dict:
+            var current_name: String = m_dict.get("name", "")
+            var new_name := current_name
+            var kind: String = String(m_dict.get("kind", ""))
+
+            # Mapping Indonesian hardcoded names to placeholders
+            if current_name.begins_with("Kumpulkan") and current_name.ends_with("koin"):
+                new_name = "Kumpulkan {n} koin"
+            elif current_name.begins_with("Dapatkan") and current_name.ends_with("skill"):
+                new_name = "Dapatkan {n} skill"
+            elif current_name.begins_with("Lompat") and current_name.ends_with("kali"):
+                new_name = "Lompat {n} kali"
+            elif current_name.begins_with("Kalahkan") and current_name.ends_with("musuh"):
+                new_name = "Kalahkan {n} musuh"
+            elif current_name.begins_with("Capai jarak") and current_name.ends_with("m"):
+                new_name = "Capai jarak {n}m"
+            elif current_name.begins_with("Mainkan") and current_name.ends_with("run"):
+                new_name = "Mainkan {n} run"
+            elif current_name.begins_with("Dapatkan Shield"):
+                new_name = "Dapatkan Shield {n} kali"
+            elif current_name.begins_with("Dapatkan DoubleCoins"):
+                new_name = "Dapatkan DoubleCoins {n} kali"
+
+            # Fallback based on kind if name is still Indonesian-like or empty
+            if new_name == current_name:
+                match kind:
+                    "coins": new_name = "Kumpulkan {n} koin"
+                    "skills": new_name = "Dapatkan {n} skill"
+                    "jumps": new_name = "Lompat {n} kali"
+                    "enemies": new_name = "Kalahkan {n} musuh"
+                    "distance": new_name = "Capai jarak {n}m"
+                    "runs": new_name = "Mainkan {n} run"
+                    "shield": new_name = "Dapatkan Shield {n} kali"
+                    "double_coins": new_name = "Dapatkan DoubleCoins {n} kali"
+
+            if new_name != current_name:
+                m_dict["name"] = new_name
+                needs_save_fix = true
+
+    if needs_save_fix:
+        cfg.set_value("missions", "list", missions)
+        cfg.save("user://save.cfg")
     var claimed_value = cfg.get_value("missions", "reward_claimed", {})
     var claimed: Dictionary = {}
     if claimed_value is Dictionary:
@@ -742,7 +839,7 @@ func _refresh_missions_panel(panel: Node) -> void:
         var t: String = String(m.get("type", ""))
         var mname: String = String(m.get("name", ""))
         var kind: String = String(m.get("kind", ""))
-        var is_kill := kind == "enemies" or (kind.is_empty() and mname.begins_with("Kalahkan"))
+        var is_kill := kind == "enemies" or (kind.is_empty() and (mname.begins_with("Kalahkan") or mname.begins_with("Defeat") or mname.begins_with("击败")))
         if t.is_empty():
             if _current_tab == "daily" or _current_tab == "mission":
                 if is_kill:
@@ -827,7 +924,15 @@ func _refresh_missions_panel(panel: Node) -> void:
             name_label.layout_direction = Control.LAYOUT_DIRECTION_LTR
             name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
             name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_WORD_ELLIPSIS
-            name_label.text = tr(mname)
+
+            # Fix localization with target numbers
+            var localized_text := tr(mname)
+            if localized_text.contains("{n}"):
+                localized_text = localized_text.replace("{n}", str(int(target)))
+            name_label.text = localized_text
+
+            # Re-apply styling in case translation changes things
+            name_label.add_theme_color_override("font_color", Color(0, 0, 0))
         if bar:
             bar.visible = true
             bar.show_percentage = false
@@ -1139,43 +1244,52 @@ func _ensure_missions_defaults(missions: Array) -> bool:
                     m["kind"] = "skills"
                     changed = true
     if not ids.has("m4"):
-        missions.append({"id": "m4", "name": "Kalahkan 5 musuh", "target": 5, "progress": 0, "type": "daily", "reward": 40, "kind": "enemies"})
+        missions.append({"id": "m4", "name": "Kalahkan {n} musuh", "target": 5, "progress": 0, "type": "daily", "reward": 40, "kind": "enemies"})
         changed = true
     if not ids.has("m5"):
-        missions.append({"id": "m5", "name": "Capai jarak 1000m", "target": 1000, "progress": 0, "type": "daily", "reward": 45, "kind": "distance"})
+        missions.append({"id": "m5", "name": "Capai jarak {n}m", "target": 1000, "progress": 0, "type": "daily", "reward": 45, "kind": "distance"})
+        changed = true
+    if not ids.has("m1"):
+        missions.append({"id": "m1", "name": "Kumpulkan {n} koin", "target": 50, "progress": 0, "type": "daily", "reward": 25, "kind": "coins"})
+        changed = true
+    if not ids.has("m2"):
+        missions.append({"id": "m2", "name": "Dapatkan {n} skill", "target": 1, "progress": 0, "type": "daily", "reward": 30, "kind": "skills"})
+        changed = true
+    if not ids.has("m3"):
+        missions.append({"id": "m3", "name": "Lompat {n} kali", "target": 50, "progress": 0, "type": "daily", "reward": 35, "kind": "jumps"})
         changed = true
     if not ids.has("ms1"):
-        missions.append({"id": "ms1", "name": "Kumpulkan 200 koin", "target": 200, "progress": 0, "type": "mission", "reward": 70, "kind": "coins"})
+        missions.append({"id": "ms1", "name": "Kumpulkan {n} koin", "target": 200, "progress": 0, "type": "mission", "reward": 70, "kind": "coins"})
         changed = true
     if not ids.has("ms2"):
-        missions.append({"id": "ms2", "name": "Dapatkan 3 skill", "target": 3, "progress": 0, "type": "mission", "reward": 90, "kind": "skills"})
+        missions.append({"id": "ms2", "name": "Dapatkan {n} skill", "target": 3, "progress": 0, "type": "mission", "reward": 90, "kind": "skills"})
         changed = true
     if not ids.has("ms3"):
-        missions.append({"id": "ms3", "name": "Lompat 200 kali", "target": 200, "progress": 0, "type": "mission", "reward": 120, "kind": "jumps"})
+        missions.append({"id": "ms3", "name": "Lompat {n} kali", "target": 200, "progress": 0, "type": "mission", "reward": 120, "kind": "jumps"})
         changed = true
     if not ids.has("ms4"):
-        missions.append({"id": "ms4", "name": "Kalahkan 20 musuh", "target": 20, "progress": 0, "type": "mission", "reward": 140, "kind": "enemies"})
+        missions.append({"id": "ms4", "name": "Kalahkan {n} musuh", "target": 20, "progress": 0, "type": "mission", "reward": 140, "kind": "enemies"})
         changed = true
     if not ids.has("w1"):
-        missions.append({"id": "w1", "name": "Kumpulkan 1000 koin", "target": 1000, "progress": 0, "type": "week", "reward": 150, "kind": "coins"})
+        missions.append({"id": "w1", "name": "Kumpulkan {n} koin", "target": 1000, "progress": 0, "type": "week", "reward": 150, "kind": "coins"})
         changed = true
     if not ids.has("w2"):
-        missions.append({"id": "w2", "name": "Dapatkan 10 skill", "target": 10, "progress": 0, "type": "week", "reward": 200, "kind": "skills"})
+        missions.append({"id": "w2", "name": "Dapatkan {n} skill", "target": 10, "progress": 0, "type": "week", "reward": 200, "kind": "skills"})
         changed = true
     if not ids.has("w3"):
-        missions.append({"id": "w3", "name": "Mainkan 20 run", "target": 20, "progress": 0, "type": "week", "reward": 260, "kind": "runs"})
+        missions.append({"id": "w3", "name": "Mainkan {n} run", "target": 20, "progress": 0, "type": "week", "reward": 260, "kind": "runs"})
         changed = true
     if not ids.has("w4"):
-        missions.append({"id": "w4", "name": "Kalahkan 60 musuh", "target": 60, "progress": 0, "type": "week", "reward": 300, "kind": "enemies"})
+        missions.append({"id": "w4", "name": "Kalahkan {n} musuh", "target": 60, "progress": 0, "type": "week", "reward": 300, "kind": "enemies"})
         changed = true
     if not ids.has("mo1"):
-        missions.append({"id": "mo1", "name": "Kumpulkan 5000 koin", "target": 5000, "progress": 0, "type": "month", "reward": 350, "kind": "coins"})
+        missions.append({"id": "mo1", "name": "Kumpulkan {n} koin", "target": 5000, "progress": 0, "type": "month", "reward": 350, "kind": "coins"})
         changed = true
     if not ids.has("mo2"):
-        missions.append({"id": "mo2", "name": "Capai jarak 20000m", "target": 20000, "progress": 0, "type": "month", "reward": 450, "kind": "distance"})
+        missions.append({"id": "mo2", "name": "Capai jarak {n}m", "target": 20000, "progress": 0, "type": "month", "reward": 450, "kind": "distance"})
         changed = true
     if not ids.has("mo3"):
-        missions.append({"id": "mo3", "name": "Kalahkan 150 musuh", "target": 150, "progress": 0, "type": "month", "reward": 550, "kind": "enemies"})
+        missions.append({"id": "mo3", "name": "Kalahkan {n} musuh", "target": 150, "progress": 0, "type": "month", "reward": 550, "kind": "enemies"})
         changed = true
     return changed
 
@@ -1322,51 +1436,56 @@ func _ensure_challenge_kill_missions(cfg: ConfigFile, missions: Array, claimed: 
     var progress := maxi(enemies_killed - base_enemies, 0)
     missions.append({
         "id": "ck",
-        "name": "Kalahkan %d musuh" % target,
+        "name": "Kalahkan {n} musuh",
         "target": target,
         "progress": progress,
         "type": "challenge",
-        "reward": reward
+        "reward": reward,
+        "kind": "enemies"
     })
 
     var shield_target := _challenge_powerup_target_for_abs_level(shield_level)
     missions.append({
         "id": "csh",
-        "name": "Dapatkan Shield %d kali" % shield_target,
+        "name": "Dapatkan Shield {n} kali",
         "target": shield_target,
         "progress": maxi(shield_skills_collected - base_shield, 0),
         "type": "challenge",
-        "reward": _challenge_generic_reward_for_abs_level(shield_level)
+        "reward": _challenge_generic_reward_for_abs_level(shield_level),
+        "kind": "shield"
     })
 
     var dc_target := _challenge_powerup_target_for_abs_level(dc_level)
     missions.append({
         "id": "cdc",
-        "name": "Dapatkan DoubleCoins %d kali" % dc_target,
+        "name": "Dapatkan DoubleCoins {n} kali",
         "target": dc_target,
         "progress": maxi(double_coins_skills_collected - base_dc, 0),
         "type": "challenge",
-        "reward": _challenge_generic_reward_for_abs_level(dc_level)
+        "reward": _challenge_generic_reward_for_abs_level(dc_level),
+        "kind": "double_coins"
     })
 
     var coins_target := _challenge_coins_target_for_abs_level(coins_level)
     missions.append({
         "id": "cc",
-        "name": "Kumpulkan %d koin" % coins_target,
+        "name": "Kumpulkan {n} koin",
         "target": coins_target,
         "progress": maxi(coins_collected - base_coins, 0),
         "type": "challenge",
-        "reward": _challenge_generic_reward_for_abs_level(coins_level)
+        "reward": _challenge_generic_reward_for_abs_level(coins_level),
+        "kind": "coins"
     })
 
     var dist_target := _challenge_distance_target_for_abs_level(dist_level)
     missions.append({
         "id": "cd",
-        "name": "Capai jarak %dm" % dist_target,
+        "name": "Capai jarak {n}m",
         "target": dist_target,
         "progress": maxi(max_distance - base_dist, 0),
         "type": "challenge",
-        "reward": _challenge_generic_reward_for_abs_level(dist_level)
+        "reward": _challenge_generic_reward_for_abs_level(dist_level),
+        "kind": "distance"
     })
 
     cfg.set_value("missions", "challenge_kill_level", level)

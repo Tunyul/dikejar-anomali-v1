@@ -5,6 +5,9 @@ signal sfx_volume_changed(v: float)
 signal bgm_mute_changed(muted: bool)
 signal sfx_mute_changed(muted: bool)
 signal overlay_closed
+signal resume_pressed
+signal restart_pressed
+signal menu_pressed
 
 var _bgm_slider: HSlider = null
 var _sfx_slider: HSlider = null
@@ -18,20 +21,35 @@ var _flag_zh: Texture2D = null
 var _close_btn: BaseButton = null
 var _panel: Control = null
 var _vbox: Control = null
+var _resume_btn: Button = null
+var _restart_btn: Button = null
+var _menu_btn: Button = null
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
 var _scroll_drag_active: bool = false
 var _scroll_drag_last_pos: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
-    _bgm_slider = get_node_or_null("UI/Panel/Scroll/VBox/BGMSlider") as HSlider
-    _sfx_slider = get_node_or_null("UI/Panel/Scroll/VBox/SFXSlider") as HSlider
-    _bgm_mute = get_node_or_null("UI/Panel/Scroll/VBox/BGMMute") as CheckBox
-    _sfx_mute = get_node_or_null("UI/Panel/Scroll/VBox/SFXMute") as CheckBox
-    _lang_option = get_node_or_null("UI/Panel/Scroll/VBox/LanguageOption") as OptionButton
+    process_mode = Node.PROCESS_MODE_ALWAYS
+    _bgm_slider = get_node_or_null("UI/Panel/Scroll/Margin/VBox/BGMGroup/BGMSlider") as HSlider
+    _sfx_slider = get_node_or_null("UI/Panel/Scroll/Margin/VBox/SFXGroup/SFXSlider") as HSlider
+    _bgm_mute = get_node_or_null("UI/Panel/Scroll/Margin/VBox/BGMGroup/BGMMute") as CheckBox
+    _sfx_mute = get_node_or_null("UI/Panel/Scroll/Margin/VBox/SFXGroup/SFXMute") as CheckBox
+    _lang_option = get_node_or_null("UI/Panel/Scroll/Margin/VBox/LanguageGroup/LanguageOption") as OptionButton
     _scroll = get_node_or_null("UI/Panel/Scroll") as ScrollContainer
     _close_btn = get_node_or_null("UI/Panel/CloseButton") as BaseButton
     _panel = get_node_or_null("UI/Panel") as Control
-    _vbox = get_node_or_null("UI/Panel/Scroll/VBox") as Control
+    _vbox = get_node_or_null("UI/Panel/Scroll/Margin/VBox") as Control
+    _resume_btn = get_node_or_null("UI/Panel/ButtonRow/ResumeButton") as Button
+    _restart_btn = get_node_or_null("UI/Panel/ButtonRow/RestartButton") as Button
+    _menu_btn = get_node_or_null("UI/Panel/ButtonRow/MenuButton") as Button
+
+    if _resume_btn:
+        _resume_btn.pressed.connect(func(): emit_signal("resume_pressed"); _on_back_pressed())
+    if _restart_btn:
+        _restart_btn.pressed.connect(func(): emit_signal("restart_pressed"))
+    if _menu_btn:
+        _menu_btn.pressed.connect(func(): emit_signal("menu_pressed"))
+
     if _panel:
         _panel.pivot_offset = _panel.size * 0.5
     if _scroll:
@@ -77,7 +95,7 @@ func _ready() -> void:
     if ui_font:
         _apply_ui_font(self, ui_font)
     if title_font:
-        var title_label := get_node_or_null("UI/Panel/Scroll/VBox/TitleLabel") as Label
+        var title_label := get_node_or_null("UI/TitleLabel") as Label
         if title_label:
             title_label.add_theme_font_override("font", title_font)
             title_label.add_theme_color_override("font_color", Color(1, 1, 0, 1))
@@ -396,8 +414,15 @@ func _on_sfx_mute_toggled(pressed: bool) -> void:
     cfg.save("user://save.cfg")
     TransitionManager.set_sfx_muted(pressed)
 
-func show_overlay() -> void:
+func show_overlay(is_ingame: bool = false) -> void:
     _sync_controls_from_save()
+    if _resume_btn:
+        _resume_btn.visible = is_ingame
+    if _restart_btn:
+        _restart_btn.visible = is_ingame
+    if _menu_btn:
+        _menu_btn.visible = is_ingame
+
     var ui := get_node_or_null("UI")
     if ui:
         ui.visible = true

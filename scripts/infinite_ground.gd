@@ -206,6 +206,7 @@ func _setup_rng() -> void:
     _rng.seed = _runtime_seed
 
 func _ready() -> void:
+    process_mode = Node.PROCESS_MODE_PAUSABLE
     _base_use_acceleration = use_acceleration
     _runtime_use_acceleration = use_acceleration
     _initialized = false

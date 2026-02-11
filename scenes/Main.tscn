@@ -19,7 +19,6 @@
 [ext_resource type="Texture2D" uid="uid://dqmmglr4yqrso" path="res://assets/enemy/sprite-256px-36.png" id="23_ebg2g"]
 [ext_resource type="Script" uid="uid://tarkx6h70bep" path="res://scripts/anomaly_chaser.gd" id="27"]
 [ext_resource type="Script" uid="uid://cabvraniau87d" path="res://scripts/version_label.gd" id="28"]
-[ext_resource type="Script" uid="uid://bqtf5uji02hgv" path="res://scripts/PauseMenu.gd" id="31"]
 [ext_resource type="Script" uid="uid://vy3s5tmkqslw" path="res://scripts/GameOverMenu.gd" id="34"]
 [ext_resource type="Script" uid="uid://cvivocoxcy2xo" path="res://scripts/AdManager.gd" id="35"]
 [ext_resource type="Script" uid="uid://dhacrgdwndgfc" path="res://scripts/MissionsManager.gd" id="36"]
@@ -698,104 +697,6 @@ theme_override_font_sizes/font_size = 28
 text = "Misi selesai! Claim di Menu Misi."
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="PauseMenu" type="Control" parent="CanvasLayer"]
-visible = false
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("31")
-
-[node name="Panel" type="ColorRect" parent="CanvasLayer/PauseMenu"]
-layout_mode = 0
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.45)
-
-[node name="Title" type="Label" parent="CanvasLayer/PauseMenu"]
-layout_mode = 0
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -296.0
-offset_top = -200.0
-offset_right = 296.0
-offset_bottom = -160.0
-text = "Paused"
-
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/PauseMenu"]
-layout_mode = 0
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -296.0
-offset_top = -132.0
-offset_right = 296.0
-offset_bottom = 132.0
-
-[node name="ResumeButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 30
-text = "Resume"
-
-[node name="RestartButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 30
-text = "Restart"
-
-[node name="MenuButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 30
-text = "Menu"
-
-[node name="MissionsButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 30
-text = "Misi"
-
-[node name="BGMVolume" type="HSlider" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-max_value = 1.0
-step = 0.01
-value = 0.8
-
-[node name="BGMMute" type="CheckBox" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 24
-text = "Mute BGM"
-
-[node name="SFXMute" type="CheckBox" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 24
-text = "Mute SFX"
-
-[node name="SFXVolume" type="HSlider" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-max_value = 1.0
-step = 0.01
-value = 0.8
-
-[node name="MissionsLabel" type="Label" parent="CanvasLayer/PauseMenu/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 24
-text = "Misi:"
 
 [node name="GameOverMenu" type="Control" parent="CanvasLayer"]
 visible = false

@@ -17,6 +17,7 @@ var _has_caught_player: bool = false
 @onready var ground_ray: RayCast2D = $GroundRay
 
 func _ready() -> void:
+    process_mode = Node.PROCESS_MODE_PAUSABLE
     var main := get_tree().get_root().get_node_or_null("Main")
     if main:
         _player = main.get_node_or_null("Player")

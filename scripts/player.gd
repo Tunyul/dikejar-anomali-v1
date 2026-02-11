@@ -166,6 +166,9 @@ func match_sprite_to_collision_size() -> void:
         print("Sprite resized: orig_run=", run_size, " orig_jump=", jump_size, " collision=", shape_size, " scale=", final_scale)
 
 func _ready() -> void:
+    # Set process mode agar bisa dipause oleh SceneTree.paused
+    process_mode = Node.PROCESS_MODE_PAUSABLE
+
     if OS.is_debug_build():
         if not InputMap.has_action("jump"):
             InputMap.add_action("jump")

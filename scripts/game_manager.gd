@@ -163,6 +163,7 @@ var _missions_menu_opened_from_playing: bool = false
 var _settings_menu_opened_from_playing: bool = false
 
 func _ready() -> void:
+    process_mode = Node.PROCESS_MODE_ALWAYS
     if _base_powerup_magnet_duration_sec < 0.0:
         _base_powerup_magnet_duration_sec = powerup_magnet_duration_sec
     if _base_powerup_shield_duration_sec < 0.0:
@@ -277,9 +278,6 @@ func _ready() -> void:
         canvas.add_child(sil)
         speed_info_label = sil
     if canvas:
-        var pm := canvas.get_node_or_null("PauseMenu")
-        if pm:
-            pm.visible = false
         var gom := canvas.get_node_or_null("GameOverMenu")
         if gom:
             gom.visible = false
@@ -345,10 +343,39 @@ func _on_ready_to_claim_changed(can_claim: bool) -> void:
 func _on_mission_became_ready(_mission_id: String, mission_name: String) -> void:
     _suppress_ready_to_claim_toast = true
     var mission_title := mission_name.strip_edges()
+
+    # Persingkat teks: Langsung nama misi jika tersedia, jika tidak pakai generic message
     if mission_title.is_empty():
-        _enqueue_missions_toast(tr("Mission reward ready! Click toast / press M."))
+        _enqueue_missions_toast(tr("Reward Ready!"))
         return
-    _enqueue_missions_toast(tr("Mission complete: %s (click/press M)") % tr(mission_title))
+
+    # Lokalisasi nama misi (menggunakan sistem template {n} yang baru saja diperbaiki)
+    # Pastikan mission_title adalah key yang valid di TransitionManager
+    var localized_title := tr(mission_title)
+
+    # Jika tr() mengembalikan string yang sama dan bukan bahasa Indonesia,
+    # mungkin ini adalah string dinamis yang sudah diformat (misal "Kumpulkan 10 koin").
+    # Kita coba deteksi dan bersihkan agar bisa diterjemahkan.
+    var locale := TranslationServer.get_locale()
+    if localized_title == mission_title and (locale.begins_with("en") or locale.begins_with("zh")):
+        if mission_title.begins_with("Kumpulkan") and mission_title.ends_with("koin"):
+            var n = mission_title.split(" ")[1]
+            localized_title = tr("Collect {n} coins").replace("{n}", n)
+        elif mission_title.begins_with("Kalahkan") and mission_title.ends_with("musuh"):
+            var n = mission_title.split(" ")[1]
+            localized_title = tr("Defeat {n} enemies").replace("{n}", n)
+        elif mission_title.begins_with("Lompat") and mission_title.ends_with("kali"):
+            var n = mission_title.split(" ")[1]
+            localized_title = tr("Jump {n} times").replace("{n}", n)
+        elif mission_title.begins_with("Dapatkan") and mission_title.ends_with("skill"):
+            var n = mission_title.split(" ")[1]
+            localized_title = tr("Get {n} skills").replace("{n}", n)
+        elif mission_title.begins_with("Capai jarak") and mission_title.ends_with("m"):
+            var n = mission_title.split(" ")[2]
+            localized_title = tr("Reach {n}m distance").replace("{n}", n)
+
+    # Namun untuk toast, kita cukup tampilkan "Selesai: [Nama Misi]"
+    _enqueue_missions_toast(tr("Done: %s") % localized_title)
     var mt: String = ""
     if missions_manager and missions_manager.has_method("get_mission_type"):
         mt = String(missions_manager.call("get_mission_type", _mission_id))
@@ -379,19 +406,59 @@ func _show_missions_toast(msg: String) -> void:
     _missions_toast_shown = true
     if missions_toast == null:
         return
+
+    # Atur teks dan sesuaikan ukuran label
     if missions_toast_text:
         missions_toast_text.text = msg
+        missions_toast_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        missions_toast_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+        # Pastikan label mengisi panel dengan margin
+        missions_toast_text.anchor_left = 0.0
+        missions_toast_text.anchor_right = 1.0
+        missions_toast_text.anchor_top = 0.0
+        missions_toast_text.anchor_bottom = 1.0
+        missions_toast_text.offset_left = 12 # Space for gold border
+        missions_toast_text.offset_right = -8
+        missions_toast_text.offset_top = 4
+        missions_toast_text.offset_bottom = -4
+
+    # Styling mobile-friendly (Compact & Clean)
+    if missions_toast is Panel:
+        var sb := StyleBoxFlat.new()
+        sb.bg_color = Color(0, 0, 0, 0.8) # Slightly darker for premium feel
+        sb.set_corner_radius_all(8) # Smaller radius for compact look
+        sb.border_width_left = 4 # Thicker gold border
+        sb.border_color = Color(1, 0.84, 0, 1)
+        missions_toast.add_theme_stylebox_override("panel", sb)
+
+    # Dynamic Width Calculation (Optional but helpful)
+    # Kita asumsikan font size sekitar 16-18px. Kita batasi lebar agar tidak meluap.
+    var text_size = 0
+    if missions_toast_text and missions_toast_text.get_theme_font("font"):
+        text_size = missions_toast_text.get_theme_font("font").get_string_size(msg, HORIZONTAL_ALIGNMENT_CENTER, -1, missions_toast_text.get_theme_font_size("font_size")).x
+
+    var final_width = clampf(text_size + 40.0, 180.0, 320.0)
+    missions_toast.offset_left = -final_width - 10.0 # Posisi dari kanan
+
     missions_toast.visible = true
     missions_toast.modulate = Color(1, 1, 1, 0)
+    missions_toast.scale = Vector2(0.9, 0.9)
+    missions_toast.pivot_offset = Vector2(final_width, 22) # Center right pivot
+
     if _missions_toast_tween != null:
         _missions_toast_tween.kill()
         _missions_toast_tween = null
-    var tween := create_tween()
+
+    var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
     _missions_toast_tween = tween
-    tween.tween_property(missions_toast, "modulate:a", 1.0, 0.2)
-    tween.tween_interval(2.2)
-    tween.tween_property(missions_toast, "modulate:a", 0.0, 0.2)
-    tween.finished.connect(func():
+    tween.tween_property(missions_toast, "modulate:a", 1.0, 0.3)
+    tween.tween_property(missions_toast, "scale", Vector2.ONE, 0.3)
+
+    # Wait and then hide
+    var hide_tween := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+    hide_tween.tween_interval(3.0) # Longer display time
+    hide_tween.tween_property(missions_toast, "modulate:a", 0.0, 0.3)
+    hide_tween.finished.connect(func():
         if missions_toast:
             missions_toast.visible = false
         _missions_toast_tween = null
@@ -794,8 +861,15 @@ func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
         bgm_toast.offset_bottom = 50.0 + inset_top
 
     if missions_toast:
-        missions_toast.offset_top = 48.0 + inset_top
-        missions_toast.offset_bottom = 92.0 + inset_top
+        # Pindahkan ke kanan atas, lebih compact
+        missions_toast.anchor_left = 1.0
+        missions_toast.anchor_right = 1.0
+        missions_toast.anchor_top = 0.0
+        missions_toast.anchor_bottom = 0.0
+        missions_toast.offset_left = -280.0 - inset_right
+        missions_toast.offset_right = -10.0 - inset_right
+        missions_toast.offset_top = 10.0 + inset_top
+        missions_toast.offset_bottom = 54.0 + inset_top
 
     var sx := safe.position.x
     var sy := safe.position.y
@@ -873,8 +947,20 @@ func _wire_settings_menu_signals(settings_menu: Node) -> void:
     if settings_menu.has_signal("sfx_mute_changed") and not settings_menu.is_connected("sfx_mute_changed", c_sfx_mute):
         settings_menu.connect("sfx_mute_changed", c_sfx_mute)
 
+    var c_resume := Callable(self, "resume_game")
+    if settings_menu.has_signal("resume_pressed") and not settings_menu.is_connected("resume_pressed", c_resume):
+        settings_menu.connect("resume_pressed", c_resume)
+
+    var c_restart := Callable(self, "restart_game")
+    if settings_menu.has_signal("restart_pressed") and not settings_menu.is_connected("restart_pressed", c_restart):
+        settings_menu.connect("restart_pressed", c_restart)
+
+    var c_menu := Callable(self, "return_to_main_menu")
+    if settings_menu.has_signal("menu_pressed") and not settings_menu.is_connected("menu_pressed", c_menu):
+        settings_menu.connect("menu_pressed", c_menu)
+
 func _process(delta: float) -> void:
-    if countdown_active:
+    if countdown_active and game_active:
         var lbl := canvas.get_node_or_null("CountdownLabel") if canvas else null
         countdown_timer = max(countdown_timer - delta, 0.0)
         if lbl and lbl is Label:
@@ -894,7 +980,7 @@ func _process(delta: float) -> void:
     var double_was_active: bool = double_coins_run_active
     var speed_was_active: bool = speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
 
-    if phase == Phase.PLAYING:
+    if phase == Phase.PLAYING and game_active:
         var env_speed: float = base_speed
         if ground_a and ground_a.has_method("get_speed"):
             env_speed = float(ground_a.call("get_speed"))
@@ -938,33 +1024,35 @@ func _process(delta: float) -> void:
             var anim_factor: float = max(0.1, target_speed / max(base_speed, 0.1))
             player.call("set_run_anim_factor", anim_factor)
         _update_speed_info_label(env_speed, target_speed)
-    if magnet_timer > 0.0:
-        magnet_timer = max(magnet_timer - delta, 0.0)
-        if magnet_timer <= 0.0:
-            magnet_enabled = false
-            if magnet_was_enabled:
-                _ensure_skill_after_power_end("magnet")
-    if shield_timer > 0.0:
-        shield_timer = max(shield_timer - delta, 0.0)
-        if shield_timer <= 0.0:
-            shield_enabled = false
-            if shield_was_enabled:
-                _ensure_skill_after_power_end("shield")
-    if double_coins_timer > 0.0:
-        double_coins_timer = max(double_coins_timer - delta, 0.0)
-        if double_coins_timer <= 0.0:
-            if double_was_active:
-                _ensure_skill_after_power_end("double_coins")
-            double_coins_run_active = false
-    _recycle_powerups_behind_player()
-    _ensure_skills_ahead_of_player()
-    _ensure_hearts_for_low_health()
-    if speed_boost_timer > 0.0:
-        speed_boost_timer = max(speed_boost_timer - delta, 0.0)
-        if speed_boost_timer <= 0.0:
-            speed_boost_multiplier = 1.0
-            if speed_was_active and not is_speed_boost_active():
-                _ensure_skill_after_power_end("speed_boost")
+    if game_active:
+        if magnet_timer > 0.0:
+            magnet_timer = max(magnet_timer - delta, 0.0)
+            if magnet_timer <= 0.0:
+                magnet_enabled = false
+                if magnet_was_enabled:
+                    _ensure_skill_after_power_end("magnet")
+        if shield_timer > 0.0:
+            shield_timer = max(shield_timer - delta, 0.0)
+            if shield_timer <= 0.0:
+                shield_enabled = false
+                if shield_was_enabled:
+                    _ensure_skill_after_power_end("shield")
+        if double_coins_timer > 0.0:
+            double_coins_timer = max(double_coins_timer - delta, 0.0)
+            if double_coins_timer <= 0.0:
+                if double_was_active:
+                    _ensure_skill_after_power_end("double_coins")
+                double_coins_run_active = false
+        _recycle_powerups_behind_player()
+        _ensure_skills_ahead_of_player()
+        _ensure_hearts_for_low_health()
+        if speed_boost_timer > 0.0:
+            speed_boost_timer = max(speed_boost_timer - delta, 0.0)
+            if speed_boost_timer <= 0.0:
+                speed_boost_multiplier = 1.0
+                if speed_was_active and not is_speed_boost_active():
+                    _ensure_skill_after_power_end("speed_boost")
+        _apply_enemy_ramp_if_needed()
     if canvas:
         if magnet_icon:
             magnet_icon.visible = magnet_enabled
@@ -1008,7 +1096,7 @@ func _process(delta: float) -> void:
                 speed_boost_timer_label.text = ""
         if heart_spawn_label:
             heart_spawn_label.visible = false
-    _apply_enemy_ramp_if_needed()
+
     if OS.is_debug_build() and debug_info_enabled:
         _debug_time_accum += delta
         if _debug_time_accum >= debug_update_interval_sec:
@@ -1187,6 +1275,7 @@ func on_quit_game() -> void:
 
 func pause_game() -> void:
     game_active = false
+    get_tree().paused = true
     if parallax and parallax.has_method("set_movement_enabled"):
         parallax.set_movement_enabled(false)
     if terrain and terrain.has_method("set_movement_enabled"):
@@ -1197,13 +1286,12 @@ func pause_game() -> void:
         ground_a.set_movement_enabled(false)
     if ground_b and ground_b.has_method("set_movement_enabled"):
         ground_b.set_movement_enabled(false)
-    _set_pause_menu_visible(true)
-    _refresh_missions_label()
 
 func resume_game() -> void:
     if phase == Phase.GAME_OVER:
         return
     game_active = true
+    get_tree().paused = false
     if parallax and parallax.has_method("set_movement_enabled"):
         parallax.set_movement_enabled(true)
     if terrain and terrain.has_method("set_movement_enabled"):
@@ -1219,9 +1307,9 @@ func resume_game() -> void:
         ground_a.set_speed(tgt)
     if ground_b and ground_b.has_method("set_speed"):
         ground_b.set_speed(tgt)
-    _set_pause_menu_visible(false)
 
 func return_to_main_menu() -> void:
+    get_tree().paused = false
     if Preloader and Preloader.has_method("set_next_scene"):
         Preloader.set_next_scene("res://scenes/MainMenu.tscn")
     await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
@@ -1231,7 +1319,6 @@ func open_missions_menu() -> void:
     if game_active:
         _missions_menu_opened_from_playing = true
         pause_game()
-        _set_pause_menu_visible(false)
     var missions_menu := get_node_or_null("DailyMissionsMenu")
     if missions_menu == null:
         var packed := load("res://scenes/DailyMissionsMenu.tscn") as PackedScene
@@ -1250,27 +1337,37 @@ func open_missions_menu() -> void:
 
 
 func open_settings_menu() -> void:
+    # Cek apakah menu sudah ada dan sedang ditampilkan
+    var existing := get_node_or_null("SettingsMenu")
+    if existing and (existing.visible or (existing.has_node("UI") and existing.get_node("UI").visible)):
+        # Jika menu ada tapi tidak terlihat, panggil show_overlay lagi
+        if existing.has_method("show_overlay"):
+            existing.call("show_overlay")
+        elif existing is CanvasItem:
+            (existing as CanvasItem).visible = true
+        return
+
     _settings_menu_opened_from_playing = false
-    if game_active:
+    var is_ingame = game_active or countdown_active
+    if is_ingame:
         _settings_menu_opened_from_playing = true
         pause_game()
-        _set_pause_menu_visible(false)
-    else:
-        _set_pause_menu_visible(false)
-    var settings_menu := get_node_or_null("SettingsMenu")
+
+    var settings_menu := existing
     if settings_menu == null:
         var packed := load("res://scenes/SettingsMenu.tscn") as PackedScene
         if packed:
             settings_menu = packed.instantiate()
             (settings_menu as Node).name = "SettingsMenu"
             add_child(settings_menu)
+
     if settings_menu:
         var cb := Callable(self, "_on_settings_overlay_closed")
         if settings_menu.has_signal("overlay_closed") and not settings_menu.is_connected("overlay_closed", cb):
             settings_menu.connect("overlay_closed", cb)
         _wire_settings_menu_signals(settings_menu as Node)
         if settings_menu.has_method("show_overlay"):
-            settings_menu.call("show_overlay")
+            settings_menu.call("show_overlay", is_ingame)
         elif settings_menu is CanvasItem:
             (settings_menu as CanvasItem).visible = true
 
@@ -1279,16 +1376,11 @@ func _on_missions_overlay_closed() -> void:
     if _missions_menu_opened_from_playing:
         _missions_menu_opened_from_playing = false
         resume_game()
-        return
-    _set_pause_menu_visible(true)
-
 
 func _on_settings_overlay_closed() -> void:
     if _settings_menu_opened_from_playing:
         _settings_menu_opened_from_playing = false
         resume_game()
-        return
-    _set_pause_menu_visible(true)
 
 func try_rewarded_continue() -> void:
     if ads_shown_count >= ads_max_per_session:
@@ -1309,6 +1401,7 @@ func _on_reward_granted(reason: String) -> void:
         grant_continue()
 
 func grant_continue() -> void:
+    get_tree().paused = false
     phase = Phase.PLAYING
     game_active = true
     continue_grace_timer = rewarded_continue_grace_sec
@@ -1394,14 +1487,6 @@ func set_sfx_muted(m: bool) -> void:
         var db: float = (-60.0 if _sfx_user_volume <= 0.0 else 20.0 * log(_sfx_user_volume) / log(10.0))
         (sfx as AudioStreamPlayer).volume_db = (-60.0 if m else db)
     _save_progress()
-
-func _set_pause_menu_visible(v: bool) -> void:
-    if canvas:
-        var pm := canvas.get_node_or_null("PauseMenu")
-        if pm:
-            pm.visible = v
-            if v:
-                _refresh_missions_label()
 
 func activate_magnet(d: float) -> void:
     var dur: float = d
@@ -1922,6 +2007,7 @@ func _play_game_over_bgm() -> void:
     _bgm_fade_tween.tween_property(bgm, "volume_db", (_bgm_base_db if not bgm_muted else -60.0), 0.22)
 
 func restart_game() -> void:
+    get_tree().paused = false
     _start_play_phase()
 
 func get_game_state() -> Dictionary:
@@ -2206,10 +2292,7 @@ func _unhandled_input(event: InputEvent) -> void:
         if OS.is_debug_build() and (Input.is_action_just_pressed("verify_scenes") or event.keycode == KEY_F6):
             call_deferred("_verify_player_scenes")
         elif Input.is_action_pressed("ui_cancel"):
-            if game_active:
-                pause_game()
-            else:
-                resume_game()
+            open_settings_menu()
 
 func on_coin_collected(segment: String, currency: String = "coins", amount: int = 1) -> void:
     var a := amount
@@ -2291,7 +2374,7 @@ func _start_play_phase() -> void:
     if not is_inside_tree():
         return
     phase = Phase.ENTRY
-    game_active = false
+    game_active = true
     _bgm_mode = BgmMode.RUN
     _bgm_duck_db = 0.0
     distance = 0.0
