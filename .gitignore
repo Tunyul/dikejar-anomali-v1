@@ -1,16 +1,42 @@
+# Godot-specific ignores
 .godot/
 .import/
+export_presets.cfg
 
-android/build/.gradle/
-android/build/build/
-android/build/.idea/
-
+# Android-specific ignores
+android/build/
+android/.gradle/
+android/.idea/
 *.apk
 *.aab
 *.keystore
 *.jks
 
+# Windows-specific ignores
+*.exe
+*.dll
+*.pdb
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Shared objects
+*.so
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash_*.json
+
+# General temporary files
 *.tmp
 *.bak
+*.swp
 *~
-
