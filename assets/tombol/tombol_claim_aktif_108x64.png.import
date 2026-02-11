@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cpwsk0io7g2su"
-path="res://.godot/imported/tombol_claim_aktif_108x64.png-e022cd77233bf17765b5bb2b782f34ae.ctex"
+path.s3tc="res://.godot/imported/tombol_claim_aktif_108x64.png-e022cd77233bf17765b5bb2b782f34ae.s3tc.ctex"
+path.etc2="res://.godot/imported/tombol_claim_aktif_108x64.png-e022cd77233bf17765b5bb2b782f34ae.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/tombol/tombol_claim_aktif_108x64.png"
-dest_files=["res://.godot/imported/tombol_claim_aktif_108x64.png-e022cd77233bf17765b5bb2b782f34ae.ctex"]
+dest_files=["res://.godot/imported/tombol_claim_aktif_108x64.png-e022cd77233bf17765b5bb2b782f34ae.s3tc.ctex", "res://.godot/imported/tombol_claim_aktif_108x64.png-e022cd77233bf17765b5bb2b782f34ae.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

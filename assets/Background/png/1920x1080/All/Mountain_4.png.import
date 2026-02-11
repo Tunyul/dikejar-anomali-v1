@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bo2bu1k452xov"
-path="res://.godot/imported/Mountain_4.png-93db741bf69e73faaec3d3b9f696c23b.ctex"
+path.s3tc="res://.godot/imported/Mountain_4.png-93db741bf69e73faaec3d3b9f696c23b.s3tc.ctex"
+path.etc2="res://.godot/imported/Mountain_4.png-93db741bf69e73faaec3d3b9f696c23b.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Background/png/1920x1080/All/Mountain_4.png"
-dest_files=["res://.godot/imported/Mountain_4.png-93db741bf69e73faaec3d3b9f696c23b.ctex"]
+dest_files=["res://.godot/imported/Mountain_4.png-93db741bf69e73faaec3d3b9f696c23b.s3tc.ctex", "res://.godot/imported/Mountain_4.png-93db741bf69e73faaec3d3b9f696c23b.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

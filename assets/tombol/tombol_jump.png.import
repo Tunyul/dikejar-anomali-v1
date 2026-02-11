@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://488lc5kv6uhg"
-path="res://.godot/imported/tombol_jump.png-b9796c1e01a48dfc389fc22563b61c90.ctex"
+path.s3tc="res://.godot/imported/tombol_jump.png-b9796c1e01a48dfc389fc22563b61c90.s3tc.ctex"
+path.etc2="res://.godot/imported/tombol_jump.png-b9796c1e01a48dfc389fc22563b61c90.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/tombol/tombol_jump.png"
-dest_files=["res://.godot/imported/tombol_jump.png-b9796c1e01a48dfc389fc22563b61c90.ctex"]
+dest_files=["res://.godot/imported/tombol_jump.png-b9796c1e01a48dfc389fc22563b61c90.s3tc.ctex", "res://.godot/imported/tombol_jump.png-b9796c1e01a48dfc389fc22563b61c90.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

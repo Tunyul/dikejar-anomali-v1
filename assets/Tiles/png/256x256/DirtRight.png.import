@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dg7cj26ulivps"
-path="res://.godot/imported/DirtRight.png-e548fa8287b36463bda0486854ac7def.ctex"
+path.s3tc="res://.godot/imported/DirtRight.png-e548fa8287b36463bda0486854ac7def.s3tc.ctex"
+path.etc2="res://.godot/imported/DirtRight.png-e548fa8287b36463bda0486854ac7def.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/256x256/DirtRight.png"
-dest_files=["res://.godot/imported/DirtRight.png-e548fa8287b36463bda0486854ac7def.ctex"]
+dest_files=["res://.godot/imported/DirtRight.png-e548fa8287b36463bda0486854ac7def.s3tc.ctex", "res://.godot/imported/DirtRight.png-e548fa8287b36463bda0486854ac7def.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://btawjbjgankfu"
-path="res://.godot/imported/DirtLeft.png-ff70f322a7e923af17549866786ac67b.ctex"
+path.s3tc="res://.godot/imported/DirtLeft.png-ff70f322a7e923af17549866786ac67b.s3tc.ctex"
+path.etc2="res://.godot/imported/DirtLeft.png-ff70f322a7e923af17549866786ac67b.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/256x256/DirtLeft.png"
-dest_files=["res://.godot/imported/DirtLeft.png-ff70f322a7e923af17549866786ac67b.ctex"]
+dest_files=["res://.godot/imported/DirtLeft.png-ff70f322a7e923af17549866786ac67b.s3tc.ctex", "res://.godot/imported/DirtLeft.png-ff70f322a7e923af17549866786ac67b.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

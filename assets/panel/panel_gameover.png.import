@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bdaq0tsevnbqe"
-path="res://.godot/imported/panel_gameover.png-afb8dd1dd03a101279702a5cc1082837.ctex"
+path.s3tc="res://.godot/imported/panel_gameover.png-afb8dd1dd03a101279702a5cc1082837.s3tc.ctex"
+path.etc2="res://.godot/imported/panel_gameover.png-afb8dd1dd03a101279702a5cc1082837.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/panel/panel_gameover.png"
-dest_files=["res://.godot/imported/panel_gameover.png-afb8dd1dd03a101279702a5cc1082837.ctex"]
+dest_files=["res://.godot/imported/panel_gameover.png-afb8dd1dd03a101279702a5cc1082837.s3tc.ctex", "res://.godot/imported/panel_gameover.png-afb8dd1dd03a101279702a5cc1082837.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

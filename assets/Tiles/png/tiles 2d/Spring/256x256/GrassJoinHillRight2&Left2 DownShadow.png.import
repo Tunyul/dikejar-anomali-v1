@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://f7jcu4ra4x7x"
-path="res://.godot/imported/GrassJoinHillRight2&Left2 DownShadow.png-48d6a12db336f63d55bb330c7c0d195a.ctex"
+path.s3tc="res://.godot/imported/GrassJoinHillRight2&Left2 DownShadow.png-48d6a12db336f63d55bb330c7c0d195a.s3tc.ctex"
+path.etc2="res://.godot/imported/GrassJoinHillRight2&Left2 DownShadow.png-48d6a12db336f63d55bb330c7c0d195a.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/tiles 2d/Spring/256x256/GrassJoinHillRight2&Left2 DownShadow.png"
-dest_files=["res://.godot/imported/GrassJoinHillRight2&Left2 DownShadow.png-48d6a12db336f63d55bb330c7c0d195a.ctex"]
+dest_files=["res://.godot/imported/GrassJoinHillRight2&Left2 DownShadow.png-48d6a12db336f63d55bb330c7c0d195a.s3tc.ctex", "res://.godot/imported/GrassJoinHillRight2&Left2 DownShadow.png-48d6a12db336f63d55bb330c7c0d195a.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

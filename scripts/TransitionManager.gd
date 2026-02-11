@@ -383,10 +383,10 @@ func _ensure_cloud_textures_loaded() -> void:
     _cloud_textures = [
         load("res://assets/Background/png/Clouds/512x512/Cloud_1.png") as Texture2D,
         load("res://assets/Background/png/Clouds/512x512/Cloud_2.png") as Texture2D,
-        load("res://assets/Background/png/Clouds/256x256/Cloud_1.png") as Texture2D,
-        load("res://assets/Background/png/Clouds/256x256/Cloud_2.png") as Texture2D,
-        load("res://assets/Background/png/Clouds/128x128/Cloud_1.png") as Texture2D,
-        load("res://assets/Background/png/Clouds/128x128/Cloud_2.png") as Texture2D
+        load("res://assets/Background/png/Clouds/512x512/Cloud_1.png") as Texture2D,
+        load("res://assets/Background/png/Clouds/512x512/Cloud_2.png") as Texture2D,
+        load("res://assets/Background/png/Clouds/512x512/Cloud_1.png") as Texture2D,
+        load("res://assets/Background/png/Clouds/512x512/Cloud_2.png") as Texture2D
     ]
 
 func _ready() -> void:

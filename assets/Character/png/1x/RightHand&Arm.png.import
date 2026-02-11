@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://vpwlxmt3ai7m"
-path="res://.godot/imported/RightHand&Arm.png-486bfe185301906a27f3e7334f091964.ctex"
+path.s3tc="res://.godot/imported/RightHand&Arm.png-486bfe185301906a27f3e7334f091964.s3tc.ctex"
+path.etc2="res://.godot/imported/RightHand&Arm.png-486bfe185301906a27f3e7334f091964.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Character/png/1x/RightHand&Arm.png"
-dest_files=["res://.godot/imported/RightHand&Arm.png-486bfe185301906a27f3e7334f091964.ctex"]
+dest_files=["res://.godot/imported/RightHand&Arm.png-486bfe185301906a27f3e7334f091964.s3tc.ctex", "res://.godot/imported/RightHand&Arm.png-486bfe185301906a27f3e7334f091964.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

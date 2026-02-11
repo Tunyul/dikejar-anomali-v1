@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://choe1o1k43ubo"
-path="res://.godot/imported/magnet_aura.svg-b75b34510ba75ded79ce66e6cf0595dc.ctex"
+path.s3tc="res://.godot/imported/magnet_aura.svg-b75b34510ba75ded79ce66e6cf0595dc.s3tc.ctex"
+path.etc2="res://.godot/imported/magnet_aura.svg-b75b34510ba75ded79ce66e6cf0595dc.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/generated/svg/magnet_aura.svg"
-dest_files=["res://.godot/imported/magnet_aura.svg-b75b34510ba75ded79ce66e6cf0595dc.ctex"]
+dest_files=["res://.godot/imported/magnet_aura.svg-b75b34510ba75ded79ce66e6cf0595dc.s3tc.ctex", "res://.godot/imported/magnet_aura.svg-b75b34510ba75ded79ce66e6cf0595dc.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

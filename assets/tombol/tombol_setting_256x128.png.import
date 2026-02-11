@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bn2mxi2ykggix"
-path="res://.godot/imported/tombol_setting_256x128.png-85ea96ea659e0d9f019de50bfbe5dab5.ctex"
+path.s3tc="res://.godot/imported/tombol_setting_256x128.png-85ea96ea659e0d9f019de50bfbe5dab5.s3tc.ctex"
+path.etc2="res://.godot/imported/tombol_setting_256x128.png-85ea96ea659e0d9f019de50bfbe5dab5.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/tombol/tombol_setting_256x128.png"
-dest_files=["res://.godot/imported/tombol_setting_256x128.png-85ea96ea659e0d9f019de50bfbe5dab5.ctex"]
+dest_files=["res://.godot/imported/tombol_setting_256x128.png-85ea96ea659e0d9f019de50bfbe5dab5.s3tc.ctex", "res://.godot/imported/tombol_setting_256x128.png-85ea96ea659e0d9f019de50bfbe5dab5.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

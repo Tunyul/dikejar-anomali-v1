@@ -496,7 +496,7 @@ func _init_shop_data() -> void:
             "description": "Menarik koin otomatis selama 30 detik.",
             "price": 150,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
             "rarity": "common"
         },
         {
@@ -535,7 +535,7 @@ func _init_shop_data() -> void:
             "description": "Meningkatkan kapasitas nyawa maksimal secara permanen.",
             "price": 1000,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_heart_96x96.png",
+            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -544,7 +544,7 @@ func _init_shop_data() -> void:
             "description": "Menambah durasi efek magnet secara permanen.",
             "price": 800,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
             "rarity": "rare"
         },
         {
@@ -571,7 +571,7 @@ func _init_shop_data() -> void:
             "description": "Menambah multiplier gain koin saat double coins aktif.",
             "price": 1200,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_coin_multiplier_96x96.png",
+            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -592,7 +592,7 @@ func _init_shop_data() -> void:
             "description": "Meningkatkan kapasitas nyawa maksimal secara permanen.",
             "price": 30,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_heart_96x96.png",
+            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -601,7 +601,7 @@ func _init_shop_data() -> void:
             "description": "Menambah durasi efek magnet secara permanen.",
             "price": 24,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
             "rarity": "rare"
         },
         {
@@ -628,7 +628,7 @@ func _init_shop_data() -> void:
             "description": "Menambah multiplier gain koin saat double coins aktif.",
             "price": 32,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_coin_multiplier_96x96.png",
+            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -649,7 +649,7 @@ func _init_shop_data() -> void:
             "description": "Skin standar untuk petualang pemula.",
             "price": 150,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_skin_basic_96x96.png",
+            "icon": "res://assets/mc/run/idle run.png",
             "rarity": "common"
         },
         {
@@ -658,7 +658,7 @@ func _init_shop_data() -> void:
             "description": "Skin dengan detail emas yang elegan.",
             "price": 400,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_skin_premium_96x96.png",
+            "icon": "res://assets/mc/run/idle run.png",
             "rarity": "rare"
         }
     ]
@@ -670,7 +670,7 @@ func _init_shop_data() -> void:
             "description": "Skin futuristik yang menyala dalam gelap.",
             "price": 25,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_skin_neon_96x96.png",
+            "icon": "res://assets/mc/run/idle run.png",
             "rarity": "epic"
         },
         {
@@ -679,7 +679,7 @@ func _init_shop_data() -> void:
             "description": "Skin misterius yang terbuat dari bayangan.",
             "price": 40,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_skin_shadow_96x96.png",
+            "icon": "res://assets/mc/run/idle run.png",
             "rarity": "legendary"
         }
     ]
@@ -692,7 +692,7 @@ func _init_shop_data() -> void:
             "price": 15000,
             "currency": "real",
             "display_price": "Rp 15.000",
-            "icon": "res://assets/icon/icon_gem_small_96x96.png"
+            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_standard",
@@ -701,7 +701,7 @@ func _init_shop_data() -> void:
             "price": 45000,
             "currency": "real",
             "display_price": "Rp 45.000",
-            "icon": "res://assets/icon/icon_gem_standard_96x96.png"
+            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_big",
@@ -710,7 +710,7 @@ func _init_shop_data() -> void:
             "price": 99000,
             "currency": "real",
             "display_price": "Rp 99.000",
-            "icon": "res://assets/icon/icon_gem_big_96x96.png"
+            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_mega",
@@ -719,7 +719,7 @@ func _init_shop_data() -> void:
             "price": 199000,
             "currency": "real",
             "display_price": "Rp 199.000",
-            "icon": "res://assets/icon/icon_gem_mega_96x96.png"
+            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
         }
     ]
 
@@ -731,7 +731,7 @@ func _init_shop_data() -> void:
             "price": 29000,
             "currency": "real",
             "display_price": "Rp 29.000",
-            "icon": "res://assets/icon/icon_bundle_starter_96x96.png"
+            "icon": "res://assets/icon/icon_trophy_128x128.png"
         },
         {
             "id": "progress_bundle",
@@ -740,7 +740,7 @@ func _init_shop_data() -> void:
             "price": 59000,
             "currency": "real",
             "display_price": "Rp 59.000",
-            "icon": "res://assets/icon/icon_bundle_progress_96x96.png"
+            "icon": "res://assets/icon/icon_trophy_128x128.png"
         },
         {
             "id": "cosmetic_bundle",
@@ -749,7 +749,7 @@ func _init_shop_data() -> void:
             "price": 49000,
             "currency": "real",
             "display_price": "Rp 49.000",
-            "icon": "res://assets/icon/icon_bundle_cosmetic_96x96.png"
+            "icon": "res://assets/icon/icon_trophy_128x128.png"
         }
     ]
 
@@ -797,7 +797,7 @@ func _init_shop_data() -> void:
 
 func _init_editor_dummy_data() -> void:
     var powerup_items = [
-        {"id": "magnet_30s", "name": "Magnet 30s", "description": "Menarik koin otomatis selama 30 detik.", "price": 150, "currency": "coins", "icon": "res://assets/icon/icon_magnet_timer_96x96.png", "rarity": "common"},
+        {"id": "magnet_30s", "name": "Magnet 30s", "description": "Menarik koin otomatis selama 30 detik.", "price": 150, "currency": "coins", "icon": "res://assets/icon/icon_magnet_v1_96x96.png", "rarity": "common"},
         {"id": "shield_1hit", "name": "Perisai 1 Hit", "description": "Melindungi dari satu kali tabrakan.", "price": 200, "currency": "coins", "icon": "res://assets/icon/icon_shield.png", "rarity": "rare"},
         {"id": "double_coins_run", "name": "Double Coins (1 Run)", "description": "Mendapatkan koin 2x lipat selama satu sesi lari.", "price": 250, "currency": "coins", "icon": "res://assets/icon/icon_coinduble_96x96.png", "rarity": "rare"},
         {"id": "speed_boost_run", "name": "Speed Boost (1 Run)", "description": "Meningkatkan kecepatan lari dasar sebesar 50%.", "price": 200, "currency": "coins", "icon": "res://assets/icon/icon_boost_96x96.png", "rarity": "rare"}
@@ -815,7 +815,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Meningkatkan kapasitas nyawa maksimal secara permanen.",
             "price": 1000,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_heart_96x96.png",
+            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -824,7 +824,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Menambah durasi efek magnet secara permanen.",
             "price": 800,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
             "rarity": "rare"
         },
         {
@@ -851,7 +851,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Menambah multiplier gain koin saat double coins aktif.",
             "price": 1200,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_coin_multiplier_96x96.png",
+            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -877,7 +877,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Meningkatkan kapasitas nyawa maksimal secara permanen.",
             "price": 30,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_heart_96x96.png",
+            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -886,7 +886,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Menambah durasi efek magnet secara permanen.",
             "price": 24,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
             "rarity": "rare"
         },
         {
@@ -913,7 +913,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Menambah multiplier gain koin saat double coins aktif.",
             "price": 32,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_coin_multiplier_96x96.png",
+            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -939,7 +939,7 @@ func _init_editor_dummy_data() -> void:
             "name": "Skin Basic",
             "price": 150,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_skin_basic_96x96.png",
+            "icon": "res://assets/mc/run/idle run.png",
             "rarity": "common"
         },
         {
@@ -947,7 +947,7 @@ func _init_editor_dummy_data() -> void:
             "name": "Skin Premium",
             "price": 400,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_skin_premium_96x96.png",
+            "icon": "res://assets/mc/run/idle run.png",
             "rarity": "rare"
         }
     ]
@@ -964,7 +964,7 @@ func _init_editor_dummy_data() -> void:
             "name": "Skin Neon",
             "price": 25,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_skin_neon_96x96.png",
+            "icon": "res://assets/mc/run/idle run.png",
             "rarity": "epic"
         },
         {
@@ -972,7 +972,7 @@ func _init_editor_dummy_data() -> void:
             "name": "Skin Shadow",
             "price": 40,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_skin_shadow_96x96.png",
+            "icon": "res://assets/mc/run/idle run.png",
             "rarity": "legendary"
         }
     ]
@@ -990,7 +990,7 @@ func _init_editor_dummy_data() -> void:
             "price": 15000,
             "currency": "real",
             "display_price": "Rp 15.000",
-            "icon": "res://assets/icon/icon_gem_small_96x96.png"
+            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_standard",
@@ -998,7 +998,7 @@ func _init_editor_dummy_data() -> void:
             "price": 45000,
             "currency": "real",
             "display_price": "Rp 45.000",
-            "icon": "res://assets/icon/icon_gem_standard_96x96.png"
+            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_big",
@@ -1006,7 +1006,7 @@ func _init_editor_dummy_data() -> void:
             "price": 99000,
             "currency": "real",
             "display_price": "Rp 99.000",
-            "icon": "res://assets/icon/icon_gem_big_96x96.png"
+            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_mega",
@@ -1014,7 +1014,7 @@ func _init_editor_dummy_data() -> void:
             "price": 199000,
             "currency": "real",
             "display_price": "Rp 199.000",
-            "icon": "res://assets/icon/icon_gem_mega_96x96.png"
+            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
         }
     ]
     shop_groups.append({
@@ -1031,7 +1031,7 @@ func _init_editor_dummy_data() -> void:
             "price": 29000,
             "currency": "real",
             "display_price": "Rp 29.000",
-            "icon": "res://assets/icon/icon_bundle_starter_96x96.png"
+            "icon": "res://assets/icon/icon_trophy_128x128.png"
         },
         {
             "id": "progress_bundle",
@@ -1039,7 +1039,7 @@ func _init_editor_dummy_data() -> void:
             "price": 59000,
             "currency": "real",
             "display_price": "Rp 59.000",
-            "icon": "res://assets/icon/icon_bundle_progress_96x96.png"
+            "icon": "res://assets/icon/icon_trophy_128x128.png"
         },
         {
             "id": "cosmetic_bundle",
@@ -1047,7 +1047,7 @@ func _init_editor_dummy_data() -> void:
             "price": 49000,
             "currency": "real",
             "display_price": "Rp 49.000",
-            "icon": "res://assets/icon/icon_bundle_cosmetic_96x96.png"
+            "icon": "res://assets/icon/icon_trophy_128x128.png"
         }
     ]
     shop_groups.append({

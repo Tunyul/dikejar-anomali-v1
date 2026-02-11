@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://u1mxgs65jnt1"
-path="res://.godot/imported/GrassJoinHillLeft2.png-a8ced867c2920fef4009a5f9d099d83f.ctex"
+path.s3tc="res://.godot/imported/GrassJoinHillLeft2.png-a8ced867c2920fef4009a5f9d099d83f.s3tc.ctex"
+path.etc2="res://.godot/imported/GrassJoinHillLeft2.png-a8ced867c2920fef4009a5f9d099d83f.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/tiles 2d/Winter/256x256/GrassJoinHillLeft2.png"
-dest_files=["res://.godot/imported/GrassJoinHillLeft2.png-a8ced867c2920fef4009a5f9d099d83f.ctex"]
+dest_files=["res://.godot/imported/GrassJoinHillLeft2.png-a8ced867c2920fef4009a5f9d099d83f.s3tc.ctex", "res://.godot/imported/GrassJoinHillLeft2.png-a8ced867c2920fef4009a5f9d099d83f.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

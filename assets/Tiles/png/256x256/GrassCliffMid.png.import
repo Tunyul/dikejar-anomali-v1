@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b5p4b53nek514"
-path="res://.godot/imported/GrassCliffMid.png-0b13ad7a0ba235568dc2d28799030e5a.ctex"
+path.s3tc="res://.godot/imported/GrassCliffMid.png-0b13ad7a0ba235568dc2d28799030e5a.s3tc.ctex"
+path.etc2="res://.godot/imported/GrassCliffMid.png-0b13ad7a0ba235568dc2d28799030e5a.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/256x256/GrassCliffMid.png"
-dest_files=["res://.godot/imported/GrassCliffMid.png-0b13ad7a0ba235568dc2d28799030e5a.ctex"]
+dest_files=["res://.godot/imported/GrassCliffMid.png-0b13ad7a0ba235568dc2d28799030e5a.s3tc.ctex", "res://.godot/imported/GrassCliffMid.png-0b13ad7a0ba235568dc2d28799030e5a.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

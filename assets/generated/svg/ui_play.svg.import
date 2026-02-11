@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b1vcsejv6qfxm"
-path="res://.godot/imported/ui_play.svg-9d1e15764bb8869bfc20fe1102ec5764.ctex"
+path.s3tc="res://.godot/imported/ui_play.svg-9d1e15764bb8869bfc20fe1102ec5764.s3tc.ctex"
+path.etc2="res://.godot/imported/ui_play.svg-9d1e15764bb8869bfc20fe1102ec5764.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/generated/svg/ui_play.svg"
-dest_files=["res://.godot/imported/ui_play.svg-9d1e15764bb8869bfc20fe1102ec5764.ctex"]
+dest_files=["res://.godot/imported/ui_play.svg-9d1e15764bb8869bfc20fe1102ec5764.s3tc.ctex", "res://.godot/imported/ui_play.svg-9d1e15764bb8869bfc20fe1102ec5764.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

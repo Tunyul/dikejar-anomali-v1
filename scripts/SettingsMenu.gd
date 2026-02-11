@@ -136,8 +136,9 @@ func _apply_responsive_layout(vp: Vector2) -> void:
     var safe_size := Vector2(maxf(safe.size.x - margin * 2.0, 1.0), maxf(safe.size.y - margin * 2.0, 1.0))
     var base_panel_size := Vector2(704.0, 448.0)
     var fit: float = minf(safe_size.x / base_panel_size.x, safe_size.y / base_panel_size.y)
-    fit = clampf(fit, 0.6, 1.0)
+    fit = clampf(fit, 0.4, 0.9)
     _panel.scale = Vector2(fit, fit)
+    _panel.position = (vp - _panel.size * fit) * 0.5
 
 
 func _on_scroll_gui_input(event: InputEvent) -> void:

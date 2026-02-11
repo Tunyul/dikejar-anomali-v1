@@ -241,8 +241,8 @@ func _apply_responsive_layout(vp: Vector2) -> void:
 
     var margin := 16.0
     var safe_size := Vector2(maxf(safe.size.x - margin * 2.0, 1.0), maxf(safe.size.y - margin * 2.0, 1.0))
-    var max_w := safe_size.x * 0.8
-    var max_h := safe_size.y * 0.72
+    var max_w := safe_size.x * 0.58
+    var max_h := safe_size.y * 0.54
     var w := max_w
     var h := max_h
     var tex_aspect := 0.0

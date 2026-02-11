@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d0he0i1qq7ht5"
-path="res://.godot/imported/Asset 41.png-6cffdfaa022205d6e3bb9e19616c1266.ctex"
+path.s3tc="res://.godot/imported/Asset 41.png-6cffdfaa022205d6e3bb9e19616c1266.s3tc.ctex"
+path.etc2="res://.godot/imported/Asset 41.png-6cffdfaa022205d6e3bb9e19616c1266.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/128x128/Asset 41.png"
-dest_files=["res://.godot/imported/Asset 41.png-6cffdfaa022205d6e3bb9e19616c1266.ctex"]
+dest_files=["res://.godot/imported/Asset 41.png-6cffdfaa022205d6e3bb9e19616c1266.s3tc.ctex", "res://.godot/imported/Asset 41.png-6cffdfaa022205d6e3bb9e19616c1266.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

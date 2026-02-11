@@ -11,7 +11,7 @@ var target_speed: float = 0.0
 func _ready() -> void:
 	movement_enabled = true
 	target_speed = speed
-	
+
 	# Configure cloud layers for smooth movement
 	for i in range(get_child_count()):
 		var parallax_layer = get_child(i)
@@ -22,40 +22,23 @@ func _ready() -> void:
 			if parallax_layer.motion_mirroring.x == 0:
 				parallax_layer.motion_mirroring.x = 1024
 
-func _physics_process(delta: float) -> void:
+func _process(delta: float) -> void:
 	if not movement_enabled:
 		return
-	
-	# Use physics process for consistent frame rate
-	var adjusted_speed := speed
-	if get_child_count() > 0:
-		var first_layer = get_child(0)
-		if first_layer is ParallaxLayer:
-			adjusted_speed = speed * first_layer.motion_scale.x
-			
-	var nx := scroll_base_offset.x - adjusted_speed * delta
-	# Apply smooth scrolling or legacy snapping
-	if use_smooth_scrolling:
-		scroll_base_offset.x = nx  # Smooth movement
-	else:
-		if snap_px > 0.0:
-			nx = floor(nx / snap_px) * snap_px
-		scroll_base_offset.x = nx  # Legacy snapping behavior
-	
-	# Apply cloud-specific smoothing
-	for i in range(get_child_count()):
-		var parallax_layer = get_child(i)
-		if parallax_layer is ParallaxLayer and parallax_layer.name.begins_with("Clouds"):
-			# Use direct assignment for cloud layers to prevent stuttering
-			parallax_layer.motion_offset.x = scroll_base_offset.x * parallax_layer.motion_scale.x
-			parallax_layer.motion_offset.y = 0  # Ensure no vertical drift
-			# Handle cloud wrapping for seamless looping
-			if parallax_layer.motion_mirroring.x > 0:
-				var wrapped_offset = fposmod(parallax_layer.motion_offset.x, parallax_layer.motion_mirroring.x)
-				if wrapped_offset != parallax_layer.motion_offset.x:
-					parallax_layer.motion_offset.x = wrapped_offset
-	if wrap_width > 0.0 and abs(scroll_base_offset.x) >= wrap_width:
-		scroll_base_offset.x = -fposmod(-scroll_base_offset.x, wrap_width)
+
+	# Use _process for smoother visual scrolling, especially on mobile
+	# Update base offset - ParallaxLayers will handle their own movement
+	# based on their motion_scale automatically.
+	var move_amount = speed * delta
+
+	if snap_px > 0.0:
+		move_amount = round(move_amount / snap_px) * snap_px
+
+	scroll_base_offset.x -= move_amount
+
+	if wrap_width > 0.0:
+		# Use fmod for wrapping if wrap_width is set
+		scroll_base_offset.x = fmod(scroll_base_offset.x, wrap_width)
 
 func set_movement_enabled(enabled: bool) -> void:
 	movement_enabled = enabled

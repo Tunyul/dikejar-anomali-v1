@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://e3d8wn68w6yy"
-path="res://.godot/imported/GrassHillRight2.png-83afcaa82f58b13ee9806722ad90f078.ctex"
+path.s3tc="res://.godot/imported/GrassHillRight2.png-83afcaa82f58b13ee9806722ad90f078.s3tc.ctex"
+path.etc2="res://.godot/imported/GrassHillRight2.png-83afcaa82f58b13ee9806722ad90f078.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/tiles 2d/Spring/256x256/GrassHillRight2.png"
-dest_files=["res://.godot/imported/GrassHillRight2.png-83afcaa82f58b13ee9806722ad90f078.ctex"]
+dest_files=["res://.godot/imported/GrassHillRight2.png-83afcaa82f58b13ee9806722ad90f078.s3tc.ctex", "res://.godot/imported/GrassHillRight2.png-83afcaa82f58b13ee9806722ad90f078.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

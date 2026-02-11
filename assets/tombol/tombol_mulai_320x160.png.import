@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://hy740k0lwxup"
-path="res://.godot/imported/tombol_mulai_320x160.png-c4f004628b49d3abad0c5ef7d019d117.ctex"
+path.s3tc="res://.godot/imported/tombol_mulai_320x160.png-c4f004628b49d3abad0c5ef7d019d117.s3tc.ctex"
+path.etc2="res://.godot/imported/tombol_mulai_320x160.png-c4f004628b49d3abad0c5ef7d019d117.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/tombol/tombol_mulai_320x160.png"
-dest_files=["res://.godot/imported/tombol_mulai_320x160.png-c4f004628b49d3abad0c5ef7d019d117.ctex"]
+dest_files=["res://.godot/imported/tombol_mulai_320x160.png-c4f004628b49d3abad0c5ef7d019d117.s3tc.ctex", "res://.godot/imported/tombol_mulai_320x160.png-c4f004628b49d3abad0c5ef7d019d117.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

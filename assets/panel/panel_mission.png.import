@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bg71h4rnsov6r"
-path="res://.godot/imported/panel_mission.png-800edec6bf22a96a270f27f207d4701e.ctex"
+path.s3tc="res://.godot/imported/panel_mission.png-800edec6bf22a96a270f27f207d4701e.s3tc.ctex"
+path.etc2="res://.godot/imported/panel_mission.png-800edec6bf22a96a270f27f207d4701e.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/panel/panel_mission.png"
-dest_files=["res://.godot/imported/panel_mission.png-800edec6bf22a96a270f27f207d4701e.ctex"]
+dest_files=["res://.godot/imported/panel_mission.png-800edec6bf22a96a270f27f207d4701e.s3tc.ctex", "res://.godot/imported/panel_mission.png-800edec6bf22a96a270f27f207d4701e.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

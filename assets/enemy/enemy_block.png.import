@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dv6p2xhswcg0v"
-path="res://.godot/imported/enemy_block.png-7a507a32f83b4fb320ceac26db24d949.ctex"
+path.s3tc="res://.godot/imported/enemy_block.png-7a507a32f83b4fb320ceac26db24d949.s3tc.ctex"
+path.etc2="res://.godot/imported/enemy_block.png-7a507a32f83b4fb320ceac26db24d949.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/enemy/enemy_block.png"
-dest_files=["res://.godot/imported/enemy_block.png-7a507a32f83b4fb320ceac26db24d949.ctex"]
+dest_files=["res://.godot/imported/enemy_block.png-7a507a32f83b4fb320ceac26db24d949.s3tc.ctex", "res://.godot/imported/enemy_block.png-7a507a32f83b4fb320ceac26db24d949.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

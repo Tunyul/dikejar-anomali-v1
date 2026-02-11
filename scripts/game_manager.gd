@@ -206,6 +206,7 @@ func _ready() -> void:
 
     _init_bukit_bgm()
     _init_gameover_bgm()
+    _start_bukit_bgm_rotation()
     call_deferred("_start_play_phase")
     if scene_verify_on_start and OS.is_debug_build():
         call_deferred("_verify_player_scenes")

@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dcb47xddqo0bi"
-path="res://.godot/imported/tombol_x_red_border_blue_64.png-ffd6939e17a77888c4860e3b0e7c7946.ctex"
+path.s3tc="res://.godot/imported/tombol_x_red_border_blue_64.png-ffd6939e17a77888c4860e3b0e7c7946.s3tc.ctex"
+path.etc2="res://.godot/imported/tombol_x_red_border_blue_64.png-ffd6939e17a77888c4860e3b0e7c7946.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/tombol/tombol_x_red_border_blue_64.png"
-dest_files=["res://.godot/imported/tombol_x_red_border_blue_64.png-ffd6939e17a77888c4860e3b0e7c7946.ctex"]
+dest_files=["res://.godot/imported/tombol_x_red_border_blue_64.png-ffd6939e17a77888c4860e3b0e7c7946.s3tc.ctex", "res://.godot/imported/tombol_x_red_border_blue_64.png-ffd6939e17a77888c4860e3b0e7c7946.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

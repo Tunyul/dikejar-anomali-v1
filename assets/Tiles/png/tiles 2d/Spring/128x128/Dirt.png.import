@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://blpxq3xkivtob"
-path="res://.godot/imported/Dirt.png-a091fd8d970e813419221f3ec458c3f0.ctex"
+path.s3tc="res://.godot/imported/Dirt.png-a091fd8d970e813419221f3ec458c3f0.s3tc.ctex"
+path.etc2="res://.godot/imported/Dirt.png-a091fd8d970e813419221f3ec458c3f0.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/tiles 2d/Spring/128x128/Dirt.png"
-dest_files=["res://.godot/imported/Dirt.png-a091fd8d970e813419221f3ec458c3f0.ctex"]
+dest_files=["res://.godot/imported/Dirt.png-a091fd8d970e813419221f3ec458c3f0.s3tc.ctex", "res://.godot/imported/Dirt.png-a091fd8d970e813419221f3ec458c3f0.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

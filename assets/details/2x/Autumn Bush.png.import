@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://kwxagv8yrmyd"
-path="res://.godot/imported/Autumn Bush.png-e5a48de870d5a4afa44000e19c947ddb.ctex"
+path.s3tc="res://.godot/imported/Autumn Bush.png-e5a48de870d5a4afa44000e19c947ddb.s3tc.ctex"
+path.etc2="res://.godot/imported/Autumn Bush.png-e5a48de870d5a4afa44000e19c947ddb.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/details/2x/Autumn Bush.png"
-dest_files=["res://.godot/imported/Autumn Bush.png-e5a48de870d5a4afa44000e19c947ddb.ctex"]
+dest_files=["res://.godot/imported/Autumn Bush.png-e5a48de870d5a4afa44000e19c947ddb.s3tc.ctex", "res://.godot/imported/Autumn Bush.png-e5a48de870d5a4afa44000e19c947ddb.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

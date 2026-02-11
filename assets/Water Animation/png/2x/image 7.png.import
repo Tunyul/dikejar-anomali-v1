@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d1nbwyawkvpui"
-path="res://.godot/imported/image 7.png-b562e5388385a7f2b973a524c148cd48.ctex"
+path.s3tc="res://.godot/imported/image 7.png-b562e5388385a7f2b973a524c148cd48.s3tc.ctex"
+path.etc2="res://.godot/imported/image 7.png-b562e5388385a7f2b973a524c148cd48.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Water Animation/png/2x/image 7.png"
-dest_files=["res://.godot/imported/image 7.png-b562e5388385a7f2b973a524c148cd48.ctex"]
+dest_files=["res://.godot/imported/image 7.png-b562e5388385a7f2b973a524c148cd48.s3tc.ctex", "res://.godot/imported/image 7.png-b562e5388385a7f2b973a524c148cd48.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

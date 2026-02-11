@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bbvrxqmoun81m"
-path="res://.godot/imported/GrassRight.png-44d2035151b79d9b002740e0b80e2545.ctex"
+path.s3tc="res://.godot/imported/GrassRight.png-44d2035151b79d9b002740e0b80e2545.s3tc.ctex"
+path.etc2="res://.godot/imported/GrassRight.png-44d2035151b79d9b002740e0b80e2545.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/Tiles/png/128x128/GrassRight.png"
-dest_files=["res://.godot/imported/GrassRight.png-44d2035151b79d9b002740e0b80e2545.ctex"]
+dest_files=["res://.godot/imported/GrassRight.png-44d2035151b79d9b002740e0b80e2545.s3tc.ctex", "res://.godot/imported/GrassRight.png-44d2035151b79d9b002740e0b80e2545.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

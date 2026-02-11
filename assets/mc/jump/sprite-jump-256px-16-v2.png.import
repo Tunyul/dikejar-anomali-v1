@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://3xlqyfjldyvw"
-path="res://.godot/imported/sprite-jump-256px-16-v2.png-85601eb775f0c8e71b6089251f963218.ctex"
+path.s3tc="res://.godot/imported/sprite-jump-256px-16-v2.png-85601eb775f0c8e71b6089251f963218.s3tc.ctex"
+path.etc2="res://.godot/imported/sprite-jump-256px-16-v2.png-85601eb775f0c8e71b6089251f963218.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/mc/jump/sprite-jump-256px-16-v2.png"
-dest_files=["res://.godot/imported/sprite-jump-256px-16-v2.png-85601eb775f0c8e71b6089251f963218.ctex"]
+dest_files=["res://.godot/imported/sprite-jump-256px-16-v2.png-85601eb775f0c8e71b6089251f963218.s3tc.ctex", "res://.godot/imported/sprite-jump-256px-16-v2.png-85601eb775f0c8e71b6089251f963218.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

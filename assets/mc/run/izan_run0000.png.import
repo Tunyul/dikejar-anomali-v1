@@ -3,19 +3,21 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://col8kr5dgeepx"
-path="res://.godot/imported/izan_run0000.png-a7c924a60a8f2d6dd272391e62e63527.ctex"
+path.s3tc="res://.godot/imported/izan_run0000.png-a7c924a60a8f2d6dd272391e62e63527.s3tc.ctex"
+path.etc2="res://.godot/imported/izan_run0000.png-a7c924a60a8f2d6dd272391e62e63527.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/mc/run/izan_run0000.png"
-dest_files=["res://.godot/imported/izan_run0000.png-a7c924a60a8f2d6dd272391e62e63527.ctex"]
+dest_files=["res://.godot/imported/izan_run0000.png-a7c924a60a8f2d6dd272391e62e63527.s3tc.ctex", "res://.godot/imported/izan_run0000.png-a7c924a60a8f2d6dd272391e62e63527.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
