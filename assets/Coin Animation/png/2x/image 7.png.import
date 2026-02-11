@@ -2,22 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b0x6c8m348jl5"
-path.s3tc="res://.godot/imported/image_5.png-737ce461fd8661b18a2bab934878c1ad.s3tc.ctex"
-path.etc2="res://.godot/imported/image_5.png-737ce461fd8661b18a2bab934878c1ad.etc2.ctex"
+uid="uid://bjukd7xpvam0"
+path="res://.godot/imported/image 7.png-16f7791116cc07c8cafa00d0e93ef8ae.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/Coin Animation/png/2x/image_5.png"
-dest_files=["res://.godot/imported/image_5.png-737ce461fd8661b18a2bab934878c1ad.s3tc.ctex", "res://.godot/imported/image_5.png-737ce461fd8661b18a2bab934878c1ad.etc2.ctex"]
+source_file="res://assets/Coin Animation/png/2x/image 7.png"
+dest_files=["res://.godot/imported/image 7.png-16f7791116cc07c8cafa00d0e93ef8ae.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
