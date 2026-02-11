@@ -306,6 +306,7 @@ func start_initial_state_sequence() -> void:
 
 func start_entry_sequence() -> void:
     set_state(PlayerState.ENTRY)
+    countdown_active = true
 
 
 
@@ -723,6 +724,7 @@ func _is_environment_moving() -> bool:
     return _env_move_enabled
 
 func prepare_for_playing_phase() -> void:
+    countdown_active = false
     _play_start_grace_timer = play_start_grace_sec
     if lock_environment_speed_to_player:
         set_environment_speed(run_speed)

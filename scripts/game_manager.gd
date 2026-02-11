@@ -2373,6 +2373,7 @@ func set_player_health(current: int, maximum: int) -> void:
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return
+    get_tree().paused = false
     phase = Phase.ENTRY
     game_active = true
     _bgm_mode = BgmMode.RUN
