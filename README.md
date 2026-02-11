@@ -1,6 +1,6 @@
 # 🏃‍♂️ Dikejar Anomali
 
-[![Godot Engine](https://img.shields.io/badge/Godot-4.5-%23478cbf?logo=godot-engine&logoColor=white)](https://godotengine.org)
+[![Godot Engine](https://img.shields.io/badge/Godot-4.6-%23478cbf?logo=godot-engine&logoColor=white)](https://godotengine.org)
 [![Version](https://img.shields.io/badge/Version-1.3.28--beta-orange)](docs/CHANGELOG.md)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-green)](export_presets.cfg)
 
