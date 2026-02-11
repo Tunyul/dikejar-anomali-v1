@@ -47,6 +47,7 @@
 Dokumentasi teknis lengkap tersedia di folder [docs/](docs/):
 
 - 📜 [**Changelog**](CHANGELOG.md) - Riwayat perubahan versi.
+- 🤖 [**AI Collaboration**](AI_COLLABORATION.md) - Panduan bekerja dengan AI.
 - 🏗️ [**Arsitektur Pemain**](docs/PLAYER_IMPLEMENTATION.md) - Detail teknis kontrol dan state machine.
 - 💰 [**Sistem Ekonomi**](docs/PLAYER_XP_AND_REWARD_SYSTEM.md) - XP, Level, dan Reward.
 - 🛒 [**Desain Shop**](docs/SHOP_SHOP_DESIGN.md) - Struktur data dan UI Shop.
