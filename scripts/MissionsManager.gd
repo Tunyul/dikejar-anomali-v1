@@ -104,39 +104,74 @@ func _flush_save() -> void:
     _save()
 
 
-static func has_ready_to_claim_missions_in_save(save_path: String = "user://save.cfg") -> bool:
+func has_ready_to_claim_missions_in_save(save_path: String = "user://save.cfg") -> bool:
     var cfg := ConfigFile.new()
     var err := cfg.load(save_path)
     if err != OK:
         return false
-    var missions_value = cfg.get_value("missions", "list", [])
-    if not (missions_value is Array):
-        return false
-    var missions_list: Array = missions_value
-    var claimed_value = cfg.get_value("missions", "reward_claimed", {})
-    var claimed: Dictionary = {}
-    if claimed_value is Dictionary:
-        claimed = claimed_value
-    for m_any in missions_list:
-        if not (m_any is Dictionary):
-            continue
-        var m: Dictionary = m_any
-        var id_str := String(m.get("id", ""))
-        if id_str.is_empty():
-            continue
-        var mt: String = String(m.get("type", "daily"))
-        if mt != "challenge":
-            if claimed.has(id_str) and bool(claimed[id_str]):
-                continue
-        var reward: int = int(m.get("reward", 0))
-        if reward <= 0:
-            continue
-        var target: float = float(m.get("target", 0))
-        if target <= 0.0:
-            continue
-        var prog: float = float(m.get("progress", 0))
-        if prog >= target:
+    
+    # Cek daily all claim status
+    var daily_all_claimed := bool(cfg.get_value("missions", "daily_all_reward_claimed", false))
+    
+    # Cek individual missions
+    var missions_data = cfg.get_value("missions", "missions", [])
+    if missions_data is Array:
+        var claimed_data = cfg.get_value("missions", "mission_reward_claimed", {})
+        
+        # Data counter untuk pengecekan progres
+        var counts := {
+            "coins": int(cfg.get_value("progress", "total_coins", 0)),
+            "distance": int(cfg.get_value("progress", "max_distance", 0)),
+            "enemies": int(cfg.get_value("missions", "enemies_killed", 0)),
+            "jumps": int(cfg.get_value("missions", "jumps_total", 0)),
+            "runs": int(cfg.get_value("missions", "runs_played", 0)),
+            "skills": int(cfg.get_value("missions", "skills_collected", 0))
+        }
+
+        for m in missions_data:
+            if m is Dictionary:
+                var id = str(m.get("id", ""))
+                if id == "" or claimed_data.get(id, false):
+                    continue
+                
+                var goal = int(m.get("goal", 0))
+                var type = str(m.get("type", ""))
+                var current = 0
+                
+                match type:
+                    "collect_coins": current = counts.coins
+                    "distance": current = counts.distance
+                    "kill_enemies": current = counts.enemies
+                    "jump": current = counts.jumps
+                    "play_runs": current = counts.runs
+                    "collect_skills": current = counts.skills
+                
+                if current >= goal:
+                    return true
+
+    # Cek jika daily all ready (semua daily mission selesai tapi belum di-claim)
+    if not daily_all_claimed:
+        var daily_ready_count = 0
+        var total_daily = 0
+        for m in missions_data:
+            if m is Dictionary and str(m.get("tab", "")) == "daily":
+                total_daily += 1
+                var id = str(m.get("id", ""))
+                var goal = int(m.get("goal", 0))
+                var type = str(m.get("type", ""))
+                var current = 0
+                match type:
+                    "collect_coins": current = counts.coins
+                    "distance": current = counts.distance
+                    "kill_enemies": current = counts.enemies
+                    "jump": current = counts.jumps
+                    "play_runs": current = counts.runs
+                    "collect_skills": current = counts.skills
+                if current >= goal:
+                    daily_ready_count += 1
+        if total_daily > 0 and daily_ready_count >= total_daily:
             return true
+
     return false
 
 
