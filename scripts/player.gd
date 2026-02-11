@@ -729,6 +729,19 @@ func _input(event: InputEvent) -> void:
         return
     if not event or not is_instance_valid(self):
         return
+
+    # Handle screen touch for jump and attack (if not on buttons)
+    if event is InputEventScreenTouch and event.pressed:
+        var viewport_rect = get_viewport().get_visible_rect()
+        # If touch is on the left half of the screen, jump
+        if event.position.x < viewport_rect.size.x * 0.5:
+            request_jump()
+        # If touch is on the right half of the screen, attack (if not on a button)
+        # Note: TouchScreenButton should handle its own events and stop propagation if set up correctly
+        else:
+            request_attack()
+        return
+
     if event.is_action_pressed("jump"):
         request_jump()
         return

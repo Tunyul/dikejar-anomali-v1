@@ -326,6 +326,16 @@ func show_overlay() -> void:
     if ui:
         ui.visible = true
     visible = true
+
+    if _mission_panel:
+        _mission_panel.modulate.a = 0.0
+        _mission_panel.scale = Vector2(0.8, 0.8)
+        # Ensure pivot is centered for scaling
+        _mission_panel.pivot_offset = _mission_panel.size * 0.5
+        var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+        tween.tween_property(_mission_panel, "modulate:a", 1.0, 0.3)
+        tween.tween_property(_mission_panel, "scale", Vector2.ONE, 0.3)
+
     _reset_missions_scroll_to_top()
     var missions_panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
     if missions_panel:
@@ -348,6 +358,13 @@ func _unhandled_input(_event: InputEvent) -> void:
 func _close_overlay_only() -> void:
     if _confirm_panel:
         _confirm_panel.visible = false
+
+    if _mission_panel:
+        var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+        tween.tween_property(_mission_panel, "modulate:a", 0.0, 0.2)
+        tween.tween_property(_mission_panel, "scale", Vector2(0.8, 0.8), 0.2)
+        await tween.finished
+
     var ui := get_node_or_null("UI")
     if ui:
         ui.visible = false

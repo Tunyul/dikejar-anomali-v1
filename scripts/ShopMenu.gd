@@ -50,6 +50,12 @@ func _ready() -> void:
     _ui_vbox = get_node_or_null("UI/VBox") as VBoxContainer
     if _ui_vbox:
         _ui_vbox.show()
+        _ui_vbox.modulate.a = 0.0
+        _ui_vbox.scale = Vector2(0.9, 0.9)
+        _ui_vbox.pivot_offset = get_viewport_rect().size * 0.5
+        var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+        tween.tween_property(_ui_vbox, "modulate:a", 1.0, 0.3)
+        tween.tween_property(_ui_vbox, "scale", Vector2.ONE, 0.3)
 
     # 1. Load resources first
     _load_currency_icons()
@@ -1598,6 +1604,13 @@ func _on_back_pressed() -> void:
     _closing = true
     if is_instance_valid(TransitionManager) and TransitionManager.has_method("play_sfx"):
         TransitionManager.play_sfx(&"click")
+
+    if _ui_vbox:
+        var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+        tween.tween_property(_ui_vbox, "modulate:a", 0.0, 0.2)
+        tween.tween_property(_ui_vbox, "scale", Vector2(0.9, 0.9), 0.2)
+        await tween.finished
+
     get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 func _apply_ui_font(node: Node, font: Font) -> void:
