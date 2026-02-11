@@ -1010,7 +1010,8 @@ func _on_viewport_size_changed() -> void:
 func _apply_responsive_layout(vp: Vector2) -> void:
     if _title_sprite == null:
         return
-    _title_sprite.position = Vector2(vp.x * 0.5, vp.y * 0.2777778)
+    # Menggunakan rasio dari posisi yang diinginkan (510, 233) pada resolusi dasar 1024x576
+    _title_sprite.position = Vector2(vp.x * 0.498, vp.y * 0.4045)
     var scale_factor: float = minf(vp.x / 1024.0, vp.y / 576.0)
     scale_factor = clampf(scale_factor, 0.75, 1.35)
     var s: float = 0.34 * scale_factor

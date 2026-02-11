@@ -1,4 +1,4 @@
-# Dikejar Anomali — Dokumentasi Singkat
+# Anomaly Rush! — Dokumentasi Singkat
 
 Lihat dokumen gabungan konsep & implementasi pemain: `GAME_CONCEPT_AND_PLAYER_IMPLEMENTATION.md`.
 

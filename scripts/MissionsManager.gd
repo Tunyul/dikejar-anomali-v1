@@ -115,19 +115,18 @@ func has_ready_to_claim_missions_in_save(save_path: String = "user://save.cfg") 
     
     # Cek individual missions
     var missions_data = cfg.get_value("missions", "missions", [])
+    var counts := {
+        "coins": int(cfg.get_value("progress", "total_coins", 0)),
+        "distance": int(cfg.get_value("progress", "max_distance", 0)),
+        "enemies": int(cfg.get_value("missions", "enemies_killed", 0)),
+        "jumps": int(cfg.get_value("missions", "jumps_total", 0)),
+        "runs": int(cfg.get_value("missions", "runs_played", 0)),
+        "skills": int(cfg.get_value("missions", "skills_collected", 0))
+    }
+
     if missions_data is Array:
         var claimed_data = cfg.get_value("missions", "mission_reward_claimed", {})
         
-        # Data counter untuk pengecekan progres
-        var counts := {
-            "coins": int(cfg.get_value("progress", "total_coins", 0)),
-            "distance": int(cfg.get_value("progress", "max_distance", 0)),
-            "enemies": int(cfg.get_value("missions", "enemies_killed", 0)),
-            "jumps": int(cfg.get_value("missions", "jumps_total", 0)),
-            "runs": int(cfg.get_value("missions", "runs_played", 0)),
-            "skills": int(cfg.get_value("missions", "skills_collected", 0))
-        }
-
         for m in missions_data:
             if m is Dictionary:
                 var id = str(m.get("id", ""))
@@ -156,7 +155,7 @@ func has_ready_to_claim_missions_in_save(save_path: String = "user://save.cfg") 
         for m in missions_data:
             if m is Dictionary and str(m.get("tab", "")) == "daily":
                 total_daily += 1
-                var id = str(m.get("id", ""))
+                var _id = str(m.get("id", ""))
                 var goal = int(m.get("goal", 0))
                 var type = str(m.get("type", ""))
                 var current = 0

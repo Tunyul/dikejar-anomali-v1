@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Dikejar Anomali"
+config/name="Anomaly Rush!"
 config/version="1.3.28-beta"
 run/main_scene="res://scenes/LoadingScreen.tscn"
 config/features=PackedStringArray("4.6")

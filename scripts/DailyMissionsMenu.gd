@@ -519,7 +519,7 @@ func _update_daily_summary(cfg: ConfigFile, missions: Array) -> void:
             completed += 1
 
     if _daily_total_label:
-        _daily_total_label.text = "Daily: %d/%d" % [completed, total]
+        _daily_total_label.text = tr("Daily") + ": %d/%d" % [completed, total]
     if _daily_total_bar:
         _daily_total_bar.max_value = float(maxi(total, 1))
         _daily_total_bar.value = float(completed)
@@ -536,13 +536,13 @@ func _update_daily_summary(cfg: ConfigFile, missions: Array) -> void:
         if reward_claimed:
             if _daily_all_reward_label:
                 _daily_all_reward_label.visible = true
-                _daily_all_reward_label.text = "Diamond: SUDAH"
+                _daily_all_reward_label.text = tr("Diamond: SUDAH")
             if _daily_all_claim_button:
                 _daily_all_claim_button.visible = false
         else:
             if _daily_all_reward_label:
                 _daily_all_reward_label.visible = true
-                _daily_all_reward_label.text = "+%d Diamond" % reward_amt
+                _daily_all_reward_label.text = "+%d " % reward_amt + tr("Diamond")
             if _daily_all_claim_button:
                 _daily_all_claim_button.visible = true
                 _daily_all_claim_button.disabled = false

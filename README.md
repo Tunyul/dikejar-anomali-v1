@@ -1,10 +1,10 @@
-# 🏃‍♂️ Dikejar Anomali
+# 🏃‍♂️ Anomaly Rush!
 
 [![Godot Engine](https://img.shields.io/badge/Godot-4.6-%23478cbf?logo=godot-engine&logoColor=white)](https://godotengine.org)
 [![Version](https://img.shields.io/badge/Version-1.3.28--beta-orange)](docs/CHANGELOG.md)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-green)](export_presets.cfg)
 
-**Dikejar Anomali** adalah game *Endless Runner 2D* yang dikembangkan menggunakan Godot Engine 4.5. Pemain harus bertahan hidup dari kejaran "Anomaly" sambil melewati rintangan dan mengumpulkan sumber daya di dunia yang terus berubah.
+**Anomaly Rush!** adalah game *Endless Runner 2D* yang dikembangkan menggunakan Godot Engine 4.6. Pemain harus bertahan hidup dari kejaran "Anomaly" sambil melewati rintangan dan mengumpulkan sumber daya di dunia yang terus berubah.
 
 ---
 

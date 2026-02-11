@@ -1,4 +1,4 @@
-# Dikejar Anomali — Konsep & Implementasi Pemain
+# Anomaly Rush! — Konsep & Implementasi Pemain
 
 ## Ringkasan Proyek
 - Genre: runner 2D kasual-komedi; kabur dari “Anomali”, kumpulkan item, hindari rintangan, bertahan sejauh mungkin.
