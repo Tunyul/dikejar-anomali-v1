@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://ckrxbg831c8qt"]
 
 [ext_resource type="Script" uid="uid://cw88mdfdtn5ex" path="res://scripts/magnet_powerup.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/magnet/magnet-96.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/icon/icon_magnet_v1_96x96.png" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ilk81"]
 size = Vector2(64, 90)

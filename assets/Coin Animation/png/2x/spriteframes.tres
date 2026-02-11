@@ -1,0 +1,57 @@
+[gd_resource type="SpriteFrames" load_steps=0 format=3 uid="uid://ck1m6pveg3m2t"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 1.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 2.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 3.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 4.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 5.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 6.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 7.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 8.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 9.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 10.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 11.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 12.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 13.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 14.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 15.png")
+}, {
+"duration": 1.0,
+"texture": ExtResource("res://assets/Coin Animation/png/2x/image 16.png")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 12.0
+}]

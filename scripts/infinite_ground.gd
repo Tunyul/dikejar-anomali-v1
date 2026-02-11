@@ -94,6 +94,19 @@ var _base_use_acceleration: bool = true
 @export_enum("RandomCampur", "LengkungNaikTurun", "NaikTanggaFlatAtas", "GarisDatar") var coin_pattern_mode: int = 0
 @export var powerup_min_distance_tiles: float = 64.0
 @export var powerup_coin_avoid_radius_tiles: int = 2
+
+@export_group("Diamonds")
+@export var diamond_scene: PackedScene
+@export var diamond_spawn_chance: float = 0.01
+@export var diamond_amount: int = 1
+@export var diamond_max_children: int = 2
+@export var diamond_scale: float = 1.0
+@export var diamond_min_distance_tiles: float = 48.0
+@export var diamond_avoid_radius_tiles: int = 0
+@export var diamond_height_offset_tiles: float = 1.8
+@export var diamond_high_spawn_ratio: float = 0.4
+@export var diamond_high_extra_offset_min_tiles: float = 1.0
+@export var diamond_high_extra_offset_max_tiles: float = 1.8
 @export_group("Hearts")
 @export var heart_scene: PackedScene
 @export var heart_spawn_chance: float = 0.08
@@ -137,6 +150,8 @@ var _tile_a: TileMapLayer = null
 var _tile_b: TileMapLayer = null
 var _coins_a: Node2D = null
 var _coins_b: Node2D = null
+var _diamonds_a: Node2D = null
+var _diamonds_b: Node2D = null
 var _enemies_a: Node2D = null
 var _enemies_b: Node2D = null
 var _seg_width_px: float = 0.0
@@ -234,6 +249,20 @@ func _ensure_initialized() -> void:
         _coins_a = get_node_or_null("CoinsA") as Node2D
     if _coins_b == null:
         _coins_b = get_node_or_null("CoinsB") as Node2D
+    if _diamonds_a == null:
+        _diamonds_a = get_node_or_null("DiamondsA") as Node2D
+        if _diamonds_a == null:
+            _diamonds_a = Node2D.new()
+            _diamonds_a.name = "DiamondsA"
+            _diamonds_a.z_index = 100
+            add_child(_diamonds_a)
+    if _diamonds_b == null:
+        _diamonds_b = get_node_or_null("DiamondsB") as Node2D
+        if _diamonds_b == null:
+            _diamonds_b = Node2D.new()
+            _diamonds_b.name = "DiamondsB"
+            _diamonds_b.z_index = 100
+            add_child(_diamonds_b)
     if _enemies_a == null:
         _enemies_a = get_node_or_null("EnemiesA") as Node2D
     if _enemies_b == null:
@@ -362,6 +391,10 @@ func _physics_process(delta: float) -> void:
         _coins_a.position.x -= dx
     if _coins_b:
         _coins_b.position.x -= dx
+    if _diamonds_a:
+        _diamonds_a.position.x -= dx
+    if _diamonds_b:
+        _diamonds_b.position.x -= dx
     if _enemies_a:
         _enemies_a.position.x -= dx
     if _enemies_b:
@@ -386,6 +419,10 @@ func _handle_wrap() -> void:
             _coins_a.position.x += dx_wrap
         elif left == _tile_b and _coins_b:
             _coins_b.position.x += dx_wrap
+        if left == _tile_a and _diamonds_a:
+            _diamonds_a.position.x += dx_wrap
+        elif left == _tile_b and _diamonds_b:
+            _diamonds_b.position.x += dx_wrap
         if left == _tile_a and _enemies_a:
             _enemies_a.position.x += dx_wrap
         elif left == _tile_b and _enemies_b:
@@ -408,6 +445,7 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
         return start_height
     _clear_collision_for_tile(tile)
     _clear_coins_for_tile(tile)
+    _clear_diamonds_for_tile(tile)
     _clear_enemies_for_tile(tile)
     tile.clear()
     var current_height: int = clamp(start_height, min_height_tiles, max_height_tiles)
@@ -422,6 +460,7 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
     var enemy_gap_remaining: int = 0
     var enemy_columns: Array = []
     var last_heart_x: int = -1024
+    var last_diamond_x: int = -1024
     var i: int = 0
     while i < segment_tile_count:
         var flat_override: bool = false
@@ -528,6 +567,28 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
         if do_spawn_enemy:
             _spawn_enemy_for_column(tile, i, current_height)
             enemy_columns.append(i)
+
+        var can_spawn_diamond: bool = true
+        if diamond_scene == null:
+            can_spawn_diamond = false
+        elif diamond_spawn_chance <= 0.0:
+            can_spawn_diamond = false
+        if can_spawn_diamond:
+            var min_d: float = max(diamond_min_distance_tiles, 0.0)
+            if min_d > 0.0 and last_diamond_x >= 0 and float(i - last_diamond_x) < min_d:
+                can_spawn_diamond = false
+        if can_spawn_diamond:
+            var r_avoid: int = max(diamond_avoid_radius_tiles, 0)
+            if r_avoid > 0 and _has_coin_near_x(tile, i, r_avoid):
+                can_spawn_diamond = false
+        if can_spawn_diamond:
+            if _has_enemy_near_x(tile, i, 0) or _has_heart_near_x(tile, i, 0):
+                can_spawn_diamond = false
+        if can_spawn_diamond:
+            var rd: float = _rng.randf()
+            if rd < diamond_spawn_chance:
+                _spawn_diamond_for_column(tile, i, current_height)
+                last_diamond_x = i
 
         var can_spawn_heart: bool = true
         if heart_scene == null:
@@ -703,6 +764,10 @@ func _has_coin_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
     for c in root.get_children():
         if not (c is Node2D):
             continue
+        if not c.has_method("get"):
+            continue
+        if str(c.get("currency")) != "coins":
+            continue
         var coin_node := c as Node2D
         var local_pos: Vector2 = tile.to_local(coin_node.global_position)
         var cell: Vector2i = tile.local_to_map(local_pos)
@@ -800,6 +865,20 @@ func _ensure_min_spawn_density(_tile: TileMapLayer) -> void:
 
 func _clear_coins_for_tile(tile: TileMapLayer) -> void:
     var root := _get_coins_root_for_tile(tile)
+    if root == null:
+        return
+    for c in root.get_children():
+        c.queue_free()
+
+func _get_diamonds_root_for_tile(tile: TileMapLayer) -> Node2D:
+    if tile == _tile_a:
+        return _diamonds_a
+    elif tile == _tile_b:
+        return _diamonds_b
+    return null
+
+func _clear_diamonds_for_tile(tile: TileMapLayer) -> void:
+    var root := _get_diamonds_root_for_tile(tile)
     if root == null:
         return
     for c in root.get_children():
@@ -1429,6 +1508,56 @@ func _spawn_coin_for_column(tile: TileMapLayer, x: int, height: int, ignore_max_
     var main := get_tree().get_root().get_node_or_null("Main")
     if main and main.has_method("on_coin_collected") and coin.has_signal("collected"):
         coin.collected.connect(Callable(main, "on_coin_collected"))
+
+func _spawn_diamond_for_column(tile: TileMapLayer, x: int, height: int, ignore_limit: bool = false) -> void:
+    if diamond_scene == null:
+        return
+    var root := _get_diamonds_root_for_tile(tile)
+    if root == null:
+        return
+    var max_d: int = diamond_max_children
+    if max_d > 0 and not ignore_limit and root.get_child_count() >= max_d:
+        return
+    var seg_id := "A"
+    if tile == _tile_b:
+        seg_id = "B"
+    var top_y: int = -height
+    var offset_tiles: float = max(diamond_height_offset_tiles, 0.0)
+    var high_ratio: float = clamp(diamond_high_spawn_ratio, 0.0, 1.0)
+    if high_ratio > 0.0 and _rng.randf() < high_ratio:
+        var extra_min: float = max(diamond_high_extra_offset_min_tiles, 0.0)
+        var extra_max: float = max(diamond_high_extra_offset_max_tiles, extra_min)
+        offset_tiles += _rng.randf_range(extra_min, extra_max)
+    var whole_tiles: int = int(floor(offset_tiles))
+    var frac_tiles: float = offset_tiles - float(whole_tiles)
+    var dy: int = top_y - whole_tiles
+    var cell := Vector2i(x, dy)
+    var local_pos: Vector2 = tile.map_to_local(cell)
+    var world_pos: Vector2 = tile.to_global(local_pos)
+    if frac_tiles != 0.0:
+        world_pos.y -= frac_tiles * _tile_h_px
+    for c2 in root.get_children():
+        if not (c2 is Node2D):
+            continue
+        var existing := c2 as Node2D
+        if existing.global_position.distance_to(world_pos) < 1.0:
+            return
+    var diamond := diamond_scene.instantiate()
+    if diamond == null:
+        return
+    diamond.scale = Vector2.ONE * diamond_scale
+    if diamond.has_method("set"):
+        diamond.set("source_segment", seg_id)
+        var a := diamond_amount
+        if a <= 0:
+            a = 1
+        diamond.set("amount", a)
+        diamond.set("currency", "gems")
+    root.add_child(diamond)
+    diamond.global_position = world_pos
+    var main := get_tree().get_root().get_node_or_null("Main")
+    if main and main.has_method("on_coin_collected") and diamond.has_signal("collected"):
+        diamond.collected.connect(Callable(main, "on_coin_collected"))
 
 func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int, ignore_limit: bool = false) -> void:
     if heart_scene == null:

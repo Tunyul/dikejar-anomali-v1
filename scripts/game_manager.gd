@@ -103,6 +103,7 @@ var _bgm_mode: BgmMode = BgmMode.RUN
 var _bgm_user_volume: float = 0.8
 var _bgm_base_db: float = 0.0
 var _bgm_duck_db: float = 0.0
+var _sfx_user_volume: float = 0.8
 const _RUN_BGM_OFFSET_DB: float = -2.0
 var _bgm_duck_tween: Tween = null
 var _bgm_fade_tween: Tween = null
@@ -428,9 +429,12 @@ func _init_bukit_bgm() -> void:
         return
     var bgm := get_node_or_null("BGM") as AudioStreamPlayer
     if bgm == null:
-        return
+        bgm = AudioStreamPlayer.new()
+        bgm.name = "BGM"
+        add_child(bgm)
     _bukit_bgm_paths = _load_bukit_bgm_paths()
     if _bukit_bgm_paths.is_empty():
+        push_warning("[GameManager] No Bukit BGM files found in " + _BUKIT_BGM_DIR)
         return
     var cb := Callable(self, "_on_bukit_bgm_finished")
     if not bgm.finished.is_connected(cb):
@@ -443,9 +447,12 @@ func _init_gameover_bgm() -> void:
         return
     var bgm := get_node_or_null("BGM") as AudioStreamPlayer
     if bgm == null:
-        return
+        bgm = AudioStreamPlayer.new()
+        bgm.name = "BGM"
+        add_child(bgm)
     _gameover_bgm_paths = _load_gameover_bgm_paths()
     if _gameover_bgm_paths.is_empty():
+        push_warning("[GameManager] No GameOver BGM files found in " + _GAMEOVER_BGM_DIR)
         return
     var cb := Callable(self, "_on_gameover_bgm_finished")
     if not bgm.finished.is_connected(cb):
@@ -1358,13 +1365,13 @@ func _apply_bgm_mix() -> void:
     bgm.volume_db = (-60.0 if bgm_muted else (_bgm_base_db + mode_offset + _bgm_duck_db))
 
 func set_sfx_volume(v: float) -> void:
+    _sfx_user_volume = clampf(v, 0.0, 1.0)
     if TransitionManager and TransitionManager.has_method("set_sfx_volume"):
-        TransitionManager.set_sfx_volume(v)
+        TransitionManager.set_sfx_volume(_sfx_user_volume)
     var sfx := get_node_or_null("SFXJump")
     if sfx and sfx is AudioStreamPlayer:
-        var lin: float = clampf(v, 0.0, 1.0)
-        var db: float = (-60.0 if lin <= 0.0 else 20.0 * log(lin) / log(10.0))
-        (sfx as AudioStreamPlayer).volume_db = db
+        var db: float = (-60.0 if _sfx_user_volume <= 0.0 else 20.0 * log(_sfx_user_volume) / log(10.0))
+        (sfx as AudioStreamPlayer).volume_db = (-60.0 if sfx_muted else db)
 
 func set_bgm_muted(m: bool) -> void:
     bgm_muted = m
@@ -1384,7 +1391,8 @@ func set_sfx_muted(m: bool) -> void:
         TransitionManager.set_sfx_muted(m)
     var sfx := get_node_or_null("SFXJump")
     if sfx and sfx is AudioStreamPlayer:
-        (sfx as AudioStreamPlayer).volume_db = (-60.0 if m else (sfx as AudioStreamPlayer).volume_db)
+        var db: float = (-60.0 if _sfx_user_volume <= 0.0 else 20.0 * log(_sfx_user_volume) / log(10.0))
+        (sfx as AudioStreamPlayer).volume_db = (-60.0 if m else db)
     _save_progress()
 
 func _set_pause_menu_visible(v: bool) -> void:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=95 format=3 uid="uid://bpol0qakhmfq"]
+[gd_scene format=3 uid="uid://bpol0qakhmfq"]
 
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
@@ -43,10 +43,10 @@
 [ext_resource type="PackedScene" uid="uid://bj0vpeb24e585" path="res://scenes/MobileControls.tscn" id="57_mobile_controls"]
 [ext_resource type="PackedScene" path="res://scenes/HealthBar.tscn" id="58_healthbar"]
 [ext_resource type="PackedScene" path="res://scenes/CollectibleHeart.tscn" id="59_heart_hud"]
-[ext_resource type="Texture2D" uid="uid://c40kjq5gmlng0" path="res://assets/magnet/magnet-96.png" id="60_magnet_icon"]
+[ext_resource type="Texture2D" uid="uid://t4hnmclvw5tg" path="res://assets/icon/icon_magnet_v1_96x96.png" id="60_magnet_icon"]
 [ext_resource type="Texture2D" uid="uid://sgqo0atm3wrv" path="res://assets/icon/icon_setting.png" id="61_setting_icon"]
 [ext_resource type="Texture2D" uid="uid://cgqcf0k0g66wp" path="res://assets/icon/icon_shield.png" id="62_shield_icon"]
-[ext_resource type="Texture2D" uid="uid://cis3quibaooqs" path="res://assets/icon/icon_coin2x_96x96.png" id="63_double_coins_icon"]
+[ext_resource type="Texture2D" uid="uid://cis3quibaooqs" path="res://assets/icon/icon_coinduble_96x96.png" id="63_double_coins_icon"]
 [ext_resource type="Texture2D" uid="uid://ns4st64im4qi" path="res://assets/panel/panel_gameover_685x356.png" id="64_gameover_panel"]
 [ext_resource type="FontFile" uid="uid://did5ru2tyvvwu" path="res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf" id="65_nunito_regular"]
 [ext_resource type="Texture2D" uid="uid://l1q21u47e1pc" path="res://assets/tombol/tombol_retry_96x96.png" id="66_retry_icon"]
@@ -55,6 +55,7 @@
 [ext_resource type="PackedScene" uid="uid://civfdm736wgj6" path="res://scenes/ConfirmPanel.tscn" id="72_confirm_panel_scene"]
 [ext_resource type="Texture2D" uid="uid://dwa1i8s1cdeq2" path="res://assets/icon/icon_boost_96x96.png" id="73_speed_boost_icon"]
 [ext_resource type="Texture2D" uid="uid://dn5c37tdf5r0" path="res://assets/icon/icon_trophy_128x128.png" id="74_trophy_icon"]
+[ext_resource type="Texture2D" uid="uid://bhfyuqhjycryw" path="res://assets/diamond animation/diamond-1024x1024.png" id="75_diamond_icon"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_coin_hud"]
 animations = [{
@@ -607,65 +608,164 @@ centered = false
 layer = 100
 
 [node name="MobileControls" parent="CanvasLayer" instance=ExtResource("57_mobile_controls")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="VersionLabel" type="Label" parent="CanvasLayer"]
+anchor_top = 1.0
+anchor_bottom = 1.0
 offset_left = 8.0
-offset_top = 544.0
+offset_top = -32.0
 offset_right = 160.0
-offset_bottom = 568.0
+offset_bottom = -8.0
 script = ExtResource("28")
 
 [node name="SettingsButton" type="TextureButton" parent="CanvasLayer"]
-offset_left = 968.0
-offset_top = 4.0
-offset_right = 1008.0
-offset_bottom = 44.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -52.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = 48.0
 scale = Vector2(0.04, 0.04)
 texture_normal = ExtResource("61_setting_icon")
+
+[node name="BGMToast" type="Control" parent="CanvasLayer"]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -260.0
+offset_top = 10.0
+offset_right = 260.0
+offset_bottom = 50.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="CanvasLayer/BGMToast"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Text" type="Label" parent="CanvasLayer/BGMToast"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 3
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 26
+text = "BGM: -"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MissionsToast" type="Control" parent="CanvasLayer"]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_top = 48.0
+offset_right = 220.0
+offset_bottom = 92.0
+mouse_filter = 0
+
+[node name="Bg" type="ColorRect" parent="CanvasLayer/MissionsToast"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Text" type="Label" parent="CanvasLayer/MissionsToast"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 3
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "Misi selesai! Claim di Menu Misi."
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="PauseMenu" type="Control" parent="CanvasLayer"]
 visible = false
 layout_mode = 3
-anchors_preset = 0
-offset_right = 1024.0
-offset_bottom = 576.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("31")
 
 [node name="Panel" type="ColorRect" parent="CanvasLayer/PauseMenu"]
 layout_mode = 0
-offset_right = 1024.0
-offset_bottom = 576.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.45)
 
 [node name="Title" type="Label" parent="CanvasLayer/PauseMenu"]
 layout_mode = 0
-offset_left = 216.0
-offset_top = 132.0
-offset_right = 808.0
-offset_bottom = 172.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -296.0
+offset_top = -200.0
+offset_right = 296.0
+offset_bottom = -160.0
 text = "Paused"
 
 [node name="VBox" type="VBoxContainer" parent="CanvasLayer/PauseMenu"]
 layout_mode = 0
-offset_left = 216.0
-offset_top = 188.0
-offset_right = 808.0
-offset_bottom = 452.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -296.0
+offset_top = -132.0
+offset_right = 296.0
+offset_bottom = 132.0
 
 [node name="ResumeButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 30
 text = "Resume"
 
 [node name="RestartButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 30
 text = "Restart"
 
 [node name="MenuButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 30
 text = "Menu"
+
+[node name="MissionsButton" type="Button" parent="CanvasLayer/PauseMenu/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "Misi"
 
 [node name="BGMVolume" type="HSlider" parent="CanvasLayer/PauseMenu/VBox"]
 layout_mode = 2
@@ -675,10 +775,14 @@ value = 0.8
 
 [node name="BGMMute" type="CheckBox" parent="CanvasLayer/PauseMenu/VBox"]
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
 text = "Mute BGM"
 
 [node name="SFXMute" type="CheckBox" parent="CanvasLayer/PauseMenu/VBox"]
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
 text = "Mute SFX"
 
 [node name="SFXVolume" type="HSlider" parent="CanvasLayer/PauseMenu/VBox"]
@@ -689,64 +793,81 @@ value = 0.8
 
 [node name="MissionsLabel" type="Label" parent="CanvasLayer/PauseMenu/VBox"]
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
 text = "Misi:"
 
 [node name="GameOverMenu" type="Control" parent="CanvasLayer"]
 visible = false
 layout_mode = 3
-anchors_preset = 0
-offset_right = 1024.0
-offset_bottom = 576.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("34")
 
 [node name="Panel" type="ColorRect" parent="CanvasLayer/GameOverMenu"]
 layout_mode = 0
-offset_right = 1024.0
-offset_bottom = 576.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.45)
 
 [node name="CardBackground" type="TextureRect" parent="CanvasLayer/GameOverMenu"]
 layout_mode = 0
-offset_left = 170.0
-offset_top = 110.0
-offset_right = 855.0
-offset_bottom = 466.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -342.0
+offset_top = -178.0
+offset_right = 343.0
+offset_bottom = 178.0
 texture = ExtResource("64_gameover_panel")
 stretch_mode = 3
 
 [node name="Title" type="Label" parent="CanvasLayer/GameOverMenu"]
 layout_mode = 0
-offset_left = 170.0
-offset_top = 134.0
-offset_right = 855.0
-offset_bottom = 184.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -342.0
+offset_top = -154.0
+offset_right = 343.0
+offset_bottom = -104.0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_fonts/font = ExtResource("65_nunito_regular")
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 44
 text = "Game Over"
 horizontal_alignment = 1
 
 [node name="VBox" type="VBoxContainer" parent="CanvasLayer/GameOverMenu"]
 layout_mode = 0
-offset_left = 170.0
-offset_top = 170.0
-offset_right = 855.0
-offset_bottom = 466.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -342.0
+offset_top = -118.0
+offset_right = 343.0
+offset_bottom = 178.0
 alignment = 1
 
 [node name="ScoreLabel" type="Label" parent="CanvasLayer/GameOverMenu/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("65_nunito_regular")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 32
 text = "Score: 0"
 horizontal_alignment = 1
 
 [node name="DistanceLabel" type="Label" parent="CanvasLayer/GameOverMenu/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("65_nunito_regular")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 32
 text = "Distance: 0"
 horizontal_alignment = 1
 
@@ -795,6 +916,7 @@ offset_right = 320.0
 offset_bottom = 36.0
 text = "Heart: OFF"
 theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 22
 
 [node name="CoinHUD" type="HBoxContainer" parent="CanvasLayer"]
 z_index = 100
@@ -806,8 +928,11 @@ offset_bottom = 84.0
 
 [node name="Label" type="Label" parent="CanvasLayer/CoinHUD"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_font_sizes/font_size = 30
 text = "0"
+clip_text = true
 
 [node name="CoinIconAnim" type="AnimatedSprite2D" parent="CanvasLayer"]
 process_mode = 3
@@ -830,83 +955,128 @@ custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 texture = ExtResource("74_trophy_icon")
 expand_mode = 1
+stretch_mode = 5
 
 [node name="ScoreLabel" type="Label" parent="CanvasLayer/ScoreHUD"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_font_sizes/font_size = 30
 text = "0"
+clip_text = true
+
+[node name="GemHUD" type="HBoxContainer" parent="CanvasLayer"]
+z_index = 100
+custom_minimum_size = Vector2(80, 32)
+offset_left = 220.0
+offset_top = 84.0
+offset_right = 384.0
+offset_bottom = 116.0
+
+[node name="Icon" type="TextureRect" parent="CanvasLayer/GemHUD"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("75_diamond_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CanvasLayer/GemHUD"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_font_sizes/font_size = 30
+text = "0"
+clip_text = true
 
 [node name="MagnetIcon" type="TextureRect" parent="CanvasLayer"]
 z_index = 100
-custom_minimum_size = Vector2(24, 24)
-offset_left = 7.0
+custom_minimum_size = Vector2(32, 32)
+offset_left = 16.0
 offset_top = 96.0
-offset_right = 103.0
-offset_bottom = 192.0
-scale = Vector2(0.25, 0.25)
+offset_right = 48.0
+offset_bottom = 128.0
 texture = ExtResource("60_magnet_icon")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="MagnetTimerLabel" type="Label" parent="CanvasLayer"]
 z_index = 100
 offset_left = 48.0
 offset_top = 96.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+offset_right = 220.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
 
 [node name="ShieldIcon" type="TextureRect" parent="CanvasLayer"]
 z_index = 100
-custom_minimum_size = Vector2(24, 24)
-offset_left = 7.0
+custom_minimum_size = Vector2(32, 32)
+offset_left = 16.0
 offset_top = 128.0
-offset_right = 103.0
-offset_bottom = 224.0
-scale = Vector2(0.25, 0.25)
+offset_right = 48.0
+offset_bottom = 160.0
 texture = ExtResource("62_shield_icon")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ShieldTimerLabel" type="Label" parent="CanvasLayer"]
 z_index = 100
 offset_left = 48.0
 offset_top = 128.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+offset_right = 220.0
+offset_bottom = 152.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
 
 [node name="DoubleCoinsIcon" type="TextureRect" parent="CanvasLayer"]
 z_index = 100
-custom_minimum_size = Vector2(24, 24)
-offset_left = 7.0
+custom_minimum_size = Vector2(32, 32)
+offset_left = 16.0
 offset_top = 160.0
-offset_right = 103.0
-offset_bottom = 256.0
-scale = Vector2(0.25, 0.25)
+offset_right = 48.0
+offset_bottom = 192.0
 texture = ExtResource("63_double_coins_icon")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="DoubleCoinsTimerLabel" type="Label" parent="CanvasLayer"]
 z_index = 100
 offset_left = 48.0
 offset_top = 160.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+offset_right = 220.0
+offset_bottom = 184.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
 
 [node name="SpeedBoostIcon" type="TextureRect" parent="CanvasLayer"]
 z_index = 100
-custom_minimum_size = Vector2(24, 24)
-offset_left = 7.0
+custom_minimum_size = Vector2(32, 32)
+offset_left = 16.0
 offset_top = 192.0
-offset_right = 103.0
-offset_bottom = 288.0
-scale = Vector2(0.25, 0.25)
+offset_right = 48.0
+offset_bottom = 224.0
 texture = ExtResource("73_speed_boost_icon")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="SpeedBoostTimerLabel" type="Label" parent="CanvasLayer"]
 z_index = 100
 offset_left = 48.0
 offset_top = 192.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+offset_right = 220.0
+offset_bottom = 216.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
 
 [node name="CountdownLabel" type="Label" parent="CanvasLayer"]
 visible = false
 z_index = 200
-offset_right = 1024.0
-offset_bottom = 576.0
+mouse_filter = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 96
+theme_override_font_sizes/font_size = 112
 horizontal_alignment = 1
 vertical_alignment = 1
 

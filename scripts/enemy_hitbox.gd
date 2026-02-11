@@ -2,10 +2,12 @@ extends Area2D
 
 @export var damage_on_hit: int = 25
 
-func _is_shield_active() -> bool:
+func _try_consume_shield_hit() -> bool:
     var main := get_tree().get_root().get_node_or_null("Main")
+    if main and main.has_method("try_consume_shield_hit"):
+        return bool(main.call("try_consume_shield_hit"))
     if main and main.has_method("is_shield_active"):
-        return main.is_shield_active()
+        return bool(main.call("is_shield_active"))
     return false
 
 func _ready() -> void:
@@ -22,8 +24,7 @@ func _on_body_entered(body: Node) -> void:
         if enemy_node and enemy_node.has_method("on_player_attack_hit"):
             enemy_node.call("on_player_attack_hit", player)
         return
-    var shield_active := _is_shield_active()
-    if shield_active:
+    if _try_consume_shield_hit():
         var enemy_node2 := get_parent()
         if enemy_node2 and enemy_node2.has_method("on_player_attack_hit"):
             enemy_node2.call("on_player_attack_hit", player)

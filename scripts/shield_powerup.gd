@@ -18,4 +18,5 @@ func _on_body_entered(body: Node) -> void:
 		var gm := get_tree().get_root().get_node_or_null("Main")
 		if gm != null and gm.has_method("activate_shield"):
 			gm.activate_shield(duration_sec)
+			TransitionManager.play_sfx(&"shield_pickup")
 	queue_free()

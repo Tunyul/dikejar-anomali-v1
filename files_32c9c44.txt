@@ -1,0 +1,535 @@
+.trae/.ignore
+addons/DropShadowCaster2D/AnimatedDropShadowCaster2D.gd
+addons/DropShadowCaster2D/AnimatedDropShadowCaster2D.gd-csocraman.uid
+addons/DropShadowCaster2D/AnimatedDropShadowCaster2D.gd.uid
+addons/DropShadowCaster2D/DropShadow.gd
+addons/DropShadowCaster2D/DropShadow.gd-csocraman.uid
+addons/DropShadowCaster2D/DropShadow.gd.uid
+addons/DropShadowCaster2D/DropShadowCaster.gd
+addons/DropShadowCaster2D/DropShadowCaster.gd.uid
+addons/DropShadowCaster2D/DropShadowCaster2D.gd
+addons/DropShadowCaster2D/DropShadowCaster2D.gd.uid
+addons/DropShadowCaster2D/Examples/Example1.tscn
+addons/DropShadowCaster2D/Examples/knight.png
+addons/DropShadowCaster2D/Examples/knight.png.import
+addons/DropShadowCaster2D/Examples/player.gd
+addons/DropShadowCaster2D/Examples/player.gd.uid
+addons/DropShadowCaster2D/Examples/tilemap.png
+addons/DropShadowCaster2D/Examples/tilemap.png.import
+addons/DropShadowCaster2D/Icons/AnimatedDropShadowCaster2D.svg
+addons/DropShadowCaster2D/Icons/AnimatedDropShadowCaster2D.svg-csocraman.import
+addons/DropShadowCaster2D/Icons/AnimatedDropShadowCaster2D.svg.import
+addons/DropShadowCaster2D/Icons/DropShadowCaster2D.svg
+addons/DropShadowCaster2D/Icons/DropShadowCaster2D.svg-csocraman.import
+addons/DropShadowCaster2D/Icons/DropShadowCaster2D.svg.import
+addons/DropShadowCaster2D/Icons/tilemap.png
+addons/DropShadowCaster2D/Icons/tilemap.png.import
+addons/DropShadowCaster2D/plugin.cfg
+addons/bluebrains_character_controller/bluebrains_character_controller.gd
+addons/bluebrains_character_controller/bluebrains_character_controller.gd.uid
+addons/bluebrains_character_controller/character_controller/2d_character_controller.gd
+addons/bluebrains_character_controller/character_controller/2d_character_controller.gd.uid
+addons/bluebrains_character_controller/character_controller/2d_character_controller.tscn
+addons/bluebrains_character_controller/character_controller/2d_character_controller_base.tscn
+addons/bluebrains_character_controller/character_controller/example_character_controller.tscn
+addons/bluebrains_character_controller/character_controller/state_machine/dynamic_data_row.gd
+addons/bluebrains_character_controller/character_controller/state_machine/dynamic_data_row.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/input_transition.gd
+addons/bluebrains_character_controller/character_controller/state_machine/input_transition.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/magic_transition.gd
+addons/bluebrains_character_controller/character_controller/state_machine/magic_transition.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/state.gd
+addons/bluebrains_character_controller/character_controller/state_machine/state.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/state_machine.gd
+addons/bluebrains_character_controller/character_controller/state_machine/state_machine.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/states/airborne.gd
+addons/bluebrains_character_controller/character_controller/state_machine/states/airborne.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/states/grounded.gd
+addons/bluebrains_character_controller/character_controller/state_machine/states/grounded.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/states/hang.gd
+addons/bluebrains_character_controller/character_controller/state_machine/states/hang.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/states/jump.gd
+addons/bluebrains_character_controller/character_controller/state_machine/states/jump.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/states/jump_air.gd
+addons/bluebrains_character_controller/character_controller/state_machine/states/jump_air.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/states/one_shot.gd
+addons/bluebrains_character_controller/character_controller/state_machine/states/one_shot.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/states/wall_slide.gd
+addons/bluebrains_character_controller/character_controller/state_machine/states/wall_slide.gd.uid
+addons/bluebrains_character_controller/character_controller/state_machine/transition.gd
+addons/bluebrains_character_controller/character_controller/state_machine/transition.gd.uid
+addons/bluebrains_character_controller/components/input_map.gd
+addons/bluebrains_character_controller/components/input_map.gd.uid
+addons/bluebrains_character_controller/components/ledge_detector.gd
+addons/bluebrains_character_controller/components/ledge_detector.gd.uid
+addons/bluebrains_character_controller/components/ledge_detector.tscn
+addons/bluebrains_character_controller/components/movement_variables.gd
+addons/bluebrains_character_controller/components/movement_variables.gd.uid
+addons/bluebrains_character_controller/components/state_machine_variables.gd
+addons/bluebrains_character_controller/components/state_machine_variables.gd.uid
+addons/bluebrains_character_controller/helpers/static_configuration_warning.gd
+addons/bluebrains_character_controller/helpers/static_configuration_warning.gd.uid
+addons/bluebrains_character_controller/icon.png
+addons/bluebrains_character_controller/icon.png.import
+addons/bluebrains_character_controller/icons/diamond-jump-to-yellow.png
+addons/bluebrains_character_controller/icons/diamond-jump-to-yellow.png.import
+addons/bluebrains_character_controller/icons/diamond-yellow.png
+addons/bluebrains_character_controller/icons/diamond-yellow.png.import
+addons/bluebrains_character_controller/icons/jump-to-yellow.png
+addons/bluebrains_character_controller/icons/jump-to-yellow.png.import
+addons/bluebrains_character_controller/icons/multi-diamonds-yellow.png
+addons/bluebrains_character_controller/icons/multi-diamonds-yellow.png.import
+addons/bluebrains_character_controller/plugin.cfg
+addons/bluebrains_character_controller/sprites/Air Spin/player air spin 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Air Spin/player air spin 48x48.png
+addons/bluebrains_character_controller/sprites/Air Spin/player air spin 48x48.png.import
+addons/bluebrains_character_controller/sprites/Climb (facing back of player)/player climb-back 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Climb (facing back of player)/player climb-back 48x48.png
+addons/bluebrains_character_controller/sprites/Climb (facing back of player)/player climb-back 48x48.png.import
+addons/bluebrains_character_controller/sprites/Climb (facing side of player)/Player Side-Climb 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Climb (facing side of player)/Player Side-Climb 48x48.png
+addons/bluebrains_character_controller/sprites/Climb (facing side of player)/Player Side-Climb 48x48.png.import
+addons/bluebrains_character_controller/sprites/Climb (facing side of player)/old climb/Player Side-Climb 48x48.png
+addons/bluebrains_character_controller/sprites/Climb (facing side of player)/old climb/Player Side-Climb 48x48.png.import
+addons/bluebrains_character_controller/sprites/Climb (facing side of player)/old climb/climb side 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Crouch-Idle/Player Crouch-Idle 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Crouch-Idle/Player Crouch-Idle 48x48.png
+addons/bluebrains_character_controller/sprites/Crouch-Idle/Player Crouch-Idle 48x48.png.import
+addons/bluebrains_character_controller/sprites/Crouch-Walk/player crouch-walk 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Crouch-Walk/player crouch-walk 48x48.png
+addons/bluebrains_character_controller/sprites/Crouch-Walk/player crouch-walk 48x48.png.import
+addons/bluebrains_character_controller/sprites/Dash/dash 48x48.png
+addons/bluebrains_character_controller/sprites/Dash/dash 48x48.png.import
+addons/bluebrains_character_controller/sprites/Dash/dash.aseprite
+addons/bluebrains_character_controller/sprites/Death/Player Death 64x64.aseprite
+addons/bluebrains_character_controller/sprites/Death/Player Death 64x64.png
+addons/bluebrains_character_controller/sprites/Death/Player Death 64x64.png.import
+addons/bluebrains_character_controller/sprites/Hurt-Damaged/Player Hurt 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Hurt-Damaged/Player Hurt 48x48.png
+addons/bluebrains_character_controller/sprites/Hurt-Damaged/Player Hurt 48x48.png.import
+addons/bluebrains_character_controller/sprites/Idle/Player Idle 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Idle/Player Idle 48x48.png
+addons/bluebrains_character_controller/sprites/Idle/Player Idle 48x48.png.import
+addons/bluebrains_character_controller/sprites/Jump/player jump 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Jump/player jump 48x48.png
+addons/bluebrains_character_controller/sprites/Jump/player jump 48x48.png.import
+addons/bluebrains_character_controller/sprites/Jump/player jump left 48x48-sheet.png
+addons/bluebrains_character_controller/sprites/Jump/player jump left 48x48-sheet.png.import
+addons/bluebrains_character_controller/sprites/Jump/player new jump 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Jump/player new jump 48x48.gif
+addons/bluebrains_character_controller/sprites/Jump/player new jump 48x48.png
+addons/bluebrains_character_controller/sprites/Jump/player new jump 48x48.png.import
+addons/bluebrains_character_controller/sprites/Katana Air Attack/player katana air attack (upper body) 80x64.png
+addons/bluebrains_character_controller/sprites/Katana Air Attack/player katana air attack (upper body) 80x64.png.import
+addons/bluebrains_character_controller/sprites/Katana Air Attack/player katana air attack 80x64.aseprite
+addons/bluebrains_character_controller/sprites/Katana Attack-Sheathe/player katana attack-sheathe 80x64.aseprite
+addons/bluebrains_character_controller/sprites/Katana Attack-Sheathe/player katana attack-sheathe 80x64.png
+addons/bluebrains_character_controller/sprites/Katana Attack-Sheathe/player katana attack-sheathe 80x64.png.import
+addons/bluebrains_character_controller/sprites/Katana Continuous Attack/player katana continuous attack 80x64.aseprite
+addons/bluebrains_character_controller/sprites/Katana Continuous Attack/player katana continuous attack 80x64.png
+addons/bluebrains_character_controller/sprites/Katana Continuous Attack/player katana continuous attack 80x64.png.import
+addons/bluebrains_character_controller/sprites/Katana Run Attack/player katana running attack (upper body).png
+addons/bluebrains_character_controller/sprites/Katana Run Attack/player katana running attack (upper body).png.import
+addons/bluebrains_character_controller/sprites/Katana Run Attack/player katana running attack.aseprite
+addons/bluebrains_character_controller/sprites/Katana Run/player katana run 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Katana Run/player katana run 48x48.png
+addons/bluebrains_character_controller/sprites/Katana Run/player katana run 48x48.png.import
+addons/bluebrains_character_controller/sprites/Katana walk/katana walk.aseprite
+addons/bluebrains_character_controller/sprites/Katana walk/katana walk.gif
+addons/bluebrains_character_controller/sprites/Katana walk/katana walk.png
+addons/bluebrains_character_controller/sprites/Katana walk/katana walk.png.import
+addons/bluebrains_character_controller/sprites/Land/player land 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Land/player land 48x48.png
+addons/bluebrains_character_controller/sprites/Land/player land 48x48.png.import
+addons/bluebrains_character_controller/sprites/Ledge Grab-Climb/player ledge climb 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Ledge Grab-Climb/player ledge climb 48x48.png
+addons/bluebrains_character_controller/sprites/Ledge Grab-Climb/player ledge climb 48x48.png.import
+addons/bluebrains_character_controller/sprites/Pull/Player Pull 48x48.png
+addons/bluebrains_character_controller/sprites/Pull/Player Pull 48x48.png.import
+addons/bluebrains_character_controller/sprites/Pull/player pull 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Punch Cross/Player Punch Cross 64x64.aseprite
+addons/bluebrains_character_controller/sprites/Punch Cross/Player Punch Cross 64x64.png
+addons/bluebrains_character_controller/sprites/Punch Cross/Player Punch Cross 64x64.png.import
+addons/bluebrains_character_controller/sprites/Punch Jab/Player Jab 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Punch Jab/Player Jab 48x48.png
+addons/bluebrains_character_controller/sprites/Punch Jab/Player Jab 48x48.png.import
+addons/bluebrains_character_controller/sprites/Punch/Player Punch 64x64.aseprite
+addons/bluebrains_character_controller/sprites/Punch/Player Punch 64x64.png
+addons/bluebrains_character_controller/sprites/Punch/Player Punch 64x64.png.import
+addons/bluebrains_character_controller/sprites/Push/player push 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Push/player push 48x48.png
+addons/bluebrains_character_controller/sprites/Push/player push 48x48.png.import
+addons/bluebrains_character_controller/sprites/PushPull (idle state)/player push idle 48x48.aseprite
+addons/bluebrains_character_controller/sprites/PushPull (idle state)/player push idle 48x48.png
+addons/bluebrains_character_controller/sprites/PushPull (idle state)/player push idle 48x48.png.import
+addons/bluebrains_character_controller/sprites/Roll/Player Roll 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Roll/Player Roll 48x48.png
+addons/bluebrains_character_controller/sprites/Roll/Player Roll 48x48.png.import
+addons/bluebrains_character_controller/sprites/Run/player run 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Run/player run 48x48.png
+addons/bluebrains_character_controller/sprites/Run/player run 48x48.png.import
+addons/bluebrains_character_controller/sprites/Shooting (running and aiming)/Player Running Aiming 48x48.png
+addons/bluebrains_character_controller/sprites/Shooting (running and aiming)/Player Running Aiming 48x48.png.import
+addons/bluebrains_character_controller/sprites/Shooting (running and aiming)/Player Running Shooting 48x48.png
+addons/bluebrains_character_controller/sprites/Shooting (running and aiming)/Player Running Shooting 48x48.png.import
+addons/bluebrains_character_controller/sprites/Shooting (running and aiming)/Player Running Shooting and Running Aiming 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Shooting (two-handed)/player shoot 2H 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Shooting (two-handed)/player shoot 2H 48x48.png
+addons/bluebrains_character_controller/sprites/Shooting (two-handed)/player shoot 2H 48x48.png.import
+addons/bluebrains_character_controller/sprites/Slide/Player Slide 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Slide/Player Slide 48x48.png
+addons/bluebrains_character_controller/sprites/Slide/Player Slide 48x48.png.import
+addons/bluebrains_character_controller/sprites/Sword Attack/player sword atk 64x64.aseprite
+addons/bluebrains_character_controller/sprites/Sword Attack/player sword atk 64x64.png
+addons/bluebrains_character_controller/sprites/Sword Attack/player sword atk 64x64.png.import
+addons/bluebrains_character_controller/sprites/Sword Idle/Player Sword Idle 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Sword Idle/Player Sword Idle 48x48.gif
+addons/bluebrains_character_controller/sprites/Sword Idle/Player Sword Idle 48x48.png
+addons/bluebrains_character_controller/sprites/Sword Idle/Player Sword Idle 48x48.png.import
+addons/bluebrains_character_controller/sprites/Sword Run/Player Sword Run 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Sword Run/Player Sword Run 48x48.png
+addons/bluebrains_character_controller/sprites/Sword Run/Player Sword Run 48x48.png.import
+addons/bluebrains_character_controller/sprites/Sword Stab/Player Sword Stab 96x48.aseprite
+addons/bluebrains_character_controller/sprites/Sword Stab/Player Sword Stab 96x48.png
+addons/bluebrains_character_controller/sprites/Sword Stab/Player Sword Stab 96x48.png.import
+addons/bluebrains_character_controller/sprites/Walk/PlayerWalk 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Walk/PlayerWalk 48x48.png
+addons/bluebrains_character_controller/sprites/Walk/PlayerWalk 48x48.png.import
+addons/bluebrains_character_controller/sprites/Wall Land/Player Wall Land (left) 48x48.png
+addons/bluebrains_character_controller/sprites/Wall Land/Player Wall Land (left) 48x48.png.import
+addons/bluebrains_character_controller/sprites/Wall Land/Player Wall Land 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Wall Land/player wall land 48x48.png
+addons/bluebrains_character_controller/sprites/Wall Land/player wall land 48x48.png.import
+addons/bluebrains_character_controller/sprites/Wall Slide/player wall slide (left) 48x48.png
+addons/bluebrains_character_controller/sprites/Wall Slide/player wall slide (left) 48x48.png.import
+addons/bluebrains_character_controller/sprites/Wall Slide/player wall slide 48x48.aseprite
+addons/bluebrains_character_controller/sprites/Wall Slide/player wall slide 48x48.png
+addons/bluebrains_character_controller/sprites/Wall Slide/player wall slide 48x48.png.import
+addons/bluebrains_character_controller/sprites/sprite_frames.tres
+addons/demo/block.tscn
+addons/demo/demo.tscn
+addons/demo/platformer_button/platformer_button.gd
+addons/demo/platformer_button/platformer_button.gd.uid
+addons/demo/platformer_button/platformer_button.tscn
+addons/demo/player.tscn
+addons/interaction_system/activator/activator.gd
+addons/interaction_system/activator/activator.gd.uid
+addons/interaction_system/interactable/interactable.gd
+addons/interaction_system/interactable/interactable.gd.uid
+addons/moving_platforms/moving_platform/moving_platform.gd
+addons/moving_platforms/moving_platform/moving_platform.gd.uid
+addons/moving_platforms/moving_platform/moving_platform.tscn
+addons/moving_platforms/moving_platform/moving_platform_dep.gd
+addons/moving_platforms/moving_platform/moving_platform_dep.gd.uid
+addons/moving_platforms/resources/moving_platform_config.gd
+addons/moving_platforms/resources/moving_platform_config.gd.uid
+addons/rmsmartshape/actions/action.gd
+addons/rmsmartshape/actions/action.gd.uid
+addons/rmsmartshape/actions/action_add_collision_nodes.gd
+addons/rmsmartshape/actions/action_add_collision_nodes.gd.uid
+addons/rmsmartshape/actions/action_add_point.gd
+addons/rmsmartshape/actions/action_add_point.gd.uid
+addons/rmsmartshape/actions/action_close_shape.gd
+addons/rmsmartshape/actions/action_close_shape.gd.uid
+addons/rmsmartshape/actions/action_cut_edge.gd
+addons/rmsmartshape/actions/action_cut_edge.gd.uid
+addons/rmsmartshape/actions/action_delete_control_point.gd
+addons/rmsmartshape/actions/action_delete_control_point.gd.uid
+addons/rmsmartshape/actions/action_delete_point.gd
+addons/rmsmartshape/actions/action_delete_point.gd.uid
+addons/rmsmartshape/actions/action_delete_points.gd
+addons/rmsmartshape/actions/action_delete_points.gd.uid
+addons/rmsmartshape/actions/action_invert_orientation.gd
+addons/rmsmartshape/actions/action_invert_orientation.gd.uid
+addons/rmsmartshape/actions/action_make_shape_unique.gd
+addons/rmsmartshape/actions/action_make_shape_unique.gd.uid
+addons/rmsmartshape/actions/action_move_control_points.gd
+addons/rmsmartshape/actions/action_move_control_points.gd.uid
+addons/rmsmartshape/actions/action_move_verticies.gd
+addons/rmsmartshape/actions/action_move_verticies.gd.uid
+addons/rmsmartshape/actions/action_open_shape.gd
+addons/rmsmartshape/actions/action_open_shape.gd.uid
+addons/rmsmartshape/actions/action_set_pivot.gd
+addons/rmsmartshape/actions/action_set_pivot.gd.uid
+addons/rmsmartshape/actions/action_split_curve.gd
+addons/rmsmartshape/actions/action_split_curve.gd.uid
+addons/rmsmartshape/actions/action_split_shape.gd
+addons/rmsmartshape/actions/action_split_shape.gd.uid
+addons/rmsmartshape/asset_library_icon-new.png
+addons/rmsmartshape/asset_library_icon-new.png.import
+addons/rmsmartshape/asset_library_icon.png
+addons/rmsmartshape/asset_library_icon.png.import
+addons/rmsmartshape/assets/Anchor.svg
+addons/rmsmartshape/assets/Anchor.svg.import
+addons/rmsmartshape/assets/CenterView.svg
+addons/rmsmartshape/assets/CenterView.svg.import
+addons/rmsmartshape/assets/InterpLinear.svg
+addons/rmsmartshape/assets/InterpLinear.svg.import
+addons/rmsmartshape/assets/SourceCodeVariable-Roman.ttf
+addons/rmsmartshape/assets/SourceCodeVariable-Roman.ttf.import
+addons/rmsmartshape/assets/closed_shape.png
+addons/rmsmartshape/assets/closed_shape.png.import
+addons/rmsmartshape/assets/freehand.png
+addons/rmsmartshape/assets/freehand.png.import
+addons/rmsmartshape/assets/gui_theme.res
+addons/rmsmartshape/assets/icon.png
+addons/rmsmartshape/assets/icon.png.import
+addons/rmsmartshape/assets/icon_collision_polygon_2d.svg
+addons/rmsmartshape/assets/icon_collision_polygon_2d.svg.import
+addons/rmsmartshape/assets/icon_curve_create.svg
+addons/rmsmartshape/assets/icon_curve_create.svg.import
+addons/rmsmartshape/assets/icon_curve_delete.svg
+addons/rmsmartshape/assets/icon_curve_delete.svg.import
+addons/rmsmartshape/assets/icon_curve_edit.svg
+addons/rmsmartshape/assets/icon_curve_edit.svg.import
+addons/rmsmartshape/assets/icon_editor_freehand.svg
+addons/rmsmartshape/assets/icon_editor_freehand.svg.import
+addons/rmsmartshape/assets/icon_editor_handle.svg
+addons/rmsmartshape/assets/icon_editor_handle.svg.import
+addons/rmsmartshape/assets/icon_editor_handle_add.svg
+addons/rmsmartshape/assets/icon_editor_handle_add.svg.import
+addons/rmsmartshape/assets/icon_editor_handle_bezier.svg
+addons/rmsmartshape/assets/icon_editor_handle_bezier.svg.import
+addons/rmsmartshape/assets/icon_editor_handle_control.svg
+addons/rmsmartshape/assets/icon_editor_handle_control.svg.import
+addons/rmsmartshape/assets/icon_editor_handle_selected.svg
+addons/rmsmartshape/assets/icon_editor_handle_selected.svg.import
+addons/rmsmartshape/assets/icon_editor_position.svg
+addons/rmsmartshape/assets/icon_editor_position.svg.import
+addons/rmsmartshape/assets/icon_editor_snap.svg
+addons/rmsmartshape/assets/icon_editor_snap.svg.import
+addons/rmsmartshape/assets/icon_width_handle.svg.import
+addons/rmsmartshape/assets/icon_width_handle0.svg.import
+addons/rmsmartshape/assets/icon_width_handle1.svg.import
+addons/rmsmartshape/assets/icon_width_handle2.svg.import
+addons/rmsmartshape/assets/icon_width_handle3.svg.import
+addons/rmsmartshape/assets/icon_width_handle4.svg.import
+addons/rmsmartshape/assets/light1-1.png
+addons/rmsmartshape/assets/light1-1.png.import
+addons/rmsmartshape/assets/meta_shape.png
+addons/rmsmartshape/assets/meta_shape.png.import
+addons/rmsmartshape/assets/open_shape.png
+addons/rmsmartshape/assets/open_shape.png.import
+addons/rmsmartshape/assets/shape.png.import
+addons/rmsmartshape/assets/shape_anchor.png.import
+addons/rmsmartshape/collision_gen.gd
+addons/rmsmartshape/collision_gen.gd.uid
+addons/rmsmartshape/common_functions.gd
+addons/rmsmartshape/common_functions.gd.uid
+addons/rmsmartshape/documentation/.gdignore
+addons/rmsmartshape/documentation/Controls.md
+addons/rmsmartshape/documentation/FAQ.md
+addons/rmsmartshape/documentation/Godot4.md
+addons/rmsmartshape/documentation/Install.md
+addons/rmsmartshape/documentation/Normals.md
+addons/rmsmartshape/documentation/Quickstart.md
+addons/rmsmartshape/documentation/Resources.md
+addons/rmsmartshape/documentation/Shapes.md
+addons/rmsmartshape/documentation/Toolbar.md
+addons/rmsmartshape/documentation/VersionHistory.md
+addons/rmsmartshape/documentation/imgs/AngleExplaination.png
+addons/rmsmartshape/documentation/imgs/EdgeEdit-MaterialOverride.png
+addons/rmsmartshape/documentation/imgs/EdgeEdit-NoRender.png
+addons/rmsmartshape/documentation/imgs/Inpsector-EdgeMaterial.png
+addons/rmsmartshape/documentation/imgs/Inpsector-EdgeMaterialCornerOuter.png
+addons/rmsmartshape/documentation/imgs/Inpsector-EdgeMaterials2.png
+addons/rmsmartshape/documentation/imgs/Inpsector-EdgeMaterialsNormalRange.png
+addons/rmsmartshape/documentation/imgs/NewNode-SS2D_Nodes.png
+addons/rmsmartshape/documentation/imgs/NormalColors.png
+addons/rmsmartshape/documentation/imgs/NormalCorrect.png
+addons/rmsmartshape/documentation/imgs/NormalWrong.png
+addons/rmsmartshape/documentation/imgs/PluginActivate.png
+addons/rmsmartshape/documentation/imgs/ShapeClosed-FillTextured.png
+addons/rmsmartshape/documentation/imgs/ShapeClosed-Untextured.png
+addons/rmsmartshape/documentation/imgs/Toolbar-PointEdit.png
+addons/rmsmartshape/documentation/imgs/canvas-item-repeat.png
+addons/rmsmartshape/documentation/imgs/faq-texture-repeat-import.png
+addons/rmsmartshape/documentation/imgs/faq-texture-repeat.png
+addons/rmsmartshape/documentation/imgs/godot4-assign-normal-tex.png
+addons/rmsmartshape/documentation/imgs/godot4-create-texture-res.png
+addons/rmsmartshape/documentation/imgs/godot4-make-points-unique.png
+addons/rmsmartshape/documentation/imgs/grass-corner-inner.png
+addons/rmsmartshape/documentation/imgs/grass-corner-outer.png
+addons/rmsmartshape/documentation/imgs/grass-taper-left.png
+addons/rmsmartshape/documentation/imgs/grass-taper-right.png
+addons/rmsmartshape/documentation/imgs/grass.png
+addons/rmsmartshape/documentation/imgs/icon_edge.png
+addons/rmsmartshape/documentation/imgs/sample.gif
+addons/rmsmartshape/documentation/imgs/sample.png
+addons/rmsmartshape/documentation/imgs/smartshape_textures_breakdown.png
+addons/rmsmartshape/editors/NormalRangeEditor/NormalRangeEditor.gd
+addons/rmsmartshape/editors/NormalRangeEditor/NormalRangeEditor.gd.uid
+addons/rmsmartshape/editors/NormalRangeEditor/NormalRangeEditor.tscn
+addons/rmsmartshape/editors/NormalRangeEditor/NormalRangeEditorProperty.gd
+addons/rmsmartshape/editors/NormalRangeEditor/NormalRangeEditorProperty.gd.uid
+addons/rmsmartshape/editors/NormalRangeEditor/over_texture.png
+addons/rmsmartshape/editors/NormalRangeEditor/over_texture.png.import
+addons/rmsmartshape/editors/NormalRangeEditor/progress_texture.png
+addons/rmsmartshape/editors/NormalRangeEditor/progress_texture.png.import
+addons/rmsmartshape/editors/NormalRangeEditor/under_texture.png
+addons/rmsmartshape/editors/NormalRangeEditor/under_texture.png.import
+addons/rmsmartshape/editors/action_property_inspector_plugin.gd
+addons/rmsmartshape/editors/action_property_inspector_plugin.gd.uid
+addons/rmsmartshape/editors/normal_range_inspector_plugin.gd
+addons/rmsmartshape/editors/normal_range_inspector_plugin.gd.uid
+addons/rmsmartshape/lib/tesselation_vertex_mapping.gd
+addons/rmsmartshape/lib/tesselation_vertex_mapping.gd.uid
+addons/rmsmartshape/lib/tuple.gd
+addons/rmsmartshape/lib/tuple.gd.uid
+addons/rmsmartshape/materials/edge_material.gd
+addons/rmsmartshape/materials/edge_material.gd.uid
+addons/rmsmartshape/materials/edge_material_metadata.gd
+addons/rmsmartshape/materials/edge_material_metadata.gd.uid
+addons/rmsmartshape/materials/shape_material.gd
+addons/rmsmartshape/materials/shape_material.gd.uid
+addons/rmsmartshape/normal_range.gd
+addons/rmsmartshape/normal_range.gd.uid
+addons/rmsmartshape/plugin.cfg
+addons/rmsmartshape/plugin.gd
+addons/rmsmartshape/plugin.gd.uid
+addons/rmsmartshape/plugin_functionality.gd
+addons/rmsmartshape/plugin_functionality.gd.uid
+addons/rmsmartshape/scenes/GUI_Edge_InfoPanel.gd
+addons/rmsmartshape/scenes/GUI_Edge_InfoPanel.gd.uid
+addons/rmsmartshape/scenes/GUI_Edge_InfoPanel.tscn
+addons/rmsmartshape/scenes/GUI_InfoPanel.gd
+addons/rmsmartshape/scenes/GUI_InfoPanel.gd.uid
+addons/rmsmartshape/scenes/GUI_InfoPanel.tscn
+addons/rmsmartshape/scenes/SnapPopup.gd
+addons/rmsmartshape/scenes/SnapPopup.gd.uid
+addons/rmsmartshape/scenes/SnapPopup.tscn
+addons/rmsmartshape/shape_renderer.gd
+addons/rmsmartshape/shape_renderer.gd.uid
+addons/rmsmartshape/shapes/edge.gd
+addons/rmsmartshape/shapes/edge.gd.uid
+addons/rmsmartshape/shapes/index_map.gd
+addons/rmsmartshape/shapes/index_map.gd.uid
+addons/rmsmartshape/shapes/mesh.gd
+addons/rmsmartshape/shapes/mesh.gd.uid
+addons/rmsmartshape/shapes/point.gd
+addons/rmsmartshape/shapes/point.gd.uid
+addons/rmsmartshape/shapes/point_array.gd
+addons/rmsmartshape/shapes/point_array.gd.uid
+addons/rmsmartshape/shapes/quad.gd
+addons/rmsmartshape/shapes/quad.gd.uid
+addons/rmsmartshape/shapes/shape.gd
+addons/rmsmartshape/shapes/shape.gd.uid
+addons/rmsmartshape/shapes/shape_anchor.gd
+addons/rmsmartshape/shapes/shape_anchor.gd.uid
+addons/rmsmartshape/shapes/shape_closed.gd
+addons/rmsmartshape/shapes/shape_closed.gd.uid
+addons/rmsmartshape/shapes/shape_open.gd
+addons/rmsmartshape/shapes/shape_open.gd.uid
+addons/rmsmartshape/strings.gd
+addons/rmsmartshape/strings.gd.uid
+addons/rmsmartshape/tools/collision_tool.gd
+addons/rmsmartshape/tools/collision_tool.gd.uid
+addons/rmsmartshape/tools/editor_tool.gd
+addons/rmsmartshape/tools/editor_tool.gd.uid
+addons/rmsmartshape/version_transition.gd
+addons/rmsmartshape/version_transition.gd.uid
+addons/rmsmartshape/vertex_properties.gd
+addons/rmsmartshape/vertex_properties.gd.uid
+addons/tween_resource/tween_resource.gd
+addons/tween_resource/tween_resource.gd.uid
+android/build/assets/assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf.import
+android/build/assets/assets/icon/icon_boost_96x96.png.import
+android/build/assets/assets/icon/icon_coin2x_96x96.png.import
+android/build/assets/assets/icon/icon_shield.png.import
+android/build/assets/assets/panel/panel_confirmation_tandatanya_350x244.png.import
+android/build/assets/assets/panel/panel_gameover_685x356.png.import
+android/build/assets/assets/tombol/tombol_checklis_green_border_orange_64.png.import
+android/build/assets/assets/tombol/tombol_home_96x96.png.import
+android/build/assets/assets/tombol/tombol_play_96x96.png.import
+android/build/assets/assets/tombol/tombol_retry_96x96.png.import
+android/build/assets/assets/tombol/tombol_x_red_border_blue_64.png.import
+android/build/assets/scenes/ConfirmPanel.tscn.remap
+android/build/assets/scenes/DoubleCoinsPowerup.tscn.remap
+android/build/assets/scenes/ShieldPowerup.tscn.remap
+android/build/assets/scenes/SpeedBoostPowerup.tscn.remap
+android/build/assets/scripts/shield_powerup.gd.remap
+android/build/assets/scripts/shield_powerup.gdc
+assets/Coin Animation/png/2x/spriteframes.tres
+assets/audio/backsound/backsound-mainmenu-1.mp3
+assets/audio/backsound/backsound-mainmenu-1.mp3.import
+assets/audio/backsound/backsound-mainmenu-2.mp3
+assets/audio/backsound/backsound-mainmenu-2.mp3.import
+assets/audio/bgm/bukit/bgm-bukit-1.mp3
+assets/audio/bgm/bukit/bgm-bukit-1.mp3.import
+assets/audio/bgm/bukit/bgm-bukit-2.mp3
+assets/audio/bgm/bukit/bgm-bukit-2.mp3.import
+assets/audio/bgm/bukit/bgm-bukit-3.mp3
+assets/audio/bgm/bukit/bgm-bukit-3.mp3.import
+assets/audio/bgm/bukit/bgm-bukit-4.mp3
+assets/audio/bgm/bukit/bgm-bukit-4.mp3.import
+assets/audio/bgm/gameover/bgm-gameover-1.mp3
+assets/audio/bgm/gameover/bgm-gameover-1.mp3.import
+assets/audio/sfx/audio-One-shot-SFX-only-not-music-Coin-pickup-chain-3-mi.mp3
+assets/audio/sfx/audio-One-shot-SFX-only-not-music-Coin-pickup-chain-3-mi.mp3.import
+assets/audio/sfx/audio-SFX-only-not-a-song-Coin-pickup-two-quick-pings-90.mp3
+assets/audio/sfx/audio-SFX-only-not-a-song-Coin-pickup-two-quick-pings-90.mp3.import
+assets/bg/bg-shop-2.png
+assets/bg/bg-shop-2.png.import
+assets/diamond animation/diamond-1024x1024.png
+assets/diamond animation/diamond-1024x1024.png.import
+assets/diamond animation/diamond-sprite-256px-36.png
+assets/diamond animation/diamond-sprite-256px-36.png.import
+assets/icon/icon_coin_multiplier_96x96.png
+assets/icon/icon_coin_multiplier_96x96.png.import
+assets/icon/icon_coinduble_96x96.png
+assets/icon/icon_coinduble_96x96.png.import
+assets/icon/icon_flag_CN.png
+assets/icon/icon_flag_CN.png.import
+assets/icon/icon_flag_INA.png
+assets/icon/icon_flag_INA.png.import
+assets/icon/icon_flag_US.png
+assets/icon/icon_flag_US.png.import
+assets/icon/icon_heart_96x96.png
+assets/icon/icon_heart_96x96.png.import
+assets/icon/icon_magnet_timer_96x96.png
+assets/icon/icon_magnet_timer_96x96.png.import
+assets/icon/icon_magnet_v1_96x96.png
+assets/icon/icon_magnet_v1_96x96.png.import
+assets/panel/panel_mission.png
+assets/panel/panel_mission.png.import
+assets/tombol/tombol_claim_aktif_108x64.png
+assets/tombol/tombol_claim_aktif_108x64.png.import
+assets/tombol/tombol_claim_nonaktif_108x64.png
+assets/tombol/tombol_claim_nonaktif_108x64.png.import
+assets/tombol/tombol_tab_mission_120x48.png
+assets/tombol/tombol_tab_mission_120x48.png.import
+assets/tombol/tombol_tab_mission_hijau_120x48.png
+assets/tombol/tombol_tab_mission_hijau_120x48.png.import
+docs/XP_MISSIONS_REWARD_STEPS.md
+examples/collisions.tscn
+examples/edge_shader/edge_shader.gdshader
+examples/edge_shader/edge_shader.gdshader.uid
+examples/edge_shader/material_edge_shader.tres
+examples/sharp_corner_tapering/assets/mat_edge_metal.tres
+examples/sharp_corner_tapering/assets/tex_metal_corner_inner.png
+examples/sharp_corner_tapering/assets/tex_metal_corner_inner.png.import
+examples/sharp_corner_tapering/assets/tex_metal_corner_outer.png
+examples/sharp_corner_tapering/assets/tex_metal_corner_outer.png.import
+examples/sharp_corner_tapering/assets/tex_metal_edge.png
+examples/sharp_corner_tapering/assets/tex_metal_edge.png.import
+examples/sharp_corner_tapering/assets/tex_metal_fill.png
+examples/sharp_corner_tapering/assets/tex_metal_fill.png.import
+examples/sharp_corner_tapering/assets/tex_metal_taper_corner_left.png
+examples/sharp_corner_tapering/assets/tex_metal_taper_corner_left.png.import
+examples/sharp_corner_tapering/assets/tex_metal_taper_corner_right.png
+examples/sharp_corner_tapering/assets/tex_metal_taper_corner_right.png.import
+examples/sharp_corner_tapering/sharp_corner_tapering.tscn
+i18n/en.tres
+i18n/id.tres
+i18n/zh.tres
+icon.svg
+icon.svg.import
+logo.png
+logo.png.import
+scenes/Diamond.tscn
+scripts/MissionsListScroll.gd
+scripts/MissionsListScroll.gd.uid
+scripts/RemoteContent.gd
+scripts/RemoteContent.gd.uid
+scripts/smoke_check_runner.gd
+scripts/smoke_check_runner.gd.uid

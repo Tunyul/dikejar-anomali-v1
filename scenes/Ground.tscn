@@ -1,6 +1,7 @@
 [gd_scene load_steps=15 format=4 uid="uid://bdwwn7sxcph1g"]
 
 [ext_resource type="PackedScene" uid="uid://ddpqyikpv4h24" path="res://scenes/Coin.tscn" id="2_hs2qo"]
+[ext_resource type="PackedScene" path="res://scenes/Diamond.tscn" id="diamond_scene"]
 [ext_resource type="Texture2D" uid="uid://dthntxgdb4ycj" path="res://assets/Tiles/png/tiles 2d/Spring/128x128/GrassMid.png" id="2_wgy8j"]
 [ext_resource type="Texture2D" uid="uid://blpxq3xkivtob" path="res://assets/Tiles/png/tiles 2d/Spring/128x128/Dirt.png" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/HeartPickup.tscn" id="3_8cosm"]
@@ -38,6 +39,7 @@ gap_max_len = 4
 debug_color_flat_start = Color(0.21461618, 0.43047512, 1, 1)
 flat_start_length_tiles = 24
 coin_scene = ExtResource("2_hs2qo")
+diamond_scene = ExtResource("diamond_scene")
 coin_zigzag_levels = 6
 heart_scene = ExtResource("3_8cosm")
 heart_scale = 0.2
@@ -103,6 +105,9 @@ collision_visibility_mode = 1
 [node name="CoinsA" type="Node2D" parent="."]
 z_index = 100
 
+[node name="DiamondsA" type="Node2D" parent="."]
+z_index = 100
+
 [node name="EnemiesA" type="Node2D" parent="."]
 z_index = 90
 
@@ -114,6 +119,9 @@ tile_set = SubResource("TileSet_1mdus")
 collision_visibility_mode = 1
 
 [node name="CoinsB" type="Node2D" parent="."]
+z_index = 100
+
+[node name="DiamondsB" type="Node2D" parent="."]
 z_index = 100
 
 [node name="EnemiesB" type="Node2D" parent="."]

@@ -5,7 +5,6 @@ class_name Player
 @export var run_speed: float = 200.0
 @export var jump_velocity: float = -400.0
 @export var jump_enabled: bool = true
-@export var air_jumps: int = 0
 @export var coyote_time: float = 0.1
 @export var jump_buffer_time: float = 0.15
 @export var gravity: float = 1200.0
@@ -85,7 +84,6 @@ var state_data: Dictionary = {}
 # ===== MOVEMENT STATE =====
 var is_grounded: bool = false
 var can_jump: bool = true
-var remaining_air_jumps: int = 0
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
 var jump_requested: bool = false
@@ -197,7 +195,6 @@ func _ready() -> void:
     if enable_entry_stop and not enable_entry_sequence:
         _set_to_entry_stop()
     start_initial_state_sequence()
-    remaining_air_jumps = air_jumps
 
 func initialize_player() -> void:
     visible = true
@@ -335,6 +332,7 @@ func _physics_process(delta: float) -> void:
                 attack_timer = attack_duration
             else:
                 attack_active = false
+
     _update_attack_hitbox()
     apply_physics(delta)
     check_game_over_conditions()
@@ -352,18 +350,9 @@ func handle_full_movement_state(_delta: float) -> void:
         position.y = entry_stop_y
         velocity.y = 0
 
-        # Debug log position and ground status
-        if enable_debug_logging and OS.is_debug_build() and state_timer < 1.0:  # Log first few frames
-            pass
-
-    # Debug log if position changes unexpectedly
-    if enable_debug_logging and OS.is_debug_build() and abs(global_position.x - entry_stop_x) > 1.0:
-        pass
-
     # Handle horizontal movement - freeze saat loncat jika diaktifkan
     if freeze_x_on_jump and not is_on_floor():
         velocity.x = velocity.x * (1.0 - jump_horizontal_damping)
-
 
     # Control animation based on state
     update_animation_state()
@@ -457,24 +446,20 @@ func apply_physics(delta: float) -> void:
     set_floor_snap_length(snap_len)
     if was_on_floor:
         coyote_timer = coyote_time
-        remaining_air_jumps = air_jumps
     else:
         coyote_timer = max(coyote_timer - delta, 0.0)
     if jump_buffer_timer > 0.0:
         jump_buffer_timer = max(jump_buffer_timer - delta, 0.0)
     if jump_enabled and jump_requested and jump_buffer_timer > 0.0:
-        var can_use_air := remaining_air_jumps > 0
-        var can_perform := is_on_floor() or coyote_timer > 0.0 or can_use_air
+        var can_perform := is_on_floor() or coyote_timer > 0.0
         if can_perform:
             velocity.y = jump_velocity
             coyote_timer = 0.0
             _jumping_this_frame = true
             _jump_grace_timer = jump_block_grace_time
-            if not is_on_floor() and coyote_timer <= 0.0 and can_use_air:
-                remaining_air_jumps -= 1
-            var sfx2 := get_tree().get_root().get_node_or_null("Main/SFXJump")
-            if sfx2 and sfx2 is AudioStreamPlayer and sfx2.stream != null:
-                (sfx2 as AudioStreamPlayer).play()
+            TransitionManager.play_sfx(&"jump")
+            if game_manager and game_manager.has_method("on_player_jump"):
+                game_manager.on_player_jump()
             jump_requested = false
             jump_buffer_timer = 0.0
     if head_blocked:
@@ -490,7 +475,7 @@ func apply_physics(delta: float) -> void:
         position.x = global_position.x
         if enable_entry_stop and auto_recenter_x:
             var recenter_ready := is_on_floor() and not _blocked_ahead(front_check_distance)
-            if recenter_ready and global_position.x < entry_stop_x:
+            if recenter_ready and abs(global_position.x - entry_stop_x) > 1.0:
                 if recenter_use_linear:
                     var dx: float = entry_stop_x - global_position.x
                     var step: float = recenter_speed_x * delta
@@ -760,13 +745,12 @@ func apply_damage(amount: int) -> void:
         return
     if is_invincible:
         return
-    if game_manager and game_manager.has_method("is_shield_active") and game_manager.is_shield_active():
+    if game_manager and game_manager.has_method("try_consume_shield_hit") and game_manager.try_consume_shield_hit():
         return
-    current_health -= amount
-
-    if current_health < 0:
-
-        current_health = 0
+    var next_health := current_health - amount
+    if next_health > 0:
+        TransitionManager.play_sfx(&"player_hit")
+    current_health = max(next_health, 0)
 
     update_health_bar()
 

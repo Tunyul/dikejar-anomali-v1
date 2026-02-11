@@ -9,7 +9,11 @@ extends Node2D
 @export var gravity: float = 900.0
 @export var enemy_coin_scale: float = 0.3
 @export var enemy_coin_magnet_speed: float = 480.0
+@export var enemy_gem_drop_chance: float = 0.08
+@export var enemy_gem_amount: int = 1
+@export var enemy_gem_tint: Color = Color(0.35, 0.8, 1.0, 1.0)
 @export var coin_scene: PackedScene = preload("res://scenes/Coin.tscn")
+@export var diamond_scene: PackedScene = preload("res://scenes/Diamond.tscn")
 
 var _velocity: Vector2 = Vector2.ZERO
 var _alive: bool = true
@@ -52,7 +56,15 @@ func on_player_attack_hit(player: Player) -> void:
     if player and player.global_position.x > global_position.x:
         dir = -1.0
     _velocity = Vector2(knockback_force.x * dir, knockback_force.y)
-    call_deferred("_spawn_coins")
+    call_deferred("_on_enemy_killed")
+
+func _on_enemy_killed() -> void:
+    TransitionManager.play_sfx(&"enemy_kill")
+    var root := get_tree().get_root()
+    var main := root.get_node_or_null("Main")
+    if main and main.has_method("on_enemy_killed_by_player"):
+        main.call("on_enemy_killed_by_player")
+    _spawn_coins()
 
 func _spawn_coins() -> void:
     if coin_scene == null:
@@ -67,36 +79,55 @@ func _spawn_coins() -> void:
     rng.randomize()
     var count := rng.randi_range(5, 8)
     for i in range(count):
-        var coin := coin_scene.instantiate()
-        if coin == null:
-            continue
-        coin.scale = Vector2.ONE * _get_coin_scale_from_ground()
-        coin.z_index = 100
-        coin.set("magnet_speed", enemy_coin_magnet_speed)
-        coin.set("source_segment", seg)
-        coin.set("always_magnet", true)
-        var root := get_tree().get_root()
-        var main_node := root.get_node_or_null("Main")
-        if main_node:
-            main_node.add_child(coin)
-        else:
-            root.add_child(coin)
-        var origin := global_position
-        var hitbox_node := get_node_or_null("Hitbox") as Node2D
-        if hitbox_node:
-            var half_h: float = hitbox_size.y * 0.5
-            if half_h < 0.0:
-                half_h = 0.0
-            origin = hitbox_node.global_position + Vector2(0.0, half_h)
-        var dir := Vector2(rng.randf_range(-1.0, 1.0), rng.randf_range(-0.2, 0.2))
-        if dir.length_squared() < 0.01:
-            dir = Vector2(1.0, 0.0)
-        dir = dir.normalized()
-        var radius_min: float = 48.0
-        var radius_max: float = 96.0
-        var radius := rng.randf_range(radius_min, radius_max)
-        var offset := dir * radius
-        coin.global_position = origin + offset
+        _spawn_pickup(seg, rng, false)
+    if enemy_gem_drop_chance > 0.0 and rng.randf() < enemy_gem_drop_chance:
+        _spawn_pickup(seg, rng, true)
+
+func _spawn_pickup(seg: String, rng: RandomNumberGenerator, is_gem: bool) -> void:
+    if coin_scene == null:
+        return
+    var scene_to_spawn: PackedScene = coin_scene
+    if is_gem and diamond_scene != null:
+        scene_to_spawn = diamond_scene
+    var pickup := scene_to_spawn.instantiate()
+    if pickup == null:
+        return
+    pickup.scale = Vector2.ONE * _get_coin_scale_from_ground()
+    pickup.z_index = 100
+    pickup.set("magnet_speed", enemy_coin_magnet_speed)
+    pickup.set("source_segment", seg)
+    pickup.set("always_magnet", true)
+    if is_gem:
+        var a := enemy_gem_amount
+        if a <= 0:
+            a = 1
+        pickup.set("currency", "gems")
+        pickup.set("amount", a)
+        pickup.set("tint", enemy_gem_tint)
+    var root := get_tree().get_root()
+    var main_node := root.get_node_or_null("Main")
+    if main_node:
+        main_node.add_child(pickup)
+    else:
+        root.add_child(pickup)
+    if main_node and main_node.has_method("on_coin_collected") and pickup.has_signal("collected"):
+        pickup.collected.connect(Callable(main_node, "on_coin_collected"))
+    var origin := global_position
+    var hitbox_node := get_node_or_null("Hitbox") as Node2D
+    if hitbox_node:
+        var half_h: float = hitbox_size.y * 0.5
+        if half_h < 0.0:
+            half_h = 0.0
+        origin = hitbox_node.global_position + Vector2(0.0, half_h)
+    var dir := Vector2(rng.randf_range(-1.0, 1.0), rng.randf_range(-0.2, 0.2))
+    if dir.length_squared() < 0.01:
+        dir = Vector2(1.0, 0.0)
+    dir = dir.normalized()
+    var radius_min: float = 48.0
+    var radius_max: float = 96.0
+    var radius := rng.randf_range(radius_min, radius_max)
+    var offset := dir * radius
+    pickup.global_position = origin + offset
 
 func _get_coin_scale_from_ground() -> float:
     var root := get_tree().get_root()

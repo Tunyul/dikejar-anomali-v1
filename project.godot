@@ -15,9 +15,9 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Dikejar Anomali"
-config/version="1.3.27-beta"
+config/version="1.3.28-beta"
 run/main_scene="res://scenes/LoadingScreen.tscn"
-config/features=PackedStringArray("4.6")
+config/features=PackedStringArray("4.5")
 config/icon="uid://cs8vxi0qroewf"
 
 [autoload]
@@ -25,6 +25,7 @@ config/icon="uid://cs8vxi0qroewf"
 TransitionManager="*res://scenes/TransitionManager.tscn"
 Preloader="*res://scripts/Preloader.gd"
 RemoteContent="*res://scripts/RemoteContent.gd"
+MissionsManager="*res://scripts/MissionsManager.gd"
 
 [display]
 

@@ -16,5 +16,5 @@ func _on_body_entered(body: Node) -> void:
 		var gm := get_tree().get_root().get_node_or_null("Main")
 		if gm != null and gm.has_method("activate_speed_boost"):
 			gm.activate_speed_boost(duration_sec, multiplier)
+			TransitionManager.play_sfx(&"speed_boost_pickup")
 	queue_free()
-

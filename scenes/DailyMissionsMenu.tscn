@@ -1,6 +1,44 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=16 format=3 uid="uid://o2sawx16hsop"]
 
-[ext_resource type="Script" path="res://scripts/DailyMissionsMenu.gd" id="1"]
+[ext_resource type="Script" uid="uid://b2xdttjwbstit" path="res://scripts/DailyMissionsMenu.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://bg71h4rnsov6r" path="res://assets/panel/panel_mission.png" id="2"]
+[ext_resource type="FontFile" uid="uid://did5ru2tyvvwu" path="res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf" id="3_nunito_regular"]
+[ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="4_fredoka_bold"]
+[ext_resource type="Texture2D" uid="uid://dgcv8u51gqyj8" path="res://assets/tombol/tombol_tab_mission_120x48.png" id="5_tab_mission"]
+[ext_resource type="Script" uid="uid://orp0numx46q2" path="res://scripts/MissionsListScroll.gd" id="6_missions_list_scroll"]
+[ext_resource type="Texture2D" uid="uid://cpwsk0io7g2su" path="res://assets/tombol/tombol_claim_aktif_108x64.png" id="7_claim_active"]
+[ext_resource type="Texture2D" uid="uid://yrdaorbs24i0" path="res://assets/tombol/tombol_x_96.png" id="9_close_x"]
+[ext_resource type="PackedScene" uid="uid://civfdm736wgj6" path="res://scenes/ConfirmPanel.tscn" id="10_confirm_panel_scene"]
+[ext_resource type="Script" uid="uid://cvivocoxcy2xo" path="res://scripts/AdManager.gd" id="11_ad_manager_script"]
+[ext_resource type="Script" uid="uid://dhacrgdwndgfc" path="res://scripts/MissionsManager.gd" id="12_missions_manager_script"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tab_mission"]
+texture = ExtResource("5_tab_mission")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_daily_bar_bg"]
+bg_color = Color(0, 0, 0, 0.25)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_daily_bar_fill"]
+bg_color = Color(0.8, 1, 0.3, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mission_list_container"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 18.0
+bg_color = Color(0, 0, 0, 0)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="DailyMissionsMenu" type="Control"]
 layout_mode = 3
@@ -11,43 +49,451 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
+[node name="AdManager" type="Node" parent="."]
+script = ExtResource("11_ad_manager_script")
+
+[node name="MissionsManager" type="Node" parent="."]
+script = ExtResource("12_missions_manager_script")
+
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 100
 
+[node name="ConfirmPanel" parent="UI" instance=ExtResource("10_confirm_panel_scene")]
+visible = false
+
 [node name="Panel" type="ColorRect" parent="UI"]
-layout_mode = 0
-offset_right = 1024.0
-offset_bottom = 576.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0, 0, 0, 0.6)
 
-[node name="VBox" type="VBoxContainer" parent="UI"]
+[node name="MissionPanel" type="TextureRect" parent="UI"]
+anchors_preset = -1
+anchor_left = 0.25
+anchor_top = 0.22
+anchor_right = 0.75
+anchor_bottom = 0.9
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2")
+stretch_mode = 5
+
+[node name="PanelContent" type="Control" parent="UI/MissionPanel"]
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 44.0
+offset_top = 56.0
+offset_right = -44.0
+offset_bottom = -56.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="UI/MissionPanel/PanelContent"]
 layout_mode = 0
-offset_left = 312.0
-offset_top = 64.0
-offset_right = 712.0
-offset_bottom = 512.0
-theme_override_constants/separation = 16
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="Tabs" type="HBoxContainer" parent="UI/MissionPanel/PanelContent/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DailyButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/Tabs"]
+texture_filter = 2
+custom_minimum_size = Vector2(108, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/hover = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/focus = SubResource("StyleBoxTexture_tab_mission")
+text = "Daily"
+
+[node name="MissionButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/Tabs"]
+texture_filter = 2
+custom_minimum_size = Vector2(108, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/hover = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/focus = SubResource("StyleBoxTexture_tab_mission")
+text = "Mission"
+
+[node name="WeeklyButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/Tabs"]
+texture_filter = 2
+custom_minimum_size = Vector2(108, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/hover = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/focus = SubResource("StyleBoxTexture_tab_mission")
+text = "Week"
+
+[node name="MonthlyButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/Tabs"]
+texture_filter = 2
+custom_minimum_size = Vector2(108, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/hover = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/focus = SubResource("StyleBoxTexture_tab_mission")
+text = "Month"
+
+[node name="ChallengeButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/Tabs"]
+texture_filter = 2
+custom_minimum_size = Vector2(108, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/hover = SubResource("StyleBoxTexture_tab_mission")
+theme_override_styles/focus = SubResource("StyleBoxTexture_tab_mission")
+text = "Challenge"
+
+[node name="ResetHeaderRow" type="HBoxContainer" parent="UI/MissionPanel/PanelContent/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="DailyGroup" type="HBoxContainer" parent="UI/MissionPanel/PanelContent/VBox/ResetHeaderRow"]
+layout_mode = 2
+theme_override_constants/separation = 6
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="UI/VBox"]
+[node name="DailyTotalLabel" type="Label" parent="UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup"]
+custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
-text = "Missions"
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+theme_override_font_sizes/font_size = 18
+text = "Daily: 0/0"
+vertical_alignment = 1
+clip_text = true
+
+[node name="DailyTotalBar" type="ProgressBar" parent="UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup"]
+custom_minimum_size = Vector2(160, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/background = SubResource("StyleBoxFlat_daily_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_daily_bar_fill")
+show_percentage = false
+
+[node name="DailyAllRewardLabel" type="Label" parent="UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup"]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 16
+text = "+0 Diamond"
+vertical_alignment = 1
+clip_text = true
+
+[node name="ClaimDailyAllButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup"]
+visible = false
+custom_minimum_size = Vector2(64, 44)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("7_claim_active")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="Spacer" type="Control" parent="UI/MissionPanel/PanelContent/VBox/ResetHeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ResetTimeLabel" type="Label" parent="UI/MissionPanel/PanelContent/VBox/ResetHeaderRow"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+text = "Reset"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="DailyLabel" type="Label" parent="UI/VBox"]
+[node name="ResetDailyButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/ResetHeaderRow"]
+custom_minimum_size = Vector2(88, 44)
 layout_mode = 2
-text = "Daily Missions (Coming Soon)"
+size_flags_horizontal = 4
+text = "Reset"
 
-[node name="WeeklyLabel" type="Label" parent="UI/VBox"]
+[node name="MissionListContainer" type="PanelContainer" parent="UI/MissionPanel/PanelContent/VBox"]
+clip_contents = true
+custom_minimum_size = Vector2(0, 190)
 layout_mode = 2
-text = "Weekly Missions (Coming Soon)"
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_mission_list_container")
 
-[node name="EventLabel" type="Label" parent="UI/VBox"]
+[node name="MissionsScroll" type="ScrollContainer" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer"]
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
-text = "Event Missions (Coming Soon)"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+script = ExtResource("6_missions_list_scroll")
 
-[node name="BackButton" type="Button" parent="UI/VBox"]
+[node name="MissionsPanel" type="VBoxContainer" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 16
+
+[node name="Mission1" type="HBoxContainer" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Name" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission1"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+theme_override_font_sizes/font_size = 20
+text = "Mission 1"
+vertical_alignment = 1
+clip_text = true
+
+[node name="Bar" type="ProgressBar" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission1"]
+custom_minimum_size = Vector2(120, 20)
+layout_mode = 2
+size_flags_horizontal = 0
+show_percentage = false
+
+[node name="Reward" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission1"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+text = "+0c"
+horizontal_alignment = 2
+vertical_alignment = 1
+clip_text = true
+
+[node name="ClaimButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission1"]
+texture_filter = 2
+custom_minimum_size = Vector2(64, 32)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("7_claim_active")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="Mission2" type="HBoxContainer" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Name" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission2"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+theme_override_font_sizes/font_size = 20
+text = "Mission 2"
+vertical_alignment = 1
+clip_text = true
+
+[node name="Bar" type="ProgressBar" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission2"]
+custom_minimum_size = Vector2(120, 20)
+layout_mode = 2
+size_flags_horizontal = 0
+show_percentage = false
+
+[node name="Reward" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission2"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+text = "+0c"
+horizontal_alignment = 2
+vertical_alignment = 1
+clip_text = true
+
+[node name="ClaimButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission2"]
+texture_filter = 2
+custom_minimum_size = Vector2(64, 32)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("7_claim_active")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="Mission3" type="HBoxContainer" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Name" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission3"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+theme_override_font_sizes/font_size = 20
+text = "Mission 3"
+vertical_alignment = 1
+clip_text = true
+
+[node name="Bar" type="ProgressBar" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission3"]
+custom_minimum_size = Vector2(120, 20)
+layout_mode = 2
+size_flags_horizontal = 0
+show_percentage = false
+
+[node name="Reward" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission3"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+text = "+0c"
+horizontal_alignment = 2
+vertical_alignment = 1
+clip_text = true
+
+[node name="ClaimButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission3"]
+texture_filter = 2
+custom_minimum_size = Vector2(64, 32)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("7_claim_active")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="Mission4" type="HBoxContainer" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Name" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission4"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+theme_override_font_sizes/font_size = 20
+text = "Mission 4"
+vertical_alignment = 1
+clip_text = true
+
+[node name="Bar" type="ProgressBar" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission4"]
+custom_minimum_size = Vector2(120, 20)
+layout_mode = 2
+size_flags_horizontal = 0
+show_percentage = false
+
+[node name="Reward" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission4"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+text = "+0c"
+horizontal_alignment = 2
+vertical_alignment = 1
+clip_text = true
+
+[node name="ClaimButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission4"]
+texture_filter = 2
+custom_minimum_size = Vector2(64, 32)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("7_claim_active")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="Mission5" type="HBoxContainer" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Name" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission5"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+theme_override_font_sizes/font_size = 20
+text = "Mission 5"
+vertical_alignment = 1
+clip_text = true
+
+[node name="Bar" type="ProgressBar" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission5"]
+custom_minimum_size = Vector2(120, 20)
+layout_mode = 2
+size_flags_horizontal = 0
+show_percentage = false
+
+[node name="Reward" type="Label" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission5"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_nunito_regular")
+text = "+0c"
+horizontal_alignment = 2
+vertical_alignment = 1
+clip_text = true
+
+[node name="ClaimButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel/Mission5"]
+texture_filter = 2
+custom_minimum_size = Vector2(64, 32)
+layout_mode = 2
+focus_mode = 0
+icon = ExtResource("7_claim_active")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="BackButton" type="Button" parent="UI/MissionPanel/PanelContent/VBox"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Back"
 
+[node name="CloseButton" type="TextureButton" parent="UI/MissionPanel"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -53.5
+offset_top = -36.72
+offset_right = 42.5
+offset_bottom = 59.28
+grow_horizontal = 0
+texture_normal = ExtResource("9_close_x")
+
+[node name="TitleLabel" type="Label" parent="UI"]
+custom_minimum_size = Vector2(0, 56)
+anchors_preset = -1
+anchor_left = 0.25
+anchor_top = 0.13
+anchor_right = 0.75
+anchor_bottom = 0.22
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("4_fredoka_bold")
+theme_override_font_sizes/font_size = 36
+text = "Missions"
+horizontal_alignment = 1
+vertical_alignment = 1

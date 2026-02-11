@@ -1,6 +1,5 @@
 extends Control
 
-const MissionsManagerScript := preload("res://scripts/MissionsManager.gd")
 
 
 var _pending_level_rewards: Array = []
@@ -725,7 +724,7 @@ func refresh_gems_from_save() -> void:
 
 
 func refresh_missions_badge_from_save() -> void:
-    var can_claim: bool = MissionsManagerScript.has_ready_to_claim_missions_in_save()
+    var can_claim: bool = MissionsManager.has_ready_to_claim_missions_in_save()
     if _missions_badge:
         _missions_badge.visible = can_claim
     var daily_button := get_node_or_null("UI/DailyButton") as BaseButton
@@ -763,7 +762,7 @@ func _gems_for_reward_type(t: String) -> int:
 
 
 func _refresh_daily_button_style(button: BaseButton) -> void:
-    var can_claim: bool = MissionsManagerScript.has_ready_to_claim_missions_in_save()
+    var can_claim: bool = MissionsManager.has_ready_to_claim_missions_in_save()
     var path := "res://assets/tombol/tombol_mission_202x168.png"
     if can_claim:
         path = "res://assets/tombol/tombol_mission_ceklis_202x168.png"

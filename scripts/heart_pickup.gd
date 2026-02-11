@@ -41,8 +41,10 @@ func _on_body_entered(body: Node) -> void:
 					if amount <= 0:
 						amount = 1
 			p.heal(amount)
+		TransitionManager.play_sfx(&"heart_pickup")
 		queue_free()
 		return
 	if body and body.has_method("heal"):
 		body.heal(heal_amount)
+		TransitionManager.play_sfx(&"heart_pickup")
 	queue_free()
