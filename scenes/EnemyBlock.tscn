@@ -269,13 +269,14 @@ size = Vector2(64, 64)
 
 [node name="EnemyBlock" type="Node2D" unique_id=1416656543]
 script = ExtResource("2")
+anim_scale = 0.7
 hitbox_size = Vector2(64, 64)
 hitbox_offset = Vector2(0, -32)
 sprite_offset_y = -55.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1970666843]
 z_index = 95
-scale = Vector2(0.2583682, 0.2583682)
+scale = Vector2(0.7, 0.7)
 sprite_frames = SubResource("SpriteFrames_eb")
 animation = &"idle"
 frame_progress = 0.82353747
