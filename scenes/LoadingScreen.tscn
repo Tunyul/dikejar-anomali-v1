@@ -6,67 +6,67 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_x85qc"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(0, 0, 101, 131)
+region = Rect2(0, 0, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ij0l4"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(101, 0, 101, 131)
+region = Rect2(128, 0, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_814mh"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(202, 0, 101, 131)
+region = Rect2(256, 0, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3gg4b"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(303, 0, 101, 131)
+region = Rect2(384, 0, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_eljrs"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(0, 131, 101, 131)
+region = Rect2(0, 128, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ef7dr"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(101, 131, 101, 131)
+region = Rect2(128, 128, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_l04bg"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(202, 131, 101, 131)
+region = Rect2(256, 128, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_24gww"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(303, 131, 101, 131)
+region = Rect2(384, 128, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_o0603"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(0, 262, 101, 131)
+region = Rect2(0, 256, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_pp3ty"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(101, 262, 101, 131)
+region = Rect2(128, 256, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_27b2i"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(202, 262, 101, 131)
+region = Rect2(256, 256, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bwlml"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(303, 262, 101, 131)
+region = Rect2(384, 256, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_tei2c"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(0, 393, 101, 131)
+region = Rect2(0, 384, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_amhhn"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(101, 393, 101, 131)
+region = Rect2(128, 384, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ct3bc"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(202, 393, 101, 131)
+region = Rect2(256, 384, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_t5g7o"]
 atlas = ExtResource("1_player_run_tex")
-region = Rect2(303, 393, 101, 131)
+region = Rect2(384, 384, 128, 128)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_player_loading"]
 animations = [{
@@ -404,7 +404,7 @@ color = Color(0, 0, 0, 1)
 
 [node name="PlayerSprite" type="AnimatedSprite2D" parent="Characters"]
 position = Vector2(220, 440)
-scale = Vector2(0.6, 0.6)
+scale = Vector2(0.462, 0.6)
 sprite_frames = SubResource("SpriteFrames_player_loading")
 animation = &"run"
 

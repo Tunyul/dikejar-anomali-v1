@@ -43,9 +43,9 @@ class_name Player
 @export var match_sprite_to_collision: bool = true
 @export var preserve_editor_transform: bool = true
 @export var collision_size: Vector2 = Vector2(48, 72)  # Optimized collision size (smaller = better gameplay feel)
-@export var preserve_editor_sprite_scale: bool = true
-@export var run_scale_override: float = 0.0
-@export var jump_scale_override: float = 0.0
+@export var preserve_editor_sprite_scale: bool = false
+@export var run_scale_override: Vector2 = Vector2.ZERO
+@export var jump_scale_override: Vector2 = Vector2.ZERO
 
 # ===== POSITION SETTINGS (BISA DIUBAH DI INSPECTOR) =====
 @export var freeze_x_on_jump: bool = true  # Player tidak maju saat loncat
@@ -226,13 +226,14 @@ func initialize_player() -> void:
             animated_sprite.play("run")
         slice_jump_spritesheet_if_needed()
         slice_run_spritesheet_if_needed()
+        _apply_scale_for_anim("run")
+        _apply_offset_for_anim("run")
+        animated_sprite.play("run")
         if enable_debug_logging and OS.is_debug_build():
             print("AnimatedSprite2D initialized: position=", animated_sprite.position, " scale=", animated_sprite.scale, " playing=", animated_sprite.is_playing())
         _prepare_animation_scales()
-        _apply_scale_for_anim("run")
         animated_sprite.centered = true
         _prepare_animation_offsets()
-        _apply_offset_for_anim("run")
     if enable_entry_stop:
         _set_to_entry_stop()
 
@@ -371,6 +372,12 @@ func handle_entry_state(_delta: float) -> void:
         global_position = _entry_start_position
         position = _entry_start_position
         velocity = Vector2.ZERO
+
+        # Force apply scaling and offset at the very beginning of entry
+        if animated_sprite:
+            _apply_scale_for_anim("run")
+            _apply_offset_for_anim("run")
+
     var t: float = 1.0
     if entry_duration_sec > 0.0:
         t = clamp(state_timer / entry_duration_sec, 0.0, 1.0)
@@ -599,6 +606,11 @@ func update_animation_state() -> void:
     if not animated_sprite:
         return
 
+    # Force initialization check to prevent cropped frames on first load
+    if animated_sprite.animation == "" or animated_sprite.scale == Vector2.ZERO:
+        _apply_scale_for_anim("run")
+        _apply_offset_for_anim("run")
+
     if attack_active and animated_sprite.sprite_frames and animated_sprite.sprite_frames.has_animation("attack"):
         if animated_sprite.animation != "attack":
             animated_sprite.play("attack")
@@ -666,8 +678,6 @@ func set_environment_speed(speed: float) -> void:
     for n in nodes:
         if n and n.has_method("set_speed"):
             n.set_speed(speed)
-    if parallax_background and parallax_background.has_method("set_speed"):
-        parallax_background.set_speed(speed)
 
 func sync_environment_speed_if_needed() -> void:
     if not lock_environment_speed_to_player:
@@ -690,13 +700,6 @@ func sync_environment_speed_if_needed() -> void:
             _last_env_speed = run_speed
 
 func enable_environment_movement(enable: bool) -> void:
-    # Kontrol parallax background movement
-    var parallax_bg = get_tree().get_root().get_node_or_null("Main/ParallaxBackground")
-    if parallax_bg and parallax_bg.has_method("set_movement_enabled"):
-        parallax_bg.set_movement_enabled(enable)
-        if enable_debug_logging and OS.is_debug_build():
-            print("Parallax movement ", "enabled" if enable else "disabled")
-
     # Kontrol terrain scrolling
     var nodes := _get_terrain_nodes()
     for n in nodes:
@@ -716,10 +719,6 @@ func _is_environment_moving() -> bool:
         if n and n.has_method("get"):
             me = n.get("movement_enabled")
         if me:
-            return true
-    if parallax_background and parallax_background.has_method("get"):
-        var pm: bool = parallax_background.get("movement_enabled")
-        if pm:
             return true
     return _env_move_enabled
 
@@ -953,33 +952,47 @@ func _compute_scale_for_anim(anim: String) -> Vector2:
     var s: Vector2 = _get_anim_frame_size(anim)
     var collision_shape = $CollisionShape2D
     if s == Vector2.ZERO or not collision_shape or not collision_shape.shape:
-        return animated_sprite.scale
+        return animated_sprite.scale if animated_sprite else Vector2(1, 1)
+
     var shape_size: Vector2 = collision_shape.shape.size
-    var target_w: float = shape_size.x * 0.9
+    # Target height is 90% of collision shape height for consistency across all animations
     var target_h: float = shape_size.y * 0.9
-    var uniform: float = min(target_w / max(s.x, 1.0), target_h / max(s.y, 1.0))
-    return Vector2(uniform, uniform)
+    var scale_y: float = target_h / max(s.y, 1.0)
+
+    # Default to uniform scaling based on height
+    var scale_x: float = scale_y
+
+    # Fix "gepeng kesamping" for run animation
+    # The run frames are 128x128 but characters often have empty space on sides
+    # Jump (101x131) is narrower. We need to compensate for the aspect ratio difference.
+    if anim == "run":
+        # Jump aspect ratio: 101/131 = 0.77
+        # Run aspect ratio: 128/128 = 1.0
+        # To match jump's width feel, we multiply by (JumpAR / RunAR) = 0.77
+        scale_x *= 0.77
+
+    return Vector2(scale_x, scale_y)
 
 func _prepare_animation_scales() -> void:
     _anim_scales.clear()
-    _anim_scales["run"] = Vector2(run_scale_override, run_scale_override) if run_scale_override > 0.0 else _compute_scale_for_anim("run")
-    _anim_scales["jump"] = Vector2(jump_scale_override, jump_scale_override) if jump_scale_override > 0.0 else _compute_scale_for_anim("jump")
+    _anim_scales["run"] = run_scale_override if run_scale_override != Vector2.ZERO else _compute_scale_for_anim("run")
+    _anim_scales["jump"] = jump_scale_override if jump_scale_override != Vector2.ZERO else _compute_scale_for_anim("jump")
     _anim_scales["attack"] = _compute_scale_for_anim("attack")
 
 func _apply_scale_for_anim(anim: String) -> void:
     if preserve_editor_sprite_scale:
         return
     var s: Vector2
-    if anim == "run" and run_scale_override > 0.0:
-        s = Vector2(run_scale_override, run_scale_override)
-    elif anim == "jump" and jump_scale_override > 0.0:
-        s = Vector2(jump_scale_override, jump_scale_override)
+    if anim == "run" and run_scale_override != Vector2.ZERO:
+        s = run_scale_override
+    elif anim == "jump" and jump_scale_override != Vector2.ZERO:
+        s = jump_scale_override
     elif _anim_scales.has(anim):
         s = _anim_scales[anim] as Vector2
     else:
         s = _compute_scale_for_anim(anim)
         _anim_scales[anim] = s
-    animated_sprite.scale = s
+    animated_sprite.scale = s * sprite_scale
 
 func _compute_offset_for_anim(anim: String) -> Vector2:
     if not animated_sprite:
@@ -1039,22 +1052,52 @@ func slice_run_spritesheet_if_needed() -> void:
     var sf := animated_sprite.sprite_frames
     if not sf.has_animation("run"):
         return
+
+    # Check if it's already sliced or manual regions are set
     var count := sf.get_frame_count("run")
     if count > 1:
         return
+
     var sheet := sf.get_frame_texture("run", 0)
     if sheet == null:
         return
+
+    if sheet is AtlasTexture:
+        return
+
     var w := sheet.get_width()
     var h := sheet.get_height()
+
+    # IDLE RUN.PNG is typically 4x4 for 16 frames
     var cols := 4
     var rows := 4
-    var cw: int = int(round(float(w) / float(cols)))
-    var ch: int = int(round(float(h) / float(rows)))
+
+    # Use float for division, then cast to int for region size
+    # This ensures we don't skip pixels if the total width isn't perfectly divisible
+    var cw_f: float = float(w) / cols
+    var ch_f: float = float(h) / rows
+
+    # Debug info to check frame sizes
+    if enable_debug_logging:
+        print("Slicing RUN: texture size=", w, "x", h, " frame size=", cw_f, "x", ch_f)
+
     sf.clear("run")
+    sf.set_animation_loop("run", true)
+    sf.set_animation_speed("run", 10.0) # Standard speed
+
     for r in range(rows):
         for c in range(cols):
             var at := AtlasTexture.new()
             at.atlas = sheet
-            at.region = Rect2(c * cw, r * ch, cw, ch)
+            # Rect2(x, y, w, h)
+            # The previous logic might have been shifting the frames.
+            # Let's ensure we are taking the exact center of each 128x128 block if the sheet is larger,
+            # or exactly the 128x128 grid if it's 512x512.
+            at.region = Rect2(c * cw_f, r * ch_f, cw_f, ch_f)
+            at.filter_clip = true
             sf.add_frame("run", at)
+
+    # Force first frame update
+    animated_sprite.play("run")
+    _apply_scale_for_anim("run")
+    _apply_offset_for_anim("run")

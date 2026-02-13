@@ -1,12 +1,19 @@
-
 # Changelog
 
 All notable changes to this project are documented in this file.
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
-
-
 ## [Unreleased]
+
+## [1.3.29-beta] - 2026-02-13
+
+- Parallax: Memperbaiki sistem parallax agar bergerak otonom menggunakan `scroll_base_offset` untuk menghindari konflik dengan Camera2D.
+- Parallax: Menambahkan sinkronisasi pergerakan parallax dengan countdown; parallax hanya mulai bergerak setelah fase bermain aktif.
+- Parallax: Memastikan parallax berhenti saat fase Game Over untuk konsistensi visual.
+- Parallax: Menambahkan logging debug untuk memantau status inisialisasi dan kecepatan parallax secara real-time.
+- Fix: Memperbaiki error indentasi pada script `player.gd`.
+- Refactor: Menghapus logika kontrol parallax yang tersebar di `game_manager.gd` dan `player.gd` untuk sentralisasi pada script parallax otonom.
+- Naik versi proyek ke 1.3.29-beta
 
 ## [1.3.28-beta] - 2026-02-11
 
@@ -171,7 +178,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Pause menu: opsi "Menu" sekarang kembali ke `MainMenu.tscn` lewat loading screen yang sama sehingga seluruh jalur balik ke menu memakai flow transisi konsisten
 - Naik versi proyek ke 1.3.10-beta
 
-
 ## [1.3.9-beta] - 2025-12-25
 
 - Hearts: menambahkan scene `HeartPickup.tscn` sebagai pickup nyawa di ground runner
@@ -181,7 +187,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Random: mengembalikan `fixed_seed` generator ground ke 0 agar pola heart kembali acak
 - Naik versi proyek ke 1.3.9-beta
 
-
 ## [1.3.8-beta] - 2025-12-25
 
 - UI: menambahkan `HealthBar.tscn` dan menampilkannya di HUD `Main.tscn` sebagai bar nyawa pemain
@@ -190,7 +195,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Gameplay: menambahkan periode invincibility singkat setelah terkena hit dengan efek sprite berkedip
 - Stabilitas: memperbaiki peringatan strict typing pada fungsi health HUD di `game_manager.gd`
 - Naik versi proyek ke 1.3.8-beta
-
 
 ## [1.3.7-beta] - 2025-12-24
 
@@ -202,7 +206,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Stabilitas: memperbaiki beberapa peringatan strict typing (Variant) dan menggunakan `call_deferred` untuk spawn koin dari callback fisika agar bebas error engine
 - Naik versi proyek ke 1.3.7-beta
 
-
 ## [1.3.6-beta] - 2025-12-23
 
 - Mobile: menambahkan kembali scene `MobileControls.tscn` dengan tombol `Jump` dan `Attack` standar berbasis `TouchScreenButton`
@@ -212,7 +215,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Debug: membersihkan eksperimen node `JumpArea` dan script pendukung yang tidak dipakai lagi agar struktur scene lebih sederhana
 - Naik versi proyek ke 1.3.6-beta
 
-
 ## [1.3.5-beta] - 2025-12-21
 
 - Input: memperbaiki tombol lompat dan serang agar selalu responsif di awal game dan setelah restart (mobile dan keyboard)
@@ -221,7 +223,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Gameplay: menambahkan hitung mundur sebelum gameplay dimulai pada start dan restart, dengan label countdown di tengah layar
 - Gameplay: memastikan environment dan player baru mulai bergerak penuh setelah entry animasi dan countdown selesai
 - Naik versi proyek ke 1.3.5-beta
-
 
 ## [1.3.4-beta] - 2025-12-19
 
@@ -235,7 +236,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Coins: menghapus pola coins yang menyeberangi jurang dan membersihkan coins di dekat tepi gap
 - Coins: menyempurnakan pola naik–turun agar tidak ada coins turun tanpa awalan naik
 - Naik versi proyek ke 1.3.4-beta
-
 
 ## [1.3.3-beta] - 2025-12-17
 
@@ -283,7 +283,5 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Naik versi proyek ke 1.2.6
 
 ## [1.2.5] - 2025-12-05
-
-
 
 ## [1.2.4] - 2025-12-05

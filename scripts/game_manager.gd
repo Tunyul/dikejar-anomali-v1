@@ -160,7 +160,9 @@ var _missions_completed_type_toasted: Dictionary = {}
 var _missions_toast_tween: Tween = null
 var _bgm_toast_tween: Tween = null
 var _missions_menu_opened_from_playing: bool = false
+var _missions_menu_was_paused: bool = false
 var _settings_menu_opened_from_playing: bool = false
+var _settings_menu_was_paused: bool = false
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -848,10 +850,10 @@ func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
     var inset_bottom: float = maxf(viewport_size.y - (safe.position.y + safe.size.y), 0.0)
 
     if settings_button:
-        settings_button.offset_left = -52.0 - inset_right
-        settings_button.offset_right = -12.0 - inset_right
-        settings_button.offset_top = 8.0 + inset_top
-        settings_button.offset_bottom = 48.0 + inset_top
+        settings_button.offset_left = -72.0 - inset_right
+        settings_button.offset_right = -16.0 - inset_right
+        settings_button.offset_top = 16.0 + inset_top
+        settings_button.offset_bottom = 72.0 + inset_top
 
     if version_label:
         version_label.offset_top = -32.0 - inset_bottom
@@ -985,16 +987,15 @@ func _process(delta: float) -> void:
         var env_speed: float = base_speed
         if ground_a and ground_a.has_method("get_speed"):
             env_speed = float(ground_a.call("get_speed"))
-        var tile_w_px: float = 128.0
-        if _ga_layer != null and (_ga_layer as Node).has_method("get"):
-            var ts: TileSet = _ga_layer.get("tile_set") if _ga_layer.has_method("get") else null
-            if ts != null:
-                var cell_a: Vector2i = ts.tile_size
-                tile_w_px = float(cell_a.x) * (_ga_layer.get("scale").x if _ga_layer.has_method("get") else 1.0)
+
+        # Update distance and background scrolling
         distance += env_speed * delta
-        if tile_w_px > 0.0:
-            _tiles_passed_accum += env_speed * delta / tile_w_px
-            total_tiles_passed = int(_tiles_passed_accum)
+
+        # Update tiles passed based on fixed tile width if env_speed is active
+        var tile_w_px: float = 128.0 # Default tile width
+        _tiles_passed_accum += env_speed * delta / tile_w_px
+        total_tiles_passed = int(_tiles_passed_accum)
+
         game_time_sec += delta
         score = int(total_tiles_passed * score_per_tile)
         if coin_hud_label != null:
@@ -1013,8 +1014,6 @@ func _process(delta: float) -> void:
             ground_a.set_speed(target_speed)
         if ground_b and ground_b.has_method("set_speed"):
             ground_b.set_speed(target_speed)
-        if parallax and parallax.has_method("set_speed"):
-            parallax.set_speed(target_speed)
         if ground_a and ground_a.has_method("set_instant_speed_mode"):
             ground_a.set_instant_speed_mode(boost_active)
         if ground_b and ground_b.has_method("set_instant_speed_mode"):
@@ -1277,8 +1276,6 @@ func on_quit_game() -> void:
 func pause_game() -> void:
     game_active = false
     get_tree().paused = true
-    if parallax and parallax.has_method("set_movement_enabled"):
-        parallax.set_movement_enabled(false)
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(false)
     if terrain_b and terrain_b.has_method("set_movement_enabled"):
@@ -1293,8 +1290,6 @@ func resume_game() -> void:
         return
     game_active = true
     get_tree().paused = false
-    if parallax and parallax.has_method("set_movement_enabled"):
-        parallax.set_movement_enabled(true)
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(true)
     if terrain_b and terrain_b.has_method("set_movement_enabled"):
@@ -1317,9 +1312,13 @@ func return_to_main_menu() -> void:
 
 func open_missions_menu() -> void:
     _missions_menu_opened_from_playing = false
-    if game_active:
+    _missions_menu_was_paused = get_tree().paused
+
+    var is_ingame = (phase != Phase.GAME_OVER)
+    if is_ingame:
         _missions_menu_opened_from_playing = true
         pause_game()
+
     var missions_menu := get_node_or_null("DailyMissionsMenu")
     if missions_menu == null:
         var packed := load("res://scenes/DailyMissionsMenu.tscn") as PackedScene
@@ -1349,7 +1348,9 @@ func open_settings_menu() -> void:
         return
 
     _settings_menu_opened_from_playing = false
-    var is_ingame = game_active or countdown_active
+    _settings_menu_was_paused = get_tree().paused
+
+    var is_ingame = (phase != Phase.GAME_OVER)
     if is_ingame:
         _settings_menu_opened_from_playing = true
         pause_game()
@@ -1376,12 +1377,14 @@ func open_settings_menu() -> void:
 func _on_missions_overlay_closed() -> void:
     if _missions_menu_opened_from_playing:
         _missions_menu_opened_from_playing = false
-        resume_game()
+        if not _missions_menu_was_paused:
+            resume_game()
 
 func _on_settings_overlay_closed() -> void:
     if _settings_menu_opened_from_playing:
         _settings_menu_opened_from_playing = false
-        resume_game()
+        if not _settings_menu_was_paused:
+            resume_game()
 
 func try_rewarded_continue() -> void:
     if ads_shown_count >= ads_max_per_session:
@@ -1406,8 +1409,6 @@ func grant_continue() -> void:
     phase = Phase.PLAYING
     game_active = true
     continue_grace_timer = rewarded_continue_grace_sec
-    if parallax and parallax.has_method("set_movement_enabled"):
-        parallax.set_movement_enabled(true)
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(true)
     if terrain_b and terrain_b.has_method("set_movement_enabled"):
@@ -1827,8 +1828,6 @@ func set_playing_phase() -> void:
         if powerup_speed_boost_multiplier > 1.0:
             max_with_boost_b = max_speed * powerup_speed_boost_multiplier
         ground_b.set_speed_limits(0.0, max_with_boost_b)
-    if parallax and parallax.has_method("set_movement_enabled"):
-        parallax.set_movement_enabled(true)
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(true)
     if terrain_b and terrain_b.has_method("set_movement_enabled"):
@@ -1846,6 +1845,14 @@ func set_playing_phase() -> void:
             player.prepare_for_playing_phase()
         if player.has_method("enable_environment_movement"):
             player.enable_environment_movement(true)
+
+    if parallax and parallax.has_method("set_speed"):
+        var p_speed: float = 300.0
+        if parallax.has_method("get"):
+            var s = parallax.get("speed")
+            if s != null:
+                p_speed = float(s)
+        parallax.set_speed(p_speed)
 
     _start_bukit_bgm_rotation()
     if anomaly:
@@ -1931,8 +1938,6 @@ func on_player_game_over(_cause: String) -> void:
     phase = Phase.GAME_OVER
     game_active = false
     TransitionManager.play_sfx(&"game_over")
-    if parallax and parallax.has_method("set_movement_enabled"):
-        parallax.set_movement_enabled(false)
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(false)
     if terrain_b and terrain_b.has_method("set_movement_enabled"):
@@ -1945,8 +1950,6 @@ func on_player_game_over(_cause: String) -> void:
         ground_a.set_speed(0.0)
     if ground_b and ground_b.has_method("set_speed"):
         ground_b.set_speed(0.0)
-    if parallax and parallax.has_method("set_speed"):
-        parallax.call("set_speed", 0.0)
 
     last_score = score
     last_coins = coin_collected_a + coin_collected_b
@@ -1968,6 +1971,9 @@ func on_player_game_over(_cause: String) -> void:
     _play_game_over_bgm()
     if anomaly:
         anomaly.hide()
+
+    if parallax and parallax.has_method("set_speed"):
+        parallax.set_speed(0.0)
     if debug_label != null:
         debug_label.visible = false
     if canvas:
@@ -2409,8 +2415,6 @@ func _start_play_phase() -> void:
     _clear_existing_hearts()
     _next_coin_burst_distance = 300
     _apply_spawn_safety_limits()
-    if parallax and parallax.has_method("set_movement_enabled"):
-        parallax.set_movement_enabled(false)
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(false)
     if terrain_b and terrain_b.has_method("set_movement_enabled"):

@@ -234,6 +234,15 @@ func _process(delta: float) -> void:
         _parallax_bg.scroll_base_offset.x -= 40.0 * delta
         _parallax_bg.scroll_base_offset.y += 40.0 * delta
 
+        # Wrap around for Shop BG to prevent large offset values
+        # Using 1664, 1109 as seen in ShopMenu.tscn motion_mirroring
+        var mirror_x = 1664.0
+        var mirror_y = 1109.0
+        if abs(_parallax_bg.scroll_base_offset.x) >= mirror_x:
+            _parallax_bg.scroll_base_offset.x = fmod(_parallax_bg.scroll_base_offset.x, mirror_x)
+        if abs(_parallax_bg.scroll_base_offset.y) >= mirror_y:
+            _parallax_bg.scroll_base_offset.y = fmod(_parallax_bg.scroll_base_offset.y, mirror_y)
+
 func _unhandled_input(event: InputEvent) -> void:
     if _closing:
         return

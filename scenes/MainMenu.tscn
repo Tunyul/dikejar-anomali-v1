@@ -525,7 +525,8 @@ script = ExtResource("2")
 speed = 200.0
 
 [node name="LayerSky" type="ParallaxLayer" parent="ParallaxBackground" unique_id=408624784]
-motion_scale = Vector2(0.1, 0.1)
+z_index = -10
+motion_scale = Vector2(0.05, 0)
 motion_mirroring = Vector2(1024, 0)
 
 [node name="Sky" type="Sprite2D" parent="ParallaxBackground/LayerSky" unique_id=1489093420]
@@ -533,170 +534,93 @@ scale = Vector2(0.53333336, 0.53333336)
 texture = ExtResource("3")
 centered = false
 
+[node name="Clouds_2" type="ParallaxLayer" parent="ParallaxBackground" unique_id=1506451648]
+z_index = -9
+motion_scale = Vector2(0.1, 0)
+motion_mirroring = Vector2(1024, 0)
+
+[node name="Cloud_2_A" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=313511874]
+position = Vector2(364, 91)
+scale = Vector2(0.18164062, 0.18164062)
+texture = ExtResource("5")
+
+[node name="Cloud_2_B" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=1374528343]
+position = Vector2(823, 67)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("13")
+
+[node name="Cloud_2_C" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=1612711617]
+position = Vector2(1235, 121)
+scale = Vector2(0.23632812, 0.23632812)
+texture = ExtResource("15")
+
+[node name="Clouds_1" type="ParallaxLayer" parent="ParallaxBackground" unique_id=156711519]
+z_index = -8
+motion_scale = Vector2(0.15, 0)
+motion_mirroring = Vector2(1024, 0)
+
+[node name="Cloud_1_A" type="Sprite2D" parent="ParallaxBackground/Clouds_1" unique_id=457788448]
+position = Vector2(111, 46)
+scale = Vector2(0.18359376, 0.18359376)
+texture = ExtResource("4")
+
+[node name="Cloud_1_B" type="Sprite2D" parent="ParallaxBackground/Clouds_1" unique_id=1626078747]
+position = Vector2(612, 107)
+scale = Vector2(0.24609374, 0.24609374)
+texture = ExtResource("12")
+
+[node name="Cloud_1_C" type="Sprite2D" parent="ParallaxBackground/Clouds_1" unique_id=1727768560]
+position = Vector2(1006, 32)
+scale = Vector2(0.1875, 0.1875)
+texture = ExtResource("14")
+
 [node name="Mountain_4" type="ParallaxLayer" parent="ParallaxBackground" unique_id=193439919]
-z_index = 1
-motion_scale = Vector2(0.3, 0)
-motion_mirroring = Vector2(2048, 0)
+z_index = -7
+motion_scale = Vector2(0.2, 0)
+motion_mirroring = Vector2(1024, 0)
 
 [node name="Mountain_4_A" type="Sprite2D" parent="ParallaxBackground/Mountain_4" unique_id=181091792]
-position = Vector2(6, 93)
-scale = Vector2(0.50781244, 0.47083336)
-texture = ExtResource("6")
-centered = false
-
-[node name="Mountain_4_B" type="Sprite2D" parent="ParallaxBackground/Mountain_4" unique_id=1263080155]
-position = Vector2(1024, 30)
-scale = Vector2(0.7304687, 0.53333336)
+position = Vector2(0, 93)
+scale = Vector2(0.53333336, 0.53333336)
 texture = ExtResource("6")
 centered = false
 
 [node name="Mountain_3" type="ParallaxLayer" parent="ParallaxBackground" unique_id=1217833983]
-z_index = 1
-motion_scale = Vector2(0.5, 0)
-motion_mirroring = Vector2(2048, 0)
+z_index = -6
+motion_scale = Vector2(0.3, 0)
+motion_mirroring = Vector2(1024, 0)
 
 [node name="Mountain_3_A" type="Sprite2D" parent="ParallaxBackground/Mountain_3" unique_id=31361652]
-position = Vector2(229.00002, 129)
-scale = Vector2(0.6494382, 0.45050505)
+position = Vector2(0, 129)
+scale = Vector2(0.53333336, 0.53333336)
 texture = ExtResource("7")
 centered = false
 
-[node name="Mountain_3_B" type="Sprite2D" parent="ParallaxBackground/Mountain_3" unique_id=1560632006]
-position = Vector2(1253, 77)
-scale = Vector2(0.76404506, 0.5060606)
-texture = ExtResource("7")
-centered = false
+[node name="Mountain_2" type="ParallaxLayer" parent="ParallaxBackground" unique_id=1285075677]
+z_index = -5
+motion_scale = Vector2(0.4, 0)
+motion_mirroring = Vector2(1024, 0)
 
-[node name="Mountain_3_C" type="Sprite2D" parent="ParallaxBackground/Mountain_3" unique_id=1305456159]
-position = Vector2(731, 119.00001)
-scale = Vector2(0.4561798, 0.46666664)
-texture = ExtResource("7")
-centered = false
-
-[node name="Mountain_3_D" type="Sprite2D" parent="ParallaxBackground/Mountain_3" unique_id=729118515]
-position = Vector2(1611.0001, 99.99999)
-scale = Vector2(0.97078645, 0.4787878)
-texture = ExtResource("7")
+[node name="Mountain_2_A" type="Sprite2D" parent="ParallaxBackground/Mountain_2" unique_id=1420717202]
+position = Vector2(0, 187)
+scale = Vector2(0.53333336, 0.53333336)
+texture = ExtResource("8")
 centered = false
 
 [node name="Mountain_1" type="ParallaxLayer" parent="ParallaxBackground" unique_id=141221046]
-z_index = 1
-motion_scale = Vector2(0.9, 0)
-motion_mirroring = Vector2(2048, 0)
+z_index = -4
+motion_scale = Vector2(0.5, 0)
+motion_mirroring = Vector2(1024, 0)
 
 [node name="Mountain_1_A" type="Sprite2D" parent="ParallaxBackground/Mountain_1" unique_id=1314760262]
-position = Vector2(319, 223.00002)
-scale = Vector2(0.6222664, 0.55211264)
+position = Vector2(0, 223)
+scale = Vector2(0.53333336, 0.53333336)
 texture = ExtResource("9")
-centered = false
-
-[node name="Mountain_1_B" type="Sprite2D" parent="ParallaxBackground/Mountain_1" unique_id=1117065460]
-position = Vector2(1339, 142.99998)
-scale = Vector2(0.44532806, 0.6773084)
-texture = ExtResource("9")
-centered = false
-
-[node name="Mountain_1_C" type="Sprite2D" parent="ParallaxBackground/Mountain_1" unique_id=410178502]
-position = Vector2(737.00006, 236)
-scale = Vector2(0.5626245, 0.53229904)
-texture = ExtResource("9")
-centered = false
-
-[node name="Mountain_1_D" type="Sprite2D" parent="ParallaxBackground/Mountain_1" unique_id=246786542]
-position = Vector2(1660, 245)
-scale = Vector2(0.60214126, 0.52003425)
-texture = ExtResource("9")
-centered = false
-
-[node name="Mountain_2" type="ParallaxLayer" parent="ParallaxBackground" unique_id=2125235603]
-z_index = 1
-motion_scale = Vector2(0.7, 0)
-motion_mirroring = Vector2(2048, 0)
-
-[node name="Mountain_2_A" type="Sprite2D" parent="ParallaxBackground/Mountain_2" unique_id=1747361252]
-position = Vector2(89, 195.99998)
-scale = Vector2(0.7869674, 0.45752108)
-texture = ExtResource("8")
-centered = false
-
-[node name="Mountain_2_B" type="Sprite2D" parent="ParallaxBackground/Mountain_2" unique_id=944492166]
-position = Vector2(1206, 106)
-scale = Vector2(0.49122792, 0.5670277)
-texture = ExtResource("8")
-centered = false
-
-[node name="Mountain_2_C" type="Sprite2D" parent="ParallaxBackground/Mountain_2" unique_id=692171239]
-position = Vector2(413.99997, 172)
-scale = Vector2(0.97493744, 0.49217814)
-texture = ExtResource("8")
-centered = false
-
-[node name="Mountain_2_D" type="Sprite2D" parent="ParallaxBackground/Mountain_2" unique_id=338979455]
-position = Vector2(1504, 164.00002)
-scale = Vector2(1.2305763, 0.49573466)
-texture = ExtResource("8")
-centered = false
-
-[node name="Clouds_1" type="ParallaxLayer" parent="ParallaxBackground" unique_id=645190757]
-motion_scale = Vector2(0.06, 0)
-motion_mirroring = Vector2(1024, 0)
-
-[node name="cloud_512_A" type="Sprite2D" parent="ParallaxBackground/Clouds_1" unique_id=33949877]
-position = Vector2(-28, -52)
-scale = Vector2(0.40039063, 0.40039063)
-texture = ExtResource("4")
-centered = false
-
-[node name="cloud_512_B" type="Sprite2D" parent="ParallaxBackground/Clouds_1" unique_id=1622471465]
-position = Vector2(777, 15)
-scale = Vector2(0.4003906, 0.4003906)
-texture = ExtResource("5")
-centered = false
-
-[node name="Clouds_2" type="ParallaxLayer" parent="ParallaxBackground" unique_id=436051262]
-z_index = 1
-motion_scale = Vector2(0.05, 0)
-motion_mirroring = Vector2(1024, 0)
-
-[node name="cloud_512_A2" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=1188798741]
-position = Vector2(15, 53)
-scale = Vector2(0.27343747, 0.28320313)
-texture = ExtResource("4")
-centered = false
-
-[node name="cloud_512_B2" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=619765622]
-position = Vector2(862, -16)
-scale = Vector2(0.26171878, 0.26171878)
-texture = ExtResource("5")
-centered = false
-
-[node name="cloud_128_A" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=480086753]
-position = Vector2(373, 34)
-scale = Vector2(0.6640625, 0.671875)
-texture = ExtResource("12")
-centered = false
-
-[node name="cloud_128_B" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=1000275566]
-position = Vector2(798, 1)
-scale = Vector2(0.460937, 0.460937)
-texture = ExtResource("13")
-centered = false
-
-[node name="cloud_256_A" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=313218690]
-position = Vector2(166, 0)
-scale = Vector2(0.42968756, 0.42968756)
-texture = ExtResource("14")
-centered = false
-
-[node name="cloud_256_B" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=326138645]
-position = Vector2(471, -10)
-scale = Vector2(0.3828125, 0.3828125)
-texture = ExtResource("15")
 centered = false
 
 [node name="Hills_2" type="ParallaxLayer" parent="ParallaxBackground" unique_id=2073475089]
-z_index = 2
-motion_scale = Vector2(0.95, 0)
+z_index = -3
+motion_scale = Vector2(0.7, 0)
 motion_mirroring = Vector2(1024, 0)
 
 [node name="Hills_2_Sprite" type="Sprite2D" parent="ParallaxBackground/Hills_2" unique_id=2133129805]
@@ -705,8 +629,8 @@ texture = ExtResource("16")
 centered = false
 
 [node name="Hills_1" type="ParallaxLayer" parent="ParallaxBackground" unique_id=2068347065]
-z_index = 3
-motion_scale = Vector2(0.85, 0)
+z_index = -2
+motion_scale = Vector2(0.9, 0)
 motion_mirroring = Vector2(1024, 0)
 
 [node name="Hills_1_Sprite" type="Sprite2D" parent="ParallaxBackground/Hills_1" unique_id=1104872836]

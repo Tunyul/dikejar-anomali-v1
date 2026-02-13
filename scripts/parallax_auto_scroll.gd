@@ -5,51 +5,54 @@ extends ParallaxBackground
 @export var use_smooth_scrolling: bool = true
 @export var wrap_width: float = 0.0
 
-var movement_enabled: bool = false
-var target_speed: float = 0.0
+var current_speed: float = 0.0
 
 func _ready() -> void:
-	movement_enabled = true
-	target_speed = speed
+    # Matikan follow_viewport_enabled agar pergerakan manual via scroll_offset
+    # tidak ditimpa oleh posisi Camera2D di scene Main.
+    follow_viewport_enabled = false
 
-	# Configure cloud layers for smooth movement
-	for i in range(get_child_count()):
-		var parallax_layer = get_child(i)
-		if parallax_layer is ParallaxLayer and parallax_layer.name.begins_with("Clouds"):
-			# Ensure cloud layers use smooth movement
-			parallax_layer.motion_offset = Vector2.ZERO
-			# Set cloud-specific mirroring for seamless looping
-			if parallax_layer.motion_mirroring.x == 0:
-				parallax_layer.motion_mirroring.x = 1024
+    # Ambil scene name untuk menentukan behavior awal
+    var scene_name = get_tree().current_scene.name
+    if scene_name == "Main":
+        current_speed = 0.0
+    else:
+        current_speed = speed
+
+    # Paksa process_mode ke INHERIT untuk memastikan script berjalan
+    process_mode = PROCESS_MODE_INHERIT
+
+    # Pastikan semua layer memiliki mirroring agar tidak hilang saat bergerak
+    for i in range(get_child_count()):
+        var child = get_child(i)
+        if child is ParallaxLayer:
+            # Gunakan 1024 sebagai default mirroring (sesuai resolusi asset yang di-scale)
+            if child.motion_mirroring.x == 0:
+                child.motion_mirroring.x = 1024
+            # Reset offset awal
+            child.motion_offset = Vector2.ZERO
+
+    print("Parallax Initialized: CurrentSpeed=", current_speed, " FollowViewport=", follow_viewport_enabled)
 
 func _process(delta: float) -> void:
-	if not movement_enabled:
-		return
+    # Parallax bergerak sesuai current_speed
+    var move_amount = current_speed * delta
 
-	# Use _process for smoother visual scrolling, especially on mobile
-	# Update base offset - ParallaxLayers will handle their own movement
-	# based on their motion_scale automatically.
-	var move_amount = speed * delta
+    # Gunakan scroll_base_offset karena ParallaxBackground seringkali
+    # bekerja lebih stabil dengan base_offset ketika follow_viewport_enabled dimatikan
+    scroll_base_offset.x -= move_amount
 
-	if snap_px > 0.0:
-		move_amount = round(move_amount / snap_px) * snap_px
-
-	scroll_base_offset.x -= move_amount
-
-	if wrap_width > 0.0:
-		# Use fmod for wrapping if wrap_width is set
-		scroll_base_offset.x = fmod(scroll_base_offset.x, wrap_width)
-
-func set_movement_enabled(enabled: bool) -> void:
-	movement_enabled = enabled
+    # Debugging setiap 60 frame
+    if Engine.get_frames_drawn() % 60 == 0 and current_speed > 0:
+        print("Parallax Debug - Speed: ", current_speed, " Scroll Base Offset: ", scroll_base_offset.x)
 
 func set_speed(new_speed: float) -> void:
-	speed = new_speed
-	target_speed = new_speed
+    current_speed = new_speed
+    print("Parallax Speed Changed to: ", current_speed)
 
 func get_layer_speed(layer_index: int = 0) -> float:
-	if get_child_count() > layer_index:
-		var parallax_layer = get_child(layer_index)
-		if parallax_layer is ParallaxLayer:
-			return speed * parallax_layer.motion_scale.x
-	return speed
+    if get_child_count() > layer_index:
+        var parallax_layer = get_child(layer_index)
+        if parallax_layer is ParallaxLayer:
+            return current_speed * parallax_layer.motion_scale.x
+    return current_speed
