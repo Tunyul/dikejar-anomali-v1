@@ -3,21 +3,19 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://vsg3ly1qravu"
-path.s3tc="res://.godot/imported/icon_flag_INA.png-9f32564feec8ef5aae88e28ad2e7139c.s3tc.ctex"
-path.etc2="res://.godot/imported/icon_flag_INA.png-9f32564feec8ef5aae88e28ad2e7139c.etc2.ctex"
+path="res://.godot/imported/icon_flag_INA.png-9f32564feec8ef5aae88e28ad2e7139c.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/icon/icon_flag_INA.png"
-dest_files=["res://.godot/imported/icon_flag_INA.png-9f32564feec8ef5aae88e28ad2e7139c.s3tc.ctex", "res://.godot/imported/icon_flag_INA.png-9f32564feec8ef5aae88e28ad2e7139c.etc2.ctex"]
+dest_files=["res://.godot/imported/icon_flag_INA.png-9f32564feec8ef5aae88e28ad2e7139c.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
