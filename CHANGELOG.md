@@ -13,7 +13,8 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Parallax: Menambahkan logging debug untuk memantau status inisialisasi dan kecepatan parallax secara real-time.
 - Fix: Memperbaiki error indentasi pada script `player.gd`.
 - Refactor: Menghapus logika kontrol parallax yang tersebar di `game_manager.gd` dan `player.gd` untuk sentralisasi pada script parallax otonom.
-- Fix: Memperbaiki bug di `EnemyBlock.tscn` di mana skala enemy menjadi kecil (0.5) di dalam game karena ter-override oleh script; sekarang menggunakan `anim_scale = 0.7` sesuai setting editor.
+- Fix: Memperbaiki skala visual `EnemyBlock` yang terlalu kecil (sekarang `anim_scale = 1.2`) dan menyesuaikan posisi `y` agar menempel tepat di atas tanah.
+- Fix: Memperbaiki error indentasi (campuran space dan tab) pada script `enemy_block.gd`.
 - Naik versi proyek ke 1.3.29-beta
 
 ## [1.3.28-beta] - 2026-02-11

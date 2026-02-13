@@ -271,8 +271,8 @@ size = Vector2(64, 64)
 script = ExtResource("2")
 anim_scale = 1.2
 hitbox_size = Vector2(80, 80)
-hitbox_offset = Vector2(0, -40)
-sprite_offset_y = -65.0
+hitbox_offset = Vector2(0, 0)
+sprite_offset_y = 0.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1970666843]
 z_index = 95

@@ -19,20 +19,20 @@ var _velocity: Vector2 = Vector2.ZERO
 var _alive: bool = true
 
 func _ready() -> void:
-	var spr: AnimatedSprite2D = $AnimatedSprite2D
-	if spr != null:
-		# Jika parent (Ground) memiliki skala (misal 0.5), kita perlu mengimbangi
-		# agar visual tetap terlihat sesuai target anim_scale relatif terhadap WORLD.
-		# Namun untuk saat ini kita pastikan local scale sprite konsisten dulu.
-		if anim_scale > 0.0:
-			spr.scale = Vector2(anim_scale, anim_scale)
+    var spr: AnimatedSprite2D = $AnimatedSprite2D
+    if spr != null:
+        # Jika parent (Ground) memiliki skala (misal 0.5), kita perlu mengimbangi
+        # agar visual tetap terlihat sesuai target anim_scale relatif terhadap WORLD.
+        # Namun untuk saat ini kita pastikan local scale sprite konsisten dulu.
+        if anim_scale > 0.0:
+            spr.scale = Vector2(anim_scale, anim_scale)
 
-		# Hitbox juga perlu disesuaikan skalanya jika anim_scale berubah
-		var hitbox := get_node_or_null("Hitbox") as Area2D
-		if hitbox:
-			hitbox.scale = Vector2.ONE # Reset ke 1.0 agar tidak terpengaruh scale sprite lama
+        # Hitbox juga perlu disesuaikan skalanya jika anim_scale berubah
+        var hitbox := get_node_or_null("Hitbox") as Area2D
+        if hitbox:
+            hitbox.scale = Vector2.ONE # Reset ke 1.0 agar tidak terpengaruh scale sprite lama
 
-		if anim_fps > 0.0 and spr.sprite_frames != null:
+        if anim_fps > 0.0 and spr.sprite_frames != null:
             spr.sprite_frames.set_animation_speed("idle", anim_fps)
         if sprite_offset_y != 0.0:
             spr.position.y += sprite_offset_y
