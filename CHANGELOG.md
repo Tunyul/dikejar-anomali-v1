@@ -5,6 +5,14 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.30-beta] - 2026-02-14
+
+- Shop: Memperbaiki ketidaksesuaian ikon pada item Shop (Heart, Magnet, dan Multiplier).
+- Shop: Mengganti ikon koin pada item "Upgrade Nyawa Maks" menjadi ikon hati yang sesuai.
+- Shop: Memperbarui ikon Magnet menjadi versi dengan indikator timer untuk merepresentasikan durasi.
+- Shop: Mengganti ikon koin pada item "Upgrade Multiplier Double Coins" menjadi ikon multiplier yang spesifik.
+- Naik versi proyek ke 1.3.30-beta
+
 ## [1.3.29-beta] - 2026-02-13
 
 - Parallax: Memperbaiki sistem parallax agar bergerak otonom menggunakan `scroll_base_offset` untuk menghindari konflik dengan Camera2D.

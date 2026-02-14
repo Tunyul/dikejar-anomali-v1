@@ -505,7 +505,7 @@ func _init_shop_data() -> void:
             "description": "Menarik koin otomatis selama 30 detik.",
             "price": 150,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
             "rarity": "common"
         },
         {
@@ -544,7 +544,7 @@ func _init_shop_data() -> void:
             "description": "Meningkatkan kapasitas nyawa maksimal secara permanen.",
             "price": 1000,
             "currency": "coins",
-            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
+            "icon": "res://assets/icon/icon_heart_96x96.png",
             "rarity": "epic"
         },
         {
@@ -553,7 +553,7 @@ func _init_shop_data() -> void:
             "description": "Menambah durasi efek magnet secara permanen.",
             "price": 800,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
             "rarity": "rare"
         },
         {
@@ -580,7 +580,7 @@ func _init_shop_data() -> void:
             "description": "Menambah multiplier gain koin saat double coins aktif.",
             "price": 1200,
             "currency": "coins",
-            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
+            "icon": "res://assets/icon/icon_coin_multiplier_96x96.png",
             "rarity": "epic"
         },
         {
@@ -601,7 +601,7 @@ func _init_shop_data() -> void:
             "description": "Meningkatkan kapasitas nyawa maksimal secara permanen.",
             "price": 30,
             "currency": "gems",
-            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
+            "icon": "res://assets/icon/icon_heart_96x96.png",
             "rarity": "epic"
         },
         {
@@ -610,7 +610,7 @@ func _init_shop_data() -> void:
             "description": "Menambah durasi efek magnet secara permanen.",
             "price": 24,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
             "rarity": "rare"
         },
         {
@@ -637,7 +637,7 @@ func _init_shop_data() -> void:
             "description": "Menambah multiplier gain koin saat double coins aktif.",
             "price": 32,
             "currency": "gems",
-            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
+            "icon": "res://assets/icon/icon_coin_multiplier_96x96.png",
             "rarity": "epic"
         },
         {
