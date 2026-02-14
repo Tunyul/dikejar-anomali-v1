@@ -5,6 +5,14 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.31-beta] - 2026-02-14
+
+- Fix: Migrasi sistem pengecekan aset dari `FileAccess` ke `ResourceLoader.exists()` untuk kompatibilitas penuh dengan sistem file Android (APK/PCK).
+- Fix: Normalisasi nama file aset (menghapus spasi dan menggantinya dengan underscore) untuk mencegah error loading pada sistem operasi berbasis Linux/Android.
+- Fix: Pemetaan ulang (re-mapping) SFX Koin dan Misi di `TransitionManager.gd` agar sesuai dengan nama file aset fisik.
+- Android: Memperbarui `export_presets.cfg` dengan launcher icon resmi (`icon_apk.png`) dan filter inklusi aset yang lebih ketat untuk menjamin kelengkapan data saat compile.
+- Naik versi proyek ke 1.3.31-beta
+
 ## [1.3.30-beta] - 2026-02-14
 
 - Shop: Memperbaiki ketidaksesuaian ikon pada item Shop (Heart, Magnet, dan Multiplier).

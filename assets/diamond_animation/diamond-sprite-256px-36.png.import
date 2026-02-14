@@ -2,20 +2,22 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://csrq1iqliyc7n"
-path="res://.godot/imported/image 11.png-1026ddf61d4b503ed2d21cc7c4e8cca4.ctex"
+uid="uid://yf7hil3mvcpc"
+path.s3tc="res://.godot/imported/diamond-sprite-256px-36.png-03f5d02ab9566110f1a8ce9d98f568c2.s3tc.ctex"
+path.etc2="res://.godot/imported/diamond-sprite-256px-36.png-03f5d02ab9566110f1a8ce9d98f568c2.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
-source_file="res://assets/Coin Animation/png/2x/image 11.png"
-dest_files=["res://.godot/imported/image 11.png-1026ddf61d4b503ed2d21cc7c4e8cca4.ctex"]
+source_file="res://assets/diamond_animation/diamond-sprite-256px-36.png"
+dest_files=["res://.godot/imported/diamond-sprite-256px-36.png-03f5d02ab9566110f1a8ce9d98f568c2.s3tc.ctex", "res://.godot/imported/diamond-sprite-256px-36.png-03f5d02ab9566110f1a8ce9d98f568c2.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

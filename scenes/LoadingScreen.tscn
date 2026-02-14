@@ -1,6 +1,6 @@
 [gd_scene load_steps=58 format=3 uid="uid://crwodo0j4kllr"]
 
-[ext_resource type="Texture2D" uid="uid://c3bwrfvu0o1ep" path="res://assets/mc/run/idle run.png" id="1_player_run_tex"]
+[ext_resource type="Texture2D" uid="uid://c3bwrfvu0o1ep" path="res://assets/mc/run/idle_run.png" id="1_player_run_tex"]
 [ext_resource type="Texture2D" uid="uid://dqmmglr4yqrso" path="res://assets/enemy/sprite-256px-36.png" id="2_anomaly_tex"]
 [ext_resource type="Script" path="res://scripts/LoadingScreen.gd" id="3_loading_script"]
 

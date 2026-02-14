@@ -2,22 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bhfyuqhjycryw"
-path.s3tc="res://.godot/imported/diamond-1024x1024.png-37489865da61810039a54328d594b43a.s3tc.ctex"
-path.etc2="res://.godot/imported/diamond-1024x1024.png-37489865da61810039a54328d594b43a.etc2.ctex"
+uid="uid://chpvmfc6irdbt"
+path="res://.godot/imported/image_9.png-edea2c38a306d3e36cc282c4ec221aa4.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/diamond animation/diamond-1024x1024.png"
-dest_files=["res://.godot/imported/diamond-1024x1024.png-37489865da61810039a54328d594b43a.s3tc.ctex", "res://.godot/imported/diamond-1024x1024.png-37489865da61810039a54328d594b43a.etc2.ctex"]
+source_file="res://assets/coin_animation/png/2x/image_9.png"
+dest_files=["res://.godot/imported/image_9.png-edea2c38a306d3e36cc282c4ec221aa4.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

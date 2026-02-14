@@ -310,21 +310,21 @@ func _is_recent_scroll_gesture() -> bool:
 
 func _load_currency_icons() -> void:
     var coin_candidates: Array = [
-        "res://assets/Coin Animation/png/2x/Coin.png",
+        "res://assets/coin_animation/png/2x/Coin.png",
         "res://assets/icon/icon_coin2x_96x96.png",
-        "res://assets/Coin Animation/png/2x/image 1.png"
+        "res://assets/coin_animation/png/2x/image_1.png"
     ]
     for p in coin_candidates:
-        if FileAccess.file_exists(p):
+        if ResourceLoader.exists(p):
             _coin_icon_tex = load(p)
             break
 
     var gem_candidates: Array = [
-        "res://assets/diamond animation/diamond-1024x1024.png",
-        "res://assets/diamond animation/diamond-sprite-256px-36.png"
+        "res://assets/diamond_animation/diamond-1024x1024.png",
+        "res://assets/diamond_animation/diamond-sprite-256px-36.png"
     ]
     for p in gem_candidates:
-        if FileAccess.file_exists(p):
+        if ResourceLoader.exists(p):
             _gem_icon_tex = load(p)
             break
 
@@ -658,7 +658,7 @@ func _init_shop_data() -> void:
             "description": "Skin standar untuk petualang pemula.",
             "price": 150,
             "currency": "coins",
-            "icon": "res://assets/mc/run/idle run.png",
+            "icon": "res://assets/mc/run/idle_run.png",
             "rarity": "common"
         },
         {
@@ -667,7 +667,7 @@ func _init_shop_data() -> void:
             "description": "Skin dengan detail emas yang elegan.",
             "price": 400,
             "currency": "coins",
-            "icon": "res://assets/mc/run/idle run.png",
+            "icon": "res://assets/mc/run/idle_run.png",
             "rarity": "rare"
         }
     ]
@@ -679,7 +679,7 @@ func _init_shop_data() -> void:
             "description": "Skin futuristik yang menyala dalam gelap.",
             "price": 25,
             "currency": "gems",
-            "icon": "res://assets/mc/run/idle run.png",
+            "icon": "res://assets/mc/run/idle_run.png",
             "rarity": "epic"
         },
         {
@@ -688,7 +688,7 @@ func _init_shop_data() -> void:
             "description": "Skin misterius yang terbuat dari bayangan.",
             "price": 40,
             "currency": "gems",
-            "icon": "res://assets/mc/run/idle run.png",
+            "icon": "res://assets/mc/run/idle_run.png",
             "rarity": "legendary"
         }
     ]
@@ -701,7 +701,7 @@ func _init_shop_data() -> void:
             "price": 15000,
             "currency": "real",
             "display_price": "Rp 15.000",
-            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
+            "icon": "res://assets/diamond_animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_standard",
@@ -710,7 +710,7 @@ func _init_shop_data() -> void:
             "price": 45000,
             "currency": "real",
             "display_price": "Rp 45.000",
-            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
+            "icon": "res://assets/diamond_animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_big",
@@ -719,7 +719,7 @@ func _init_shop_data() -> void:
             "price": 99000,
             "currency": "real",
             "display_price": "Rp 99.000",
-            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
+            "icon": "res://assets/diamond_animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_mega",
@@ -728,7 +728,7 @@ func _init_shop_data() -> void:
             "price": 199000,
             "currency": "real",
             "display_price": "Rp 199.000",
-            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
+            "icon": "res://assets/diamond_animation/diamond-1024x1024.png"
         }
     ]
 
@@ -824,7 +824,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Meningkatkan kapasitas nyawa maksimal secara permanen.",
             "price": 1000,
             "currency": "coins",
-            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -860,7 +860,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Menambah multiplier gain koin saat double coins aktif.",
             "price": 1200,
             "currency": "coins",
-            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -886,7 +886,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Meningkatkan kapasitas nyawa maksimal secara permanen.",
             "price": 30,
             "currency": "gems",
-            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -922,7 +922,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Menambah multiplier gain koin saat double coins aktif.",
             "price": 32,
             "currency": "gems",
-            "icon": "res://assets/Coin Animation/png/2x/Coin.png",
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
             "rarity": "epic"
         },
         {
@@ -948,7 +948,7 @@ func _init_editor_dummy_data() -> void:
             "name": "Skin Basic",
             "price": 150,
             "currency": "coins",
-            "icon": "res://assets/mc/run/idle run.png",
+            "icon": "res://assets/mc/run/idle_run.png",
             "rarity": "common"
         },
         {
@@ -956,7 +956,7 @@ func _init_editor_dummy_data() -> void:
             "name": "Skin Premium",
             "price": 400,
             "currency": "coins",
-            "icon": "res://assets/mc/run/idle run.png",
+            "icon": "res://assets/mc/run/idle_run.png",
             "rarity": "rare"
         }
     ]
@@ -973,7 +973,7 @@ func _init_editor_dummy_data() -> void:
             "name": "Skin Neon",
             "price": 25,
             "currency": "gems",
-            "icon": "res://assets/mc/run/idle run.png",
+            "icon": "res://assets/mc/run/idle_run.png",
             "rarity": "epic"
         },
         {
@@ -981,7 +981,7 @@ func _init_editor_dummy_data() -> void:
             "name": "Skin Shadow",
             "price": 40,
             "currency": "gems",
-            "icon": "res://assets/mc/run/idle run.png",
+            "icon": "res://assets/mc/run/idle_run.png",
             "rarity": "legendary"
         }
     ]
@@ -999,7 +999,7 @@ func _init_editor_dummy_data() -> void:
             "price": 15000,
             "currency": "real",
             "display_price": "Rp 15.000",
-            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
+            "icon": "res://assets/diamond_animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_standard",
@@ -1007,7 +1007,7 @@ func _init_editor_dummy_data() -> void:
             "price": 45000,
             "currency": "real",
             "display_price": "Rp 45.000",
-            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
+            "icon": "res://assets/diamond_animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_big",
@@ -1015,7 +1015,7 @@ func _init_editor_dummy_data() -> void:
             "price": 99000,
             "currency": "real",
             "display_price": "Rp 99.000",
-            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
+            "icon": "res://assets/diamond_animation/diamond-1024x1024.png"
         },
         {
             "id": "gems_mega",
@@ -1023,7 +1023,7 @@ func _init_editor_dummy_data() -> void:
             "price": 199000,
             "currency": "real",
             "display_price": "Rp 199.000",
-            "icon": "res://assets/diamond animation/diamond-1024x1024.png"
+            "icon": "res://assets/diamond_animation/diamond-1024x1024.png"
         }
     ]
     shop_groups.append({

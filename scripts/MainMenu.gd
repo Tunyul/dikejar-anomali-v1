@@ -19,7 +19,7 @@ static var _diamond_icon_tex: Texture2D = null
 static func _get_diamond_icon_texture() -> Texture2D:
     if _diamond_icon_tex != null:
         return _diamond_icon_tex
-    var tex := load("res://assets/diamond animation/diamond-1024x1024.png") as Texture2D
+    var tex := load("res://assets/diamond_animation/diamond-1024x1024.png") as Texture2D
     if tex == null:
         _diamond_icon_tex = null
         return null

@@ -2,20 +2,22 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://chpvmfc6irdbt"
-path="res://.godot/imported/image 9.png-48d4c6df8570a2b91c4712e9a94512e4.ctex"
+uid="uid://c3bwrfvu0o1ep"
+path.s3tc="res://.godot/imported/idle_run.png-0e3ed071b38ab3704c9cc154eb7b2bf1.s3tc.ctex"
+path.etc2="res://.godot/imported/idle_run.png-0e3ed071b38ab3704c9cc154eb7b2bf1.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
-source_file="res://assets/Coin Animation/png/2x/image 9.png"
-dest_files=["res://.godot/imported/image 9.png-48d4c6df8570a2b91c4712e9a94512e4.ctex"]
+source_file="res://assets/mc/run/idle_run.png"
+dest_files=["res://.godot/imported/idle_run.png-0e3ed071b38ab3704c9cc154eb7b2bf1.s3tc.ctex", "res://.godot/imported/idle_run.png-0e3ed071b38ab3704c9cc154eb7b2bf1.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

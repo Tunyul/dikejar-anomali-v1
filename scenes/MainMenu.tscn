@@ -20,7 +20,7 @@
 [ext_resource type="Texture2D" uid="uid://dcmw8cal1xu1v" path="res://assets/tombol/tombol_shop_256x128.png" id="18_tombol_shop"]
 [ext_resource type="Texture2D" uid="uid://bn2mxi2ykggix" path="res://assets/tombol/tombol_setting_256x128.png" id="19_tombol_setting"]
 [ext_resource type="Texture2D" uid="uid://7xrqfqhbeh37" path="res://assets/tombol/tombol_mission_202x168.png" id="20_tombol_mission"]
-[ext_resource type="Texture2D" uid="uid://brlwhbamogaai" path="res://assets/Coin Animation/png/2x/Coin.png" id="21_coin_icon"]
+[ext_resource type="Texture2D" uid="uid://brlwhbamogaai" path="res://assets/coin_animation/png/2x/Coin.png" id="21_coin_icon"]
 [ext_resource type="Texture2D" uid="uid://dn5c37tdf5r0" path="res://assets/icon/icon_trophy_128x128.png" id="22_trophy_icon"]
 [ext_resource type="Texture2D" uid="uid://v21m5eac8ghe" path="res://assets/icon/icon_border_avatar_gold_128x128.png" id="23_avatar_border"]
 [ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="26_fredoka_bold"]

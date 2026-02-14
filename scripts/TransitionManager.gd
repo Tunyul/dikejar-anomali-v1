@@ -824,7 +824,23 @@ func _get_sfx_stream(id: StringName) -> AudioStream:
 
     # Try loading from assets first
     var asset_path := "res://assets/audio/sfx/" + key + ".mp3"
-    if ResourceLoader.exists(asset_path):
+
+    # Map special keys to actual filenames if they differ
+    var actual_path := asset_path
+    match key:
+        "coin":
+            actual_path = "res://assets/audio/sfx/audio-SFX-only-not-a-song-Coin-pickup-two-quick-pings-90.mp3"
+        "mission_claim":
+            actual_path = "res://assets/audio/sfx/audio-One-shot-SFX-only-not-music-Coin-pickup-chain-3-mi.mp3"
+
+    if ResourceLoader.exists(actual_path):
+        var s_res = load(actual_path) as AudioStream
+        if s_res:
+            _sfx_streams[key] = s_res
+            return s_res
+
+    # Fallback to default asset path if not mapped
+    if actual_path != asset_path and ResourceLoader.exists(asset_path):
         var s_res = load(asset_path) as AudioStream
         if s_res:
             _sfx_streams[key] = s_res

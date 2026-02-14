@@ -133,8 +133,8 @@ func _ready() -> void:
 
     _claim_tex_active = _load_button_texture("res://assets/tombol/tombol_claim_aktif_108x64.png")
     _claim_tex_disabled = _load_button_texture("res://assets/tombol/tombol_claim_nonaktif_108x64.png")
-    _coin_fx_tex = load("res://assets/Coin Animation/png/2x/Coin.png") as Texture2D
-    _diamond_fx_tex = load("res://assets/diamond animation/diamond-1024x1024.png") as Texture2D
+    _coin_fx_tex = load("res://assets/coin_animation/png/2x/Coin.png") as Texture2D
+    _diamond_fx_tex = load("res://assets/diamond_animation/diamond-1024x1024.png") as Texture2D
     var missions_panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
     if missions_panel:
         _refresh_missions_panel(missions_panel)
