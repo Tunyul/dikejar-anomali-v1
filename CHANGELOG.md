@@ -9,6 +9,10 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 - Android: Aktivasi `show_as_launcher_app` agar ikon muncul di app drawer/launcher Android.
 - Android: Menambahkan kelengkapan resolusi ikon launcher (48x48, 72x72, 96x96, 144x144, 192x192).
+- Android: Perbaikan tombol Jump & Attack yang hilang pada build Android.
+- Android: Implementasi fallback layout (96x96) jika tekstur tombol gagal dimuat tepat waktu.
+- Android: Penambahan validasi ukuran viewport untuk inisialisasi layout mobile yang lebih stabil.
+- Android: Pemaksaan visibilitas node `MobileControls` saat inisialisasi state playing.
 - Fix: Migrasi sistem pengecekan aset dari `FileAccess` ke `ResourceLoader.exists()` untuk kompatibilitas penuh dengan sistem file Android (APK/PCK).
 - Fix: Normalisasi nama file aset (menghapus spasi dan menggantinya dengan underscore) untuk mencegah error loading pada sistem operasi berbasis Linux/Android.
 - Fix: Pemetaan ulang (re-mapping) SFX Koin dan Misi di `TransitionManager.gd` agar sesuai dengan nama file aset fisik.

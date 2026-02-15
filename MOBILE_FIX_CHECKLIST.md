@@ -36,5 +36,17 @@
 
 ## Input & Controls
 
-- [ ] **Button Visibility**: Pastikan `TouchScreenButton` muncul dan tidak terhalang oleh node UI lain (`mouse_filter`).
+- [x] **BUG: Tombol Jump & Attack Hilang di Android**
+  - [x] Audit inisialisasi tombol di `game_manager.gd`.
+  - [x] Tambahkan fallback layout jika tekstur gagal dimuat.
+  - [x] Paksa visibilitas node `MobileControls` saat inisialisasi.
+  - [x] Tambahkan validasi ukuran viewport untuk inisialisasi mobile yang lebih stabil.
+  - _Status: Selesai. Logika layout diperkuat dan visibilitas dipaksa aktif._
 - [ ] **Input Mapping**: Verifikasi `Action` pada tombol mobile sudah terhubung ke `InputMap` (jump, attack).
+
+## Kesimpulan Perbaikan Terakhir (v1.3.31-beta)
+
+1. **BGM Fix**: Menangani akhiran `.remap` dan `.import` pada Android.
+2. **Icon Fix**: Menambahkan berbagai resolusi icon dan mengaktifkan flag launcher.
+3. **Shop Icon Fix**: Migrasi ke `ResourceLoader.exists()` untuk kompatibilitas Android.
+4. **Mobile Controls Fix**: Memperbaiki logika layout dan visibilitas tombol Jump/Attack.

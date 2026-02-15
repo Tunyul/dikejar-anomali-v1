@@ -735,13 +735,31 @@ func _format_track_name(path: String) -> String:
 
 func _connect_mobile_buttons() -> void:
     if not canvas or not player:
+        print("[GameManager] Error: Canvas or Player not found during mobile button connection")
         return
-    _jump_button = canvas.get_node_or_null("MobileControls/JumpButton") as TouchScreenButton
-    if _jump_button and _jump_button.has_signal("pressed"):
-        _jump_button.pressed.connect(_on_jump_button_pressed)
-    _attack_button = canvas.get_node_or_null("MobileControls/AttackButton") as TouchScreenButton
-    if _attack_button and _attack_button.has_signal("pressed"):
-        _attack_button.pressed.connect(_on_attack_button_pressed)
+
+    var mc = canvas.get_node_or_null("MobileControls")
+    if mc:
+        mc.visible = true
+        print("[GameManager] MobileControls node found and forced visible")
+    else:
+        print("[GameManager] Error: MobileControls node NOT found in CanvasLayer")
+        return
+
+    _jump_button = mc.get_node_or_null("JumpButton") as TouchScreenButton
+    if _jump_button:
+        print("[GameManager] JumpButton found")
+        if _jump_button.has_signal("pressed"):
+            if not _jump_button.pressed.is_connected(_on_jump_button_pressed):
+                _jump_button.pressed.connect(_on_jump_button_pressed)
+
+    _attack_button = mc.get_node_or_null("AttackButton") as TouchScreenButton
+    if _attack_button:
+        print("[GameManager] AttackButton found")
+        if _attack_button.has_signal("pressed"):
+            if not _attack_button.pressed.is_connected(_on_attack_button_pressed):
+                _attack_button.pressed.connect(_on_attack_button_pressed)
+
     _ensure_mobile_button_tints()
     _update_mobile_controls_layout(true)
 
@@ -840,6 +858,11 @@ func _compute_safe_area_rect() -> Rect2:
 
 func _update_mobile_controls_layout(force: bool) -> void:
     var vp := get_viewport().get_visible_rect().size
+
+    # Abaikan jika ukuran viewport tidak valid (biasanya frame pertama di mobile)
+    if vp.x < 100 or vp.y < 100:
+        return
+
     var vp_i := Vector2i(int(vp.x), int(vp.y))
     var sa_i := Rect2i()
     if OS.has_feature("android") or OS.has_feature("ios"):
@@ -858,10 +881,10 @@ func _update_mobile_controls_layout(force: bool) -> void:
 
         var jt := _jump_button.texture_normal
         var at := _attack_button.texture_normal
-        if jt == null or at == null:
-            return
-        var js := jt.get_size()
-        var asz := at.get_size()
+
+        # Fallback size jika tekstur belum dimuat
+        var js := jt.get_size() if jt != null else Vector2(96, 96)
+        var asz := at.get_size() if at != null else Vector2(96, 96)
 
         var jump_pos := Vector2(
             safe.position.x + safe.size.x - margin - js.x,
@@ -873,6 +896,11 @@ func _update_mobile_controls_layout(force: bool) -> void:
         )
         _jump_button.position = jump_pos
         _attack_button.position = attack_pos
+
+        # Pastikan tombol terlihat di mobile
+        _jump_button.visible = true
+        _attack_button.visible = true
+
         _update_mobile_button_tints()
 
 
