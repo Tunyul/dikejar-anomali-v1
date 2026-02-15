@@ -847,11 +847,30 @@ func _load_menu_bgm_paths() -> Array[String]:
     for f in files:
         var fs := String(f)
         var lower := fs.to_lower()
-        if not lower.ends_with(".mp3"):
+
+        # In exported projects, files might have .remap or .import suffix
+        var actual_file := lower
+        if actual_file.ends_with(".remap"):
+            actual_file = actual_file.trim_suffix(".remap")
+        elif actual_file.ends_with(".import"):
+            actual_file = actual_file.trim_suffix(".import")
+
+        if not actual_file.ends_with(".mp3"):
             continue
-        if not fs.begins_with(_MENU_BGM_PREFIX):
+
+        # Use the original filename (without .remap/.import) for prefix check and path
+        var clean_fs := fs
+        if fs.to_lower().ends_with(".remap"):
+            clean_fs = fs.left(-6)
+        elif fs.to_lower().ends_with(".import"):
+            clean_fs = fs.left(-7)
+
+        if not clean_fs.begins_with(_MENU_BGM_PREFIX):
             continue
-        out.append(_MENU_BGM_DIR + "/" + fs)
+
+        var full_path := _MENU_BGM_DIR + "/" + clean_fs
+        if not out.has(full_path):
+            out.append(full_path)
     out.sort()
     return out
 

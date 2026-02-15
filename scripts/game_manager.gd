@@ -539,11 +539,27 @@ func _load_gameover_bgm_paths() -> Array[String]:
     for f in files:
         var fs := String(f)
         var lower := fs.to_lower()
-        if not lower.ends_with(".mp3"):
+        var actual_file := lower
+        if actual_file.ends_with(".remap"):
+            actual_file = actual_file.trim_suffix(".remap")
+        elif actual_file.ends_with(".import"):
+            actual_file = actual_file.trim_suffix(".import")
+
+        if not actual_file.ends_with(".mp3"):
             continue
-        if not fs.begins_with(_GAMEOVER_BGM_PREFIX):
+
+        var clean_fs := fs
+        if fs.to_lower().ends_with(".remap"):
+            clean_fs = fs.left(-6)
+        elif fs.to_lower().ends_with(".import"):
+            clean_fs = fs.left(-7)
+
+        if not clean_fs.begins_with(_GAMEOVER_BGM_PREFIX):
             continue
-        out.append(_GAMEOVER_BGM_DIR + "/" + fs)
+
+        var full_path := _GAMEOVER_BGM_DIR + "/" + clean_fs
+        if not out.has(full_path):
+            out.append(full_path)
     out.sort()
     return out
 
@@ -601,11 +617,27 @@ func _load_bukit_bgm_paths() -> Array[String]:
     for f in files:
         var fs := String(f)
         var lower := fs.to_lower()
-        if not lower.ends_with(".mp3"):
+        var actual_file := lower
+        if actual_file.ends_with(".remap"):
+            actual_file = actual_file.trim_suffix(".remap")
+        elif actual_file.ends_with(".import"):
+            actual_file = actual_file.trim_suffix(".import")
+
+        if not actual_file.ends_with(".mp3"):
             continue
-        if not fs.begins_with(_BUKIT_BGM_PREFIX):
+
+        var clean_fs := fs
+        if fs.to_lower().ends_with(".remap"):
+            clean_fs = fs.left(-6)
+        elif fs.to_lower().ends_with(".import"):
+            clean_fs = fs.left(-7)
+
+        if not clean_fs.begins_with(_BUKIT_BGM_PREFIX):
             continue
-        out.append(_BUKIT_BGM_DIR + "/" + fs)
+
+        var full_path := _BUKIT_BGM_DIR + "/" + clean_fs
+        if not out.has(full_path):
+            out.append(full_path)
     out.sort()
     return out
 

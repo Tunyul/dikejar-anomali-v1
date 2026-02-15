@@ -5,8 +5,10 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
-## [1.3.31-beta] - 2026-02-14
+## [1.3.31-beta] - 2026-02-15
 
+- Android: Aktivasi `show_as_launcher_app` agar ikon muncul di app drawer/launcher Android.
+- Android: Menambahkan kelengkapan resolusi ikon launcher (48x48, 72x72, 96x96, 144x144, 192x192).
 - Fix: Migrasi sistem pengecekan aset dari `FileAccess` ke `ResourceLoader.exists()` untuk kompatibilitas penuh dengan sistem file Android (APK/PCK).
 - Fix: Normalisasi nama file aset (menghapus spasi dan menggantinya dengan underscore) untuk mencegah error loading pada sistem operasi berbasis Linux/Android.
 - Fix: Pemetaan ulang (re-mapping) SFX Koin dan Misi di `TransitionManager.gd` agar sesuai dengan nama file aset fisik.

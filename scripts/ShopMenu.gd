@@ -1223,7 +1223,7 @@ func _create_item_card(item: Dictionary) -> Control:
     vbox.add_child(icon)
 
     var icon_path := String(item.get("icon", ""))
-    if not icon_path.is_empty() and FileAccess.file_exists(icon_path):
+    if not icon_path.is_empty() and ResourceLoader.exists(icon_path):
         var item_icon_tex = load(icon_path)
         if item_icon_tex:
             icon.texture = item_icon_tex

@@ -8,20 +8,26 @@
 
 ## Resource Loading & Assets (Android)
 
-- [ ] **FileAccess.file_exists() Failure**:
-  - [ ] `ShopMenu.gd`: Hapus penggunaan `FileAccess.file_exists()` di `_load_currency_icons()`. Gunakan `ResourceLoader.exists()` atau langsung `load()`.
-  - [ ] `TransitionManager.gd`: Periksa `_get_sfx_stream()` yang mencoba memuat file `.mp3` dari path statis yang mungkin tidak ada (e.g., `res://assets/audio/sfx/coin.mp3`).
-- [ ] **Path Case-Sensitivity & Accuracy**:
-  - [ ] `TransitionManager.gd`: Path `res://assets/audio/sfx/` + key + `.mp3` asumsikan semua SFX ada di folder tersebut, padahal file asli memiliki nama panjang (e.g., `audio-SFX-only...`).
-  - [ ] `ShopMenu.gd`: Verifikasi path `res://assets/mc/run/idle run.png` (spasi pada nama file bisa bermasalah di beberapa filesystem).
-- [ ] **Export Presets Configuration**:
-  - [ ] Tambahkan Launcher Icons (Main 192x192, dll) di `export_presets.cfg`.
-  - [ ] Pastikan filter ekspor menyertakan semua ekstensi yang diperlukan (`*.png, *.jpg, *.jpeg, *.ogg, *.mp3, *.wav, *.tscn, *.tres`).
+- [x] **FileAccess.file_exists() Failure**:
+  - [x] `ShopMenu.gd`: Ganti `FileAccess.file_exists()` dengan `ResourceLoader.exists()` pada fungsi `_create_item_card()` agar ikon item shop muncul di Android. (Fixed)
+  - [x] `ShopMenu.gd`: Hapus penggunaan `FileAccess.file_exists()` di `_load_currency_icons()`. Gunakan `ResourceLoader.exists()` atau langsung `load()`. (Fixed)
+  - [x] `TransitionManager.gd`: Periksa `_get_sfx_stream()` yang mencoba memuat file `.mp3` dari path statis yang mungkin tidak ada (e.g., `res://assets/audio/sfx/coin.mp3`). (Fixed: sudah menggunakan ResourceLoader dan mapping file yang benar)
+- [x] **Path Case-Sensitivity & Accuracy**:
+  - [x] `TransitionManager.gd`: Path `res://assets/audio/sfx/` + key + `.mp3` asumsikan semua SFX ada di folder tersebut, padahal file asli memiliki nama panjang (e.g., `audio-SFX-only...`). (Fixed: mapping manual untuk nama file panjang sudah ada)
+  - [x] `ShopMenu.gd`: Verifikasi path `res://assets/mc/run/idle_run.png` (Tidak ada spasi, sudah menggunakan underscore). (Fixed)
+- [x] **Export Presets Configuration**:
+  - [x] Tambahkan Launcher Icons (Main 192x192, dll) di `export_presets.cfg`. (Fixed: ditambahkan ukuran 48, 72, 96, 144, 192, dan adaptive)
+  - [x] **Launcher App Flag**:
+    - [x] `package/show_as_launcher_app` disetel ke `true` agar icon muncul di daftar aplikasi Android. (Fixed)
+  - [x] Pastikan filter ekspor menyertakan semua ekstensi yang diperlukan (`*.png, *.jpg, *.jpeg, *.ogg, *.mp3, *.wav, *.tscn, *.tres`). (Fixed: spasi dihapus dan \*.pck ditambahkan)
 - [ ] **Audio Format & SFX System**:
-  - [ ] `TransitionManager.gd` menggunakan generator WAV internal jika file tidak ditemukan. Pastikan sistem fallback ini bekerja atau ganti dengan referensi aset yang benar.
+  - [x] `TransitionManager.gd` menggunakan generator WAV internal jika file tidak ditemukan. Pastikan sistem fallback ini bekerja atau ganti dengan referensi aset yang benar. (Fixed: sistem fallback generator sudah aktif)
   - [ ] Verifikasi apakah `AudioStreamPlayer` di mobile memerlukan setting khusus (e.g., Audio Driver).
-- [ ] **Texture Compression**:
-  - [ ] Pastikan `textures/vram_compression/import_etc2_astc` aktif di `project.godot` (Sudah OK).
+- [x] **Texture Compression**:
+  - [x] Pastikan `textures/vram_compression/import_etc2_astc` aktif di `project.godot` (Sudah OK).
+- [x] **Dynamic Asset Loading (DirAccess)**:
+  - [x] `MainMenu.gd`: Perbaiki `_load_menu_bgm_paths()` untuk menangani sufiks `.remap` dan `.import` di Android. (Fixed)
+  - [x] `game_manager.gd`: Perbaiki `_load_bukit_bgm_paths()` dan `_load_gameover_bgm_paths()` untuk menangani sufiks `.remap` dan `.import`. (Fixed)
 
 ## Rendering & Gameplay
 
