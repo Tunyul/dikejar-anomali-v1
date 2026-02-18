@@ -308,6 +308,7 @@ size = Vector2(80, 80)
 [node name="Player" type="CharacterBody2D" unique_id=570224257]
 collision_layer = 2
 script = ExtResource("1_player_script")
+fall_multiplier = 1.3900000000000001
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1508381846]
 sprite_frames = SubResource("SpriteFrames_run")

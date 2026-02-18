@@ -2,6 +2,11 @@ extends Node
 
 var _cache: Dictionary = {}
 var _next_scene_path: String = ""
+var _total_to_load: int = 0
+var _loaded_count: int = 0
+
+signal progress_changed(p: float)
+signal all_ready
 
 func _ready() -> void:
     if _has_cmd_arg("--smoke-check"):
@@ -15,21 +20,51 @@ func _ready() -> void:
         return
     if _is_headless_or_check_only():
         return
-    if Engine.has_singleton("RemoteContent"):
-        RemoteContent.start()
-        if RemoteContent.is_ready():
-            _maybe_preload_main()
-        else:
-            RemoteContent.content_ready.connect(_on_remote_ready)
-    _maybe_preload_main()
 
-func _on_remote_ready() -> void:
-    _maybe_preload_main()
+func start_preloading() -> void:
+    if _loaded_count > 0 and _loaded_count >= _total_to_load and _total_to_load > 0:
+        all_ready.emit()
+        return
 
-func _maybe_preload_main() -> void:
-    var path := "res://scenes/Main.tscn"
-    if ResourceLoader.exists(path):
-        _preload_scene(path)
+    var assets := [
+        "res://scenes/Main.tscn",
+        "res://scenes/MainMenu.tscn",
+        "res://scenes/ShopMenu.tscn",
+        "res://scenes/DailyMissionsMenu.tscn",
+        "res://scenes/SettingsMenu.tscn",
+        "res://scenes/GameOver.tscn",
+        "res://scenes/player.tscn",
+        "res://scenes/Coin.tscn",
+        "res://scenes/Diamond.tscn",
+        "res://scenes/HeartPickup.tscn",
+        "res://scenes/EnemyBlock.tscn",
+        "res://scenes/EnemyCone.tscn",
+        "res://scenes/MagnetPowerup.tscn",
+        "res://scenes/ShieldPowerup.tscn",
+        "res://scenes/DoubleCoinsPowerup.tscn",
+        "res://scenes/SpeedBoostPowerup.tscn"
+    ]
+
+    _total_to_load = assets.size()
+    _loaded_count = 0
+
+    for path in assets:
+        if ResourceLoader.exists(path):
+            _preload_scene(path)
+        _loaded_count += 1
+        progress_changed.emit(get_progress())
+        # Berikan kesempatan engine untuk memproses frame jika banyak asset
+        if _loaded_count % 3 == 0:
+            await get_tree().process_frame
+
+    all_ready.emit()
+
+func get_progress() -> float:
+    if _total_to_load <= 0: return 1.0
+    return float(_loaded_count) / float(_total_to_load)
+
+func is_ready() -> bool:
+    return _loaded_count >= _total_to_load
 
 func _has_cmd_arg(arg: String) -> bool:
     for a in OS.get_cmdline_args():

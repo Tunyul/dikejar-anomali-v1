@@ -12,6 +12,7 @@ var _t: float = 0.0
 var _initialized: bool = false
 
 func _ready() -> void:
+    add_to_group("heart_pickup")
     collision_layer = 8
     collision_mask = 2
     monitoring = true

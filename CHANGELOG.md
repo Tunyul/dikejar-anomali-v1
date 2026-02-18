@@ -5,6 +5,16 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.32-beta] - 2026-02-18
+
+- Fix: Memperbaiki ukuran ikon heart yang terlalu besar (sekarang scale 0.2).
+- Fix: Memperbaiki spawn heart berlebih saat health berkurang (tambahkan cooldown 2 detik dan limit spawn).
+- Fix: Mencegah heart spawn saat health pemain penuh.
+- Fix: Memperbaiki masalah spawn heart per-tile dengan memastikan persistensi jarak antar segmen.
+- Feature: Menambahkan mekanisme emergency spawn heart saat health rendah (< max) dan tidak ada heart di depan.
+- Debug: Menambahkan logging detail untuk jumlah spawn heart dan estimasi jarak dalam pixel.
+- Naik versi proyek ke 1.3.32-beta
+
 ## [1.3.31-beta] - 2026-02-15
 
 - Android: Aktivasi `show_as_launcher_app` agar ikon muncul di app drawer/launcher Android.

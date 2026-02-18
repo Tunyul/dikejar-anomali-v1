@@ -41,7 +41,9 @@
   - [x] Tambahkan fallback layout jika tekstur gagal dimuat.
   - [x] Paksa visibilitas node `MobileControls` saat inisialisasi.
   - [x] Tambahkan validasi ukuran viewport untuk inisialisasi mobile yang lebih stabil.
-  - _Status: Selesai. Logika layout diperkuat dan visibilitas dipaksa aktif._
+  - [x] Tambahkan Z-Index tinggi (100) untuk memastikan tombol di atas UI lain.
+  - [x] Tambahkan debug logging runtime untuk melacak inisialisasi node di Android.
+  - _Status: Selesai. Logika layout diperkuat, visibilitas dipaksa, dan debug logging ditambahkan untuk verifikasi._
 - [ ] **Input Mapping**: Verifikasi `Action` pada tombol mobile sudah terhubung ke `InputMap` (jump, attack).
 
 ## Kesimpulan Perbaikan Terakhir (v1.3.31-beta)

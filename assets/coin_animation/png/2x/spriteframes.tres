@@ -1,55 +1,72 @@
-[gd_resource type="SpriteFrames" load_steps=0 format=3 uid="uid://ck1m6pveg3m2t"]
+[gd_resource type="SpriteFrames" load_steps=18 format=3 uid="uid://ck1m6pveg3m2t"]
+
+[ext_resource type="Texture2D" uid="uid://cv2m8ao6ea8dm" path="res://assets/coin_animation/png/2x/image_1.png" id="1_1"]
+[ext_resource type="Texture2D" uid="uid://dn3ku63liodkk" path="res://assets/coin_animation/png/2x/image_2.png" id="2_2"]
+[ext_resource type="Texture2D" uid="uid://cfrlo0ws5whgv" path="res://assets/coin_animation/png/2x/image_3.png" id="3_3"]
+[ext_resource type="Texture2D" uid="uid://cifwv46e4gaeg" path="res://assets/coin_animation/png/2x/image_4.png" id="4_4"]
+[ext_resource type="Texture2D" uid="uid://b0x6c8m348jl5" path="res://assets/coin_animation/png/2x/image_5.png" id="5_5"]
+[ext_resource type="Texture2D" uid="uid://cw4hfsbbwkngd" path="res://assets/coin_animation/png/2x/image_6.png" id="6_6"]
+[ext_resource type="Texture2D" uid="uid://bjukd7xpvam0" path="res://assets/coin_animation/png/2x/image_7.png" id="7_7"]
+[ext_resource type="Texture2D" uid="uid://ce0mg72tyvouo" path="res://assets/coin_animation/png/2x/image_8.png" id="8_8"]
+[ext_resource type="Texture2D" uid="uid://chpvmfc6irdbt" path="res://assets/coin_animation/png/2x/image_9.png" id="9_9"]
+[ext_resource type="Texture2D" uid="uid://bk5mt3hw3feq2" path="res://assets/coin_animation/png/2x/image_10.png" id="10_10"]
+[ext_resource type="Texture2D" uid="uid://csrq1iqliyc7n" path="res://assets/coin_animation/png/2x/image_11.png" id="11_11"]
+[ext_resource type="Texture2D" uid="uid://ckcpojxdc3ueg" path="res://assets/coin_animation/png/2x/image_12.png" id="12_12"]
+[ext_resource type="Texture2D" uid="uid://cn3ublc236wf5" path="res://assets/coin_animation/png/2x/image_13.png" id="13_13"]
+[ext_resource type="Texture2D" uid="uid://iuphyvl5bg2k" path="res://assets/coin_animation/png/2x/image_14.png" id="14_14"]
+[ext_resource type="Texture2D" uid="uid://0c72kan61tye" path="res://assets/coin_animation/png/2x/image_15.png" id="15_15"]
+[ext_resource type="Texture2D" uid="uid://dagmpexuijtgs" path="res://assets/coin_animation/png/2x/image_16.png" id="16_16"]
 
 [resource]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_1.png")
+"texture": ExtResource("1_1")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_2.png")
+"texture": ExtResource("2_2")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_3.png")
+"texture": ExtResource("3_3")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_4.png")
+"texture": ExtResource("4_4")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_5.png")
+"texture": ExtResource("5_5")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_6.png")
+"texture": ExtResource("6_6")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_7.png")
+"texture": ExtResource("7_7")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_8.png")
+"texture": ExtResource("8_8")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_9.png")
+"texture": ExtResource("9_9")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_10.png")
+"texture": ExtResource("10_10")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_11.png")
+"texture": ExtResource("11_11")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_12.png")
+"texture": ExtResource("12_12")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_13.png")
+"texture": ExtResource("13_13")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_14.png")
+"texture": ExtResource("14_14")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_15.png")
+"texture": ExtResource("15_15")
 }, {
 "duration": 1.0,
-"texture": ExtResource("res://assets/coin_animation/png/2x/image_16.png")
+"texture": ExtResource("16_16")
 }],
 "loop": true,
 "name": &"spin",

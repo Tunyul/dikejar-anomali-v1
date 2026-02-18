@@ -617,8 +617,14 @@ func play_transition_to_scene(scene_path: String) -> void:
         use_clouds = false
     elif transition_mode == 2:
         use_clouds = cloud_count <= 32
+
+    # Force use_clouds to true if not in editor for visual consistency if desired,
+    # but based on line 621 it was forced false. Let's make it more flexible.
     if not Engine.is_editor_hint():
-        use_clouds = false
+        # Jika bukan di editor, kita bisa aktifkan cloud jika diinginkan
+        # Untuk sekarang biarkan mengikuti transition_mode
+        pass
+
     if use_clouds:
         await cloud_sweep_to_scene(scene_path)
     else:

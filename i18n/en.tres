@@ -1,5 +1,6 @@
 [gd_resource type="Translation" format=3]
 
+[resource]
 locale = "en"
 messages = {
 "Already owned.": "Already owned.",
@@ -90,3 +91,4 @@ messages = {
 "%s: Now": "%s: Now",
 "中文": "Chinese"
 }
+

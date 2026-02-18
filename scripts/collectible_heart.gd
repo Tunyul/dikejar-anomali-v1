@@ -1,4 +1,5 @@
 extends Area2D
+# class_name HeartPickup
 
 @export var bob_amplitude: float = 8.0
 @export var bob_frequency: float = 1.2
@@ -10,6 +11,7 @@ var _t: float = 0.0
 
 func _ready() -> void:
     _base_y = position.y
+    add_to_group("heart_pickup")
     if enable_pickup:
         collision_layer = 8
         collision_mask = 2
@@ -24,5 +26,9 @@ func _physics_process(delta: float) -> void:
     _t += delta
     position.y = _base_y + sin(_t * TAU * bob_frequency) * bob_amplitude
 
-func _on_body_entered(_body: Node) -> void:
+func _on_body_entered(body: Node) -> void:
+    if body.is_in_group("player"):
+        if body.has_method("heal"):
+            body.heal(1)
+            # TODO: Play SFX if needed
     queue_free()

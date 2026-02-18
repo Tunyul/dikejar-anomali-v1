@@ -68,9 +68,7 @@ var speed_boost_multiplier: float = 1.0
 @onready var player: Player = $Player
 @onready var anomaly: Node2D = get_node_or_null("AnomalyChaser")
 @onready var terrain = get_node_or_null("Terrain")
-@onready var terrain_b = get_node_or_null("TerrainB")
 @onready var ground_a: Node2D = get_node_or_null("Ground")
-@onready var ground_b: Node2D = get_node_or_null("TerrainB/Ground")
 @onready var parallax = $ParallaxBackground
 @onready var canvas = $CanvasLayer
 var debug_label: Label
@@ -165,6 +163,14 @@ var _settings_menu_opened_from_playing: bool = false
 var _settings_menu_was_paused: bool = false
 
 func _ready() -> void:
+    if missions_manager and missions_manager.has_signal("ready_to_claim_changed"):
+        var cb := Callable(self, "_on_missions_ready_to_claim_changed")
+        if not missions_manager.is_connected("ready_to_claim_changed", cb):
+            missions_manager.connect("ready_to_claim_changed", cb)
+    if missions_manager and missions_manager.has_signal("mission_became_ready"):
+        var cb2 := Callable(self, "_on_mission_became_ready")
+        if not missions_manager.is_connected("mission_became_ready", cb2):
+            missions_manager.connect("mission_became_ready", cb2)
     process_mode = Node.PROCESS_MODE_ALWAYS
     if _base_powerup_magnet_duration_sec < 0.0:
         _base_powerup_magnet_duration_sec = powerup_magnet_duration_sec
@@ -288,8 +294,6 @@ func _ready() -> void:
         _ga_layer = ground_a.get_node_or_null("TileMapLayerA")
         if _gb_layer == null:
             _gb_layer = ground_a.get_node_or_null("TileMapLayerB")
-    if ground_b != null and _gb_layer == null:
-        _gb_layer = ground_b.get_node_or_null("TileMapLayerB")
 
     _connect_mobile_buttons()
     _connect_viewport_resize()
@@ -734,31 +738,28 @@ func _format_track_name(path: String) -> String:
 
 
 func _connect_mobile_buttons() -> void:
-    if not canvas or not player:
-        print("[GameManager] Error: Canvas or Player not found during mobile button connection")
+    if not canvas:
+        print("[GameManager] Error: CanvasLayer not found")
         return
 
     var mc = canvas.get_node_or_null("MobileControls")
     if mc:
-        mc.visible = true
-        print("[GameManager] MobileControls node found and forced visible")
+        print("[GameManager] MobileControls node found")
     else:
         print("[GameManager] Error: MobileControls node NOT found in CanvasLayer")
         return
 
     _jump_button = mc.get_node_or_null("JumpButton") as TouchScreenButton
     if _jump_button:
-        print("[GameManager] JumpButton found")
-        if _jump_button.has_signal("pressed"):
-            if not _jump_button.pressed.is_connected(_on_jump_button_pressed):
-                _jump_button.pressed.connect(_on_jump_button_pressed)
+        print("[GameManager] JumpButton found and connecting signals")
+        if not _jump_button.pressed.is_connected(_on_jump_button_pressed):
+            _jump_button.pressed.connect(_on_jump_button_pressed)
 
     _attack_button = mc.get_node_or_null("AttackButton") as TouchScreenButton
     if _attack_button:
-        print("[GameManager] AttackButton found")
-        if _attack_button.has_signal("pressed"):
-            if not _attack_button.pressed.is_connected(_on_attack_button_pressed):
-                _attack_button.pressed.connect(_on_attack_button_pressed)
+        print("[GameManager] AttackButton found and connecting signals")
+        if not _attack_button.pressed.is_connected(_on_attack_button_pressed):
+            _attack_button.pressed.connect(_on_attack_button_pressed)
 
     _ensure_mobile_button_tints()
     _update_mobile_controls_layout(true)
@@ -847,12 +848,26 @@ func _on_viewport_size_changed() -> void:
 
 
 func _compute_safe_area_rect() -> Rect2:
-    var vp_size := get_viewport().get_visible_rect().size
-    var out := Rect2(Vector2.ZERO, vp_size)
+    var vp_rect := get_viewport().get_visible_rect()
+    var out := vp_rect
+
     if OS.has_feature("android") or OS.has_feature("ios"):
         var sa := DisplayServer.get_display_safe_area()
-        if sa.size.x > 0 and sa.size.y > 0:
-            out = Rect2(Vector2(sa.position), Vector2(sa.size))
+        var window_size := DisplayServer.window_get_size()
+
+        if sa.size.x > 0 and sa.size.y > 0 and window_size.x > 0 and window_size.y > 0:
+            # Hitung rasio antara screen pixels dan viewport units
+            var scale_factor := Vector2(
+                vp_rect.size.x / float(window_size.x),
+                vp_rect.size.y / float(window_size.y)
+            )
+
+            # Skala Safe Area ke koordinat viewport
+            out.position = Vector2(sa.position) * scale_factor
+            out.size = Vector2(sa.size) * scale_factor
+
+            print("[GameManager] Safe Area Scaled: ", out, " Scale Factor: ", scale_factor)
+
     return out
 
 
@@ -886,6 +901,7 @@ func _update_mobile_controls_layout(force: bool) -> void:
         var js := jt.get_size() if jt != null else Vector2(96, 96)
         var asz := at.get_size() if at != null else Vector2(96, 96)
 
+        # Log posisi untuk debugging
         var jump_pos := Vector2(
             safe.position.x + safe.size.x - margin - js.x,
             safe.position.y + safe.size.y - margin - js.y
@@ -894,12 +910,17 @@ func _update_mobile_controls_layout(force: bool) -> void:
             jump_pos.x - spacing - asz.x,
             safe.position.y + safe.size.y - margin - asz.y
         )
+
+        print("[GameManager] Setting button positions - Jump: ", jump_pos, " Attack: ", attack_pos, " Viewport: ", vp)
+
         _jump_button.position = jump_pos
         _attack_button.position = attack_pos
 
-        # Pastikan tombol terlihat di mobile
+        # Pastikan tombol terlihat di mobile dan z-index tinggi
         _jump_button.visible = true
         _attack_button.visible = true
+        _jump_button.z_index = 100
+        _attack_button.z_index = 100
 
         _update_mobile_button_tints()
 
@@ -1072,12 +1093,8 @@ func _process(delta: float) -> void:
             target_speed *= speed_boost_multiplier
         if ground_a and ground_a.has_method("set_speed"):
             ground_a.set_speed(target_speed)
-        if ground_b and ground_b.has_method("set_speed"):
-            ground_b.set_speed(target_speed)
         if ground_a and ground_a.has_method("set_instant_speed_mode"):
             ground_a.set_instant_speed_mode(boost_active)
-        if ground_b and ground_b.has_method("set_instant_speed_mode"):
-            ground_b.set_instant_speed_mode(boost_active)
         if player:
             player.run_speed = target_speed
         if player and player.has_method("set_run_anim_factor"):
@@ -1338,12 +1355,8 @@ func pause_game() -> void:
     get_tree().paused = true
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(false)
-    if terrain_b and terrain_b.has_method("set_movement_enabled"):
-        terrain_b.set_movement_enabled(false)
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(false)
-    if ground_b and ground_b.has_method("set_movement_enabled"):
-        ground_b.set_movement_enabled(false)
 
 func resume_game() -> void:
     if phase == Phase.GAME_OVER:
@@ -1352,23 +1365,18 @@ func resume_game() -> void:
     get_tree().paused = false
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(true)
-    if terrain_b and terrain_b.has_method("set_movement_enabled"):
-        terrain_b.set_movement_enabled(true)
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(true)
-    if ground_b and ground_b.has_method("set_movement_enabled"):
-        ground_b.set_movement_enabled(true)
     var tgt: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
     if ground_a and ground_a.has_method("set_speed"):
         ground_a.set_speed(tgt)
-    if ground_b and ground_b.has_method("set_speed"):
-        ground_b.set_speed(tgt)
 
 func return_to_main_menu() -> void:
     get_tree().paused = false
     if Preloader and Preloader.has_method("set_next_scene"):
         Preloader.set_next_scene("res://scenes/MainMenu.tscn")
     await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
+
 
 func open_missions_menu() -> void:
     _missions_menu_opened_from_playing = false
@@ -1471,17 +1479,11 @@ func grant_continue() -> void:
     continue_grace_timer = rewarded_continue_grace_sec
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(true)
-    if terrain_b and terrain_b.has_method("set_movement_enabled"):
-        terrain_b.set_movement_enabled(true)
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(true)
-    if ground_b and ground_b.has_method("set_movement_enabled"):
-        ground_b.set_movement_enabled(true)
     var tgt: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
     if ground_a and ground_a.has_method("set_speed"):
         ground_a.set_speed(tgt)
-    if ground_b and ground_b.has_method("set_speed"):
-        ground_b.set_speed(tgt)
     var bgm := get_node_or_null("BGM")
     if bgm and bgm is AudioStreamPlayer and (bgm as AudioStreamPlayer).stream != null and not bgm_muted:
         (bgm as AudioStreamPlayer).play()
@@ -1621,17 +1623,19 @@ func _get_nearest_heart_distance_px() -> float:
     var grounds: Array = []
     if ground_a != null:
         grounds.append(ground_a)
-    if ground_b != null:
-        grounds.append(ground_b)
     for g in grounds:
         if g == null:
             continue
-        for coins_root_name in ["CoinsA", "CoinsB"]:
-            var root: Node = g.get_node_or_null(coins_root_name)
+        # Check all potential containers for hearts
+        var container_names = ["HeartsA", "HeartsB", "CoinsA", "CoinsB"]
+        for c_name in container_names:
+            var root: Node = g.get_node_or_null(c_name)
             if root == null:
                 continue
             for c in root.get_children():
-                if c is HeartPickup and c is Node2D:
+                if (c is HeartPickup) or c.is_in_group("heart_pickup"):
+                    if not (c is Node2D):
+                        continue
                     var n2 := c as Node2D
                     if n2.global_position.x < p_pos.x:
                         continue
@@ -1672,13 +1676,12 @@ func _clear_existing_magnets_and_shields() -> void:
     var grounds: Array = []
     if ground_a != null:
         grounds.append(ground_a)
-    if ground_b != null:
-        grounds.append(ground_b)
     for g in grounds:
         if g == null:
             continue
-        for coins_root_name in ["CoinsA", "CoinsB"]:
-            var root: Node = g.get_node_or_null(coins_root_name)
+        var container_names = ["MagnetsA", "ShieldsA", "CoinsA"]
+        for c_name in container_names:
+            var root: Node = g.get_node_or_null(c_name)
             if root == null:
                 continue
             for c in root.get_children():
@@ -1689,13 +1692,12 @@ func _clear_existing_speed_boosts() -> void:
     var grounds: Array = []
     if ground_a != null:
         grounds.append(ground_a)
-    if ground_b != null:
-        grounds.append(ground_b)
     for g in grounds:
         if g == null:
             continue
-        for coins_root_name in ["CoinsA", "CoinsB"]:
-            var root: Node = g.get_node_or_null(coins_root_name)
+        var container_names = ["SpeedBoostsA", "CoinsA"]
+        for c_name in container_names:
+            var root: Node = g.get_node_or_null(c_name)
             if root == null:
                 continue
             for c in root.get_children():
@@ -1706,12 +1708,10 @@ func _clear_existing_hearts() -> void:
     var grounds: Array = []
     if ground_a != null:
         grounds.append(ground_a)
-    if ground_b != null:
-        grounds.append(ground_b)
     for g in grounds:
         if g == null:
             continue
-        for coins_root_name in ["CoinsA", "CoinsB"]:
+        for coins_root_name in ["CoinsA"]:
             var root: Node = g.get_node_or_null(coins_root_name)
             if root == null:
                 continue
@@ -1734,12 +1734,10 @@ func _recycle_powerups_behind_player() -> void:
     var grounds: Array = []
     if ground_a != null:
         grounds.append(ground_a)
-    if ground_b != null:
-        grounds.append(ground_b)
     for g in grounds:
         if g == null:
             continue
-        for coins_root_name in ["CoinsA", "CoinsB"]:
+        for coins_root_name in ["CoinsA"]:
             var root: Node = g.get_node_or_null(coins_root_name)
             if root == null:
                 continue
@@ -1790,13 +1788,21 @@ func _ensure_skills_ahead_of_player() -> void:
             if d >= 0.0:
                 any_skill_ahead = true
                 break
+
     if any_skill_ahead:
         return
     _spawn_random_skill_ahead(px, min_skill_dist_px, max_skill_dist_px)
 
+var _last_heart_spawn_check_time: float = 0.0
+
 func _ensure_hearts_for_low_health() -> void:
     if phase != Phase.PLAYING:
         return
+    var now: float = Time.get_ticks_msec() / 1000.0
+    if now - _last_heart_spawn_check_time < 2.0:
+        return
+    _last_heart_spawn_check_time = now
+
     if player == null:
         return
     if ground_a == null:
@@ -1805,8 +1811,19 @@ func _ensure_hearts_for_low_health() -> void:
         return
     if _last_health_current >= _last_health_max:
         return
+
+    if OS.is_debug_build():
+        print("[GameManager] Low health detected: %d/%d. Checking for hearts..." % [_last_health_current, _last_health_max])
+
     if _has_any_heart_on_ground():
+        if OS.is_debug_build():
+            var d: float = _get_nearest_heart_distance_px()
+            print("[GameManager] Heart found ahead at distance: %.2f px. Skipping spawn." % d)
         return
+
+    if OS.is_debug_build():
+        print("[GameManager] No heart found ahead. Requesting emergency spawn...")
+
     if not ground_a.has_method("request_emergency_heart"):
         return
     var px: float = player.global_position.x
@@ -1816,7 +1833,8 @@ func _ensure_hearts_for_low_health() -> void:
         px = cam.global_position.x + float(view_rect.size.x) * 0.5
     var min_heart_dist_px: float = 500.0
     var max_heart_dist_px: float = 700.0
-    ground_a.call("request_emergency_heart", px, min_heart_dist_px, max_heart_dist_px)
+    if ground_a.has_method("request_emergency_heart"):
+        ground_a.call("request_emergency_heart", px, min_heart_dist_px, max_heart_dist_px)
 
 func _ensure_skill_after_power_end(_kind: String) -> void:
     if phase != Phase.PLAYING:
@@ -1857,13 +1875,17 @@ func _spawn_random_skill_ahead(px: float, min_skill_dist_px: float, max_skill_di
     var kind: String = candidates[idx]
     match kind:
         "magnet":
-            ground_a.call("request_emergency_magnet", px, min_skill_dist_px, max_skill_dist_px)
+            if ground_a.has_method("request_emergency_magnet"):
+                ground_a.call("request_emergency_magnet", px, min_skill_dist_px, max_skill_dist_px)
         "shield":
-            ground_a.call("request_emergency_shield", px, min_skill_dist_px, max_skill_dist_px)
+            if ground_a.has_method("request_emergency_shield"):
+                ground_a.call("request_emergency_shield", px, min_skill_dist_px, max_skill_dist_px)
         "double_coins":
-            ground_a.call("request_emergency_double_coins", px, min_skill_dist_px, max_skill_dist_px)
+            if ground_a.has_method("request_emergency_double_coins"):
+                ground_a.call("request_emergency_double_coins", px, min_skill_dist_px, max_skill_dist_px)
         "speed_boost":
-            ground_a.call("request_emergency_speed_boost", px, min_skill_dist_px, max_skill_dist_px)
+            if ground_a.has_method("request_emergency_speed_boost"):
+                ground_a.call("request_emergency_speed_boost", px, min_skill_dist_px, max_skill_dist_px)
 
 func _on_player_health_decreased(_current: int, _maximum: int) -> void:
     call_deferred("_ensure_hearts_for_low_health")
@@ -1883,23 +1905,12 @@ func set_playing_phase() -> void:
         if powerup_speed_boost_multiplier > 1.0:
             max_with_boost = max_speed * powerup_speed_boost_multiplier
         ground_a.set_speed_limits(0.0, max_with_boost)
-    if ground_b and ground_b.has_method("set_speed_limits"):
-        var max_with_boost_b: float = max_speed
-        if powerup_speed_boost_multiplier > 1.0:
-            max_with_boost_b = max_speed * powerup_speed_boost_multiplier
-        ground_b.set_speed_limits(0.0, max_with_boost_b)
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(true)
-    if terrain_b and terrain_b.has_method("set_movement_enabled"):
-        terrain_b.set_movement_enabled(true)
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(true)
         if ground_a.has_method("set_speed"):
             ground_a.set_speed(base_speed)
-    if ground_b and ground_b.has_method("set_movement_enabled"):
-        ground_b.set_movement_enabled(true)
-        if ground_b.has_method("set_speed"):
-            ground_b.set_speed(base_speed)
     if player:
         if player.has_method("prepare_for_playing_phase"):
             player.prepare_for_playing_phase()
@@ -2000,16 +2011,10 @@ func on_player_game_over(_cause: String) -> void:
     TransitionManager.play_sfx(&"game_over")
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(false)
-    if terrain_b and terrain_b.has_method("set_movement_enabled"):
-        terrain_b.set_movement_enabled(false)
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(false)
-    if ground_b and ground_b.has_method("set_movement_enabled"):
-        ground_b.set_movement_enabled(false)
     if ground_a and ground_a.has_method("set_speed"):
         ground_a.set_speed(0.0)
-    if ground_b and ground_b.has_method("set_speed"):
-        ground_b.set_speed(0.0)
 
     last_score = score
     last_coins = coin_collected_a + coin_collected_b
@@ -2412,12 +2417,10 @@ func _clear_existing_double_coins() -> void:
     var grounds: Array = []
     if ground_a != null:
         grounds.append(ground_a)
-    if ground_b != null:
-        grounds.append(ground_b)
     for g in grounds:
         if g == null:
             continue
-        for coins_root_name in ["CoinsA", "CoinsB"]:
+        for coins_root_name in ["CoinsA"]:
             var root: Node = g.get_node_or_null(coins_root_name)
             if root == null:
                 continue
@@ -2435,6 +2438,8 @@ func set_player_health(current: int, maximum: int) -> void:
     health_bar.value = clamped
     _last_health_current = new_current
     _last_health_max = maximum
+    if OS.is_debug_build():
+        print("[GameManager] set_player_health: %d/%d (Clamped: %.1f)" % [new_current, maximum, clamped])
     if prev_current >= 0 and new_current != prev_current:
         _on_player_health_decreased(new_current, maximum)
 func _start_play_phase() -> void:
@@ -2477,12 +2482,8 @@ func _start_play_phase() -> void:
     _apply_spawn_safety_limits()
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(false)
-    if terrain_b and terrain_b.has_method("set_movement_enabled"):
-        terrain_b.set_movement_enabled(false)
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(false)
-    if ground_b and ground_b.has_method("set_movement_enabled"):
-        ground_b.set_movement_enabled(false)
     var bgm2 := get_node_or_null("BGM")
     if bgm2 and bgm2 is AudioStreamPlayer:
         (bgm2 as AudioStreamPlayer).stop()
@@ -2504,8 +2505,6 @@ func _apply_spawn_safety_limits() -> void:
     var layers: Array = []
     if _ga_layer != null:
         layers.append(_ga_layer)
-    if _gb_layer != null:
-        layers.append(_gb_layer)
     for tl in layers:
         if tl != null:
             tl.set("coin_max_children", 40)
@@ -2530,8 +2529,6 @@ func _trigger_coin_burst() -> void:
     var layers: Array = []
     if _ga_layer != null:
         layers.append(_ga_layer)
-    if _gb_layer != null:
-        layers.append(_gb_layer)
     for tl in layers:
         if tl != null and tl.has_method("spawn_bonus_coins"):
             tl.spawn_bonus_coins(2)
