@@ -739,25 +739,19 @@ func _format_track_name(path: String) -> String:
 
 func _connect_mobile_buttons() -> void:
     if not canvas:
-        print("[GameManager] Error: CanvasLayer not found")
         return
 
     var mc = canvas.get_node_or_null("MobileControls")
-    if mc:
-        print("[GameManager] MobileControls node found")
-    else:
-        print("[GameManager] Error: MobileControls node NOT found in CanvasLayer")
+    if not mc:
         return
 
     _jump_button = mc.get_node_or_null("JumpButton") as TouchScreenButton
     if _jump_button:
-        print("[GameManager] JumpButton found and connecting signals")
         if not _jump_button.pressed.is_connected(_on_jump_button_pressed):
             _jump_button.pressed.connect(_on_jump_button_pressed)
 
     _attack_button = mc.get_node_or_null("AttackButton") as TouchScreenButton
     if _attack_button:
-        print("[GameManager] AttackButton found and connecting signals")
         if not _attack_button.pressed.is_connected(_on_attack_button_pressed):
             _attack_button.pressed.connect(_on_attack_button_pressed)
 
@@ -1248,7 +1242,7 @@ func _update_debug_label() -> void:
     var player_grounded: bool = false
     var player_state_text: String = ""
     var env_move: bool = false
-    if player:
+    if is_instance_valid(player) and player.is_inside_tree():
         if player.has_method("get_player_state"):
             var ps: Dictionary = player.get_player_state()
             if ps.has("position"):
@@ -1269,13 +1263,13 @@ func _update_debug_label() -> void:
             env_move = bool(player._is_environment_moving())
     var jump_pos: Vector2 = Vector2.ZERO
     var attack_pos: Vector2 = Vector2.ZERO
-    if _jump_button:
+    if is_instance_valid(_jump_button) and _jump_button.is_inside_tree():
         jump_pos = _jump_button.global_position
-    if _attack_button:
+    if is_instance_valid(_attack_button) and _attack_button.is_inside_tree():
         attack_pos = _attack_button.global_position
     var cam_center: Vector2 = Vector2.ZERO
     var cam := get_viewport().get_camera_2d()
-    if cam != null:
+    if cam != null and cam.is_inside_tree():
         cam_center = cam.global_position
     var phase_text: String = ("PLAYING" if phase == Phase.PLAYING else "GAME_OVER")
     var txt: String = ""
@@ -1321,7 +1315,7 @@ func _update_spawn_status_label() -> void:
     t += " | Double " + ("Aktif" if double_on else "Non")
     t += " | Speed " + ("Aktif" if speed_on else "Non")
     var dist_text: String = ""
-    if player != null and ground_a.has_method("get_powerup_distances"):
+    if is_instance_valid(player) and player.is_inside_tree() and ground_a.has_method("get_powerup_distances"):
         var pd: Dictionary = ground_a.call("get_powerup_distances", player.global_position.x)
         var dh: float = float(pd.get("heart", -1.0))
         var dm: float = float(pd.get("magnet", -1.0))
@@ -1375,7 +1369,7 @@ func return_to_main_menu() -> void:
     get_tree().paused = false
     if Preloader and Preloader.has_method("set_next_scene"):
         Preloader.set_next_scene("res://scenes/MainMenu.tscn")
-    await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
+    TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
 
 
 func open_missions_menu() -> void:
@@ -1616,12 +1610,12 @@ func can_spawn_hearts() -> bool:
     return _last_health_current < _last_health_max
 
 func _get_nearest_heart_distance_px() -> float:
-    if player == null:
+    if not is_instance_valid(player) or not player.is_inside_tree():
         return -1.0
     var p_pos: Vector2 = player.global_position
     var best: float = -1.0
     var grounds: Array = []
-    if ground_a != null:
+    if is_instance_valid(ground_a) and ground_a.is_inside_tree():
         grounds.append(ground_a)
     for g in grounds:
         if g == null:
@@ -1637,6 +1631,8 @@ func _get_nearest_heart_distance_px() -> float:
                     if not (c is Node2D):
                         continue
                     var n2 := c as Node2D
+                    if not n2.is_inside_tree():
+                        continue
                     if n2.global_position.x < p_pos.x:
                         continue
                     var d: float = p_pos.distance_to(n2.global_position)
@@ -1727,10 +1723,12 @@ func _recycle_powerups_behind_player() -> void:
     var cam := get_viewport().get_camera_2d()
     var view_rect := get_viewport().get_visible_rect()
     var left_limit: float
-    if cam != null:
+    if cam != null and cam.is_inside_tree():
         left_limit = cam.global_position.x - float(view_rect.size.x) * 0.5 - 64.0
-    else:
+    elif player != null and player.is_inside_tree():
         left_limit = player.global_position.x - float(view_rect.size.x) * 0.6
+    else:
+        return
     var grounds: Array = []
     if ground_a != null:
         grounds.append(ground_a)
@@ -1760,15 +1758,15 @@ func _recycle_powerups_behind_player() -> void:
                 if not (c is Node2D):
                     continue
                 var n2 := c as Node2D
+                if not n2.is_inside_tree():
+                    continue
                 if n2.global_position.x < left_limit:
                     n2.queue_free()
 
 func _ensure_skills_ahead_of_player() -> void:
     if phase != Phase.PLAYING:
         return
-    if player == null:
-        return
-    if ground_a == null:
+    if not is_instance_valid(player) or not player.is_inside_tree():
         return
     var px: float = player.global_position.x
     var min_skill_dist_tiles: float = 70.0
@@ -1826,10 +1824,12 @@ func _ensure_hearts_for_low_health() -> void:
 
     if not ground_a.has_method("request_emergency_heart"):
         return
+    if not is_instance_valid(player) or not player.is_inside_tree():
+        return
     var px: float = player.global_position.x
     var cam := get_viewport().get_camera_2d()
     var view_rect := get_viewport().get_visible_rect()
-    if cam != null:
+    if cam != null and cam.is_inside_tree():
         px = cam.global_position.x + float(view_rect.size.x) * 0.5
     var min_heart_dist_px: float = 500.0
     var max_heart_dist_px: float = 700.0
@@ -1839,7 +1839,7 @@ func _ensure_hearts_for_low_health() -> void:
 func _ensure_skill_after_power_end(_kind: String) -> void:
     if phase != Phase.PLAYING:
         return
-    if player == null:
+    if not is_instance_valid(player) or not player.is_inside_tree():
         return
     if ground_a == null:
         return
@@ -2110,6 +2110,8 @@ func _verify_player_scenes() -> void:
     var report: Array[String] = []
     while file != "":
         await get_tree().process_frame
+        if not is_inside_tree():
+            return
         var found: Array = []
         var status: String = "-"
         if not dir.current_is_dir() and file.ends_with(".tscn"):
@@ -2130,6 +2132,8 @@ func _verify_player_scenes() -> void:
                     steps += 1
                     if steps % 100 == 0:
                         await get_tree().process_frame
+                        if not is_inside_tree():
+                            return
                 status = "OK"
                 var issues: Array = []
                 for pn in found:
@@ -2308,16 +2312,6 @@ func _get_pending_level_rewards_for_range(old_level: int, new_level: int) -> Arr
 
 
 
-func _is_touch_over_button(btn: TouchScreenButton, pos: Vector2) -> bool:
-    if not btn:
-        return false
-    var local: Vector2 = btn.to_local(pos)
-    var tex := btn.texture_normal
-    if tex == null:
-        return false
-    var size: Vector2 = tex.get_size()
-    var rect := Rect2(Vector2.ZERO, size)
-    return rect.has_point(local)
 
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventAction:
@@ -2328,27 +2322,6 @@ func _unhandled_input(event: InputEvent) -> void:
                     player.request_jump()
                 return
             if ia.action == "attack":
-                if player and player.has_method("request_attack"):
-                    player.request_attack()
-                return
-    if event is InputEventMouseButton and event.pressed:
-        var mb := event as InputEventMouseButton
-        if _is_touch_over_button(_jump_button, mb.position):
-            if player and player.has_method("request_jump"):
-                player.request_jump()
-            return
-        if _is_touch_over_button(_attack_button, mb.position):
-            if player and player.has_method("request_attack"):
-                player.request_attack()
-            return
-    if event is InputEventScreenTouch:
-        var st := event as InputEventScreenTouch
-        if st.pressed:
-            if _is_touch_over_button(_jump_button, st.position):
-                if player and player.has_method("request_jump"):
-                    player.request_jump()
-                return
-            if _is_touch_over_button(_attack_button, st.position):
                 if player and player.has_method("request_attack"):
                     player.request_attack()
                 return

@@ -60,7 +60,7 @@ extends Node2D
 @export var debug_color_flat_start: Color = Color(0.7, 0.0, 0.12, 1.0)
 ## Jika true, akan print log saat wrap segmen.
 @export var debug_info_enabled: bool = false
-@export var flat_start_length_tiles: int = 32
+@export var flat_start_length_tiles: int = 100
 ## Seed tetap untuk RNG; 0 berarti acak setiap init.
 @export var fixed_seed: int = 0
 
@@ -169,7 +169,7 @@ var _double_coins_b: Node2D = null
 var _speed_boosts_a: Node2D = null
 var _speed_boosts_b: Node2D = null
 var _seg_width_px: float = 0.0
-var _seg_overlap_px: float = 0.0
+var _seg_overlap_px: float = 2.0 # Tambahkan overlap 2px untuk mencegah gap visual (garis vertikal) antar segmen
 var _tile_w_px: float = 0.0
 var _tile_h_px: float = 0.0
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -187,7 +187,6 @@ var _runtime_seed: int = 0
 var _flat_start_runtime_initialized: bool = false
 var _tiles_since_last_heart: int = 100
 var _debug_heart_spawn_session_count: int = 0
-var _debug_last_heart_spawn_pos_x: float = -1.0
 
 const _BASE_SEGMENT_TILES: int = 64
 
@@ -495,7 +494,7 @@ func _handle_wrap() -> void:
         right = _tile_a
     var left_end: float = left.position.x + _seg_width_px
     if left_end < -_seg_width_px * 0.25:
-        left.position.x = right.position.x + _seg_width_px
+        left.position.x = right.position.x + _seg_width_px - _seg_overlap_px
         if debug_info_enabled:
             print("[InfiniteGround] Wrapping segment: ", left.name, " to ", left.position.x)
 
@@ -805,6 +804,8 @@ func _is_near_enemy(tile_x: int, enemy_columns: Array, buffer: int) -> bool:
 func _column_world_x(tile: TileMapLayer, x: int) -> float:
     if tile == null:
         return 0.0
+    if not tile.is_inside_tree():
+        return 0.0
     var cell := Vector2i(x, 0)
     var local_pos: Vector2 = tile.map_to_local(cell)
     var world_pos: Vector2 = tile.to_global(local_pos)
@@ -886,6 +887,8 @@ func get_powerup_distances(from_world_x: float) -> Dictionary:
                     continue
                 var n2d := c as Node2D
                 if n2d == null:
+                    continue
+                if not tile.is_inside_tree():
                     continue
                 var dx: float = n2d.position.x - (from_world_x - tile.global_position.x)
                 if dx < 0.0:
@@ -1833,15 +1836,9 @@ func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int, ignore_lim
 
     # Debug logging for user request
     _debug_heart_spawn_session_count += 1
-    var current_world_x: float = _column_world_x(tile, x)
 
     # Calculate px distance based on tiles (more reliable than world pos across segments)
     var dist_px_est: float = float(distance_tiles_check) * _tile_w_px
-
-    var health_info:String = ""
-    var main_node := _get_main_node()
-    if main_node and "current_health" in main_node: # Try to get from game_manager properties if exposed
-         pass # Actually GameManager uses _last_health_current which is private
 
     print("DEBUG_HEART_SPAWN: #%d | x=%d | Dist: %d tiles (approx %.2f px) | Scale: %.2f | Emergency: %s" % [_debug_heart_spawn_session_count, x, distance_tiles_check, dist_px_est, n2d.scale.x, str(ignore_limit)])
 
@@ -2036,7 +2033,12 @@ func set_movement_enabled(enabled: bool) -> void:
     movement_enabled = enabled
 
 func get_active_segment_name() -> String:
-    var cam := get_viewport().get_camera_2d()
+    if not is_inside_tree():
+        return ""
+    var vp = get_viewport()
+    if vp == null:
+        return ""
+    var cam := vp.get_camera_2d()
     var px: float = 0.0
     if cam != null:
         px = cam.global_position.x

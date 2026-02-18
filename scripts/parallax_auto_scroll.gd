@@ -38,13 +38,56 @@ func _ready() -> void:
     process_mode = PROCESS_MODE_INHERIT
 
     # Konfigurasi Layer
+    var min_width_target: float = 4096.0 # Target width aman (cover 4K screens)
+
     for i in range(get_child_count()):
         var child = get_child(i)
         if child is ParallaxLayer:
-            # Mirroring otomatis jika belum diatur di editor
-            if child.motion_mirroring.x == 0:
-                child.motion_mirroring.x = 1024
-            # Reset offset untuk menghindari lompatan posisi saat start
+            var sprites: Array[Sprite2D] = []
+            for c in child.get_children():
+                if c is Sprite2D:
+                    sprites.append(c)
+
+            # Logika khusus untuk layer background continuous (biasanya cuma 1 sprite)
+            if sprites.size() == 1:
+                var sprite = sprites[0]
+                if sprite.texture != null:
+                    var sprite_w = sprite.texture.get_width() * sprite.scale.x
+
+                    # Jika kurang lebar untuk layar HP modern, duplikasi sprite
+                    if sprite_w < min_width_target and sprite_w > 0:
+                        var count_needed = ceil(min_width_target / sprite_w)
+                        var total_w = sprite_w
+
+                        # Duplikasi sprite untuk memenuhi lebar minimum
+                        for n in range(1, int(count_needed)):
+                            var dup = sprite.duplicate()
+                            dup.position.x = sprite.position.x + (sprite_w * n)
+                            child.add_child(dup)
+                            total_w += sprite_w
+
+                        child.motion_mirroring.x = total_w
+                        print("[Parallax] Layer ", child.name, " extended to width: ", total_w, " (Copies: ", count_needed, ")")
+
+                    # Jika sudah cukup lebar tapi mirroring belum set
+                    elif child.motion_mirroring.x == 0:
+                        child.motion_mirroring.x = sprite_w
+
+            # Fallback untuk layer kompleks (seperti awan multiple sprites)
+            elif child.motion_mirroring.x == 0:
+                 # Coba hitung bounding box dari semua children
+                 var max_x = 0.0
+                 for s in sprites:
+                     var right = s.position.x + (s.texture.get_width() * s.scale.x)
+                     if right > max_x:
+                         max_x = right
+
+                 if max_x > 0:
+                     child.motion_mirroring.x = max(max_x, 2048.0)
+                 else:
+                     child.motion_mirroring.x = 2048.0
+
+            # Reset offset
             child.motion_offset = Vector2.ZERO
 
     print("[Parallax] System Locked & Initialized: Scene=", scene_name, " Speed=", current_speed)

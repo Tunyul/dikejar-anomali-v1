@@ -520,6 +520,8 @@ func fade_out(duration: float = 0.5) -> void:
     _tween_active = true
     t.tween_property(_overlay, "modulate:a", 1.0, duration)
     await t.finished
+    if not is_inside_tree():
+        return
     _tween_active = false
 
 func fade_in(duration: float = 0.5) -> void:
@@ -527,6 +529,8 @@ func fade_in(duration: float = 0.5) -> void:
     _tween_active = true
     t.tween_property(_overlay, "modulate:a", 0.0, duration)
     await t.finished
+    if not is_inside_tree():
+        return
     _tween_active = false
 
 func fade_to_scene(scene_path: String, duration: float = 0.5) -> void:
@@ -540,6 +544,8 @@ func fade_to_scene(scene_path: String, duration: float = 0.5) -> void:
         if res is PackedScene:
             packed_scene = res
     await fade_out(duration)
+    if not is_inside_tree():
+        return
     if packed_scene != null:
         var err := get_tree().change_scene_to_packed(packed_scene)
         if err != OK:
@@ -601,7 +607,11 @@ func cloud_sweep_to_scene(scene_path: String, duration: float = -1.0, count: int
         var t := create_tween()
         t.tween_property(cloud_rect, "position:x", end_x, dur).set_delay(delay)
     await get_tree().create_timer(dur + 0.4).timeout
+    if not is_inside_tree():
+        return
     await fade_out(0.2)
+    if not is_inside_tree():
+        return
     if is_instance_valid(_cloud_layer):
         _cloud_layer.queue_free()
     if packed_scene != null:
@@ -609,6 +619,8 @@ func cloud_sweep_to_scene(scene_path: String, duration: float = -1.0, count: int
     else:
         get_tree().change_scene_to_file(scene_path)
     await get_tree().create_timer(0.01).timeout
+    if not is_inside_tree():
+        return
     await fade_in(0.2)
 
 func play_transition_to_scene(scene_path: String) -> void:

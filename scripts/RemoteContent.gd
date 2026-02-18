@@ -40,6 +40,8 @@ func retry() -> void:
 
 func _run() -> void:
     await get_tree().process_frame
+    if not is_inside_tree():
+        return
 
     var base_url := str(ProjectSettings.get_setting("remote_content/base_url", ""))
     var manifest_name := str(ProjectSettings.get_setting("remote_content/manifest_name", "manifest.json"))

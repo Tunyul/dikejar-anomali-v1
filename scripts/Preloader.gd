@@ -56,6 +56,8 @@ func start_preloading() -> void:
         # Berikan kesempatan engine untuk memproses frame jika banyak asset
         if _loaded_count % 3 == 0:
             await get_tree().process_frame
+            if not is_inside_tree():
+                return
 
     all_ready.emit()
 

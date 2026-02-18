@@ -5,6 +5,13 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.33-beta] - 2026-02-18
+
+- Fix: Mobile - Mengatasi gap/jurang pada ground dan start yang tidak flat dengan memperpanjang `flat_start_length_tiles` (100) dan menambah overlap segmen.
+- Fix: Mobile - Mengatasi area hitam pada background parallax di layar lebar (aspect ratio tinggi) dengan duplikasi sprite otomatis hingga width minimum 4096px.
+- Fix: Mobile - Mengubah renderer default mobile ke `gl_compatibility` (OpenGL ES 3.0) untuk mencegah crash `VK_ERROR_SURFACE_LOST_KHR` pada beberapa device.
+- Naik versi proyek ke 1.3.33-beta
+
 ## [1.3.32-beta] - 2026-02-18
 
 - Fix: Memperbaiki ukuran ikon heart yang terlalu besar (sekarang scale 0.2).
