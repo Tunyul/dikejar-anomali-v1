@@ -1060,7 +1060,7 @@ func _process(delta: float) -> void:
 
     if phase == Phase.PLAYING and game_active:
         var env_speed: float = base_speed
-        if ground_a and ground_a.has_method("get_speed"):
+        if is_instance_valid(ground_a) and ground_a.has_method("get_speed"):
             env_speed = float(ground_a.call("get_speed"))
 
         # Update distance and background scrolling
@@ -1073,27 +1073,28 @@ func _process(delta: float) -> void:
 
         game_time_sec += delta
         score = int(total_tiles_passed * score_per_tile)
-        if coin_hud_label != null:
+        if is_instance_valid(coin_hud_label):
             coin_hud_label.text = str(coin_collected_a + coin_collected_b)
-        if gem_hud_label != null:
+        if is_instance_valid(gem_hud_label):
             gem_hud_label.text = str(gem_collected_a + gem_collected_b)
-        if score_hud_label != null:
+        if is_instance_valid(score_hud_label):
             score_hud_label.text = str(score)
-        if missions_manager and missions_manager.has_method("update_distance"):
+        if is_instance_valid(missions_manager) and missions_manager.has_method("update_distance"):
             missions_manager.update_distance(distance)
         var target_speed: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
         var boost_active: bool = speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
         if boost_active:
             target_speed *= speed_boost_multiplier
-        if ground_a and ground_a.has_method("set_speed"):
-            ground_a.set_speed(target_speed)
-        if ground_a and ground_a.has_method("set_instant_speed_mode"):
-            ground_a.set_instant_speed_mode(boost_active)
-        if player:
+        if is_instance_valid(ground_a):
+            if ground_a.has_method("set_speed"):
+                ground_a.set_speed(target_speed)
+            if ground_a.has_method("set_instant_speed_mode"):
+                ground_a.set_instant_speed_mode(boost_active)
+        if is_instance_valid(player):
             player.run_speed = target_speed
-        if player and player.has_method("set_run_anim_factor"):
-            var anim_factor: float = max(0.1, target_speed / max(base_speed, 0.1))
-            player.call("set_run_anim_factor", anim_factor)
+            if player.has_method("set_run_anim_factor"):
+                var anim_factor: float = max(0.1, target_speed / max(base_speed, 0.1))
+                player.call("set_run_anim_factor", anim_factor)
         _update_speed_info_label(env_speed, target_speed)
     if game_active:
         if magnet_timer > 0.0:
@@ -1186,13 +1187,13 @@ func _update_speed_info_label(env_speed: float, target_speed: float) -> void:
     if not boost_active:
         return
     var ground_speed: float = env_speed
-    if ground_a and ground_a.has_method("get_speed"):
+    if is_instance_valid(ground_a) and ground_a.has_method("get_speed"):
         ground_speed = float(ground_a.call("get_speed"))
     var parallax_speed: float = 0.0
-    if parallax and parallax.has_method("get_layer_speed"):
+    if is_instance_valid(parallax) and parallax.has_method("get_layer_speed"):
         parallax_speed = float(parallax.call("get_layer_speed", 0))
     var player_speed: float = 0.0
-    if player:
+    if is_instance_valid(player):
         player_speed = player.run_speed
     var txt: String = "BOOST SPEED\n"
     txt += "Env: " + str(int(env_speed)) + " | Target: " + str(int(target_speed)) + "\n"

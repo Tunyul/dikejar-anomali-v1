@@ -93,6 +93,9 @@ func _ready() -> void:
     print("[Parallax] System Locked & Initialized: Scene=", scene_name, " Speed=", current_speed)
 
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
+
     # Pergerakan menggunakan delta agar konsisten di berbagai framerate
     var move_amount = current_speed * delta
 

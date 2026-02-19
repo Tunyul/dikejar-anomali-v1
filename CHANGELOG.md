@@ -5,6 +5,12 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.34-beta] - 2026-02-18
+
+- Fix: Mobile - Mengatasi error `can_process: Condition "!is_inside_tree()" is true` dengan menambahkan pengecekan `is_instance_valid()` dan `is_inside_tree()` pada GameManager dan Parallax.
+- Fix: Mobile - Mengatasi ground yang masih terputus/gap di awal dengan meningkatkan `flat_start_length_tiles` ke 150 dan `_seg_overlap_px` ke 4.0.
+- Improve: Mobile - Meningkatkan stabilitas saat scene transition.
+
 ## [1.3.33-beta] - 2026-02-18
 
 - Fix: Mobile - Mengatasi gap/jurang pada ground dan start yang tidak flat dengan memperpanjang `flat_start_length_tiles` (100) dan menambah overlap segmen.

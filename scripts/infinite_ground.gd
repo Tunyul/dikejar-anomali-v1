@@ -60,7 +60,7 @@ extends Node2D
 @export var debug_color_flat_start: Color = Color(0.7, 0.0, 0.12, 1.0)
 ## Jika true, akan print log saat wrap segmen.
 @export var debug_info_enabled: bool = false
-@export var flat_start_length_tiles: int = 100
+@export var flat_start_length_tiles: int = 150
 ## Seed tetap untuk RNG; 0 berarti acak setiap init.
 @export var fixed_seed: int = 0
 
@@ -169,7 +169,7 @@ var _double_coins_b: Node2D = null
 var _speed_boosts_a: Node2D = null
 var _speed_boosts_b: Node2D = null
 var _seg_width_px: float = 0.0
-var _seg_overlap_px: float = 2.0 # Tambahkan overlap 2px untuk mencegah gap visual (garis vertikal) antar segmen
+var _seg_overlap_px: float = 4.0 # Tambahkan overlap 4px untuk mencegah gap visual (garis vertikal) antar segmen
 var _tile_w_px: float = 0.0
 var _tile_h_px: float = 0.0
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
