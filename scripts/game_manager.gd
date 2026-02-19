@@ -1038,6 +1038,8 @@ func _wire_settings_menu_signals(settings_menu: Node) -> void:
         settings_menu.connect("menu_pressed", c_menu)
 
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     if countdown_active and game_active:
         var lbl := canvas.get_node_or_null("CountdownLabel") if canvas else null
         countdown_timer = max(countdown_timer - delta, 0.0)

@@ -683,6 +683,8 @@ func _on_claim_daily_all_pressed() -> void:
 
 
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     if get_tree().current_scene == self:
         return
     if not visible:

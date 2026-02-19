@@ -227,7 +227,12 @@ func _set_status_text(text: String) -> void:
         if timer:
             timer.start()
 
+func _exit_tree() -> void:
+    set_process(false)
+
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     if _parallax_bg:
         # Move from Top-Right to Bottom-Left
         # X decreases (Left), Y increases (Bottom)

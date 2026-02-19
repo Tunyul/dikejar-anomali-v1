@@ -62,6 +62,8 @@ func _ready() -> void:
     set_process(true)
 
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     _update_progress(delta)
     _update_characters(delta)
     _check_transition()

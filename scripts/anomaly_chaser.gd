@@ -38,6 +38,8 @@ func _ready() -> void:
     _ensure_playing()
 
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     if Engine.is_editor_hint():
         return
     if _camera == null:
