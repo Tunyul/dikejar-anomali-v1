@@ -19,6 +19,11 @@ extends ParallaxBackground
 # Kecepatan saat ini yang dikontrol oleh Game Manager
 var current_speed: float = 0.0 : set = set_speed
 
+func _exit_tree() -> void:
+    set_process(false)
+    set_physics_process(false)
+
+
 func _ready() -> void:
     # CRITICAL: Matikan follow_viewport_enabled.
     # Jika bernilai TRUE, ParallaxBackground akan mencoba mengikuti posisi Camera2D

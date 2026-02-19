@@ -544,6 +544,7 @@ func _on_shop_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     if _menu_bgm:
         _menu_bgm.stop()
+    process_mode = Node.PROCESS_MODE_DISABLED
     get_tree().change_scene_to_file("res://scenes/ShopMenu.tscn")
 
 func _on_settings_pressed() -> void:
