@@ -132,10 +132,13 @@ func _on_continue_pressed() -> void:
 
 func _on_bonus_continue_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    _pending_action = "bonus"
-    if confirm_panel and confirm_message:
-        confirm_message.text = tr("Lanjut dengan bonus?\nTonton iklan untuk lanjut run ini.")
-        confirm_panel.visible = true
+    var main := get_tree().get_root().get_node_or_null("Main")
+    if not main: # Fallback if Main is not direct child of root (e.g. testing)
+        main = get_tree().current_scene
+
+    if main and main.has_method("try_rewarded_continue"):
+        main.try_rewarded_continue()
+    # Confirmation removed for smoother flow ("Zero friction")
 
 func _on_confirm_yes_pressed() -> void:
     TransitionManager.play_sfx(&"click")
@@ -146,12 +149,6 @@ func _on_confirm_yes_pressed() -> void:
             if Preloader and Preloader.has_method("set_next_scene"):
                 Preloader.set_next_scene("res://scenes/MainMenu.tscn")
             await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
-        "bonus":
-            var main := get_tree().get_root().get_node_or_null("Main")
-            if main and main.has_method("try_rewarded_continue"):
-                visible = false
-                _pending_action = ""
-                main.try_rewarded_continue()
     if confirm_panel:
         confirm_panel.visible = false
 

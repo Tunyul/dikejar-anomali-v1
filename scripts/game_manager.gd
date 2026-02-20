@@ -22,6 +22,7 @@ var game_time_sec: float = 0.0
 var total_tiles_passed: int = 0
 var _tiles_passed_accum: float = 0.0
 var _debug_time_accum: float = 0.0
+var _score_offset: int = 0
 var powerups_data: Dictionary = {}
 var pending_level_rewards: Array = []
 var max_heart_bonus: int = 0
@@ -119,6 +120,7 @@ var _last_health_max: int = -1
 @export var rewarded_continue_grace_sec: float = 5.0
 var ads_shown_count: int = 0
 var continue_grace_timer: float = 0.0
+var _carry_over_stats: Dictionary = {}
 @onready var coin_hud_label: Label = $CanvasLayer/CoinHUD/Label
 @onready var gem_hud_label: Label = $CanvasLayer/GemHUD/Label
 @onready var score_hud_label: Label = $CanvasLayer/ScoreHUD/ScoreLabel
@@ -1074,7 +1076,7 @@ func _process(delta: float) -> void:
         total_tiles_passed = int(_tiles_passed_accum)
 
         game_time_sec += delta
-        score = int(total_tiles_passed * score_per_tile)
+        score = _score_offset + int(total_tiles_passed * score_per_tile)
         if is_instance_valid(coin_hud_label):
             coin_hud_label.text = str(coin_collected_a + coin_collected_b)
         if is_instance_valid(gem_hud_label):
@@ -1453,41 +1455,57 @@ func _on_settings_overlay_closed() -> void:
 
 func try_rewarded_continue() -> void:
     if ads_shown_count >= ads_max_per_session:
+        print("[GameManager] Max ads reached, cannot continue.")
         return
     var adm = AdManager
     if adm and adm.has_method("show_rewarded"):
         if adm.has_method("is_rewarded_available") and not adm.is_rewarded_available():
+            print("[GameManager] Rewarded ad not available.")
             return
         if adm.has_signal("reward_granted"):
             var cb := Callable(self, "_on_reward_granted")
             if not adm.reward_granted.is_connected(cb):
                 adm.reward_granted.connect(cb)
+                print("[GameManager] Connected to reward_granted signal.")
+        print("[GameManager] Requesting rewarded ad...")
         adm.show_rewarded("continue")
+    else:
+        print("[GameManager] AdManager not found or missing method.")
 
 func _on_reward_granted(reason: String) -> void:
+    print("[GameManager] _on_reward_granted called with reason: ", reason)
     if reason == "continue":
         ads_shown_count += 1
-        grant_continue()
+        # Call deferred to ensure we are on main thread and UI is ready
+        call_deferred("grant_continue")
 
 func grant_continue() -> void:
-    get_tree().paused = false
-    phase = Phase.PLAYING
-    game_active = true
-    continue_grace_timer = rewarded_continue_grace_sec
-    if terrain and terrain.has_method("set_movement_enabled"):
-        terrain.set_movement_enabled(true)
-    if ground_a and ground_a.has_method("set_movement_enabled"):
-        ground_a.set_movement_enabled(true)
-    var tgt: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
-    if ground_a and ground_a.has_method("set_speed"):
-        ground_a.set_speed(tgt)
-    var bgm := get_node_or_null("BGM")
-    if bgm and bgm is AudioStreamPlayer and (bgm as AudioStreamPlayer).stream != null and not bgm_muted:
-        (bgm as AudioStreamPlayer).play()
+    print("[GameManager] grant_continue execution started.")
+    # Force hide Game Over menu immediately
     if canvas:
         var gom := canvas.get_node_or_null("GameOverMenu")
         if gom:
             gom.visible = false
+            print("[GameManager] GameOverMenu hidden forcibly.")
+
+    # Rollback total stats from previous game over (undo finalization)
+    total_coins -= last_coins
+    total_gems -= last_gems
+    if total_coins < 0: total_coins = 0
+    if total_gems < 0: total_gems = 0
+
+    # Capture stats for new run (Carry Over)
+    _carry_over_stats = {
+        "score": last_score,
+        "coin_collected": last_coins,
+        "gem_collected": last_gems
+    }
+
+    # Save progress with rolled back totals (to prevent double counting if they die again)
+    _save_progress()
+
+    # Restart game from beginning
+    restart_game()
 
 func set_bgm_volume(v: float) -> void:
     _bgm_user_volume = clampf(v, 0.0, 1.0)
@@ -2427,11 +2445,22 @@ func _start_play_phase() -> void:
     _bgm_mode = BgmMode.RUN
     _bgm_duck_db = 0.0
     distance = 0.0
+
     score = 0
+    _score_offset = 0
     coin_collected_a = 0
     coin_collected_b = 0
     gem_collected_a = 0
     gem_collected_b = 0
+
+    # Apply carry-over stats if available (Continue feature)
+    if not _carry_over_stats.is_empty():
+        _score_offset = int(_carry_over_stats.get("score", 0))
+        score = _score_offset
+        coin_collected_a = int(_carry_over_stats.get("coin_collected", 0))
+        gem_collected_a = int(_carry_over_stats.get("gem_collected", 0))
+        _carry_over_stats.clear()
+
     if gem_hud_label != null:
         gem_hud_label.text = "0"
     game_time_sec = 0.0
@@ -2465,6 +2494,14 @@ func _start_play_phase() -> void:
         (bgm2 as AudioStreamPlayer).stop()
     if anomaly:
         anomaly.hide()
+
+    # Hide menus
+    if canvas:
+        var pm := canvas.get_node_or_null("PauseMenu")
+        if pm: pm.visible = false
+        var gom := canvas.get_node_or_null("GameOverMenu")
+        if gom: gom.visible = false
+
     if player:
         if player.has_method("enable_environment_movement"):
             player.enable_environment_movement(false)
