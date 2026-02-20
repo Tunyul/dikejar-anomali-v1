@@ -2461,8 +2461,14 @@ func _start_play_phase() -> void:
         gem_collected_a = int(_carry_over_stats.get("gem_collected", 0))
         _carry_over_stats.clear()
 
+    var total_run_coins: int = coin_collected_a + coin_collected_b
+    var total_run_gems: int = gem_collected_a + gem_collected_b
+    if coin_hud_label != null:
+        coin_hud_label.text = str(total_run_coins)
     if gem_hud_label != null:
-        gem_hud_label.text = "0"
+        gem_hud_label.text = str(total_run_gems)
+    if score_hud_label != null:
+        score_hud_label.text = str(score)
     game_time_sec = 0.0
     _tiles_passed_accum = 0.0
     total_tiles_passed = 0
@@ -2480,6 +2486,11 @@ func _start_play_phase() -> void:
     entry_finished = false
     _missions_completed_type_toasted.clear()
     _apply_powerups_for_new_run()
+    if ground_a:
+        if ground_a.has_method("restart_from_flat_start"):
+            ground_a.restart_from_flat_start()
+        elif ground_a.has_method("_run_generate_now"):
+            ground_a.call("_run_generate_now", true, true)
     if player and player.has_method("reset_player"):
         player.reset_player()
     _clear_existing_hearts()

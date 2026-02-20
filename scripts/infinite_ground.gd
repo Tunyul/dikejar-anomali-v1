@@ -60,7 +60,7 @@ extends Node2D
 @export var debug_color_flat_start: Color = Color(0.7, 0.0, 0.12, 1.0)
 ## Jika true, akan print log saat wrap segmen.
 @export var debug_info_enabled: bool = false
-@export var flat_start_length_tiles: int = 150
+@export var flat_start_length_tiles: int = 24
 ## Seed tetap untuk RNG; 0 berarti acak setiap init.
 @export var fixed_seed: int = 0
 
@@ -187,6 +187,10 @@ var _runtime_seed: int = 0
 var _flat_start_runtime_initialized: bool = false
 var _tiles_since_last_heart: int = 100
 var _debug_heart_spawn_session_count: int = 0
+var _initial_flat_start_pos: Vector2 = Vector2.ZERO
+var _initial_tile_a_pos: Vector2 = Vector2.ZERO
+var _initial_tile_b_pos: Vector2 = Vector2.ZERO
+var _initial_positions_captured: bool = false
 
 const _BASE_SEGMENT_TILES: int = 64
 
@@ -318,6 +322,15 @@ func _ensure_initialized() -> void:
         _tile_a = get_node_or_null("TileMapLayerA") as TileMapLayer
     if not is_instance_valid(_tile_b):
         _tile_b = get_node_or_null("TileMapLayerB") as TileMapLayer
+
+    if not _initial_positions_captured:
+        if _tile_flat_start:
+            _initial_flat_start_pos = _tile_flat_start.position
+        if _tile_a:
+            _initial_tile_a_pos = _tile_a.position
+        if _tile_b:
+            _initial_tile_b_pos = _tile_b.position
+        _initial_positions_captured = true
 
     # Inisialisasi kontainer secara otomatis jika tidak ada
     var containers = [
@@ -552,7 +565,7 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
     while i < segment_tile_count:
         _tiles_since_last_heart += 1
         var flat_override: bool = false
-        if is_first_segment and i < max(min_platform_len, 16):
+        if is_first_segment and i < max(min_platform_len, 12):
             flat_override = true
 
         if flat_override:
@@ -1991,22 +2004,33 @@ func _get_ground_height_for_column(tile: TileMapLayer, x: int) -> int:
 func _run_generate_now(reset_flat: bool = false, reset_height: bool = false) -> void:
     _initialized = false
     _ensure_initialized()
-    _ensure_flat_start_tiles()
     if reset_flat:
-        pass
+        _flat_start_runtime_initialized = false
+        if _tile_flat_start != null and _initial_positions_captured:
+            _tile_flat_start.position = _initial_flat_start_pos
+    _ensure_flat_start_tiles()
     if reset_height:
         _height_a = 0
         _height_b = 0
     if _tile_a:
         _height_a = _generate_segment(_tile_a, 0)
-        _tile_a.position.x = 0.0
+        if _initial_positions_captured:
+            _tile_a.position = _initial_tile_a_pos
+        else:
+            _tile_a.position.x = 0.0
         _sync_containers_for_tile(_tile_a)
     if _tile_b:
         _height_b = _generate_segment(_tile_b, _height_a)
-        _tile_b.position.x = _seg_width_px - _seg_overlap_px
+        if _initial_positions_captured:
+            _tile_b.position = _initial_tile_b_pos
+        else:
+            _tile_b.position.x = _seg_width_px - _seg_overlap_px
         _sync_containers_for_tile(_tile_b)
     _align_segments_with_flat_start()
     _apply_debug_tint()
+
+func restart_from_flat_start() -> void:
+    _run_generate_now(true, true)
 
 func set_speed(new_speed: float) -> void:
     var v: float = clamp(new_speed, min_scroll_speed, max_scroll_speed)

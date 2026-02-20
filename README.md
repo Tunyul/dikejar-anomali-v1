@@ -2,7 +2,7 @@
 
 ![Banner](https://img.shields.io/badge/Status-In--Development-yellow?style=for-the-badge)
 ![Godot Engine](https://img.shields.io/badge/Godot-4.6-%23478cbf?style=for-the-badge&logo=godot-engine&logoColor=white)
-![Version](https://img.shields.io/badge/Version-1.3.28--beta-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.3.37--beta-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Anomaly Rush!** adalah game *Endless Runner 2D* yang dikembangkan menggunakan Godot Engine 4.6. Pemain harus bertahan hidup dari kejaran "Anomaly" sambil melewati rintangan dan mengumpulkan sumber daya di dunia yang terus berubah.

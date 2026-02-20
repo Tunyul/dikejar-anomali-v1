@@ -30,6 +30,16 @@ var _scroll_pointer_id: int = -1
 var _scroll_last_pos: Vector2 = Vector2.ZERO
 var _edge_padding_nodes: Array = []
 var _items_margin_nodes: Array = []
+var _fx_rng := RandomNumberGenerator.new()
+var _ad_manager: Node = null
+var _awaiting_rewarded_reason: String = ""
+var _daily_claim_day_bucket: int = -1
+var _daily_claim_count: int = 0
+
+const _DAILY_CLAIM_ITEM_ID := "daily_coins_claim"
+const _DAILY_CLAIM_MIN_COINS := 100
+const _DAILY_CLAIM_MAX_COINS := 500
+const _DAILY_CLAIM_AD_REASON := "shop_daily_coins_claim"
 
 func _set_refresh_editor(_val: bool) -> void:
     if Engine.is_editor_hint():
@@ -49,6 +59,7 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+    _fx_rng.randomize()
     _parallax_bg = get_node_or_null("ParallaxBG") as ParallaxBackground
     if _parallax_bg:
         var bg_layer := _parallax_bg.get_node_or_null("BG") as ParallaxLayer
@@ -121,15 +132,22 @@ func _ready() -> void:
         var coins_label := get_node_or_null("UI/VBox/CurrencyRow/CoinsLabel")
         var gems_label := get_node_or_null("UI/VBox/CurrencyRow/GemsLabel")
         var status_label := get_node_or_null("UI/VBox/StatusLabel") as Label
+        _ad_manager = AdManager
 
         if back and not back.pressed.is_connected(_on_back_pressed):
             back.pressed.connect(_on_back_pressed)
         if close_btn and not close_btn.pressed.is_connected(_on_back_pressed):
             close_btn.pressed.connect(_on_back_pressed)
 
+        if _ad_manager and _ad_manager.has_signal("reward_granted"):
+            var cb_reward := Callable(self, "_on_reward_granted")
+            if not _ad_manager.is_connected("reward_granted", cb_reward):
+                _ad_manager.connect("reward_granted", cb_reward)
+
         current_coins = _load_coins()
         current_gems = _load_gems()
         _setup_currency_display(coins_label, gems_label)
+        _load_daily_claim_progress()
 
         if status_label:
             status_label.text = ""
@@ -178,7 +196,6 @@ func _input(event: InputEvent) -> void:
                 _scroll_last_pos = e.position
                 _scroll_dragging = true
                 _scroll_drag_total = 0.0
-                get_viewport().set_input_as_handled()
         else:
             if e.index == _scroll_pointer_id:
                 if _scroll_drag_total >= 14.0:
@@ -206,7 +223,6 @@ func _input(event: InputEvent) -> void:
                     _scroll_last_pos = e.position
                     _scroll_dragging = true
                     _scroll_drag_total = 0.0
-                    get_viewport().set_input_as_handled()
             else:
                 if _scroll_pointer_id == 0:
                     if _scroll_drag_total >= 14.0:
@@ -417,6 +433,174 @@ func _save_gems(value: int) -> void:
     cfg.save(SAVE_PATH)
 
 
+func _get_today_claim_bucket() -> int:
+    return int(Time.get_unix_time_from_system() / 86400)
+
+
+func _load_daily_claim_progress() -> void:
+    var cfg := ConfigFile.new()
+    var err := cfg.load(SAVE_PATH)
+    if err == OK:
+        _daily_claim_day_bucket = int(cfg.get_value("shop", "daily_coins_claim_day", -1))
+        _daily_claim_count = maxi(int(cfg.get_value("shop", "daily_coins_claim_count", 0)), 0)
+    else:
+        _daily_claim_day_bucket = -1
+        _daily_claim_count = 0
+    _sync_daily_claim_state(true)
+
+
+func _save_daily_claim_progress() -> void:
+    var cfg := ConfigFile.new()
+    var err := cfg.load(SAVE_PATH)
+    if err != OK:
+        cfg = ConfigFile.new()
+    cfg.set_value("shop", "daily_coins_claim_day", _daily_claim_day_bucket)
+    cfg.set_value("shop", "daily_coins_claim_count", maxi(_daily_claim_count, 0))
+    cfg.save(SAVE_PATH)
+
+
+func _sync_daily_claim_state(save_if_reset: bool = false) -> void:
+    var today := _get_today_claim_bucket()
+    if _daily_claim_day_bucket == today:
+        return
+    _daily_claim_day_bucket = today
+    _daily_claim_count = 0
+    if save_if_reset:
+        _save_daily_claim_progress()
+
+
+func _is_daily_free_claim_available() -> bool:
+    _sync_daily_claim_state()
+    return _daily_claim_count <= 0
+
+
+func _is_rewarded_available_for_daily_claim() -> bool:
+    if _ad_manager == null:
+        return false
+    if _ad_manager.has_method("is_rewarded_available"):
+        return bool(_ad_manager.call("is_rewarded_available"))
+    return true
+
+
+func _find_buy_button_for_item_id(item_id: String) -> BaseButton:
+    if item_id.is_empty():
+        return null
+    for e_any in buy_buttons:
+        if not (e_any is Dictionary):
+            continue
+        var e: Dictionary = e_any
+        var item_any = e.get("item")
+        if not (item_any is Dictionary):
+            continue
+        var item: Dictionary = item_any
+        if String(item.get("id", "")) != item_id:
+            continue
+        var btn_any = e.get("button")
+        if btn_any is BaseButton:
+            return btn_any as BaseButton
+    return null
+
+
+func _on_reward_granted(reason: String) -> void:
+    if reason != _awaiting_rewarded_reason:
+        return
+    _awaiting_rewarded_reason = ""
+    if reason == _DAILY_CLAIM_AD_REASON:
+        _grant_daily_claim_coins(true)
+
+
+func _on_daily_claim_pressed() -> void:
+    _sync_daily_claim_state()
+    if _is_daily_free_claim_available():
+        _grant_daily_claim_coins(false)
+        return
+    if _ad_manager == null or not _ad_manager.has_method("show_rewarded"):
+        _set_status_text(tr("Ad not available."))
+        _update_buy_buttons_state()
+        return
+    if not _is_rewarded_available_for_daily_claim():
+        _set_status_text(tr("Ad not available."))
+        _update_buy_buttons_state()
+        return
+    _awaiting_rewarded_reason = _DAILY_CLAIM_AD_REASON
+    _ad_manager.call("show_rewarded", _awaiting_rewarded_reason)
+
+
+func _grant_daily_claim_coins(via_ad: bool) -> void:
+    _sync_daily_claim_state()
+    if not via_ad and _daily_claim_count > 0:
+        return
+
+    var gain := _fx_rng.randi_range(_DAILY_CLAIM_MIN_COINS, _DAILY_CLAIM_MAX_COINS)
+    current_coins += gain
+    _save_coins(current_coins)
+
+    _daily_claim_count += 1
+    _save_daily_claim_progress()
+
+    var coins_label := get_node_or_null("UI/VBox/CurrencyRow/CoinsLabel") as Label
+    if coins_label:
+        coins_label.text = str(current_coins)
+
+    if is_instance_valid(TransitionManager) and TransitionManager.has_method("play_sfx"):
+        TransitionManager.play_sfx(&"mission_claim")
+
+    var from_btn := _find_buy_button_for_item_id(_DAILY_CLAIM_ITEM_ID) as Control
+    var to_icon := get_node_or_null("UI/VBox/CurrencyRow/CoinsIcon") as Control
+    var coin_count := clampi(int(round(float(gain) / 40.0)), 6, 14)
+    _play_claim_coin_fly(from_btn, to_icon, coin_count)
+
+    _update_buy_buttons_state()
+    _set_status_text(tr("Daily coins claimed: +%d") % [gain])
+
+
+func _play_claim_coin_fly(from_control: Control, to_control: Control, count: int) -> void:
+    if from_control == null:
+        return
+    if _coin_icon_tex == null:
+        return
+    if count <= 0:
+        return
+    var ui_layer := get_node_or_null("UI") as CanvasLayer
+    if ui_layer == null:
+        return
+
+    var from_rect := from_control.get_global_rect()
+    var from_center := from_rect.position + from_rect.size * 0.5
+
+    var to_center := Vector2(56, 56)
+    if to_control != null:
+        var to_rect := to_control.get_global_rect()
+        to_center = to_rect.position + to_rect.size * 0.5
+
+    for i in range(count):
+        var coin := TextureRect.new()
+        coin.texture = _coin_icon_tex
+        coin.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        coin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        coin.set_as_top_level(true)
+        coin.size = Vector2(24, 24)
+        coin.pivot_offset = coin.size * 0.5
+        ui_layer.add_child(coin)
+
+        var start_offset := Vector2(
+            _fx_rng.randf_range(-24.0, 24.0),
+            _fx_rng.randf_range(-18.0, 18.0)
+        )
+        coin.global_position = (from_center + start_offset) - coin.pivot_offset
+        coin.modulate = Color(1, 1, 1, 1)
+        coin.scale = Vector2.ONE * _fx_rng.randf_range(0.85, 1.05)
+
+        var t := create_tween()
+        t.tween_interval(_fx_rng.randf_range(0.0, 0.12))
+        t.tween_property(coin, "global_position", to_center - coin.pivot_offset, _fx_rng.randf_range(0.35, 0.55)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+        t.parallel().tween_property(coin, "modulate:a", 0.0, _fx_rng.randf_range(0.35, 0.55)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+        t.finished.connect(func():
+            if coin:
+                coin.queue_free()
+        )
+
+
 func _connect_viewport_resize() -> void:
     var vp := get_viewport()
     if vp == null:
@@ -532,6 +716,15 @@ func _init_shop_data() -> void:
     buy_buttons.clear()
 
     var all_skills_items: Array = [
+        {
+            "id": _DAILY_CLAIM_ITEM_ID,
+            "name": "Daily Coins Claim",
+            "description": "Klaim %d-%d koin harian. Klaim berikutnya di hari yang sama perlu iklan." % [_DAILY_CLAIM_MIN_COINS, _DAILY_CLAIM_MAX_COINS],
+            "price": 0,
+            "currency": "coins",
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
+            "rarity": "common"
+        },
         {
             "id": "magnet_30s",
             "name": "Magnet 30s",
@@ -839,6 +1032,7 @@ func _init_shop_data() -> void:
 
 func _init_editor_dummy_data() -> void:
     var powerup_items = [
+        {"id": _DAILY_CLAIM_ITEM_ID, "name": "Daily Coins Claim", "description": "Klaim %d-%d koin harian. Klaim berikutnya di hari yang sama perlu iklan." % [_DAILY_CLAIM_MIN_COINS, _DAILY_CLAIM_MAX_COINS], "price": 0, "currency": "coins", "icon": "res://assets/coin_animation/png/2x/Coin.png", "rarity": "common"},
         {"id": "magnet_30s", "name": "Magnet 30s", "description": "Menarik koin otomatis selama 30 detik.", "price": 150, "currency": "coins", "icon": "res://assets/icon/icon_magnet_v1_96x96.png", "rarity": "common"},
         {"id": "shield_1hit", "name": "Perisai 1 Hit", "description": "Melindungi dari satu kali tabrakan.", "price": 200, "currency": "coins", "icon": "res://assets/icon/icon_shield.png", "rarity": "rare"},
         {"id": "double_coins_run", "name": "Double Coins (1 Run)", "description": "Mendapatkan koin 2x lipat selama satu sesi lari.", "price": 250, "currency": "coins", "icon": "res://assets/icon/icon_coinduble_96x96.png", "rarity": "rare"},
@@ -1279,11 +1473,14 @@ func _create_item_card(item: Dictionary) -> Control:
     vbox.add_child(name_lbl)
 
     # Price
+    var id := String(item.get("id", ""))
     var display_price := String(item.get("display_price", ""))
     var price := int(item.get("price", 0))
     var currency := String(item.get("currency", "coins"))
     var price_text := ""
-    if display_price.is_empty():
+    if id == _DAILY_CLAIM_ITEM_ID:
+        price_text = "%d-%d" % [_DAILY_CLAIM_MIN_COINS, _DAILY_CLAIM_MAX_COINS]
+    elif display_price.is_empty():
         price_text = str(price)
     else:
         price_text = display_price
@@ -1335,9 +1532,10 @@ func _create_item_card(item: Dictionary) -> Control:
         _apply_shop_number_font(price_lbl)
         vbox.add_child(price_lbl)
 
-    var id := String(item.get("id", ""))
     var is_coming_soon := false
-    if _is_skin_id(id):
+    if id == _DAILY_CLAIM_ITEM_ID:
+        is_coming_soon = false
+    elif _is_skin_id(id):
         is_coming_soon = true
     else:
         var item_currency := String(item.get("currency", "coins"))
@@ -1355,7 +1553,7 @@ func _create_item_card(item: Dictionary) -> Control:
         vbox.add_child(coming_soon_lbl)
 
     var button := Button.new()
-    button.text = tr("Buy")
+    button.text = tr("Claim") if id == _DAILY_CLAIM_ITEM_ID else tr("Buy")
     button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     button.custom_minimum_size = Vector2(0, 40)
     button.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -1387,6 +1585,16 @@ func _update_buy_buttons_state() -> void:
             continue
         var id := String(it.get("id", ""))
         var currency := String(it.get("currency", "coins"))
+        if id == _DAILY_CLAIM_ITEM_ID:
+            var free_claim := _is_daily_free_claim_available()
+            var allowed := free_claim or _is_rewarded_available_for_daily_claim()
+            (b as BaseButton).disabled = not allowed
+            if b is Button:
+                if free_claim:
+                    (b as Button).text = tr("Claim")
+                else:
+                    (b as Button).text = tr("Claim") + " +Ad"
+            continue
         if _is_skin_id(id):
             var owned := owned_set.has(id)
             var price_skin := int(it.get("price", 0))
@@ -1421,6 +1629,10 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
     var currency := String(item.get("currency", "coins"))
     var id := String(item.get("id", ""))
 
+    if id == _DAILY_CLAIM_ITEM_ID:
+        _on_daily_claim_pressed()
+        return
+
     if _is_skin_id(id) and _is_skin_owned(id):
         _set_status_text(tr("Already owned."))
         return
@@ -1429,7 +1641,11 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
     var confirm_scene := load("res://scenes/ConfirmPanel.tscn") as PackedScene
     if confirm_scene:
         var popup := confirm_scene.instantiate()
-        add_child(popup)
+        var ui_layer := get_node_or_null("UI") as CanvasLayer
+        if ui_layer:
+            ui_layer.add_child(popup)
+        else:
+            add_child(popup)
 
         var msg := popup.get_node_or_null("Message") as Label
         if msg:

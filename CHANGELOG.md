@@ -5,6 +5,19 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.37-beta] - 2026-02-20
+
+- Gameplay: Memendekkan `flat_start_length_tiles` menjadi 24 agar fase awal run tidak terlalu panjang.
+- Gameplay: Menambahkan reset ground ke posisi flat-start saat run dimulai ulang, termasuk flow continue setelah Game Over + rewarded ad.
+- Gameplay: Menjaga nilai run saat lanjut (score/coins/gems) agar tidak ter-reset ke nol ketika masuk fase play lagi.
+- Missions UI: Memperbaiki responsif panel misi di berbagai ukuran layar agar tidak melebar full-screen.
+- Missions: Tombol reset daily sekarang hanya tampil setelah semua misi daily selesai.
+- Missions: Tombol reset daily langsung memicu rewarded ad dan mereset misi harian seketika tanpa menunggu timer.
+- Shop: Menambahkan item baru `Daily Coins Claim` (100-500 coins/hari).
+- Shop: Klaim pertama per hari gratis; klaim berikutnya di hari yang sama wajib rewarded ad.
+- Shop: Menambahkan animasi coin fly dan SFX claim untuk klaim daily coins.
+- Shop: Memperbaiki input tap agar tombol claim/buy item shop kembali responsif.
+
 ## [1.3.36-beta] - 2026-02-20
 
 - Feature: Integrasi penuh AdMob (Banner, Interstitial, Rewarded) menggunakan plugin Poing Studios.

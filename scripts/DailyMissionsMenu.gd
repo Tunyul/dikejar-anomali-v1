@@ -29,12 +29,17 @@ var _ad_manager: Node = null
 var _missions_manager: Node = null
 var _mission_panel: Control = null
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
+var _mission_panel_target_scale: float = 1.0
 
 var _daily_summary: Control = null
 var _daily_total_label: Label = null
 var _daily_total_bar: ProgressBar = null
 var _daily_all_reward_label: Label = null
 var _daily_all_claim_button: BaseButton = null
+
+const _MISSION_PANEL_BASE_SIZE := Vector2(685.0, 385.0)
+const _MISSION_PANEL_SCALE_MIN := 0.35
+const _MISSION_PANEL_SCALE_MAX := 0.90
 
 
 func _notification(what: int) -> void:
@@ -230,6 +235,19 @@ func _on_viewport_size_changed() -> void:
     _apply_responsive_layout(vp)
 
 
+func _get_mission_panel_base_size() -> Vector2:
+    var base := _MISSION_PANEL_BASE_SIZE
+    if _mission_panel is TextureRect:
+        var tr := _mission_panel as TextureRect
+        if tr.texture:
+            var ts := tr.texture.get_size()
+            if ts.x > 0.0 and ts.y > 0.0:
+                base = ts
+    base.x = maxf(base.x, 1.0)
+    base.y = maxf(base.y, 1.0)
+    return base
+
+
 func _apply_responsive_layout(vp: Vector2) -> void:
     if _mission_panel == null:
         return
@@ -241,41 +259,27 @@ func _apply_responsive_layout(vp: Vector2) -> void:
 
     var margin := 16.0
     var safe_size := Vector2(maxf(safe.size.x - margin * 2.0, 1.0), maxf(safe.size.y - margin * 2.0, 1.0))
-    var max_w := safe_size.x * 0.58
-    var max_h := safe_size.y * 0.54
-    var w := max_w
-    var h := max_h
-    var tex_aspect := 0.0
-    if _mission_panel is TextureRect:
-        var mission_tr := _mission_panel as TextureRect
-        if mission_tr.texture:
-            var ts := mission_tr.texture.get_size()
-            if ts.y > 0.0:
-                tex_aspect = ts.x / ts.y
-    if tex_aspect > 0.0:
-        if (max_w / max_h) > tex_aspect:
-            h = max_h
-            w = h * tex_aspect
-        else:
-            w = max_w
-            h = w / tex_aspect
-    w = clampf(w, 1.0, safe_size.x)
-    h = clampf(h, 1.0, safe_size.y)
+    var base_size := _get_mission_panel_base_size()
+    var fit := minf(safe_size.x / base_size.x, safe_size.y / base_size.y)
+    fit = clampf(fit, _MISSION_PANEL_SCALE_MIN, _MISSION_PANEL_SCALE_MAX)
+    _mission_panel_target_scale = fit
 
     _mission_panel.anchor_left = 0.5
     _mission_panel.anchor_top = 0.5
     _mission_panel.anchor_right = 0.5
     _mission_panel.anchor_bottom = 0.5
-    _mission_panel.offset_left = -w * 0.5
-    _mission_panel.offset_top = -h * 0.5
-    _mission_panel.offset_right = w * 0.5
-    _mission_panel.offset_bottom = h * 0.5
+    _mission_panel.offset_left = -base_size.x * 0.5
+    _mission_panel.offset_top = -base_size.y * 0.5
+    _mission_panel.offset_right = base_size.x * 0.5
+    _mission_panel.offset_bottom = base_size.y * 0.5
+    _mission_panel.pivot_offset = base_size * 0.5
+    _mission_panel.scale = Vector2.ONE * _mission_panel_target_scale
 
     var pc := get_node_or_null("UI/MissionPanel/PanelContent") as Control
     if pc:
-        var lm := clampf(w * 0.08, 56.0, 92.0)
-        var tm := clampf(h * 0.16, 72.0, 132.0)
-        var bm := clampf(h * 0.12, 56.0, 110.0)
+        var lm := clampf(base_size.x * 0.08, 44.0, 72.0)
+        var tm := clampf(base_size.y * 0.145, 52.0, 84.0)
+        var bm := clampf(base_size.y * 0.11, 40.0, 72.0)
         pc.offset_left = lm
         pc.offset_right = -lm
         pc.offset_top = tm
@@ -374,16 +378,20 @@ func show_overlay() -> void:
         ui.visible = true
     visible = true
 
+    var vp := get_viewport().get_visible_rect().size
+    _apply_responsive_layout(vp)
+
     _refresh_all_ui_texts()
 
     if _mission_panel:
+        var target_scale := Vector2.ONE * _mission_panel_target_scale
         _mission_panel.modulate.a = 0.0
-        _mission_panel.scale = Vector2(0.8, 0.8)
+        _mission_panel.scale = target_scale * 0.8
         # Ensure pivot is centered for scaling
         _mission_panel.pivot_offset = _mission_panel.size * 0.5
         var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
         tween.tween_property(_mission_panel, "modulate:a", 1.0, 0.3)
-        tween.tween_property(_mission_panel, "scale", Vector2.ONE, 0.3)
+        tween.tween_property(_mission_panel, "scale", target_scale, 0.3)
 
     _reset_missions_scroll_to_top()
     var missions_panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
@@ -409,9 +417,10 @@ func _close_overlay_only() -> void:
         _confirm_panel.visible = false
 
     if _mission_panel:
+        var close_scale := Vector2.ONE * (_mission_panel_target_scale * 0.8)
         var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
         tween.tween_property(_mission_panel, "modulate:a", 0.0, 0.2)
-        tween.tween_property(_mission_panel, "scale", Vector2(0.8, 0.8), 0.2)
+        tween.tween_property(_mission_panel, "scale", close_scale, 0.2)
         await tween.finished
 
     var ui := get_node_or_null("UI")
@@ -451,15 +460,52 @@ func _on_tab_pressed(tab: String) -> void:
     _update_reset_header_layout()
 
 
+func _are_all_daily_missions_completed(missions: Array) -> bool:
+    var total := 0
+    var completed := 0
+    for m_any in missions:
+        if not (m_any is Dictionary):
+            continue
+        var m: Dictionary = m_any
+        var mt: String = String(m.get("type", ""))
+        if mt == "challenge":
+            continue
+        if not (mt.is_empty() or mt == "daily"):
+            continue
+        var target: float = float(m.get("target", 0))
+        if target <= 0.0:
+            continue
+        total += 1
+        var prog: float = float(m.get("progress", 0))
+        if prog >= target:
+            completed += 1
+    return total > 0 and completed >= total
+
+
+func _are_all_daily_missions_completed_in_save() -> bool:
+    var cfg := ConfigFile.new()
+    if cfg.load("user://save.cfg") != OK:
+        return false
+    var missions_value = cfg.get_value("missions", "list", [])
+    if not (missions_value is Array):
+        return false
+    return _are_all_daily_missions_completed(missions_value)
+
+
 func _update_reset_daily_button_state() -> void:
     if _reset_daily_button == null:
         _reset_daily_button = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/ResetDailyButton") as BaseButton
-    _reset_daily_button.visible = _current_tab == "daily"
-    if _reset_daily_button.visible:
+    if _reset_daily_button == null:
+        return
+    var can_show := _current_tab == "daily" and _are_all_daily_missions_completed_in_save()
+    _reset_daily_button.visible = can_show
+    if can_show:
         var available := false
         if _ad_manager and _ad_manager.has_method("is_rewarded_available"):
             available = bool(_ad_manager.call("is_rewarded_available"))
         _reset_daily_button.disabled = not available
+    else:
+        _reset_daily_button.disabled = true
     _update_reset_header_layout()
 
 
@@ -486,10 +532,20 @@ func _update_reset_header_layout() -> void:
 
 func _on_reset_daily_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    _pending_action = "reset_daily"
-    if _confirm_panel and _confirm_message:
-        _confirm_message.text = tr("Reset misi harian?\nTonton iklan untuk reset.")
-        _confirm_panel.visible = true
+    if _current_tab != "daily":
+        return
+    if not _are_all_daily_missions_completed_in_save():
+        _update_reset_daily_button_state()
+        return
+    var available := false
+    if _ad_manager and _ad_manager.has_method("is_rewarded_available"):
+        available = bool(_ad_manager.call("is_rewarded_available"))
+    if not available:
+        _update_reset_daily_button_state()
+        return
+    if _ad_manager and _ad_manager.has_method("show_rewarded"):
+        _awaiting_rewarded_reason = "reset_daily_missions"
+        _ad_manager.call("show_rewarded", _awaiting_rewarded_reason)
 
 
 func _on_confirm_yes_pressed() -> void:
@@ -530,6 +586,7 @@ func _apply_rewarded_daily_reset() -> void:
         if panel:
             _refresh_missions_panel(panel)
         _update_reset_time_label()
+        _update_reset_daily_button_state()
         var root_scene := get_tree().current_scene
         if root_scene and root_scene.has_method("refresh_missions_badge_from_save"):
             root_scene.call("refresh_missions_badge_from_save")
@@ -961,6 +1018,7 @@ func _refresh_missions_panel(panel: Node) -> void:
             claim_button.set_meta("mission_id", id_str)
 
     _connect_claim_buttons(panel_vbox)
+    _update_reset_daily_button_state()
 
 
 func _apply_claim_button_style(btn: BaseButton) -> void:
