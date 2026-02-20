@@ -41,8 +41,8 @@ func load(
 		safe_connect(_plugin, "on_interstitial_ad_loaded", _on_interstitial_ad_loaded, CONNECT_DEFERRED)
 		safe_connect(_plugin, "on_interstitial_ad_failed_to_load", _on_interstitial_ad_failed_to_load, CONNECT_DEFERRED)
 		reference()
-		_plugin.load(ad_unit_id, ad_request.convert_to_dictionary(), ad_request.keywords, _uid)
-		
+		_plugin.load(ad_unit_id, ad_request.convert_to_dictionary(), PackedStringArray(ad_request.keywords), _uid)
+
 func _on_interstitial_ad_loaded(uid: int) -> void:
 	if uid == _uid:
 		interstitial_ad_load_callback.on_ad_loaded.call(InterstitialAd.new(uid))

@@ -5,6 +5,15 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.36-beta] - 2026-02-20
+
+- Feature: Integrasi penuh AdMob (Banner, Interstitial, Rewarded) menggunakan plugin Poing Studios.
+- Fix: Mengatasi crash pada perangkat Android tertentu dengan menurunkan versi library `play-services-ads` ke 23.0.0.
+- Fix: Menyesuaikan ukuran Banner menjadi standar `AdSize.BANNER` (320x50) agar posisi otomatis di tengah (center) dan tidak menutupi tombol.
+- Fix: Menambahkan dummy banner pada editor/PC untuk visualisasi area iklan.
+- Fix: Mengatasi error `JavascriptEngine` dengan penyesuaian versi library dan konfigurasi Gradle.
+- Docs: Menambahkan panduan penggunaan AdMob (`ADMOB_USAGE.md`) termasuk contoh implementasi Game Over dan Reward Ganda.
+
 ## [1.3.35-beta] - 2026-02-20
 
 - Fix: Mengatasi indentasi error pada `AdManager.gd` agar sesuai standar GDScript (spasi vs tab).

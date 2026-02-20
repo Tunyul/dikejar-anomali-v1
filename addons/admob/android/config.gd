@@ -25,11 +25,11 @@ const Library := preload("res://addons/admob/internal/exporters/android/library.
 const APPLICATION_ID := "ca-app-pub-3940256099942544~3347511713" # Change to your own AdMob App ID when releasing your game.
 
 var libraries: Array[Library] = [
-	# Main Plugin
-	Library.new("ads", true), # Disable if you don't want to use AdMob.
-	
-	# Supported Mediations
-	Library.new("adcolony", false),
-	Library.new("meta", false),
-	Library.new("vungle", false)
+    # Main Plugin
+    Library.new("ads", true), # Disable if you don't want to use AdMob.
+    
+    # Supported Mediations
+    Library.new("adcolony", false),
+    Library.new("meta", false),
+    Library.new("vungle", false)
 ]
