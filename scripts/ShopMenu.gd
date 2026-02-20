@@ -39,6 +39,15 @@ func _set_refresh_editor(_val: bool) -> void:
              _apply_responsive_layout(get_viewport_rect().size)
     refresh_editor = false
 
+func _enter_tree() -> void:
+    if Engine.is_editor_hint():
+        return
+    # Matikan input dan process sementara saat transisi masuk untuk mencegah race condition
+    set_process_input(false)
+    set_process_unhandled_input(false)
+    set_process(false)
+
+
 func _ready() -> void:
     _parallax_bg = get_node_or_null("ParallaxBG") as ParallaxBackground
     if _parallax_bg:
@@ -135,7 +144,18 @@ func _ready() -> void:
     _connect_viewport_resize()
     _init_status_timer()
 
+    if not Engine.is_editor_hint():
+        call_deferred("_enable_processing")
+
+func _enable_processing() -> void:
+    if is_inside_tree():
+        set_process_input(true)
+        set_process_unhandled_input(true)
+        set_process(true)
+
 func _input(event: InputEvent) -> void:
+    if not is_inside_tree():
+        return
     if _closing:
         return
     if _groups_scroll == null:
@@ -215,6 +235,8 @@ func _init_status_timer() -> void:
         add_child(timer)
 
 func _on_status_timer_timeout() -> void:
+    if not is_inside_tree():
+        return
     var status_label := get_node_or_null("UI/VBox/StatusLabel") as Label
     if status_label:
         status_label.text = ""
@@ -227,7 +249,12 @@ func _set_status_text(text: String) -> void:
         if timer:
             timer.start()
 
+func _exit_tree() -> void:
+    set_process(false)
+
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     if _parallax_bg:
         # Move from Top-Right to Bottom-Left
         # X decreases (Left), Y increases (Bottom)
@@ -244,6 +271,8 @@ func _process(delta: float) -> void:
             _parallax_bg.scroll_base_offset.y = fmod(_parallax_bg.scroll_base_offset.y, mirror_y)
 
 func _unhandled_input(event: InputEvent) -> void:
+    if not is_inside_tree():
+        return
     if _closing:
         return
     if event.is_action_pressed(&"ui_cancel"):
@@ -264,6 +293,8 @@ func _setup_groups_scroll_input() -> void:
         _groups_scroll.gui_input.connect(_on_groups_scroll_gui_input)
 
 func _on_groups_scroll_gui_input(event: InputEvent) -> void:
+    if not is_inside_tree():
+        return
     if _groups_scroll == null:
         return
 
@@ -397,6 +428,8 @@ func _connect_viewport_resize() -> void:
 
 
 func _on_viewport_size_changed() -> void:
+    if not is_inside_tree():
+        return
     var viewport := get_viewport()
     if viewport == null:
         return
@@ -1377,6 +1410,8 @@ func _update_buy_buttons_state() -> void:
 
 
 func _on_item_buy_pressed(item: Dictionary) -> void:
+    if not is_inside_tree():
+        return
     if _is_recent_scroll_gesture():
         return
     if not Engine.is_editor_hint():
@@ -1471,6 +1506,8 @@ func _execute_purchase(item: Dictionary) -> void:
 
 
 func _on_language_changed(_locale: String) -> void:
+    if not is_inside_tree():
+        return
     if Engine.is_editor_hint():
         return
     var title := get_node_or_null("UI/VBox/TitleLabel") as Label
@@ -1606,6 +1643,8 @@ func _unlock_skin(id: String) -> void:
     _save_cosmetics_data(cosmetics)
 
 func _on_back_pressed() -> void:
+    if not is_inside_tree():
+        return
     if Engine.is_editor_hint():
         return
     if _closing:

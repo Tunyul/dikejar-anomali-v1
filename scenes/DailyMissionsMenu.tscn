@@ -9,8 +9,6 @@
 [ext_resource type="Texture2D" uid="uid://cpwsk0io7g2su" path="res://assets/tombol/tombol_claim_aktif_108x64.png" id="7_claim_active"]
 [ext_resource type="Texture2D" uid="uid://yrdaorbs24i0" path="res://assets/tombol/tombol_x_96.png" id="9_close_x"]
 [ext_resource type="PackedScene" uid="uid://civfdm736wgj6" path="res://scenes/ConfirmPanel.tscn" id="10_confirm_panel_scene"]
-[ext_resource type="Script" uid="uid://cvivocoxcy2xo" path="res://scripts/AdManager.gd" id="11_ad_manager_script"]
-[ext_resource type="Script" uid="uid://dhacrgdwndgfc" path="res://scripts/MissionsManager.gd" id="12_missions_manager_script"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tab_mission"]
 texture = ExtResource("5_tab_mission")
@@ -49,14 +47,8 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="AdManager" type="Node" parent="."]
-script = ExtResource("11_ad_manager_script")
-
-[node name="MissionsManager" type="Node" parent="."]
-script = ExtResource("12_missions_manager_script")
-
 [node name="UI" type="CanvasLayer" parent="."]
-layer = 100
+layer = 200
 
 [node name="ConfirmPanel" parent="UI" instance=ExtResource("10_confirm_panel_scene")]
 visible = false

@@ -110,6 +110,8 @@ func _find_player() -> Node2D:
     return null
 
 func _physics_process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     _t += delta
     var root := get_tree().get_root()
     var main := root.get_node_or_null("Main")

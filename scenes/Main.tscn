@@ -931,8 +931,4 @@ target_position = Vector2(0, 200)
 
 [node name="SFXJump" type="AudioStreamPlayer" parent="."]
 
-[node name="AdManager" type="Node" parent="."]
-script = ExtResource("35")
 
-[node name="MissionsManager" type="Node" parent="."]
-script = ExtResource("36")

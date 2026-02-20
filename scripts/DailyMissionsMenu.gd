@@ -177,8 +177,8 @@ func _ready() -> void:
     if _confirm_no:
         _confirm_no.pressed.connect(_on_confirm_no_pressed)
 
-    _ad_manager = get_node_or_null("AdManager")
-    _missions_manager = get_node_or_null("MissionsManager")
+    _ad_manager = AdManager
+    _missions_manager = MissionsManager
     if _ad_manager and _ad_manager.has_signal("reward_granted"):
         var cb := Callable(self, "_on_reward_granted")
         if not _ad_manager.is_connected("reward_granted", cb):
@@ -683,6 +683,8 @@ func _on_claim_daily_all_pressed() -> void:
 
 
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     if get_tree().current_scene == self:
         return
     if not visible:

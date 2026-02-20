@@ -45,9 +45,11 @@ var _flag_zh: Texture2D = null
 var _lang_confirm_popup: Node = null
 var _lang_popup: PopupMenu = null
 var _settings_menu: Node = null
+var _buttons_row: Control = null
 
 
 func _ready() -> void:
+    _buttons_row = get_node_or_null("UI/CenterContainer/VBox/ButtonsRow")
     var play := get_node_or_null("UI/CenterContainer/VBox/ButtonsRow/PlayButton")
     if play == null:
         play = get_node_or_null("UI/CenterContainer/VBox/PlayButton")
@@ -570,11 +572,17 @@ func _on_daily_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     var missions_menu := get_node_or_null("DailyMissionsMenu")
     if missions_menu == null:
+        # Check if old instance exists
+        var old_menu := get_node_or_null("UI/DailyMissionsMenu")
+        if old_menu:
+            old_menu.queue_free()
+
         var packed := load("res://scenes/DailyMissionsMenu.tscn") as PackedScene
         if packed:
             missions_menu = packed.instantiate()
             (missions_menu as Node).name = "DailyMissionsMenu"
             add_child(missions_menu)
+
     if missions_menu:
         if missions_menu.has_method("show_overlay"):
             missions_menu.call("show_overlay")
@@ -990,6 +998,8 @@ func _wire_settings_menu_signals(settings_menu: Node) -> void:
     var c_bgm_mute := Callable(self, "_on_settings_bgm_mute_changed")
     if settings_menu.has_signal("bgm_mute_changed") and not settings_menu.is_connected("bgm_mute_changed", c_bgm_mute):
         settings_menu.connect("bgm_mute_changed", c_bgm_mute)
+    if settings_menu.has_signal("overlay_closed") and not settings_menu.is_connected("overlay_closed", _on_overlay_closed):
+        settings_menu.connect("overlay_closed", _on_overlay_closed)
 
 
 func _on_settings_bgm_volume_changed(v: float) -> void:
@@ -1036,3 +1046,5 @@ func _apply_responsive_layout(vp: Vector2) -> void:
     scale_factor = clampf(scale_factor, 0.75, 1.35)
     var s: float = 0.34 * scale_factor
     _title_sprite.scale = Vector2(s, s)
+func _on_overlay_closed() -> void:
+    pass

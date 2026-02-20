@@ -5,6 +5,14 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.35-beta] - 2026-02-20
+
+- Fix: Mengatasi indentasi error pada `AdManager.gd` agar sesuai standar GDScript (spasi vs tab).
+- Fix: Standardisasi nama aplikasi menjadi "Anomaly Rush!" pada `PRIVACY_POLICY.md` dan `export_presets.cfg`.
+- Fix: Mengatasi masalah overlay Menu Misi Harian yang tertutup judul dengan memindahkan ke `CanvasLayer` (layer 200).
+- Fix: Mengatasi masalah overlay Menu Settings dengan menyamakan struktur `CanvasLayer` (layer 200).
+- Refactor: Menyeragamkan logika overlay menu (Misi & Settings) untuk maintenance yang lebih mudah.
+
 ## [1.3.34-beta] - 2026-02-18
 
 - Fix: Mobile - Mengatasi error `can_process: Condition "!is_inside_tree()" is true` dengan menambahkan pengecekan `is_instance_valid()` dan `is_inside_tree()` pada GameManager dan Parallax.

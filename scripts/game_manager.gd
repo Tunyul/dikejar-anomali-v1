@@ -1038,6 +1038,8 @@ func _wire_settings_menu_signals(settings_menu: Node) -> void:
         settings_menu.connect("menu_pressed", c_menu)
 
 func _process(delta: float) -> void:
+    if not is_inside_tree():
+        return
     if countdown_active and game_active:
         var lbl := canvas.get_node_or_null("CountdownLabel") if canvas else null
         countdown_timer = max(countdown_timer - delta, 0.0)
@@ -1452,7 +1454,7 @@ func _on_settings_overlay_closed() -> void:
 func try_rewarded_continue() -> void:
     if ads_shown_count >= ads_max_per_session:
         return
-    var adm := get_node_or_null("AdManager")
+    var adm = AdManager
     if adm and adm.has_method("show_rewarded"):
         if adm.has_method("is_rewarded_available") and not adm.is_rewarded_available():
             return
@@ -2473,7 +2475,7 @@ func _append_perf_log(_line: String) -> void:
     pass
 
 
-@onready var missions_manager: Node = get_node_or_null("MissionsManager")
+@onready var missions_manager: Node = MissionsManager
 var _next_coin_burst_distance: int = 300
 func _apply_spawn_safety_limits() -> void:
     var layers: Array = []

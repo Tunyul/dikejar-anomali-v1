@@ -15,7 +15,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Anomaly Rush!"
-config/version="1.3.34-beta"
+config/version="1.3.35-beta"
 run/main_scene="res://scenes/LoadingScreen.tscn"
 config/features=PackedStringArray("4.6")
 config/icon="uid://cs8vxi0qroewf"
@@ -26,6 +26,7 @@ TransitionManager="*res://scenes/TransitionManager.tscn"
 Preloader="*res://scripts/Preloader.gd"
 RemoteContent="*res://scripts/RemoteContent.gd"
 MissionsManager="*res://scripts/MissionsManager.gd"
+AdManager="*res://scripts/AdManager.gd"
 
 [display]
 
@@ -36,6 +37,10 @@ window/size/window_width_override=1024
 window/size/window_height_override=576
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/admob/plugin.cfg")
 
 [input]
 
@@ -78,3 +83,9 @@ textures/vram_compression/import_etc2_astc=true
 2d/snap/snap_2d_transforms_to_pixel=true
 textures/vram_compression/import_etc=true
 textures/vram_compression/import_s3tc=true
+
+[admob]
+
+config/banner_id="ca-app-pub-3940256099942544/6300978111"
+config/interstitial_id="ca-app-pub-3940256099942544/1033173712"
+config/rewarded_id="ca-app-pub-3940256099942544/5224354917"
