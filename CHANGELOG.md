@@ -7,6 +7,7 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [1.3.37-beta] - 2026-02-20
 
+- Docs: Menambahkan `DEPLOYMENT_GUIDE_ID.md` sebagai panduan rilis dan persiapan QA/Beta.
 - Gameplay: Memendekkan `flat_start_length_tiles` menjadi 24 agar fase awal run tidak terlalu panjang.
 - Gameplay: Menambahkan reset ground ke posisi flat-start saat run dimulai ulang, termasuk flow continue setelah Game Over + rewarded ad.
 - Gameplay: Menjaga nilai run saat lanjut (score/coins/gems) agar tidak ter-reset ke nol ketika masuk fase play lagi.
