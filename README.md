@@ -5,11 +5,12 @@
 ![Version](https://img.shields.io/badge/Version-1.3.37--beta-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**Anomaly Rush!** adalah game *Endless Runner 2D* yang dikembangkan menggunakan Godot Engine 4.6. Pemain harus bertahan hidup dari kejaran "Anomaly" sambil melewati rintangan dan mengumpulkan sumber daya di dunia yang terus berubah.
+**Anomaly Rush!** adalah game _Endless Runner 2D_ yang dikembangkan menggunakan Godot Engine 4.6. Pemain harus bertahan hidup dari kejaran "Anomaly" sambil melewati rintangan dan mengumpulkan sumber daya di dunia yang terus berubah.
 
 ---
 
 ## 📌 Daftar Isi
+
 - [Gameplay](#-gameplay)
 - [Fitur Utama](#-fitur-utama)
 - [Struktur Proyek](#-struktur-proyek--dokumentasi)
@@ -20,21 +21,24 @@
 ---
 
 ## 🎮 Gameplay
+
 - **Genre**: 2D Endless Runner.
 - **Core Loop**: Berlari, melompat, dan menyerang untuk menghindari rintangan/musuh.
 - **Objective**: Kumpulkan koin dan gems, capai jarak terjauh, dan selesaikan misi harian.
 - **Progression**: Tingkatkan skill dan power-ups di Shop menggunakan koin yang dikumpulkan.
 
 ### Kontrol
-| Aksi | Keyboard | Mouse/Touch |
-| :--- | :--- | :--- |
-| **Lompat** | `Space` | Klik Kiri / Tap |
-| **Serang** | `K` | Klik Kanan / Double Tap |
-| **Pause** | `Esc` | Tombol Pause UI |
+
+| Aksi       | Keyboard | Mouse/Touch             |
+| :--------- | :------- | :---------------------- |
+| **Lompat** | `Space`  | Klik Kiri / Tap         |
+| **Serang** | `K`      | Klik Kanan / Double Tap |
+| **Pause**  | `Esc`    | Tombol Pause UI         |
 
 ---
 
 ## ✨ Fitur Utama
+
 - **Sistem Misi**: Misi harian, mingguan, dan tantangan dengan sistem reward dinamis.
 - **Shop & Upgrades**: Tingkatkan durasi Power-ups (Magnet, Shield, Double Coins, Speed Boost).
 - **XP & Leveling**: Sistem progres pemain dengan hadiah setiap kenaikan level.
@@ -44,9 +48,11 @@
 ---
 
 ## 🛠️ Struktur Proyek & Dokumentasi
+
 Dokumentasi teknis lengkap tersedia di folder [docs/](docs/):
 
 - 📜 [**Changelog**](CHANGELOG.md) - Riwayat perubahan versi.
+- 🚀 [**Panduan Deployment**](DEPLOYMENT_GUIDE_ID.md) - Persiapan rilis ke Google Play Store (QA/Beta).
 - 🤖 [**AI Collaboration**](AI_COLLABORATION.md) - Panduan bekerja dengan AI.
 - 🗺️ [**Roadmap**](ROADMAP.md) - Rencana pengembangan fitur.
 - 🏗️ [**Arsitektur Pemain**](docs/GAME_CONCEPT_AND_PLAYER_IMPLEMENTATION.md) - Detail teknis kontrol dan state machine.
@@ -57,6 +63,7 @@ Dokumentasi teknis lengkap tersedia di folder [docs/](docs/):
 ---
 
 ## 🚀 Cara Menjalankan
+
 1. Pastikan Anda menggunakan **Godot Engine 4.6**.
 2. Clone repository ini:
    ```bash
@@ -68,12 +75,15 @@ Dokumentasi teknis lengkap tersedia di folder [docs/](docs/):
 ---
 
 ## 🤝 Kontribusi
+
 Kami menerima kontribusi dalam bentuk pelaporan bug, saran fitur, maupun pull request. Silakan baca [CONTRIBUTING.md](CONTRIBUTING.md) untuk panduan lebih lanjut.
 
 ---
 
 ## 📄 Lisensi
+
 Proyek ini dilisensikan di bawah **MIT License**. Lihat file [LICENSE](LICENSE) untuk detail lebih lanjut.
 
 ---
+
 © 2026 **Rakhasa Team** - [Okka Putra](mailto:okka.putra@rakhasa.com)
