@@ -29,11 +29,11 @@
 
 ### Kontrol (Mobile)
 
-| Aksi       | Gestur / Touch     |
-| :--------- | :----------------- |
-| **Lompat** | Tap Layar          |
-| **Serang** | Double Tap Layar   |
-| **Pause**  | Tombol Pause di UI |
+| Aksi       | Input                                   |
+| :--------- | :-------------------------------------- |
+| **Lompat** | Tap Tombol **Lompat** (Kanan Bawah)     |
+| **Serang** | Tap Tombol **Serang** (Kiri Bawah)      |
+| **Pause**  | Tap Tombol **Pause** (Pojok Kanan Atas) |
 
 > **Catatan:** Saat testing di Godot Editor (PC), bisa menggunakan `Spasi` untuk lompat, `K` untuk serang, dan `Esc` untuk pause.
 
