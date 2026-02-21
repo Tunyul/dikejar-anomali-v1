@@ -27,13 +27,15 @@
 - **Objective**: Kumpulkan koin dan gems, capai jarak terjauh, dan selesaikan misi harian.
 - **Progression**: Tingkatkan skill dan power-ups di Shop menggunakan koin yang dikumpulkan.
 
-### Kontrol
+### Kontrol (Mobile)
 
-| Aksi       | Keyboard | Mouse/Touch             |
-| :--------- | :------- | :---------------------- |
-| **Lompat** | `Space`  | Klik Kiri / Tap         |
-| **Serang** | `K`      | Klik Kanan / Double Tap |
-| **Pause**  | `Esc`    | Tombol Pause UI         |
+| Aksi       | Gestur / Touch     |
+| :--------- | :----------------- |
+| **Lompat** | Tap Layar          |
+| **Serang** | Double Tap Layar   |
+| **Pause**  | Tombol Pause di UI |
+
+> **Catatan:** Saat testing di Godot Editor (PC), bisa menggunakan `Spasi` untuk lompat, `K` untuk serang, dan `Esc` untuk pause.
 
 ---
 
