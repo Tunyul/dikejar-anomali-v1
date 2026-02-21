@@ -2,7 +2,7 @@
 
 ![Banner](https://img.shields.io/badge/Status-In--Development-yellow?style=for-the-badge)
 ![Godot Engine](https://img.shields.io/badge/Godot-4.6-%23478cbf?style=for-the-badge&logo=godot-engine&logoColor=white)
-![Version](https://img.shields.io/badge/Version-1.3.37--beta-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.3.38--beta-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Anomaly Rush!** adalah game _Endless Runner 2D_ yang dikembangkan menggunakan Godot Engine 4.6. Pemain harus bertahan hidup dari kejaran "Anomaly" sambil melewati rintangan dan mengumpulkan sumber daya di dunia yang terus berubah.
@@ -41,6 +41,8 @@
 
 - **Sistem Misi**: Misi harian, mingguan, dan tantangan dengan sistem reward dinamis.
 - **Shop & Upgrades**: Tingkatkan durasi Power-ups (Magnet, Shield, Double Coins, Speed Boost).
+- **In-App Purchase (Beta)**: Beli koin dan hapus iklan menggunakan Google Play Billing (Coming Soon).
+- **Google Play Games (Beta)**: Login, Leaderboard, dan Achievement (Coming Soon).
 - **XP & Leveling**: Sistem progres pemain dengan hadiah setiap kenaikan level.
 - **Audio Dinamis**: BGM khusus untuk gameplay dan game over, dengan sistem audio ducking.
 - **Optimization**: Renderer Mobile dioptimalkan untuk performa tinggi di perangkat Android.
