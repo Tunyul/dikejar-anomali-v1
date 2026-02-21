@@ -5,6 +5,14 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.38-beta] - 2026-02-24
+
+- Core: Added `BillingManager.gd` for Google Play Billing integration.
+- Core: Added `PlayGamesManager.gd` for Google Play Games Services login.
+- Docs: Updated project timeline for solo development (`TIMELINE_SOLO_DEV_REALISTIC.csv`).
+- Docs: Cleaned up deprecated timeline files.
+- Docs: Added `REPORT_TO_MANAGER.md` draft.
+
 ## [1.3.37-beta] - 2026-02-20
 
 - Docs: Menambahkan `DEPLOYMENT_GUIDE_ID.md` sebagai panduan rilis dan persiapan QA/Beta.

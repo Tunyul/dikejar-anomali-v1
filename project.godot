@@ -33,6 +33,8 @@ Preloader="*res://scripts/Preloader.gd"
 RemoteContent="*res://scripts/RemoteContent.gd"
 MissionsManager="*res://scripts/MissionsManager.gd"
 AdManager="*res://scripts/AdManager.gd"
+BillingManager="*res://scripts/BillingManager.gd"
+PlayGamesManager="*res://scripts/PlayGamesManager.gd"
 
 [display]
 
