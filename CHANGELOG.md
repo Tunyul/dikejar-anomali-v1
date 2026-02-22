@@ -5,6 +5,11 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.39-beta] - 2026-02-22
+
+- UI: Menghilangkan indikator visual area sentuh (lingkaran biru/kuning) pada tombol mobile untuk tampilan yang lebih bersih.
+- Fix: Memperbaiki masalah tombol Attack dan Jump yang tetap muncul saat Game Over.
+
 ## [1.3.38-beta] - 2026-02-24
 
 - Core: Added `BillingManager.gd` for Google Play Billing integration.

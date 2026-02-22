@@ -52,6 +52,7 @@ func _ready() -> void:
     _buttons_row = get_node_or_null("UI/CenterContainer/VBox/ButtonsRow")
     AdManager.load_banner()
     AdManager.show_banner()
+    AdManager.move_banner(false) # Banner di bawah untuk menu
     var play := get_node_or_null("UI/CenterContainer/VBox/ButtonsRow/PlayButton")
     if play == null:
         play = get_node_or_null("UI/CenterContainer/VBox/PlayButton")

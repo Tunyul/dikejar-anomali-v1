@@ -238,9 +238,9 @@ func _on_viewport_size_changed() -> void:
 func _get_mission_panel_base_size() -> Vector2:
     var base := _MISSION_PANEL_BASE_SIZE
     if _mission_panel is TextureRect:
-        var tr := _mission_panel as TextureRect
-        if tr.texture:
-            var ts := tr.texture.get_size()
+        var tex_rect := _mission_panel as TextureRect
+        if tex_rect.texture:
+            var ts := tex_rect.texture.get_size()
             if ts.x > 0.0 and ts.y > 0.0:
                 base = ts
     base.x = maxf(base.x, 1.0)

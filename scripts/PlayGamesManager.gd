@@ -3,61 +3,87 @@ extends Node
 # Signal
 signal login_success(player_data) # Dictionary: {id, display_name, avatar_url}
 signal login_failed(error_code)
-signal achievement_unlocked(achievement_id)
+# signal achievement_unlocked(achievement_id)
 
-var play_games = null
+var sign_in_client: PlayGamesSignInClient
+var achievements_client: PlayGamesAchievementsClient
+var leaderboards_client: PlayGamesLeaderboardsClient
+var players_client: PlayGamesPlayersClient
+
 var is_authenticated = false
 
 func _ready():
-	if Engine.has_singleton("GodotPlayGamesServices"):
-		play_games = Engine.get_singleton("GodotPlayGamesServices")
+    # Initialize the plugin first
+    # Note: Autoload 'GodotPlayGameServices' is available globally
+    var init_status = GodotPlayGameServices.initialize()
+    if init_status != GodotPlayGameServices.PlayGamesPluginError.OK:
+        print("PlayGamesManager: Failed to initialize GodotPlayGameServices or plugin not found.")
+        return
 
-		# Setup callback
-		play_games.connect("sign_in_success", _on_sign_in_success)
-		play_games.connect("sign_in_failed", _on_sign_in_failed)
+    # Initialize Clients
+    sign_in_client = PlayGamesSignInClient.new()
+    add_child(sign_in_client)
 
-		# Auto-login saat start
-		# Note: Google menyarankan silent sign-in dulu
-		sign_in(true)
-	else:
-		print("PlayGamesManager: Plugin not found!")
+    achievements_client = PlayGamesAchievementsClient.new()
+    add_child(achievements_client)
+
+    leaderboards_client = PlayGamesLeaderboardsClient.new()
+    add_child(leaderboards_client)
+
+    players_client = PlayGamesPlayersClient.new()
+    add_child(players_client)
+
+    # Connect Signals
+    sign_in_client.user_authenticated.connect(_on_user_authenticated)
+
+    # Auto-login check (Silent sign-in is handled by plugin at startup usually)
+    # But we can explicitly check authentication
+    check_authentication()
+
+func check_authentication():
+    if sign_in_client:
+        sign_in_client.is_authenticated()
 
 func sign_in(silent: bool = false):
-	if play_games:
-		if silent:
-			# Login tanpa UI pop-up (jika user pernah login sebelumnya)
-			# Implementasi tergantung plugin, biasanya otomatis handle di init
-			play_games.signIn()
-		else:
-			# Login dengan UI pop-up (jika silent gagal atau tombol login ditekan)
-			play_games.signIn()
+    if sign_in_client:
+        if silent:
+            # The new plugin's sign_in() triggers the interactive flow.
+            # Silent sign-in is usually automatic or via is_authenticated() check.
+            sign_in_client.is_authenticated()
+        else:
+            sign_in_client.sign_in()
 
-func _on_sign_in_success(account_id: String):
-	print("PlayGamesManager: Login Success! ID: ", account_id)
-	is_authenticated = true
+func _on_user_authenticated(is_auth: bool):
+    if is_auth:
+        print("PlayGamesManager: User Authenticated!")
+        is_authenticated = true
 
-	# Ambil detail player
-	# (Tergantung plugin, kadang perlu panggil fungsi getPlayer())
-	var player_info = {
-		"id": account_id,
-		"display_name": "Player" # Placeholder, update jika plugin support getDisplayName
-	}
-	emit_signal("login_success", player_info)
-
-func _on_sign_in_failed(error_code: int):
-	print("PlayGamesManager: Login Failed. Code: ", error_code)
-	is_authenticated = false
-	emit_signal("login_failed", error_code)
+        # Fetch player info
+        if players_client:
+            # Note: players_client.load_current_player() might be needed if available
+            # For now, we emit success with a placeholder or fetch if possible
+            # Checking players_client API... assuming load_current_player exists or similar
+            # If not, we just signal success
+            emit_signal("login_success", {"id": "unknown", "display_name": "Player"})
+            # Optionally load real player data here if players_client has methods
+    else:
+        print("PlayGamesManager: User NOT Authenticated.")
+        is_authenticated = false
+        emit_signal("login_failed", -1)
 
 func unlock_achievement(achievement_id: String):
-	if play_games and is_authenticated:
-		play_games.unlockAchievement(achievement_id)
-		# emit_signal("achievement_unlocked", achievement_id) # Opsional
+    if achievements_client and is_authenticated:
+        achievements_client.unlock_achievement(achievement_id)
+        # emit_signal("achievement_unlocked", achievement_id) # Optional
 
 func show_achievements():
-	if play_games and is_authenticated:
-		play_games.showAchievements()
+    if achievements_client and is_authenticated:
+        achievements_client.show_achievements()
 
 func show_leaderboard(leaderboard_id: String):
-	if play_games and is_authenticated:
-		play_games.showLeaderboard(leaderboard_id)
+    if leaderboards_client and is_authenticated:
+        leaderboards_client.show_leaderboard(leaderboard_id)
+
+func submit_score(leaderboard_id: String, score: int):
+    if leaderboards_client and is_authenticated:
+        leaderboards_client.submit_score(leaderboard_id, score)

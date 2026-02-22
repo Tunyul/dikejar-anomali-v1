@@ -21,7 +21,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Anomaly Rush!"
-config/version="1.3.37-beta"
+config/version="1.3.39-beta"
 run/main_scene="res://scenes/LoadingScreen.tscn"
 config/features=PackedStringArray("4.6")
 config/icon="uid://cs8vxi0qroewf"
@@ -35,6 +35,7 @@ MissionsManager="*res://scripts/MissionsManager.gd"
 AdManager="*res://scripts/AdManager.gd"
 BillingManager="*res://scripts/BillingManager.gd"
 PlayGamesManager="*res://scripts/PlayGamesManager.gd"
+GodotPlayGameServices="*uid://cr6qqx4sy0lsj"
 
 [display]
 
@@ -48,7 +49,7 @@ window/stretch/aspect="expand"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/admob/plugin.cfg")
+enabled=PackedStringArray("res://addons/admob/plugin.cfg", "res://addons/GodotGooglePlayBilling/plugin.cfg", "res://addons/GodotPlayGameServices/plugin.cfg")
 
 [input]
 

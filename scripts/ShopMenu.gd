@@ -133,6 +133,8 @@ func _ready() -> void:
         var gems_label := get_node_or_null("UI/VBox/CurrencyRow/GemsLabel")
         var status_label := get_node_or_null("UI/VBox/StatusLabel") as Label
         _ad_manager = AdManager
+        if _ad_manager:
+            _ad_manager.move_banner(false) # Banner di bawah untuk shop
 
         if back and not back.pressed.is_connected(_on_back_pressed):
             back.pressed.connect(_on_back_pressed)

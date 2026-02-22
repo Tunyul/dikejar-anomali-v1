@@ -29,11 +29,11 @@
 
 ### Kontrol (Mobile)
 
-| Aksi       | Input                                   |
-| :--------- | :-------------------------------------- |
-| **Lompat** | Tap Tombol **Lompat** (Kanan Bawah)     |
-| **Serang** | Tap Tombol **Serang** (Kiri Bawah)      |
-| **Pause**  | Tap Tombol **Pause** (Pojok Kanan Atas) |
+| Aksi       | Input                                                     |
+| :--------- | :-------------------------------------------------------- |
+| **Lompat** | Tap Tombol **Lompat** (Kanan Bawah - Paling Kanan)        |
+| **Serang** | Tap Tombol **Serang** (Kanan Bawah - Sebelah Kiri Lompat) |
+| **Pause**  | Tap Tombol **Pause** (Pojok Kanan Atas)                   |
 
 > **Catatan:** Saat testing di Godot Editor (PC), bisa menggunakan `Spasi` untuk lompat, `K` untuk serang, dan `Esc` untuk pause.
 

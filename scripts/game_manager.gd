@@ -165,6 +165,7 @@ var _settings_menu_opened_from_playing: bool = false
 var _settings_menu_was_paused: bool = false
 
 func _ready() -> void:
+    AdManager.move_banner(true) # Banner di atas untuk ingame
     if missions_manager and missions_manager.has_signal("ready_to_claim_changed"):
         var cb := Callable(self, "_on_missions_ready_to_claim_changed")
         if not missions_manager.is_connected("ready_to_claim_changed", cb):
@@ -757,11 +758,12 @@ func _connect_mobile_buttons() -> void:
         if not _attack_button.pressed.is_connected(_on_attack_button_pressed):
             _attack_button.pressed.connect(_on_attack_button_pressed)
 
-    _ensure_mobile_button_tints()
+    # _ensure_mobile_button_tints() # Removed tints as per user request
     _update_mobile_controls_layout(true)
 
 
 func _ensure_mobile_button_tints() -> void:
+    return # Disable button tints
     if canvas == null:
         return
     var mc := canvas.get_node_or_null("MobileControls") as Control
@@ -887,8 +889,10 @@ func _update_mobile_controls_layout(force: bool) -> void:
     _update_safe_ui_layout(safe, vp)
 
     if _jump_button != null and _attack_button != null:
-        var margin: float = 24.0
-        var spacing: float = 16.0
+        # Config Layout Baru (Lebih naik & ke tengah)
+        var margin_right: float = 80.0
+        var margin_bottom: float = 60.0
+        var spacing: float = 32.0
 
         var jt := _jump_button.texture_normal
         var at := _attack_button.texture_normal
@@ -897,14 +901,31 @@ func _update_mobile_controls_layout(force: bool) -> void:
         var js := jt.get_size() if jt != null else Vector2(96, 96)
         var asz := at.get_size() if at != null else Vector2(96, 96)
 
+        # Perbesar tombol (Scale Up)
+        var button_scale: float = 1.3
+        _jump_button.scale = Vector2(button_scale, button_scale)
+        _attack_button.scale = Vector2(button_scale, button_scale)
+
+        # Transparansi agar tidak menghalangi pandangan (50% Opacity)
+        _jump_button.modulate.a = 0.5
+        _attack_button.modulate.a = 0.5
+
+        # Hitung ukuran efektif setelah di-scale
+        var js_scaled := js * button_scale
+        var asz_scaled := asz * button_scale
+
         # Log posisi untuk debugging
+        # Jump Button: Posisi acuan (Kanan Atas dari cluster tombol)
         var jump_pos := Vector2(
-            safe.position.x + safe.size.x - margin - js.x,
-            safe.position.y + safe.size.y - margin - js.y
+            safe.position.x + safe.size.x - margin_right - js_scaled.x,
+            safe.position.y + safe.size.y - margin_bottom - js_scaled.y
         )
+
+        # Attack Button: Sebelah kiri Jump, sedikit turun (formasi arc natural jempol)
+        var attack_y_offset: float = 40.0
         var attack_pos := Vector2(
-            jump_pos.x - spacing - asz.x,
-            safe.position.y + safe.size.y - margin - asz.y
+            jump_pos.x - spacing - asz_scaled.x,
+            jump_pos.y + attack_y_offset
         )
 
         print("[GameManager] Setting button positions - Jump: ", jump_pos, " Attack: ", attack_pos, " Viewport: ", vp)
@@ -912,33 +933,32 @@ func _update_mobile_controls_layout(force: bool) -> void:
         _jump_button.position = jump_pos
         _attack_button.position = attack_pos
 
-        # Pastikan tombol terlihat di mobile dan z-index tinggi
-        _jump_button.visible = true
-        _attack_button.visible = true
+        # Pastikan tombol terlihat di mobile dan z-index tinggi HANYA saat bermain
+        _jump_button.visible = (phase != Phase.GAME_OVER)
+        _attack_button.visible = (phase != Phase.GAME_OVER)
         _jump_button.z_index = 100
         _attack_button.z_index = 100
 
-        _update_mobile_button_tints()
+        # _update_mobile_button_tints() # Removed tints as per user request
 
 
 func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
-    var inset_top: float = safe.position.y
+    # Banner height offset (estimasi 70px + margin 10px) - Hanya untuk notifikasi tengah
+    var banner_height: float = 80.0
+    var inset_top_center: float = safe.position.y + banner_height
+    var inset_top_hud: float = safe.position.y
     var inset_right: float = maxf(viewport_size.x - (safe.position.x + safe.size.x), 0.0)
     var inset_bottom: float = maxf(viewport_size.y - (safe.position.y + safe.size.y), 0.0)
 
-    if settings_button:
-        settings_button.offset_left = -72.0 - inset_right
-        settings_button.offset_right = -16.0 - inset_right
-        settings_button.offset_top = 16.0 + inset_top
-        settings_button.offset_bottom = 72.0 + inset_top
+    # Hapus pengaturan settings_button di sini karena dipindah ke bawah (RIGHT GROUP) agar logic-nya menyatu
 
     if version_label:
         version_label.offset_top = -32.0 - inset_bottom
         version_label.offset_bottom = -8.0 - inset_bottom
 
     if bgm_toast:
-        bgm_toast.offset_top = 10.0 + inset_top
-        bgm_toast.offset_bottom = 50.0 + inset_top
+        bgm_toast.offset_top = 10.0 + inset_top_center
+        bgm_toast.offset_bottom = 50.0 + inset_top_center
 
     if missions_toast:
         # Pindahkan ke kanan atas, lebih compact
@@ -948,26 +968,56 @@ func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
         missions_toast.anchor_bottom = 0.0
         missions_toast.offset_left = -280.0 - inset_right
         missions_toast.offset_right = -10.0 - inset_right
-        missions_toast.offset_top = 10.0 + inset_top
-        missions_toast.offset_bottom = 54.0 + inset_top
+        missions_toast.offset_top = 10.0 + inset_top_center
+        missions_toast.offset_bottom = 54.0 + inset_top_center
 
     var sx := safe.position.x
     var sy := safe.position.y
+    var rx := safe.position.x + safe.size.x
 
+    # HUD Scaling (Kembalikan ke ukuran yang lebih wajar tapi tetap compact)
+    var hud_scale := Vector2(0.85, 0.85)
+
+    # LEFT GROUP (Health & Coin)
     if health_icon:
         health_icon.position = Vector2(sx + 20.0, sy + 24.0)
     if health_bar:
         health_bar.position = Vector2(sx + 40.0, sy + 12.0)
     if heart_spawn_label:
         heart_spawn_label.position = Vector2(sx + 248.0, sy + 12.0)
+
     if coin_hud:
-        coin_hud.position = Vector2(sx + 40.0, sy + 52.0)
+        coin_hud.scale = hud_scale
+        # Geser text lebih ke kanan agar tidak menumpuk dengan icon
+        coin_hud.position = Vector2(sx + 60.0, sy + 64.0)
     if coin_icon_anim:
-        coin_icon_anim.position = Vector2(sx + 20.0, sy + 68.0)
+        # Perbesar sedikit icon dan geser agar tidak terlalu mepet kiri
+        coin_icon_anim.scale = Vector2(0.25, 0.25)
+        coin_icon_anim.position = Vector2(sx + 25.0, sy + 76.0)
+
+    # RIGHT GROUP (Score, Gem, Settings)
+    # Settings Button di pojok kanan paling ujung
+    if settings_button:
+        # Reset offset karena kita pakai position manual atau anchor yang sudah benar
+        # Tapi karena ini Control node dengan anchor, kita mainkan offset dari kanan
+        settings_button.anchor_left = 1.0
+        settings_button.anchor_right = 1.0
+        settings_button.offset_left = -72.0 - inset_right
+        settings_button.offset_right = -16.0 - inset_right
+        settings_button.offset_top = 16.0 + inset_top_hud
+        settings_button.offset_bottom = 72.0 + inset_top_hud
+
+    # Score & Gem di sebelah kiri Settings Button
+    var right_hud_margin := 90.0 # Space untuk settings button
+
     if score_hud:
-        score_hud.position = Vector2(sx + 220.0, sy + 52.0)
+        score_hud.scale = hud_scale
+        # Posisi X: Kanan layar - Margin Settings - Lebar estimasi Score
+        score_hud.position = Vector2(rx - right_hud_margin - 140.0, sy + 20.0)
+
     if gem_hud:
-        gem_hud.position = Vector2(sx + 220.0, sy + 84.0)
+        gem_hud.scale = hud_scale
+        gem_hud.position = Vector2(rx - right_hud_margin - 140.0, sy + 55.0)
 
     var icon_x := sx + 16.0
     var label_x := sx + 56.0
@@ -1921,6 +1971,7 @@ func set_playing_phase() -> void:
     _bgm_mode = BgmMode.RUN
     _bgm_duck_db = 0.0
     _apply_spawn_safety_limits()
+    _update_mobile_controls_layout(true)
     if ground_a and ground_a.has_method("set_speed_limits"):
         var max_with_boost: float = max_speed
         if powerup_speed_boost_multiplier > 1.0:
@@ -2029,6 +2080,8 @@ func on_player_game_over(_cause: String) -> void:
         return
     phase = Phase.GAME_OVER
     game_active = false
+    if _jump_button: _jump_button.visible = false
+    if _attack_button: _attack_button.visible = false
     TransitionManager.play_sfx(&"game_over")
     if terrain and terrain.has_method("set_movement_enabled"):
         terrain.set_movement_enabled(false)

@@ -66,6 +66,30 @@ func hide_banner() -> void:
     if _ad_view:
         _ad_view.hide()
 
+func move_banner(to_top: bool) -> void:
+    if _ad_view:
+        # Hancurkan banner lama
+        _ad_view.destroy()
+        _ad_view = null
+
+    var unit_id = BANNER_ID_ANDROID if OS.get_name() == "Android" else BANNER_ID_IOS
+    var ad_size = AdSize.BANNER
+    # Tentukan posisi baru
+    var position = AdPosition.Values.TOP if to_top else AdPosition.Values.BOTTOM
+
+    _ad_view = AdView.new(unit_id, ad_size, position)
+
+    _ad_view.ad_listener.on_ad_loaded = func() -> void:
+        print("Banner reloaded at ", "TOP" if to_top else "BOTTOM")
+        banner_loaded.emit()
+        _ad_view.show()
+
+    _ad_view.ad_listener.on_ad_failed_to_load = func(load_ad_error : LoadAdError) -> void:
+        print("Banner failed to reload: " + load_ad_error.message)
+        banner_failed_to_load.emit(load_ad_error.code)
+
+    _ad_view.load_ad(AdRequest.new())
+
 func load_interstitial() -> void:
     var unit_id = INTERSTITIAL_ID_ANDROID if OS.get_name() == "Android" else INTERSTITIAL_ID_IOS
     var ad_request := AdRequest.new()

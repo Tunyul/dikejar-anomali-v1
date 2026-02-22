@@ -3,16 +3,12 @@
 [ext_resource type="Script" uid="uid://noswsccs8n2x" path="res://scripts/MainMenu.gd" id="1"]
 [ext_resource type="Script" uid="uid://bd4py7a4neowx" path="res://scripts/parallax_auto_scroll.gd" id="2"]
 [ext_resource type="Texture2D" uid="uid://defhj3k14gbs7" path="res://assets/Background/png/1920x1080/All/Sky.png" id="3"]
-[ext_resource type="Texture2D" uid="uid://1d818ghi2rdd" path="res://assets/Background/png/Clouds/512x512/Cloud_1.png" id="4"]
-[ext_resource type="Texture2D" uid="uid://cyv2v7og50o2r" path="res://assets/Background/png/Clouds/512x512/Cloud_2.png" id="5"]
 [ext_resource type="Texture2D" uid="uid://bo2bu1k452xov" path="res://assets/Background/png/1920x1080/All/Mountain_4.png" id="6"]
 [ext_resource type="Texture2D" uid="uid://b8k0ak7ehq3a8" path="res://assets/Background/png/1920x1080/All/Mountain_3.png" id="7"]
 [ext_resource type="Texture2D" uid="uid://dbqhmqte5y0x7" path="res://assets/Background/png/1920x1080/All/Mountain_2.png" id="8"]
 [ext_resource type="Texture2D" uid="uid://p4vincqhmsp4" path="res://assets/Background/png/1920x1080/All/Mountain_1.png" id="9"]
 [ext_resource type="Texture2D" uid="uid://cb6ibjcmicdsw" path="res://assets/tombol/tombol_mulai_256x128.png" id="10_tombol_play"]
 [ext_resource type="Texture2D" uid="uid://cs57tqdxe7yjm" path="res://assets/title/title_game.png" id="11"]
-[ext_resource type="Texture2D" uid="uid://1d818ghi2rdd" path="res://assets/Background/png/Clouds/512x512/Cloud_1.png" id="12"]
-[ext_resource type="Texture2D" uid="uid://cyv2v7og50o2r" path="res://assets/Background/png/Clouds/512x512/Cloud_2.png" id="13"]
 [ext_resource type="Texture2D" uid="uid://1d818ghi2rdd" path="res://assets/Background/png/Clouds/512x512/Cloud_1.png" id="14"]
 [ext_resource type="Texture2D" uid="uid://cyv2v7og50o2r" path="res://assets/Background/png/Clouds/512x512/Cloud_2.png" id="15"]
 [ext_resource type="Texture2D" uid="uid://kpcwkxsrgbgi" path="res://assets/Background/png/1920x1080/All/Hills_2.png" id="16"]
@@ -541,17 +537,17 @@ motion_mirroring = Vector2(1024, 0)
 
 [node name="Cloud_2_A" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=313511874]
 position = Vector2(364, 91)
-scale = Vector2(0.18164062, 0.18164062)
-texture = ExtResource("5")
+scale = Vector2(0.18164063, 0.18164063)
+texture = ExtResource("15")
 
 [node name="Cloud_2_B" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=1374528343]
 position = Vector2(823, 67)
 scale = Vector2(0.25, 0.25)
-texture = ExtResource("13")
+texture = ExtResource("15")
 
 [node name="Cloud_2_C" type="Sprite2D" parent="ParallaxBackground/Clouds_2" unique_id=1612711617]
 position = Vector2(1235, 121)
-scale = Vector2(0.23632812, 0.23632812)
+scale = Vector2(0.23632813, 0.23632813)
 texture = ExtResource("15")
 
 [node name="Clouds_1" type="ParallaxLayer" parent="ParallaxBackground" unique_id=156711519]
@@ -562,12 +558,12 @@ motion_mirroring = Vector2(1024, 0)
 [node name="Cloud_1_A" type="Sprite2D" parent="ParallaxBackground/Clouds_1" unique_id=457788448]
 position = Vector2(111, 46)
 scale = Vector2(0.18359376, 0.18359376)
-texture = ExtResource("4")
+texture = ExtResource("14")
 
 [node name="Cloud_1_B" type="Sprite2D" parent="ParallaxBackground/Clouds_1" unique_id=1626078747]
 position = Vector2(612, 107)
 scale = Vector2(0.24609374, 0.24609374)
-texture = ExtResource("12")
+texture = ExtResource("14")
 
 [node name="Cloud_1_C" type="Sprite2D" parent="ParallaxBackground/Clouds_1" unique_id=1727768560]
 position = Vector2(1006, 32)
