@@ -16,7 +16,6 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Core: Added `PlayGamesManager.gd` for Google Play Games Services login.
 - Docs: Updated project timeline for solo development (`TIMELINE_SOLO_DEV_REALISTIC.csv`).
 - Docs: Cleaned up deprecated timeline files.
-- Docs: Added `REPORT_TO_MANAGER.md` draft.
 
 ## [1.3.37-beta] - 2026-02-20
 
