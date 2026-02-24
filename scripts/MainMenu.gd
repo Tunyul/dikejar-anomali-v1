@@ -564,8 +564,72 @@ func _show_profile_panel() -> void:
     if close_btn and not close_btn.pressed.is_connected(_hide_profile_panel):
         close_btn.pressed.connect(_hide_profile_panel)
 
+    var change_avatar_btn := _profile_panel.get_node_or_null("%ChangeAvatarButton") as Button
+    if change_avatar_btn and not change_avatar_btn.pressed.is_connected(_on_change_avatar_pressed):
+        change_avatar_btn.pressed.connect(_on_change_avatar_pressed)
+
+    var change_border_btn := _profile_panel.get_node_or_null("%ChangeBorderButton") as Button
+    if change_border_btn and not change_border_btn.pressed.is_connected(_on_change_border_pressed):
+        change_border_btn.pressed.connect(_on_change_border_pressed)
+
     _refresh_profile_panel()
     _profile_panel.visible = true
+
+func _on_change_avatar_pressed() -> void:
+    TransitionManager.play_sfx(&"click")
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK: return
+
+    var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+    var owned_skins: Array = cosmetics.get("owned_skins", ["skin_basic"])
+    var current_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
+
+    if owned_skins.size() <= 1:
+        _on_shop_pressed()
+        return
+
+    # Cycle to next owned skin
+    var idx := owned_skins.find(current_skin)
+    var next_idx := (idx + 1) % owned_skins.size()
+    var next_skin := String(owned_skins[next_idx])
+
+    cosmetics["equipped_skin"] = next_skin
+    cfg.set_value("cosmetics", "data", cosmetics)
+    cfg.save("user://save.cfg")
+
+    _update_avatar_icon(next_skin)
+    _refresh_profile_panel()
+
+func _on_change_border_pressed() -> void:
+    TransitionManager.play_sfx(&"click")
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK: return
+
+    var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+    var owned_borders: Array = cosmetics.get("owned_borders", [])
+    var current_border := String(cosmetics.get("equipped_border", ""))
+
+    # Tambahkan "" (tanpa border) ke pilihan jika belum ada
+    if not owned_borders.has(""):
+        owned_borders.push_front("")
+
+    if owned_borders.size() <= 1:
+        _on_shop_pressed()
+        return
+
+    # Cycle to next owned border
+    var idx := owned_borders.find(current_border)
+    var next_idx := (idx + 1) % owned_borders.size()
+    var next_border := String(owned_borders[next_idx])
+
+    cosmetics["equipped_border"] = next_border
+    cfg.set_value("cosmetics", "data", cosmetics)
+    cfg.save("user://save.cfg")
+
+    _update_avatar_border(next_border)
+    _refresh_profile_panel()
 
 func _hide_profile_panel() -> void:
     TransitionManager.play_sfx(&"click")

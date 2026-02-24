@@ -14,6 +14,7 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Avatar: Menambahkan dukungan border avatar (Gold Border) yang dapat dimuat secara dinamis.
 - Shop: Ekstensi kategori `Avatar Borders` di menu Shop dengan variasi baru (Gold, Silver, Neon, Shadow) dan sistem `Equip`.
 - Avatar: Memperbarui sistem pemilihan border di Main Menu agar sinkron dengan pilihan di Shop dan tampil di Profile Panel.
+- Profile: Menambahkan fitur "Quick Change" (Cycle) untuk Avatar dan Border langsung dari Profile Panel bagi item yang sudah dimiliki.
 - Fix: Memperbaiki error `load_current_player()` pada `PlayGamesManager.gd` dengan menambahkan argumen `force_reload` dan koreksi tipe data `PlayGamesPlayer`.
 - Fix: Memperbaiki masalah indentasi pada `MainMenu.gd` yang menyebabkan error linter.
 

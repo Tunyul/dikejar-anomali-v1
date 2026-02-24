@@ -406,11 +406,28 @@ theme_override_font_size = 24
 text = "Nama: Player"
 
 [node name="StatsLabel" type="Label" parent="UI/ProfilePanel/Content"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Level: 1
-XP: 0/100
-Best Score: 0"
+			unique_name_in_owner = true
+			layout_mode = 2
+			text = "Level: 1
+			XP: 0/100
+			Best Score: 0"
+
+			[node name="Buttons" type="HBoxContainer" parent="UI/ProfilePanel/Content"]
+			layout_mode = 2
+			theme_override_constants/separation = 20
+			alignment = 1
+
+			[node name="ChangeAvatarButton" type="Button" parent="UI/ProfilePanel/Content/Buttons"]
+			unique_name_in_owner = true
+			custom_minimum_size = Vector2(160, 45)
+			layout_mode = 2
+			text = "Ganti Avatar"
+
+			[node name="ChangeBorderButton" type="Button" parent="UI/ProfilePanel/Content/Buttons"]
+			unique_name_in_owner = true
+			custom_minimum_size = Vector2(160, 45)
+			layout_mode = 2
+			text = "Ganti Border"
 
 [node name="CloseButton" type="Button" parent="UI/ProfilePanel"]
 layout_mode = 1
