@@ -390,6 +390,14 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
+[node name="LargeAvatarIcon" type="TextureRect" parent="UI/ProfilePanel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
 [node name="NameLabel" type="Label" parent="UI/ProfilePanel/Content"]
 unique_name_in_owner = true
 layout_mode = 2

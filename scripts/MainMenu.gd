@@ -577,6 +577,7 @@ func _refresh_profile_panel() -> void:
 
     var name_label := _profile_panel.get_node_or_null("%NameLabel") as Label
     var stats_label := _profile_panel.get_node_or_null("%StatsLabel") as Label
+    var large_avatar := _profile_panel.get_node_or_null("%LargeAvatarIcon") as TextureRect
 
     var cfg := ConfigFile.new()
     var err := cfg.load("user://save.cfg")
@@ -592,6 +593,17 @@ func _refresh_profile_panel() -> void:
         name_label.text = "Nama: " + player_name
     if stats_label:
         stats_label.text = "Level: %d\nXP: %d/%d\nBest Score: %d" % [level, xp, xp_req, best_score]
+
+    if large_avatar:
+        var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+        var equipped_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
+        var icon_path := "res://assets/profile/profile_basic.png"
+        match equipped_skin:
+            "skin_basic": icon_path = "res://assets/profile/profile_basic.png"
+            "skin_premium": icon_path = "res://assets/profile/profile_premium.png"
+            "skin_neon": icon_path = "res://assets/profile/profile_neon.png"
+            "skin_shadow": icon_path = "res://assets/profile/profile_ninja.png"
+        large_avatar.texture = load(icon_path) as Texture2D
 
 func _on_play_pressed() -> void:
     TransitionManager.play_sfx(&"click")
@@ -766,7 +778,7 @@ func _update_avatar_border(border_id: String) -> void:
         inner_icon.name = "InnerIcon"
         inner_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         inner_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        inner_icon.layout_mode = 1 # Anchors
+        # inner_icon.layout_mode = 1 # Anchors
         inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8) # Padding
         inner_icon.show_behind_parent = true
         _avatar_icon.add_child(inner_icon)
@@ -793,13 +805,13 @@ func _update_avatar_icon(skin_id: String) -> void:
 
     if inner_icon == null: return
 
-    var icon_path := "res://assets/mc/run/idle_run.png"
+    var icon_path := "res://assets/profile/profile_basic.png"
     match skin_id:
-        "skin_basic": icon_path = "res://assets/mc/run/idle_run.png"
-        "skin_premium": icon_path = "res://assets/mc/run/idle_run.png" # Need real icon assets later
-        "skin_neon": icon_path = "res://assets/mc/run/idle_run.png"
-        "skin_shadow": icon_path = "res://assets/mc/run/idle_run.png"
-        _: icon_path = "res://assets/mc/run/idle_run.png"
+        "skin_basic": icon_path = "res://assets/profile/profile_basic.png"
+        "skin_premium": icon_path = "res://assets/profile/profile_premium.png"
+        "skin_neon": icon_path = "res://assets/profile/profile_neon.png"
+        "skin_shadow": icon_path = "res://assets/profile/profile_ninja.png"
+        _: icon_path = "res://assets/profile/profile_basic.png"
 
     var tex := load(icon_path) as Texture2D
     if tex:

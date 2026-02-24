@@ -886,7 +886,7 @@ func _init_shop_data() -> void:
             "description": "Skin standar untuk petualang pemula.",
             "price": 150,
             "currency": "coins",
-            "icon": "res://assets/mc/run/idle_run.png",
+            "icon": "res://assets/profile/profile_basic.png",
             "rarity": "common"
         },
         {
@@ -895,7 +895,7 @@ func _init_shop_data() -> void:
             "description": "Skin dengan detail emas yang elegan.",
             "price": 400,
             "currency": "coins",
-            "icon": "res://assets/mc/run/idle_run.png",
+            "icon": "res://assets/profile/profile_premium.png",
             "rarity": "rare"
         }
     ]
@@ -907,7 +907,7 @@ func _init_shop_data() -> void:
             "description": "Skin futuristik yang menyala dalam gelap.",
             "price": 25,
             "currency": "gems",
-            "icon": "res://assets/mc/run/idle_run.png",
+            "icon": "res://assets/profile/profile_neon.png",
             "rarity": "epic"
         },
         {
@@ -916,7 +916,7 @@ func _init_shop_data() -> void:
             "description": "Skin misterius yang terbuat dari bayangan.",
             "price": 40,
             "currency": "gems",
-            "icon": "res://assets/mc/run/idle_run.png",
+            "icon": "res://assets/profile/profile_ninja.png",
             "rarity": "legendary"
         }
     ]
