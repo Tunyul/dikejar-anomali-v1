@@ -5,6 +5,14 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+- Profile: Implementasi sistem profil pemain interaktif yang dapat diakses dengan men-tap foto profil di Main Menu.
+- Profile: Menambahkan `ProfilePanel` UI untuk menampilkan Nama, Level, XP, dan Best Score pemain.
+- Avatar: Implementasi sistem avatar dinamis yang terintegrasi dengan sistem Skin (Basic, Premium, Neon, Shadow).
+- Avatar: Menambahkan dukungan border avatar (Gold Border) yang dapat dimuat secara dinamis.
+- Shop: Ekstensi kategori `Avatar Borders` di menu Shop untuk pembelian dan kustomisasi bingkai profil.
+- Fix: Memperbaiki error `load_current_player()` pada `PlayGamesManager.gd` dengan menambahkan argumen `force_reload` dan koreksi tipe data `PlayGamesPlayer`.
+- Fix: Memperbaiki masalah indentasi pada `MainMenu.gd` yang menyebabkan error linter.
+
 ## [1.3.39-beta] - 2026-02-22
 
 - UI: Menghilangkan indikator visual area sentuh (lingkaran biru/kuning) pada tombol mobile untuk tampilan yang lebih bersih.

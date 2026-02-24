@@ -4,6 +4,7 @@ extends Control
 
 var _pending_level_rewards: Array = []
 var _reward_panel: Control = null
+var _profile_panel: Control = null
 var _coin_label: Label = null
 var _total_coins: int = 0
 var _gem_label: Label = null
@@ -11,6 +12,7 @@ var _total_gems: int = 0
 var _reward_icon: TextureRect = null
 var _missions_badge: Control = null
 var _daily_button_animator: AnimationPlayer = null
+var _avatar_icon: TextureRect = null
 
 @export var debug_dummy_stats: bool = false
 
@@ -124,31 +126,44 @@ func _ready() -> void:
                 var score_label := score_hud.get_node_or_null("ScoreLabel") as Label
                 if score_label:
                     score_label.text = str(best)
-            if player_hud:
-                var level := int(cfg.get_value("progress", "player_level", 1))
-                var xp := int(cfg.get_value("progress", "player_xp", 0))
-                var xp_required := int(cfg.get_value("progress", "player_xp_required", 100))
-                var level_label := player_hud.get_node_or_null("LevelLabel") as Label
-                var xp_bar := player_hud.get_node_or_null("XPBar") as ProgressBar
-                var xp_label := player_hud.get_node_or_null("XPLabel") as Label
-                _reward_icon = player_hud.get_node_or_null("RewardIcon") as TextureRect
-                if level_label:
-                    level_label.text = "Lv " + str(level)
-                if xp_bar:
-                    if xp_required <= 0:
-                        xp_required = 1
-                    xp_bar.max_value = float(xp_required)
-                    xp_bar.value = clampf(float(xp), 0.0, float(xp_required))
-                if xp_label:
-                    xp_label.text = str(xp) + "/" + str(xp_required) + " XP"
-                var plr_value = cfg.get_value("rewards", "pending_level_rewards", [])
-                if plr_value is Array:
-                    _pending_level_rewards = plr_value
-                else:
-                    _pending_level_rewards = []
-                if _reward_icon:
-                    _update_reward_icon()
-                    _reward_icon.gui_input.connect(_on_reward_icon_gui_input)
+        if player_hud:
+            _avatar_icon = player_hud.get_node_or_null("AvatarIcon") as TextureRect
+            var level := int(cfg.get_value("progress", "player_level", 1))
+            var xp := int(cfg.get_value("progress", "player_xp", 0))
+            var xp_required := int(cfg.get_value("progress", "player_xp_required", 100))
+            var level_label := player_hud.get_node_or_null("LevelLabel") as Label
+            var xp_bar := player_hud.get_node_or_null("XPBar") as ProgressBar
+            var xp_label := player_hud.get_node_or_null("XPLabel") as Label
+            _reward_icon = player_hud.get_node_or_null("RewardIcon") as TextureRect
+
+            # Load equipped cosmetics
+            var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+            var equipped_border := String(cosmetics.get("equipped_border", "border_gold"))
+            var equipped_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
+
+            _update_avatar_border(equipped_border)
+            _update_avatar_icon(equipped_skin)
+
+            if level_label:
+                level_label.text = "Lv " + str(level)
+            if xp_bar:
+                if xp_required <= 0:
+                    xp_required = 1
+                xp_bar.max_value = float(xp_required)
+                xp_bar.value = clampf(float(xp), 0.0, float(xp_required))
+            if xp_label:
+                xp_label.text = str(xp) + "/" + str(xp_required) + " XP"
+            var plr_value = cfg.get_value("rewards", "pending_level_rewards", [])
+            if plr_value is Array:
+                _pending_level_rewards = plr_value
+            else:
+                _pending_level_rewards = []
+            if _reward_icon:
+                _update_reward_icon()
+                _reward_icon.gui_input.connect(_on_reward_icon_gui_input)
+            if _avatar_icon:
+                _avatar_icon.mouse_filter = Control.MOUSE_FILTER_STOP
+                _avatar_icon.gui_input.connect(_on_avatar_icon_gui_input)
         else:
             _reset_main_menu_stats_to_default(coin_hud, gem_hud, score_hud, player_hud)
 
@@ -531,6 +546,53 @@ func _on_reward_icon_gui_input(event: InputEvent) -> void:
         TransitionManager.play_sfx(&"click")
         _show_reward_panel()
 
+func _on_avatar_icon_gui_input(event: InputEvent) -> void:
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        TransitionManager.play_sfx(&"click")
+        _show_profile_panel()
+    elif event is InputEventScreenTouch and event.pressed:
+        TransitionManager.play_sfx(&"click")
+        _show_profile_panel()
+
+func _show_profile_panel() -> void:
+    if _profile_panel == null:
+        _profile_panel = get_node_or_null("UI/ProfilePanel") as Control
+    if _profile_panel == null:
+        return
+
+    var close_btn := _profile_panel.get_node_or_null("CloseButton") as Button
+    if close_btn and not close_btn.pressed.is_connected(_hide_profile_panel):
+        close_btn.pressed.connect(_hide_profile_panel)
+
+    _refresh_profile_panel()
+    _profile_panel.visible = true
+
+func _hide_profile_panel() -> void:
+    TransitionManager.play_sfx(&"click")
+    if _profile_panel:
+        _profile_panel.visible = false
+
+func _refresh_profile_panel() -> void:
+    if _profile_panel == null: return
+
+    var name_label := _profile_panel.get_node_or_null("%NameLabel") as Label
+    var stats_label := _profile_panel.get_node_or_null("%StatsLabel") as Label
+
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK: return
+
+    var player_name := String(cfg.get_value("profile", "name", "Player"))
+    var level := int(cfg.get_value("progress", "player_level", 1))
+    var xp := int(cfg.get_value("progress", "player_xp", 0))
+    var xp_req := int(cfg.get_value("progress", "player_xp_required", 100))
+    var best_score := int(cfg.get_value("progress", "best_score", 0))
+
+    if name_label:
+        name_label.text = "Nama: " + player_name
+    if stats_label:
+        stats_label.text = "Level: %d\nXP: %d/%d\nBest Score: %d" % [level, xp, xp_req, best_score]
+
 func _on_play_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     print("PlayButton ditekan")
@@ -691,11 +753,57 @@ func _on_reward_close_pressed() -> void:
 func _update_reward_icon() -> void:
     if _reward_icon == null:
         return
-    var has_pending := not _pending_level_rewards.is_empty()
-    if has_pending:
-        _reward_icon.modulate = Color(1, 1, 1, 1)
-    else:
-        _reward_icon.modulate = Color(0.5, 0.5, 0.5, 1)
+    _reward_icon.visible = not _pending_level_rewards.is_empty()
+
+func _update_avatar_border(border_id: String) -> void:
+    if _avatar_icon == null:
+        return
+
+    # We need a child for the actual avatar icon inside the border
+    var inner_icon := _avatar_icon.get_node_or_null("InnerIcon") as TextureRect
+    if inner_icon == null:
+        inner_icon = TextureRect.new()
+        inner_icon.name = "InnerIcon"
+        inner_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        inner_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        inner_icon.layout_mode = 1 # Anchors
+        inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8) # Padding
+        inner_icon.show_behind_parent = true
+        _avatar_icon.add_child(inner_icon)
+
+    var border_tex_path := "res://assets/icon/icon_border_avatar_gold_128x128.png"
+    match border_id:
+        "border_gold":
+            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png"
+        _:
+            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png"
+
+    var tex := load(border_tex_path) as Texture2D
+    if tex:
+        _avatar_icon.texture = tex
+
+func _update_avatar_icon(skin_id: String) -> void:
+    if _avatar_icon == null:
+        return
+    var inner_icon := _avatar_icon.get_node_or_null("InnerIcon") as TextureRect
+    if inner_icon == null:
+        # If not created by _update_avatar_border yet
+        _update_avatar_border("") # Trigger creation
+        inner_icon = _avatar_icon.get_node_or_null("InnerIcon") as TextureRect
+
+    if inner_icon == null: return
+
+    var icon_path := "res://assets/mc/run/idle_run.png"
+    match skin_id:
+        "skin_basic": icon_path = "res://assets/mc/run/idle_run.png"
+        "skin_premium": icon_path = "res://assets/mc/run/idle_run.png" # Need real icon assets later
+        "skin_neon": icon_path = "res://assets/mc/run/idle_run.png"
+        "skin_shadow": icon_path = "res://assets/mc/run/idle_run.png"
+        _: icon_path = "res://assets/mc/run/idle_run.png"
+
+    var tex := load(icon_path) as Texture2D
+    if tex:
+        inner_icon.texture = tex
 
 
 func _save_rewards_and_coins() -> void:

@@ -921,6 +921,19 @@ func _init_shop_data() -> void:
         }
     ]
 
+    var border_items: Array = [
+        {
+            "id": "border_gold",
+            "name": "Gold Border",
+            "description": "Bingkai emas mewah untuk profilmu.",
+            "price": 500,
+            "currency": "coins",
+            "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
+            "rarity": "rare",
+            "type": "border"
+        }
+    ]
+
     var gem_pack_real_items: Array = [
         {
             "id": "gems_small",
@@ -1015,9 +1028,15 @@ func _init_shop_data() -> void:
     })
 
     shop_groups.append({
-        "id": "cosmetics_gems",
-        "title": "Cosmetics (Gems)",
+        "id": "cosmetic_gems",
+        "title": "Cosmetic Skins (Gems)",
         "items": cosmetic_gem_items
+    })
+
+    shop_groups.append({
+        "id": "avatar_borders",
+        "title": "Avatar Borders",
+        "items": border_items
     })
 
     shop_groups.append({
@@ -1576,6 +1595,12 @@ func _update_buy_buttons_state() -> void:
     if owned_value is Array:
         for s in owned_value:
             owned_set[String(s)] = true
+    var owned_borders_set: Dictionary = {}
+    var owned_borders_value = cosmetics.get("owned_borders", [])
+    if owned_borders_value is Array:
+        for b in owned_borders_value:
+            owned_borders_set[String(b)] = true
+
     for e in buy_buttons:
         if not (e is Dictionary):
             continue
@@ -1604,6 +1629,16 @@ func _update_buy_buttons_state() -> void:
                 (b as BaseButton).disabled = owned or current_gems < price_skin
             else:
                 (b as BaseButton).disabled = owned or current_coins < price_skin
+            if b is Button:
+                (b as Button).text = (tr("Owned") if owned else tr("Buy"))
+            continue
+        if _is_border_id(id):
+            var owned := owned_borders_set.has(id)
+            var price_border := int(it.get("price", 0))
+            if currency == "gems":
+                (b as BaseButton).disabled = owned or current_gems < price_border
+            else:
+                (b as BaseButton).disabled = owned or current_coins < price_border
             if b is Button:
                 (b as Button).text = (tr("Owned") if owned else tr("Buy"))
             continue
@@ -1636,6 +1671,10 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
         return
 
     if _is_skin_id(id) and _is_skin_owned(id):
+        _set_status_text(tr("Already owned."))
+        return
+
+    if _is_border_id(id) and _is_border_owned(id):
         _set_status_text(tr("Already owned."))
         return
 
@@ -1686,6 +1725,8 @@ func _execute_purchase(item: Dictionary) -> void:
             _save_coins(current_coins)
             if _is_skin_id(id):
                 _unlock_skin(id)
+            elif _is_border_id(id):
+                _unlock_border(id)
             else:
                 _apply_item_to_powerups(item)
 
@@ -1703,6 +1744,8 @@ func _execute_purchase(item: Dictionary) -> void:
             _save_gems(current_gems)
             if _is_skin_id(id):
                 _unlock_skin(id)
+            elif _is_border_id(id):
+                _unlock_border(id)
             else:
                 _apply_item_to_powerups(item)
 
@@ -1836,15 +1879,22 @@ func _apply_item_to_powerups(item: Dictionary) -> void:
 func _is_skin_id(id: String) -> bool:
     return id.begins_with("skin_")
 
+func _is_border_id(id: String) -> bool:
+    return id.begins_with("border_")
 
 func _is_skin_owned(id: String) -> bool:
     var cosmetics := _load_cosmetics_data()
     var owned_value = cosmetics.get("owned_skins", [])
     if owned_value is Array:
-        var owned: Array = owned_value
-        return owned.has(id)
+        return owned_value.has(id)
     return false
 
+func _is_border_owned(id: String) -> bool:
+    var cosmetics := _load_cosmetics_data()
+    var owned_value = cosmetics.get("owned_borders", [])
+    if owned_value is Array:
+        return owned_value.has(id)
+    return false
 
 func _unlock_skin(id: String) -> void:
     var cosmetics := _load_cosmetics_data()
@@ -1858,6 +1908,20 @@ func _unlock_skin(id: String) -> void:
     var equipped := String(cosmetics.get("equipped_skin", ""))
     if equipped.is_empty():
         cosmetics["equipped_skin"] = id
+    _save_cosmetics_data(cosmetics)
+
+func _unlock_border(id: String) -> void:
+    var cosmetics := _load_cosmetics_data()
+    var owned_value = cosmetics.get("owned_borders", [])
+    var owned: Array = []
+    if owned_value is Array:
+        owned = owned_value
+    if not owned.has(id):
+        owned.append(id)
+    cosmetics["owned_borders"] = owned
+    var equipped := String(cosmetics.get("equipped_border", ""))
+    if equipped.is_empty():
+        cosmetics["equipped_border"] = id
     _save_cosmetics_data(cosmetics)
 
 func _on_back_pressed() -> void:

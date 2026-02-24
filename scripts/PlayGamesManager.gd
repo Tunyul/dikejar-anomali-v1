@@ -35,6 +35,7 @@ func _ready():
 
     # Connect Signals
     sign_in_client.user_authenticated.connect(_on_user_authenticated)
+    players_client.current_player_loaded.connect(_on_current_player_loaded)
 
     # Auto-login check (Silent sign-in is handled by plugin at startup usually)
     # But we can explicitly check authentication
@@ -57,19 +58,25 @@ func _on_user_authenticated(is_auth: bool):
     if is_auth:
         print("PlayGamesManager: User Authenticated!")
         is_authenticated = true
-
-        # Fetch player info
         if players_client:
-            # Note: players_client.load_current_player() might be needed if available
-            # For now, we emit success with a placeholder or fetch if possible
-            # Checking players_client API... assuming load_current_player exists or similar
-            # If not, we just signal success
-            emit_signal("login_success", {"id": "unknown", "display_name": "Player"})
-            # Optionally load real player data here if players_client has methods
+            players_client.load_current_player(true)
     else:
         print("PlayGamesManager: User NOT Authenticated.")
         is_authenticated = false
         emit_signal("login_failed", -1)
+
+func _on_current_player_loaded(player: PlayGamesPlayer):
+    if player:
+        var player_data = {
+            "id": player.player_id,
+            "display_name": player.display_name,
+            "hi_res_image_url": player.hi_res_image_url,
+            "icon_image_url": player.icon_image_url
+        }
+        print("PlayGamesManager: Player data loaded: ", player_data.display_name)
+        emit_signal("login_success", player_data)
+    else:
+        emit_signal("login_success", {"id": "unknown", "display_name": "Player"})
 
 func unlock_achievement(achievement_id: String):
     if achievements_client and is_authenticated:

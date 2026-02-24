@@ -969,7 +969,7 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.9143974
+frame_progress = 0.046731517
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser" unique_id=638828194]
 shape = SubResource("RectangleShape2D_oa6sj")
