@@ -787,12 +787,25 @@ func _update_avatar_border(border_id: String) -> void:
     match border_id:
         "border_gold":
             border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png"
+        "border_silver":
+            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png" # Ganti dengan aset asli jika ada
+        "border_neon":
+            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png" # Ganti dengan aset asli jika ada
+        "border_shadow":
+            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png" # Ganti dengan aset asli jika ada
         _:
-            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png"
+            border_tex_path = "" # Tidak ada border (default)
 
-    var tex := load(border_tex_path) as Texture2D
-    if tex:
-        _avatar_icon.texture = tex
+    if border_tex_path == "":
+        _avatar_icon.texture = null
+        if inner_icon:
+            inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 0)
+    else:
+        var tex := load(border_tex_path) as Texture2D
+        if tex:
+            _avatar_icon.texture = tex
+            if inner_icon:
+                inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8)
 
 func _update_avatar_icon(skin_id: String) -> void:
     if _avatar_icon == null:

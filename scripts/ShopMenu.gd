@@ -931,6 +931,36 @@ func _init_shop_data() -> void:
             "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
             "rarity": "rare",
             "type": "border"
+        },
+        {
+            "id": "border_silver",
+            "name": "Silver Border",
+            "description": "Bingkai perak yang elegan dan bersih.",
+            "price": 250,
+            "currency": "coins",
+            "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
+            "rarity": "common",
+            "type": "border"
+        },
+        {
+            "id": "border_neon",
+            "name": "Neon Border",
+            "description": "Bingkai futuristik dengan efek cahaya biru.",
+            "price": 20,
+            "currency": "gems",
+            "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
+            "rarity": "epic",
+            "type": "border"
+        },
+        {
+            "id": "border_shadow",
+            "name": "Shadow Border",
+            "description": "Bingkai misterius dengan aura gelap.",
+            "price": 35,
+            "currency": "gems",
+            "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
+            "rarity": "legendary",
+            "type": "border"
         }
     ]
 

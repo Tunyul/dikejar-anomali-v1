@@ -12,7 +12,8 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Avatar: Implementasi sistem avatar dinamis yang terintegrasi dengan sistem Skin (Basic, Premium, Neon, Shadow).
 - Avatar: Menggunakan aset gambar profil baru (Basic, Premium, Neon, Ninja) untuk ikon avatar dan shop.
 - Avatar: Menambahkan dukungan border avatar (Gold Border) yang dapat dimuat secara dinamis.
-- Shop: Ekstensi kategori `Avatar Borders` di menu Shop untuk pembelian dan kustomisasi bingkai profil.
+- Shop: Ekstensi kategori `Avatar Borders` di menu Shop dengan variasi baru (Gold, Silver, Neon, Shadow).
+- Avatar: Memperbarui sistem pemilihan border di Main Menu agar sinkron dengan pilihan di Shop.
 - Fix: Memperbaiki error `load_current_player()` pada `PlayGamesManager.gd` dengan menambahkan argumen `force_reload` dan koreksi tipe data `PlayGamesPlayer`.
 - Fix: Memperbaiki masalah indentasi pada `MainMenu.gd` yang menyebabkan error linter.
 
