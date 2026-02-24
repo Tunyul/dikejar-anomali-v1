@@ -1631,6 +1631,9 @@ func _update_buy_buttons_state() -> void:
         for b in owned_borders_value:
             owned_borders_set[String(b)] = true
 
+    var equipped_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
+    var equipped_border := String(cosmetics.get("equipped_border", ""))
+
     for e in buy_buttons:
         if not (e is Dictionary):
             continue
@@ -1642,6 +1645,7 @@ func _update_buy_buttons_state() -> void:
             continue
         var id := String(it.get("id", ""))
         var currency := String(it.get("currency", "coins"))
+
         if id == _DAILY_CLAIM_ITEM_ID:
             var free_claim := _is_daily_free_claim_available()
             var allowed := free_claim or _is_rewarded_available_for_daily_claim()
@@ -1652,25 +1656,45 @@ func _update_buy_buttons_state() -> void:
                 else:
                     (b as Button).text = tr("Claim") + " +Ad"
             continue
+
         if _is_skin_id(id):
             var owned := owned_set.has(id)
+            var equipped := (equipped_skin == id)
             var price_skin := int(it.get("price", 0))
-            if currency == "gems":
-                (b as BaseButton).disabled = owned or current_gems < price_skin
-            else:
-                (b as BaseButton).disabled = owned or current_coins < price_skin
+
             if b is Button:
-                (b as Button).text = (tr("Owned") if owned else tr("Buy"))
+                if equipped:
+                    (b as Button).text = tr("Equipped")
+                    (b as BaseButton).disabled = true
+                elif owned:
+                    (b as Button).text = tr("Equip")
+                    (b as BaseButton).disabled = false
+                else:
+                    (b as Button).text = tr("Buy")
+                    if currency == "gems":
+                        (b as BaseButton).disabled = current_gems < price_skin
+                    else:
+                        (b as BaseButton).disabled = current_coins < price_skin
             continue
+
         if _is_border_id(id):
             var owned := owned_borders_set.has(id)
+            var equipped := (equipped_border == id)
             var price_border := int(it.get("price", 0))
-            if currency == "gems":
-                (b as BaseButton).disabled = owned or current_gems < price_border
-            else:
-                (b as BaseButton).disabled = owned or current_coins < price_border
+
             if b is Button:
-                (b as Button).text = (tr("Owned") if owned else tr("Buy"))
+                if equipped:
+                    (b as Button).text = tr("Equipped")
+                    (b as BaseButton).disabled = true
+                elif owned:
+                    (b as Button).text = tr("Equip")
+                    (b as BaseButton).disabled = false
+                else:
+                    (b as Button).text = tr("Buy")
+                    if currency == "gems":
+                        (b as BaseButton).disabled = current_gems < price_border
+                    else:
+                        (b as BaseButton).disabled = current_coins < price_border
             continue
         var price := int(it.get("price", 0))
         match currency:
@@ -1701,11 +1725,11 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
         return
 
     if _is_skin_id(id) and _is_skin_owned(id):
-        _set_status_text(tr("Already owned."))
+        _equip_skin(id)
         return
 
     if _is_border_id(id) and _is_border_owned(id):
-        _set_status_text(tr("Already owned."))
+        _equip_border(id)
         return
 
     # Show confirmation popup
@@ -1935,9 +1959,8 @@ func _unlock_skin(id: String) -> void:
     if not owned.has(id):
         owned.append(id)
     cosmetics["owned_skins"] = owned
-    var equipped := String(cosmetics.get("equipped_skin", ""))
-    if equipped.is_empty():
-        cosmetics["equipped_skin"] = id
+    # Auto-equip if newly purchased
+    cosmetics["equipped_skin"] = id
     _save_cosmetics_data(cosmetics)
 
 func _unlock_border(id: String) -> void:
@@ -1949,10 +1972,23 @@ func _unlock_border(id: String) -> void:
     if not owned.has(id):
         owned.append(id)
     cosmetics["owned_borders"] = owned
-    var equipped := String(cosmetics.get("equipped_border", ""))
-    if equipped.is_empty():
-        cosmetics["equipped_border"] = id
+    # Auto-equip if newly purchased
+    cosmetics["equipped_border"] = id
     _save_cosmetics_data(cosmetics)
+
+func _equip_border(id: String) -> void:
+    var cosmetics := _load_cosmetics_data()
+    cosmetics["equipped_border"] = id
+    _save_cosmetics_data(cosmetics)
+    _update_buy_buttons_state()
+    _set_status_text(tr("Border equipped!"))
+
+func _equip_skin(id: String) -> void:
+    var cosmetics := _load_cosmetics_data()
+    cosmetics["equipped_skin"] = id
+    _save_cosmetics_data(cosmetics)
+    _update_buy_buttons_state()
+    _set_status_text(tr("Skin equipped!"))
 
 func _on_back_pressed() -> void:
     if not is_inside_tree():

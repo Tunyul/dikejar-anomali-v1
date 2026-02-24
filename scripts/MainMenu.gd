@@ -597,13 +597,20 @@ func _refresh_profile_panel() -> void:
     if large_avatar:
         var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
         var equipped_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
+        var equipped_border := String(cosmetics.get("equipped_border", ""))
+
         var icon_path := "res://assets/profile/profile_basic.png"
         match equipped_skin:
             "skin_basic": icon_path = "res://assets/profile/profile_basic.png"
             "skin_premium": icon_path = "res://assets/profile/profile_premium.png"
             "skin_neon": icon_path = "res://assets/profile/profile_neon.png"
             "skin_shadow": icon_path = "res://assets/profile/profile_ninja.png"
-        large_avatar.texture = load(icon_path) as Texture2D
+            _: icon_path = "res://assets/profile/profile_basic.png"
+
+        _apply_border_to_icon(large_avatar, equipped_border)
+        var inner := large_avatar.get_node_or_null("InnerIcon") as TextureRect
+        if inner:
+            inner.texture = load(icon_path) as Texture2D
 
 func _on_play_pressed() -> void:
     TransitionManager.play_sfx(&"click")
@@ -768,20 +775,22 @@ func _update_reward_icon() -> void:
     _reward_icon.visible = not _pending_level_rewards.is_empty()
 
 func _update_avatar_border(border_id: String) -> void:
-    if _avatar_icon == null:
+    _apply_border_to_icon(_avatar_icon, border_id)
+
+func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
+    if icon_node == null:
         return
 
     # We need a child for the actual avatar icon inside the border
-    var inner_icon := _avatar_icon.get_node_or_null("InnerIcon") as TextureRect
+    var inner_icon := icon_node.get_node_or_null("InnerIcon") as TextureRect
     if inner_icon == null:
         inner_icon = TextureRect.new()
         inner_icon.name = "InnerIcon"
         inner_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         inner_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        # inner_icon.layout_mode = 1 # Anchors
         inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8) # Padding
         inner_icon.show_behind_parent = true
-        _avatar_icon.add_child(inner_icon)
+        icon_node.add_child(inner_icon)
 
     var border_tex_path := "res://assets/icon/icon_border_avatar_gold_128x128.png"
     match border_id:
@@ -797,13 +806,13 @@ func _update_avatar_border(border_id: String) -> void:
             border_tex_path = "" # Tidak ada border (default)
 
     if border_tex_path == "":
-        _avatar_icon.texture = null
+        icon_node.texture = null
         if inner_icon:
             inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 0)
     else:
         var tex := load(border_tex_path) as Texture2D
         if tex:
-            _avatar_icon.texture = tex
+            icon_node.texture = tex
             if inner_icon:
                 inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8)
 
