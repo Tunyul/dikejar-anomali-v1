@@ -5,6 +5,18 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.41-beta] - 2026-02-25
+
+- Android: Perbaikan bug game yang terdeteksi sebagai aplikasi launcher (Home Screen) dengan menghapus `CATEGORY_HOME` dari manifest.
+- Android: Penyesuaian `app_category` ke `Game` (1) dan penonaktifan flag launcher otomatis di export presets.
+- Fix: Pembersihan metadata launcher pada build debug dan release untuk mencegah konflik dengan sistem UI Android.
+- MainMenu: Perbaikan bug tombol "Ganti Border" yang salah mengarahkan ke Shop saat pemain masih menggunakan border default.
+- MainMenu: Sinkronisasi daftar pilihan border agar selalu menyertakan opsi "Tanpa Border" dan "Gold Border" (default).
+- Shop: Perbaikan bug BGM yang hilang saat masuk ke ShopMenu dengan mengganti path audio ke aset yang tersedia (`backsound-mainmenu-2.mp3`).
+- TransitionManager: Implementasi sistem manajemen BGM terpusat untuk transisi antar scene yang lebih mulus dan persisten.
+- TransitionManager: Menambahkan fungsi `play_bgm`, `play_playlist`, dan `stop_bgm` yang mendukung pemuatan file audio secara dinamis dari path string.
+- ShopMenu: Integrasi dengan `TransitionManager.fade_to_scene` untuk transisi kembali ke Main Menu dengan efek visual dan audio yang konsisten.
+
 ## [1.3.40-beta] - 2026-02-24
 
 - Profile: Implementasi sistem profil pemain interaktif yang dapat diakses dengan men-tap foto profil di Main Menu.

@@ -166,6 +166,11 @@ func _ready() -> void:
 
     if not Engine.is_editor_hint():
         call_deferred("_enable_processing")
+        _init_bgm()
+
+func _init_bgm() -> void:
+    if TransitionManager:
+        TransitionManager.play_bgm("res://assets/audio/backsound/backsound-mainmenu-2.mp3")
 
 func _enable_processing() -> void:
     if is_inside_tree():
@@ -2007,7 +2012,10 @@ func _on_back_pressed() -> void:
         tween.tween_property(_ui_vbox, "scale", Vector2(0.9, 0.9), 0.2)
         await tween.finished
 
-    get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+    if is_instance_valid(TransitionManager) and TransitionManager.has_method("fade_to_scene"):
+        TransitionManager.fade_to_scene("res://scenes/MainMenu.tscn")
+    else:
+        get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 
 func _apply_ui_font(node: Node, font: Font) -> void:
     if node is Label:

@@ -1560,6 +1560,8 @@ func grant_continue() -> void:
 func set_bgm_volume(v: float) -> void:
     _bgm_user_volume = clampf(v, 0.0, 1.0)
     _bgm_base_db = (-60.0 if _bgm_user_volume <= 0.0 else 20.0 * log(_bgm_user_volume) / log(10.0))
+    if TransitionManager and TransitionManager.has_method("set_bgm_volume"):
+        TransitionManager.set_bgm_volume(_bgm_user_volume)
     _apply_bgm_mix()
 
 func duck_bgm(reduction_db: float = 6.0, duration_sec: float = 0.22) -> void:
@@ -1597,6 +1599,8 @@ func set_sfx_volume(v: float) -> void:
 
 func set_bgm_muted(m: bool) -> void:
     bgm_muted = m
+    if TransitionManager and TransitionManager.has_method("set_bgm_muted"):
+        TransitionManager.set_bgm_muted(m)
     var bgm := get_node_or_null("BGM")
     if bgm and bgm is AudioStreamPlayer:
         if m:
@@ -2276,6 +2280,8 @@ func _load_progress() -> void:
     set_sfx_volume(sfx_volume)
     if TransitionManager and TransitionManager.has_method("set_sfx_muted"):
         TransitionManager.set_sfx_muted(sfx_muted)
+    if TransitionManager and TransitionManager.has_method("set_bgm_muted"):
+        TransitionManager.set_bgm_muted(bgm_muted)
     if bgm_muted:
         var bgm := get_node_or_null("BGM") as AudioStreamPlayer
         if bgm:
@@ -2556,6 +2562,8 @@ func _start_play_phase() -> void:
     var bgm2 := get_node_or_null("BGM")
     if bgm2 and bgm2 is AudioStreamPlayer:
         (bgm2 as AudioStreamPlayer).stop()
+    if TransitionManager and TransitionManager.has_method("stop_bgm"):
+        TransitionManager.stop_bgm()
     if anomaly:
         anomaly.hide()
 

@@ -30,7 +30,6 @@ static func _get_diamond_icon_texture() -> Texture2D:
 
 const _MENU_BGM_DIR := "res://assets/audio/backsound"
 const _MENU_BGM_PREFIX := "backsound-mainmenu"
-var _menu_bgm: AudioStreamPlayer = null
 var _menu_bgm_paths: Array[String] = []
 var _menu_bgm_index: int = 0
 var _menu_bgm_volume: float = 0.8
@@ -609,20 +608,28 @@ func _on_change_border_pressed() -> void:
 
     var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
     var owned_borders: Array = cosmetics.get("owned_borders", [])
-    var current_border := String(cosmetics.get("equipped_border", ""))
+    var current_border := String(cosmetics.get("equipped_border", "border_gold"))
 
-    # Tambahkan "" (tanpa border) ke pilihan jika belum ada
-    if not owned_borders.has(""):
-        owned_borders.push_front("")
+    # Buat list pilihan unik
+    var selection_list: Array = [""] # Opsi tanpa border
 
-    if owned_borders.size() <= 1:
-        _on_shop_pressed()
-        return
+    # Tambahkan border gold sebagai default yang pasti dimiliki
+    if not selection_list.has("border_gold"):
+        selection_list.append("border_gold")
 
-    # Cycle to next owned border
-    var idx := owned_borders.find(current_border)
-    var next_idx := (idx + 1) % owned_borders.size()
-    var next_border := String(owned_borders[next_idx])
+    # Tambahkan border lain yang sudah dibeli
+    for b in owned_borders:
+        var b_str = String(b)
+        if b_str != "" and not selection_list.has(b_str):
+            selection_list.append(b_str)
+
+    # Cycle ke border berikutnya
+    var idx := selection_list.find(current_border)
+    # Jika border sekarang entah gimana nggak ada di list, mulai dari awal
+    if idx == -1: idx = 0
+
+    var next_idx := (idx + 1) % selection_list.size()
+    var next_border := String(selection_list[next_idx])
 
     cosmetics["equipped_border"] = next_border
     cfg.set_value("cosmetics", "data", cosmetics)
@@ -679,8 +686,7 @@ func _refresh_profile_panel() -> void:
 func _on_play_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     print("PlayButton ditekan")
-    if _menu_bgm:
-        _menu_bgm.stop()
+    TransitionManager.stop_bgm()
     var ui := get_node_or_null("UI")
     if ui:
         ui.visible = false
@@ -692,10 +698,11 @@ func _on_play_pressed() -> void:
 
 func _on_shop_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    if _menu_bgm:
-        _menu_bgm.stop()
-    process_mode = Node.PROCESS_MODE_DISABLED
-    get_tree().change_scene_to_file("res://scenes/ShopMenu.tscn")
+    if TransitionManager.has_method("fade_to_scene"):
+        TransitionManager.fade_to_scene("res://scenes/ShopMenu.tscn")
+    else:
+        process_mode = Node.PROCESS_MODE_DISABLED
+        get_tree().change_scene_to_file("res://scenes/ShopMenu.tscn")
 
 func _on_settings_pressed() -> void:
     TransitionManager.play_sfx(&"click")
@@ -1038,22 +1045,23 @@ func _init_menu_bgm() -> void:
         _music_toast = _music_toast_panel.get_node_or_null("MusicToast") as Label
     else:
         _music_toast = get_node_or_null("UI/MusicToast") as Label
-    _menu_bgm = get_node_or_null("MenuBGM") as AudioStreamPlayer
-    if _menu_bgm == null:
-        _menu_bgm = AudioStreamPlayer.new()
-        _menu_bgm.name = "MenuBGM"
-        add_child(_menu_bgm)
-    if not _menu_bgm.finished.is_connected(_on_menu_bgm_finished):
-        _menu_bgm.finished.connect(_on_menu_bgm_finished)
 
+    # Load settings into TransitionManager
     _load_menu_audio_settings()
-    _apply_menu_bgm_mix()
 
     _menu_bgm_paths = _load_menu_bgm_paths()
     if _menu_bgm_paths.is_empty():
         return
     _menu_bgm_index = _consume_next_menu_bgm_index(_menu_bgm_paths.size())
-    _play_menu_bgm_index(_menu_bgm_index)
+
+    if TransitionManager.has_signal("bgm_track_changed"):
+        if not TransitionManager.bgm_track_changed.is_connected(_show_music_toast):
+            TransitionManager.bgm_track_changed.connect(_show_music_toast)
+    if TransitionManager.has_signal("bgm_index_changed"):
+        if not TransitionManager.bgm_index_changed.is_connected(_on_bgm_index_changed):
+            TransitionManager.bgm_index_changed.connect(_on_bgm_index_changed)
+
+    TransitionManager.play_playlist(_menu_bgm_paths, _menu_bgm_index)
 
 
 func _load_menu_bgm_paths() -> Array[String]:
@@ -1099,15 +1107,13 @@ func _load_menu_audio_settings() -> void:
     if err != OK:
         _menu_bgm_volume = 0.8
         _menu_bgm_muted = false
-        return
-    _menu_bgm_volume = float(cfg.get_value("settings", "bgm_volume", 0.8))
-    _menu_bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
+    else:
+        _menu_bgm_volume = float(cfg.get_value("settings", "bgm_volume", 0.8))
+        _menu_bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
 
+    TransitionManager.set_bgm_volume(_menu_bgm_volume)
+    TransitionManager.set_bgm_muted(_menu_bgm_muted)
 
-func _apply_menu_bgm_mix() -> void:
-    if _menu_bgm == null:
-        return
-    _menu_bgm.volume_db = (-60.0 if _menu_bgm_muted else _lin_to_db(_menu_bgm_volume))
 
 
 func _consume_next_menu_bgm_index(list_size: int) -> int:
@@ -1124,6 +1130,10 @@ func _consume_next_menu_bgm_index(list_size: int) -> int:
     return next
 
 
+func _on_bgm_index_changed(i: int) -> void:
+    _menu_bgm_index = i
+    _save_menu_bgm_index(i)
+
 func _save_menu_bgm_index(i: int) -> void:
     var cfg := ConfigFile.new()
     var err := cfg.load("user://save.cfg")
@@ -1132,29 +1142,6 @@ func _save_menu_bgm_index(i: int) -> void:
     cfg.set_value("settings", "menu_bgm_index", i)
     cfg.save("user://save.cfg")
 
-
-func _play_menu_bgm_index(i: int) -> void:
-    if _menu_bgm == null:
-        return
-    if _menu_bgm_paths.is_empty():
-        return
-    _menu_bgm_index = clampi(i, 0, _menu_bgm_paths.size() - 1)
-    var path := _menu_bgm_paths[_menu_bgm_index]
-    var stream := load(path) as AudioStream
-    if stream == null:
-        return
-    _menu_bgm.stream = stream
-    if not _menu_bgm_muted:
-        _menu_bgm.play()
-    _show_music_toast(_format_track_name(path))
-
-
-func _on_menu_bgm_finished() -> void:
-    if _menu_bgm_paths.is_empty():
-        return
-    _menu_bgm_index = (_menu_bgm_index + 1) % _menu_bgm_paths.size()
-    _save_menu_bgm_index(_menu_bgm_index)
-    _play_menu_bgm_index(_menu_bgm_index)
 
 
 func _show_music_toast(title: String) -> void:
@@ -1213,18 +1200,14 @@ func _wire_settings_menu_signals(settings_menu: Node) -> void:
 
 func _on_settings_bgm_volume_changed(v: float) -> void:
     _menu_bgm_volume = clampf(v, 0.0, 1.0)
-    _apply_menu_bgm_mix()
-
+    TransitionManager.set_bgm_volume(_menu_bgm_volume)
 
 func _on_settings_bgm_mute_changed(muted: bool) -> void:
     _menu_bgm_muted = muted
-    if _menu_bgm:
-        if muted:
-            _menu_bgm.stop()
-        else:
-            if _menu_bgm.stream != null:
-                _menu_bgm.play()
-    _apply_menu_bgm_mix()
+    TransitionManager.set_bgm_muted(muted)
+    if not muted:
+        if not TransitionManager.is_bgm_playing():
+            TransitionManager.play_playlist(_menu_bgm_paths, _menu_bgm_index)
 
 
 func _connect_viewport_resize() -> void:
