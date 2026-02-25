@@ -5,6 +5,19 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.42-beta] - 2026-02-25
+
+- Avatar Border: Perbaikan misalignment pada Fire Border agar presisi di tengah icon.
+- Avatar Border: Implementasi sistem switching border yang sudah dibeli dari Shop ke Main Menu.
+- Avatar Border: Penambahan node `InnerIcon` untuk pemisahan visual antara avatar dan border di Main Menu.
+- Avatar Border: Perbaikan bug persistensi data border agar tetap tersimpan setelah game ditutup.
+- Shop: Perbaikan duplikasi icon Gold pada menu pembelian border.
+- Animation: Perbaikan bug `AnimatedSprite2D` pada animasi Attack yang sebelumnya menampilkan seluruh spritesheet sekaligus.
+- Animation: Perbaikan bug `AnimatedSprite2D` pada animasi Jump yang tidak terpotong (slice) karena perbedaan ukuran aset.
+- Animation: Implementasi sistem slicing otomatis yang lebih generik untuk semua animasi utama (Run, Jump, Attack).
+- Fix: Pembersihan error indentasi (Tab vs Space) pada `game_manager.gd`.
+- Fix: Pembersihan kode yang tidak terjangkau (_unreachable code_) pada fungsi mobile button tints.
+
 ## [1.3.41-beta] - 2026-02-25
 
 - Android: Perbaikan bug game yang terdeteksi sebagai aplikasi launcher (Home Screen) dengan menghapus `CATEGORY_HOME` dari manifest.

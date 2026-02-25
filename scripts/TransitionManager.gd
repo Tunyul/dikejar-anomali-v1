@@ -796,129 +796,129 @@ func _init_sfx() -> void:
     _apply_sfx_mix()
 
 func _apply_sfx_mix() -> void:
-	_sfx_base_db = (-60.0 if _sfx_muted else _lin_to_db(_sfx_volume))
-	if _sfx_pool.is_empty():
-		return
-	for p in _sfx_pool:
-		if is_instance_valid(p):
-			p.volume_db = _sfx_base_db
+    _sfx_base_db = (-60.0 if _sfx_muted else _lin_to_db(_sfx_volume))
+    if _sfx_pool.is_empty():
+        return
+    for p in _sfx_pool:
+        if is_instance_valid(p):
+            p.volume_db = _sfx_base_db
 
 func set_bgm_volume(v: float) -> void:
-	_bgm_volume = clampf(v, 0.0, 1.0)
-	_apply_bgm_mix()
+    _bgm_volume = clampf(v, 0.0, 1.0)
+    _apply_bgm_mix()
 
 func set_bgm_muted(m: bool) -> void:
-	_bgm_muted = m
-	_apply_bgm_mix()
+    _bgm_muted = m
+    _apply_bgm_mix()
 
 func _apply_bgm_mix() -> void:
-	if _bgm_player == null:
-		return
-	_bgm_player.volume_db = (-60.0 if _bgm_muted else _lin_to_db(_bgm_volume))
+    if _bgm_player == null:
+        return
+    _bgm_player.volume_db = (-60.0 if _bgm_muted else _lin_to_db(_bgm_volume))
 
 func ensure_bgm_player() -> void:
-	if _bgm_player != null and is_instance_valid(_bgm_player):
-		return
-	_bgm_player = AudioStreamPlayer.new()
-	_bgm_player.name = "BGMPlayer"
-	_bgm_player.process_mode = Node.PROCESS_MODE_ALWAYS
-	_bgm_player.finished.connect(_on_bgm_finished)
-	add_child(_bgm_player)
-	_apply_bgm_mix()
+    if _bgm_player != null and is_instance_valid(_bgm_player):
+        return
+    _bgm_player = AudioStreamPlayer.new()
+    _bgm_player.name = "BGMPlayer"
+    _bgm_player.process_mode = Node.PROCESS_MODE_ALWAYS
+    _bgm_player.finished.connect(_on_bgm_finished)
+    add_child(_bgm_player)
+    _apply_bgm_mix()
 
 func play_bgm(stream_or_path: Variant, volume: float = -1.0) -> void:
-	var stream: AudioStream = null
-	if typeof(stream_or_path) == TYPE_STRING:
-		var path = str(stream_or_path)
-		if ResourceLoader.exists(path):
-			stream = load(path) as AudioStream
-		else:
-			push_error("BGM file not found: " + path)
-	elif stream_or_path is AudioStream:
-		stream = stream_or_path
+    var stream: AudioStream = null
+    if typeof(stream_or_path) == TYPE_STRING:
+        var path = str(stream_or_path)
+        if ResourceLoader.exists(path):
+            stream = load(path) as AudioStream
+        else:
+            push_error("BGM file not found: " + path)
+    elif stream_or_path is AudioStream:
+        stream = stream_or_path
 
-	if stream == null:
-		return
+    if stream == null:
+        return
 
-	_bgm_paths = [] # Reset playlist if playing single stream
-	_bgm_index = -1
-	ensure_bgm_player()
-	if volume >= 0.0:
-		_bgm_volume = volume
-		_apply_bgm_mix()
+    _bgm_paths = [] # Reset playlist if playing single stream
+    _bgm_index = -1
+    ensure_bgm_player()
+    if volume >= 0.0:
+        _bgm_volume = volume
+        _apply_bgm_mix()
 
-	if _bgm_player.stream == stream and _bgm_player.playing:
-		return
+    if _bgm_player.stream == stream and _bgm_player.playing:
+        return
 
-	_bgm_player.stream = stream
-	_bgm_player.play()
+    _bgm_player.stream = stream
+    _bgm_player.play()
 
 func play_playlist(paths: Array[String], start_index: int = 0) -> void:
-	if paths.is_empty():
-		return
+    if paths.is_empty():
+        return
 
-	# Filter paths that actually exist
-	var valid_paths: Array[String] = []
-	for p in paths:
-		if ResourceLoader.exists(p):
-			valid_paths.append(p)
-		else:
-			push_error("Playlist BGM file not found: " + p)
+    # Filter paths that actually exist
+    var valid_paths: Array[String] = []
+    for p in paths:
+        if ResourceLoader.exists(p):
+            valid_paths.append(p)
+        else:
+            push_error("Playlist BGM file not found: " + p)
 
-	if valid_paths.is_empty():
-		return
+    if valid_paths.is_empty():
+        return
 
-	_bgm_paths = valid_paths
-	_bgm_index = clampi(start_index, 0, _bgm_paths.size() - 1)
-	_play_current_playlist_item()
+    _bgm_paths = valid_paths
+    _bgm_index = clampi(start_index, 0, _bgm_paths.size() - 1)
+    _play_current_playlist_item()
 
 func _play_current_playlist_item() -> void:
-	if _bgm_index < 0 or _bgm_index >= _bgm_paths.size():
-		return
-	var path := _bgm_paths[_bgm_index]
+    if _bgm_index < 0 or _bgm_index >= _bgm_paths.size():
+        return
+    var path := _bgm_paths[_bgm_index]
 
-	if not ResourceLoader.exists(path):
-		push_error("BGM item not found during playback: " + path)
-		# Try next one if available
-		if _bgm_paths.size() > 1:
-			_on_bgm_finished()
-		return
+    if not ResourceLoader.exists(path):
+        push_error("BGM item not found during playback: " + path)
+        # Try next one if available
+        if _bgm_paths.size() > 1:
+            _on_bgm_finished()
+        return
 
-	var stream := load(path) as AudioStream
-	if stream:
-		ensure_bgm_player()
-		if _bgm_player.stream != stream or not _bgm_player.playing:
-			_bgm_player.stream = stream
-			_bgm_player.play()
+    var stream := load(path) as AudioStream
+    if stream:
+        ensure_bgm_player()
+        if _bgm_player.stream != stream or not _bgm_player.playing:
+            _bgm_player.stream = stream
+            _bgm_player.play()
 
-		var raw_name := path.get_file().get_basename().replace("backsound-mainmenu-", "").replace("backsound-", "").replace("-", " ").strip_edges()
-		var track_name := ""
-		if raw_name.is_valid_int():
-			track_name = "Track " + raw_name
-		elif raw_name == "":
-			track_name = "Main Theme"
-		else:
-			track_name = raw_name.capitalize()
+        var raw_name := path.get_file().get_basename().replace("backsound-mainmenu-", "").replace("backsound-", "").replace("-", " ").strip_edges()
+        var track_name := ""
+        if raw_name.is_valid_int():
+            track_name = "Track " + raw_name
+        elif raw_name == "":
+            track_name = "Main Theme"
+        else:
+            track_name = raw_name.capitalize()
 
-		bgm_track_changed.emit(track_name)
-		bgm_index_changed.emit(_bgm_index)
+        bgm_track_changed.emit(track_name)
+        bgm_index_changed.emit(_bgm_index)
 
 func _on_bgm_finished() -> void:
-	if _bgm_paths.is_empty():
-		return
-	_bgm_index = (_bgm_index + 1) % _bgm_paths.size()
-	_play_current_playlist_item()
+    if _bgm_paths.is_empty():
+        return
+    _bgm_index = (_bgm_index + 1) % _bgm_paths.size()
+    _play_current_playlist_item()
 
 func stop_bgm() -> void:
-	if _bgm_player and is_instance_valid(_bgm_player) and _bgm_player.playing:
-		_bgm_player.stop()
+    if _bgm_player and is_instance_valid(_bgm_player) and _bgm_player.playing:
+        _bgm_player.stop()
 
 func is_bgm_playing() -> bool:
-	return _bgm_player != null and is_instance_valid(_bgm_player) and _bgm_player.playing
+    return _bgm_player != null and is_instance_valid(_bgm_player) and _bgm_player.playing
 
 func get_bgm_player() -> AudioStreamPlayer:
-	ensure_bgm_player()
-	return _bgm_player
+    ensure_bgm_player()
+    return _bgm_player
 
 func _load_sfx_settings_from_save() -> void:
     var cfg := ConfigFile.new()

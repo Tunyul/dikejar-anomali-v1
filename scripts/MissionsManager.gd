@@ -366,7 +366,20 @@ func _ensure_missions_upgraded() -> void:
                 m["reward"] = 550
                 m["kind"] = "enemies"
             _:
-                pass
+                if not m.has("id"):
+                    m["id"] = "unknown_" + str(Time.get_ticks_msec())
+                if not m.has("name"):
+                    m["name"] = "Misi Tanpa Nama"
+                if not m.has("target"):
+                    m["target"] = 100
+                if not m.has("progress"):
+                    m["progress"] = 0
+                if not m.has("type"):
+                    m["type"] = "daily"
+                if not m.has("reward"):
+                    m["reward"] = 10
+                if not m.has("kind"):
+                    m["kind"] = _infer_kind_from_name(String(m.get("name", "")))
 
         if not m.has("kind") or String(m.get("kind", "")).is_empty():
             var inferred := _infer_kind_from_name(String(m.get("name", "")))
@@ -695,7 +708,7 @@ func _set_last_reset(t: String, now: int) -> void:
         "month":
             last_reset_month = now
         _:
-            pass
+            push_warning("Unknown reset type: " + t)
 
 
 func _set_type_baselines_to_current(t: String) -> void:
@@ -722,7 +735,7 @@ func _set_type_baselines_to_current(t: String) -> void:
             month_base_skills = skills_collected
             month_base_distance = current_run_distance
         _:
-            pass
+            push_warning("Unknown baseline reset type: " + t)
 
 
 func _reset_type_max_distance(t: String) -> void:
@@ -734,7 +747,7 @@ func _reset_type_max_distance(t: String) -> void:
         "month":
             month_max_distance = 0
         _:
-            pass
+            push_warning("Unknown max distance reset type: " + t)
 
 
 func _get_base_value_for_type(t: String, kind: String) -> int:

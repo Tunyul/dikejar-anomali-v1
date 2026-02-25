@@ -226,6 +226,7 @@ func initialize_player() -> void:
             animated_sprite.play("run")
         slice_jump_spritesheet_if_needed()
         slice_run_spritesheet_if_needed()
+        slice_attack_spritesheet_if_needed()
         _apply_scale_for_anim("run")
         _apply_offset_for_anim("run")
         animated_sprite.play("run")
@@ -251,6 +252,7 @@ func initialize_player() -> void:
     if animated_sprite:
         log_animation_scales()
 
+    update_cosmetics()
     current_health = starting_health
 
 func setup_collision_layers() -> void:
@@ -1013,26 +1015,43 @@ func slice_jump_spritesheet_if_needed() -> void:
     var sf := animated_sprite.sprite_frames
     if not sf.has_animation("jump"):
         return
+
+    # Check if it's already sliced or manual regions are set
     var count := sf.get_frame_count("jump")
     if count > 1:
         return
+
     var sheet := sf.get_frame_texture("jump", 0)
     if sheet == null:
         return
+
+    if sheet is AtlasTexture:
+        return
+
     var w := sheet.get_width()
     var h := sheet.get_height()
-    if int(w) == 956 and int(h) == 1668:
-        var cols := 4
-        var rows := 4
-        var cw: int = int(round(float(w) / float(cols)))
-        var ch: int = int(round(float(h) / float(rows)))
-        sf.clear("jump")
-        for r in range(rows):
-            for c in range(cols):
-                var at := AtlasTexture.new()
-                at.atlas = sheet
-                at.region = Rect2(c * cw, r * ch, cw, ch)
-                sf.add_frame("jump", at)
+
+    # Jump sheet typically 4x4
+    var cols := 4
+    var rows := 4
+
+    var cw_f: float = float(w) / cols
+    var ch_f: float = float(h) / rows
+
+    if enable_debug_logging:
+        print("Slicing JUMP: texture size=", w, "x", h, " frame size=", cw_f, "x", ch_f)
+
+    sf.clear("jump")
+    sf.set_animation_loop("jump", false) # Jump shouldn't loop
+    sf.set_animation_speed("jump", 12.0)
+
+    for r in range(rows):
+        for c in range(cols):
+            var at := AtlasTexture.new()
+            at.atlas = sheet
+            at.region = Rect2(c * cw_f, r * ch_f, cw_f, ch_f)
+            at.filter_clip = true
+            sf.add_frame("jump", at)
 
 func slice_run_spritesheet_if_needed() -> void:
     if not animated_sprite or not animated_sprite.sprite_frames:
@@ -1089,3 +1108,212 @@ func slice_run_spritesheet_if_needed() -> void:
     animated_sprite.play("run")
     _apply_scale_for_anim("run")
     _apply_offset_for_anim("run")
+
+func slice_attack_spritesheet_if_needed() -> void:
+    if not animated_sprite or not animated_sprite.sprite_frames:
+        return
+    var sf := animated_sprite.sprite_frames
+    if not sf.has_animation("attack"):
+        return
+
+    # Check if it's already sliced or manual regions are set
+    var count := sf.get_frame_count("attack")
+    if count > 1:
+        return
+
+    var sheet := sf.get_frame_texture("attack", 0)
+    if sheet == null:
+        return
+
+    if sheet is AtlasTexture:
+        return
+
+    var w := sheet.get_width()
+    var h := sheet.get_height()
+
+    # Attack sheet typically 4x4
+    var cols := 4
+    var rows := 4
+
+    var cw_f: float = float(w) / cols
+    var ch_f: float = float(h) / rows
+
+    if enable_debug_logging:
+        print("Slicing ATTACK: texture size=", w, "x", h, " frame size=", cw_f, "x", ch_f)
+
+    sf.clear("attack")
+    sf.set_animation_loop("attack", false) # Attack shouldn't loop
+    sf.set_animation_speed("attack", 12.0)
+
+    for r in range(rows):
+        for c in range(cols):
+            var at := AtlasTexture.new()
+            at.atlas = sheet
+            at.region = Rect2(c * cw_f, r * ch_f, cw_f, ch_f)
+            at.filter_clip = true
+            sf.add_frame("attack", at)
+
+func update_cosmetics() -> void:
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK:
+        return
+
+    var equipped_skin = cfg.get_value("cosmetics", "equipped_skin", "default")
+
+    # Load and apply border
+    var cosmetics_data = cfg.get_value("cosmetics", "data", {})
+    var equipped_border = cosmetics_data.get("equipped_border", "")
+    set_border(equipped_border)
+
+    if not animated_sprite or not animated_sprite.sprite_frames:
+        return
+
+    var sf := animated_sprite.sprite_frames
+
+    # Path mapping
+    var skin_base = "res://assets/mc/"
+    var anim_map = {
+        "run": "run/idle_run.png",
+        "jump": "jump/sprite-jump-256px-16-v2.png",
+        "attack": "attack/sprite-attack-256px-36-3.png"
+    }
+
+    if equipped_skin != "default":
+        var custom_skin_dir = "res://assets/skins/" + equipped_skin + "/"
+        if DirAccess.dir_exists_absolute(custom_skin_dir):
+            skin_base = custom_skin_dir
+            anim_map = {
+                "run": "run.png",
+                "jump": "jump.png",
+                "attack": "attack.png"
+            }
+        else:
+            equipped_skin = "default"
+
+    # Update animations
+    for anim_name in anim_map.keys():
+        var tex_path = skin_base + anim_map[anim_name]
+        if FileAccess.file_exists(tex_path):
+            var tex = load(tex_path)
+            if tex:
+                if not sf.has_animation(anim_name):
+                    sf.add_animation(anim_name)
+
+                # Clear existing and add new texture as frame 0 for re-slicing
+                sf.clear(anim_name)
+                sf.add_frame(anim_name, tex)
+
+                if anim_name == "run":
+                    slice_run_spritesheet_if_needed()
+                elif anim_name == "jump":
+                    slice_jump_spritesheet_if_needed()
+                elif anim_name == "attack":
+                    slice_attack_spritesheet_if_needed()
+
+    # Restart animation to apply changes
+    if animated_sprite.animation == "run":
+        animated_sprite.play("run")
+        _apply_scale_for_anim("run")
+        _apply_offset_for_anim("run")
+
+    if enable_debug_logging:
+        print("Player cosmetics updated: skin=", equipped_skin)
+
+func set_border(border_id: String) -> void:
+    var avatar_icon = get_node_or_null("CanvasLayer/UI/AvatarIcon")
+    if not avatar_icon:
+        # If in-game UI has different path, adjust accordingly
+        # But usually in-game player doesn't have the border UI attached directly
+        # Let's check if there's a reference to the UI in GameManager
+        if game_manager and game_manager.has_method("update_ui_border"):
+            game_manager.update_ui_border(border_id)
+        return
+
+    # Apply border logic similar to MainMenu.gd
+    _apply_border_to_icon(avatar_icon, border_id)
+
+func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
+    if not icon_node:
+        return
+
+    var inner_icon = icon_node.get_node_or_null("InnerIcon")
+    if not inner_icon:
+        # Create InnerIcon if missing (to preserve original avatar texture)
+        inner_icon = TextureRect.new()
+        inner_icon.name = "InnerIcon"
+        inner_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        inner_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        inner_icon.anchor_right = 1.0
+        inner_icon.anchor_bottom = 1.0
+        inner_icon.show_behind_parent = true
+        # Margin for border
+        inner_icon.offset_left = 5
+        inner_icon.offset_top = 5
+        inner_icon.offset_right = -5
+        inner_icon.offset_bottom = -5
+        icon_node.add_child(inner_icon)
+
+        # Move original texture to inner_icon if needed
+        if icon_node.texture:
+            inner_icon.texture = icon_node.texture
+            icon_node.texture = null
+
+    var border_tex_path := ""
+    var padding := 8 # Default padding for premium borders
+
+    match border_id:
+        "border_gold_premium":
+            border_tex_path = "res://assets/border/border_gold_premium.png"
+        "border_silver_premium":
+            border_tex_path = "res://assets/border/border_silver_premium.png"
+        "border_neon_v2":
+            border_tex_path = "res://assets/border/border_neon_v2.png"
+        "border_shadow_v2":
+            border_tex_path = "res://assets/border/border_shadow_v2.png"
+        "border_fire":
+            border_tex_path = "res://assets/border/border_fire.png"
+            padding = 22 # Increased padding for Fire border
+        "border_kraken":
+            border_tex_path = "res://assets/border/border_kraken.png"
+            padding = 14 # Slightly increased
+        "border_nature":
+            border_tex_path = "res://assets/border/border_nature.png"
+            padding = 14 # Slightly increased
+        "border_cyber":
+            border_tex_path = "res://assets/border/border_cyber.png"
+            padding = 14 # Slightly increased
+        "border_gold":
+            border_tex_path = "res://assets/border/border_gold.png"
+            padding = 4
+        "border_silver":
+            border_tex_path = "res://assets/border/border_silver.png"
+            padding = 4
+        "border_bronze":
+            border_tex_path = "res://assets/border/border_bronze.png"
+            padding = 4
+        "border_white":
+            border_tex_path = "res://assets/border/border_white.png"
+            padding = 4
+        _:
+            # Default or none
+            icon_node.texture = null
+            inner_icon.offset_left = 0
+            inner_icon.offset_top = 0
+            inner_icon.offset_right = 0
+            inner_icon.offset_bottom = 0
+            return
+
+    if border_tex_path != "" and FileAccess.file_exists(border_tex_path):
+        icon_node.texture = load(border_tex_path)
+        # Adjust margins for border
+        inner_icon.offset_left = padding
+        inner_icon.offset_top = padding
+        inner_icon.offset_right = -padding
+        inner_icon.offset_bottom = -padding
+    else:
+        icon_node.texture = null
+        inner_icon.offset_left = 0
+        inner_icon.offset_top = 0
+        inner_icon.offset_right = 0
+        inner_icon.offset_bottom = 0

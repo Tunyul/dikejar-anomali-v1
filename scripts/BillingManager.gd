@@ -16,7 +16,7 @@ const PRODUCTS = [
     "remove_ads",
     "coin_pack_small",
     "coin_pack_medium",
-	"coin_pack_large"
+    "coin_pack_large"
 ]
 
 func _ready():

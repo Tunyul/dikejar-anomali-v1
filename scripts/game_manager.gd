@@ -697,6 +697,19 @@ func _start_bukit_bgm_rotation() -> void:
     _bukit_bgm_index = _consume_next_bukit_bgm_index(_bukit_bgm_paths.size())
     _play_bukit_bgm_index(_bukit_bgm_index)
 
+func update_player_cosmetics() -> void:
+    if player and player.has_method("update_cosmetics"):
+        player.update_cosmetics()
+
+    # Reload local progress to ensure any changed cosmetics are picked up
+    _load_progress()
+
+
+func update_ui_border(border_id: String) -> void:
+    var avatar_icon = get_node_or_null("CanvasLayer/UI/AvatarIcon")
+    if avatar_icon and player and player.has_method("_apply_border_to_icon"):
+        player._apply_border_to_icon(avatar_icon, border_id)
+
 
 func _on_bukit_bgm_finished() -> void:
     if phase != Phase.PLAYING:
@@ -763,25 +776,27 @@ func _connect_mobile_buttons() -> void:
 
 
 func _ensure_mobile_button_tints() -> void:
-    return # Disable button tints
-    if canvas == null:
-        return
-    var mc := canvas.get_node_or_null("MobileControls") as Control
-    if mc == null:
-        return
-    if _jump_button_tint == null:
-        _jump_button_tint = Panel.new()
-        _jump_button_tint.name = "JumpButtonTint"
-        _jump_button_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        _jump_button_tint.z_index = 0
-        mc.add_child(_jump_button_tint)
-    if _attack_button_tint == null:
-        _attack_button_tint = Panel.new()
-        _attack_button_tint.name = "AttackButtonTint"
-        _attack_button_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        _attack_button_tint.z_index = 0
-        mc.add_child(_attack_button_tint)
-    _update_mobile_button_tints()
+    # Disable button tints as per user request
+    return
+    # The following code is unreachable but kept as reference if needed later
+    # if canvas == null:
+    #     return
+    # var mc := canvas.get_node_or_null("MobileControls") as Control
+    # if mc == null:
+    #     return
+    # if _jump_button_tint == null:
+    #     _jump_button_tint = Panel.new()
+    #     _jump_button_tint.name = "JumpButtonTint"
+    #     _jump_button_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    #     _jump_button_tint.z_index = 0
+    #     mc.add_child(_jump_button_tint)
+    # if _attack_button_tint == null:
+    #     _attack_button_tint = Panel.new()
+    #     _attack_button_tint.name = "AttackButtonTint"
+    #     _attack_button_tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    #     _attack_button_tint.z_index = 0
+    #     mc.add_child(_attack_button_tint)
+    # _update_mobile_button_tints()
 
 
 func _update_mobile_button_tints() -> void:
@@ -2304,6 +2319,15 @@ func _load_progress() -> void:
         pending_level_rewards = plr_value
     else:
         pending_level_rewards = []
+
+    # Load equipped cosmetics
+    var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+    var equipped_border = cosmetics.get("equipped_border", "")
+    if player and player.has_method("set_border"):
+        player.set_border(equipped_border)
+    else:
+        # Fallback to UI update if player not ready
+        update_ui_border(equipped_border)
 
 func _save_progress() -> void:
     var cfg := ConfigFile.new()

@@ -20,6 +20,7 @@
 [ext_resource type="Texture2D" uid="uid://dn5c37tdf5r0" path="res://assets/icon/icon_trophy_128x128.png" id="22_trophy_icon"]
 [ext_resource type="Texture2D" uid="uid://v21m5eac8ghe" path="res://assets/icon/icon_border_avatar_gold_128x128.png" id="23_avatar_border"]
 [ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="26_fredoka_bold"]
+[ext_resource type="Texture2D" uid="uid://bg5u0njvop2kr" path="res://assets/profile/profile_basic.png" id="27_profile_basic"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_music_toast_panel"]
 bg_color = Color(0, 0, 0, 0.55)
@@ -264,6 +265,22 @@ texture = ExtResource("23_avatar_border")
 expand_mode = 1
 stretch_mode = 5
 
+[node name="InnerIcon" type="TextureRect" parent="UI/PlayerHUD/AvatarIcon"]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("27_profile_basic")
+expand_mode = 1
+stretch_mode = 5
+
 [node name="LevelLabel" type="Label" parent="UI/PlayerHUD" unique_id=517451708]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 0, 1)
@@ -364,7 +381,7 @@ offset_right = 225.0
 offset_bottom = 175.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
 
-[node name="Title" type="Label" parent="UI/ProfilePanel"]
+[node name="Title" type="Label" parent="UI/ProfilePanel" unique_id=885659812]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -372,12 +389,11 @@ offset_bottom = 50.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_fonts/font = ExtResource("26_fredoka_bold")
-theme_override_font_size = 32
 text = "Profil Pemain"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Content" type="VBoxContainer" parent="UI/ProfilePanel"]
+[node name="Content" type="VBoxContainer" parent="UI/ProfilePanel" unique_id=1731817437]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -390,7 +406,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
-[node name="LargeAvatarIcon" type="TextureRect" parent="UI/ProfilePanel/Content"]
+[node name="LargeAvatarIcon" type="TextureRect" parent="UI/ProfilePanel/Content" unique_id=648000957]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
@@ -398,38 +414,53 @@ size_flags_horizontal = 4
 expand_mode = 1
 stretch_mode = 5
 
-[node name="NameLabel" type="Label" parent="UI/ProfilePanel/Content"]
+[node name="InnerIcon" type="TextureRect" parent="UI/ProfilePanel/Content/LargeAvatarIcon"]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("27_profile_basic")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="UI/ProfilePanel/Content" unique_id=1347035900]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_fonts/font = ExtResource("26_fredoka_bold")
-theme_override_font_size = 24
 text = "Nama: Player"
 
-[node name="StatsLabel" type="Label" parent="UI/ProfilePanel/Content"]
-			unique_name_in_owner = true
-			layout_mode = 2
-			text = "Level: 1
+[node name="StatsLabel" type="Label" parent="UI/ProfilePanel/Content" unique_id=1329623724]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Level: 1
 			XP: 0/100
 			Best Score: 0"
 
-			[node name="Buttons" type="HBoxContainer" parent="UI/ProfilePanel/Content"]
-			layout_mode = 2
-			theme_override_constants/separation = 20
-			alignment = 1
+[node name="Buttons" type="HBoxContainer" parent="UI/ProfilePanel/Content" unique_id=1172058025]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
 
-			[node name="ChangeAvatarButton" type="Button" parent="UI/ProfilePanel/Content/Buttons"]
-			unique_name_in_owner = true
-			custom_minimum_size = Vector2(160, 45)
-			layout_mode = 2
-			text = "Ganti Avatar"
+[node name="ChangeAvatarButton" type="Button" parent="UI/ProfilePanel/Content/Buttons" unique_id=373486531]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 45)
+layout_mode = 2
+text = "Ganti Avatar"
 
-			[node name="ChangeBorderButton" type="Button" parent="UI/ProfilePanel/Content/Buttons"]
-			unique_name_in_owner = true
-			custom_minimum_size = Vector2(160, 45)
-			layout_mode = 2
-			text = "Ganti Border"
+[node name="ChangeBorderButton" type="Button" parent="UI/ProfilePanel/Content/Buttons" unique_id=994814561]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 45)
+layout_mode = 2
+text = "Ganti Border"
 
-[node name="CloseButton" type="Button" parent="UI/ProfilePanel"]
+[node name="CloseButton" type="Button" parent="UI/ProfilePanel" unique_id=381857852]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5

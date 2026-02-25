@@ -863,16 +863,33 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
         inner_icon.show_behind_parent = true
         icon_node.add_child(inner_icon)
 
-    var border_tex_path := "res://assets/icon/icon_border_avatar_gold_128x128.png"
+    var border_tex_path := ""
+    var padding := 8 # Default padding for premium borders
+
     match border_id:
-        "border_gold":
+        "border_gold_premium":
+            border_tex_path = "res://assets/border/border_gold_premium.png"
+        "border_silver_premium":
+            border_tex_path = "res://assets/border/border_silver_premium.png"
+        "border_neon_v2":
+            border_tex_path = "res://assets/border/border_neon_v2.png"
+        "border_shadow_v2":
+            border_tex_path = "res://assets/border/border_shadow_v2.png"
+        "border_fire":
+            border_tex_path = "res://assets/border/border_fire.png"
+            padding = 22 # Increased padding for Fire border
+        "border_kraken":
+            border_tex_path = "res://assets/border/border_kraken.png"
+            padding = 14 # Slightly increased
+        "border_nature":
+            border_tex_path = "res://assets/border/border_nature.png"
+            padding = 14 # Slightly increased
+        "border_cyber":
+            border_tex_path = "res://assets/border/border_cyber.png"
+            padding = 14 # Slightly increased
+        "border_gold", "border_silver", "border_neon", "border_shadow":
             border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png"
-        "border_silver":
-            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png" # Ganti dengan aset asli jika ada
-        "border_neon":
-            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png" # Ganti dengan aset asli jika ada
-        "border_shadow":
-            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png" # Ganti dengan aset asli jika ada
+            padding = 4
         _:
             border_tex_path = "" # Tidak ada border (default)
 
@@ -885,7 +902,7 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
         if tex:
             icon_node.texture = tex
             if inner_icon:
-                inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8)
+                inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, padding)
 
 func _update_avatar_icon(skin_id: String) -> void:
     if _avatar_icon == null:

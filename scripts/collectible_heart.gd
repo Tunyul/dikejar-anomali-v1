@@ -30,5 +30,6 @@ func _on_body_entered(body: Node) -> void:
     if body.is_in_group("player"):
         if body.has_method("heal"):
             body.heal(1)
-            # TODO: Play SFX if needed
+            if has_node("/root/TransitionManager"):
+                get_node("/root/TransitionManager").play_sfx("heart_pickup")
     queue_free()

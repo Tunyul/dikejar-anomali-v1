@@ -902,6 +902,69 @@ func _init_shop_data() -> void:
             "currency": "coins",
             "icon": "res://assets/profile/profile_premium.png",
             "rarity": "rare"
+        },
+        {
+            "id": "skin_chef",
+            "name": "Skin Chef",
+            "description": "Siap memasak skor tertinggi.",
+            "price": 300,
+            "currency": "coins",
+            "icon": "res://assets/profile/profile_chef.png",
+            "rarity": "common"
+        },
+        {
+            "id": "skin_firefighter",
+            "name": "Skin Firefighter",
+            "description": "Memadamkan rintangan di depan.",
+            "price": 350,
+            "currency": "coins",
+            "icon": "res://assets/profile/profile_firefighter.png",
+            "rarity": "common"
+        },
+        {
+            "id": "skin_caveman",
+            "name": "Skin Caveman",
+            "description": "Kembali ke zaman batu.",
+            "price": 450,
+            "currency": "coins",
+            "icon": "res://assets/profile/profile_caveman.png",
+            "rarity": "rare"
+        },
+        {
+            "id": "skin_cat_explorer",
+            "name": "Skin Cat Explorer",
+            "description": "Kucing petualang yang pemberani.",
+            "price": 500,
+            "currency": "coins",
+            "icon": "res://assets/profile/profile_cat_explorer.png",
+            "rarity": "rare"
+        },
+        {
+            "id": "skin_doctor",
+            "name": "Skin Doctor",
+            "description": "Siap mengobati skor yang rendah.",
+            "price": 400,
+            "currency": "coins",
+            "icon": "res://assets/profile/profile_doctor.png",
+            "rarity": "rare"
+        },
+        {
+            "id": "skin_robot",
+            "name": "Skin Robot",
+            "description": "Unit robotik yang efisien.",
+            "price": 600,
+            "currency": "coins",
+            "icon": "res://assets/profile/profile_robot.png",
+            "rarity": "rare"
+        },
+        {
+            "id": "skin_knight",
+            "name": "Skin Knight",
+            "description": "Ksatria berbaju zirah lengkap.",
+            "price": 750,
+            "currency": "coins",
+            "icon": "res://assets/profile/profile_knight.png",
+            "rarity": "epic"
         }
     ]
 
@@ -923,48 +986,196 @@ func _init_shop_data() -> void:
             "currency": "gems",
             "icon": "res://assets/profile/profile_ninja.png",
             "rarity": "legendary"
+        },
+        {
+            "id": "skin_astro_white",
+            "name": "Skin Astronaut White",
+            "description": "Menjelajahi anomali luar angkasa.",
+            "price": 30,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_astro_white.png",
+            "rarity": "epic"
+        },
+        {
+            "id": "skin_astro_blue",
+            "name": "Skin Astronaut Blue",
+            "description": "Versi biru dari penjelajah bintang.",
+            "price": 35,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_astro_blue.png",
+            "rarity": "epic"
+        },
+        {
+            "id": "skin_pirate",
+            "name": "Skin Pirate",
+            "description": "Mencari harta karun tersembunyi.",
+            "price": 45,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_pirate.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "skin_wizard",
+            "name": "Skin Wizard",
+            "description": "Kekuatan sihir di ujung jarimu.",
+            "price": 50,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_wizard.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "skin_dragon",
+            "name": "Skin Dragon",
+            "description": "Naga kecil yang lincah.",
+            "price": 55,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_dragon.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "skin_superhero",
+            "name": "Skin Superhero",
+            "description": "Pahlawan yang kita butuhkan.",
+            "price": 60,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_superhero.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "skin_green_dragon",
+            "name": "Skin Green Dragon",
+            "description": "Naga hijau yang legendaris.",
+            "price": 65,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_green_dragon.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "skin_superhero_male",
+            "name": "Skin Superhero Male",
+            "description": "Pahlawan super pria dengan kekuatan tak terbatas.",
+            "price": 70,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_superhero_male.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "skin_superhero_female",
+            "name": "Skin Superhero Female",
+            "description": "Pahlawan super wanita yang tangguh.",
+            "price": 70,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_superhero_female.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "skin_witch",
+            "name": "Skin Witch",
+            "description": "Penyihir cilik dengan ramuan ajaib.",
+            "price": 55,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_witch.png",
+            "rarity": "epic"
+        },
+        {
+            "id": "skin_pirate_v2",
+            "name": "Skin Pirate Captain",
+            "description": "Kapten bajak laut yang disegani.",
+            "price": 75,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_pirate_v2.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "skin_orc",
+            "name": "Skin Orc Warrior",
+            "description": "Prajurit orc yang kuat dan liar.",
+            "price": 45,
+            "currency": "gems",
+            "icon": "res://assets/profile/profile_orc.png",
+            "rarity": "rare"
         }
     ]
 
     var border_items: Array = [
         {
-            "id": "border_gold",
-            "name": "Gold Border",
-            "description": "Bingkai emas mewah untuk profilmu.",
-            "price": 500,
+            "id": "border_gold_premium",
+            "name": "Royal Gold Border",
+            "description": "Bingkai emas kerajaan yang sangat mewah.",
+            "price": 2000,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
-            "rarity": "rare",
+            "icon": "res://assets/border/border_gold_premium.png",
+            "rarity": "legendary",
             "type": "border"
         },
         {
-            "id": "border_silver",
-            "name": "Silver Border",
-            "description": "Bingkai perak yang elegan dan bersih.",
-            "price": 250,
+            "id": "border_silver_premium",
+            "name": "Elite Silver Border",
+            "description": "Bingkai perak metalik yang modern dan elegan.",
+            "price": 1000,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
-            "rarity": "common",
-            "type": "border"
-        },
-        {
-            "id": "border_neon",
-            "name": "Neon Border",
-            "description": "Bingkai futuristik dengan efek cahaya biru.",
-            "price": 20,
-            "currency": "gems",
-            "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
+            "icon": "res://assets/border/border_silver_premium.png",
             "rarity": "epic",
             "type": "border"
         },
         {
-            "id": "border_shadow",
-            "name": "Shadow Border",
-            "description": "Bingkai misterius dengan aura gelap.",
-            "price": 35,
+            "id": "border_neon_v2",
+            "name": "Cyber Neon Border",
+            "description": "Bingkai dengan cahaya neon futuristik yang menyala.",
+            "price": 40,
             "currency": "gems",
-            "icon": "res://assets/icon/icon_border_avatar_gold_128x128.png",
+            "icon": "res://assets/border/border_neon_v2.png",
+            "rarity": "epic",
+            "type": "border"
+        },
+        {
+            "id": "border_shadow_v2",
+            "name": "Void Shadow Border",
+            "description": "Bingkai dari energi kegelapan yang misterius.",
+            "price": 60,
+            "currency": "gems",
+            "icon": "res://assets/border/border_shadow_v2.png",
             "rarity": "legendary",
+            "type": "border"
+        },
+        {
+            "id": "border_fire",
+            "name": "Fire Border",
+            "description": "Bingkai api yang membara.",
+            "price": 800,
+            "currency": "coins",
+            "icon": "res://assets/border/border_fire.png",
+            "rarity": "rare",
+            "type": "border"
+        },
+        {
+            "id": "border_kraken",
+            "name": "Kraken Border",
+            "description": "Tentakel monster laut yang legendaris.",
+            "price": 1000,
+            "currency": "coins",
+            "icon": "res://assets/border/border_kraken.png",
+            "rarity": "epic",
+            "type": "border"
+        },
+        {
+            "id": "border_nature",
+            "name": "Nature Border",
+            "description": "Kesejukan alam di sekeliling profilmu.",
+            "price": 30,
+            "currency": "gems",
+            "icon": "res://assets/border/border_nature.png",
+            "rarity": "rare",
+            "type": "border"
+        },
+        {
+            "id": "border_cyber",
+            "name": "Cyber Border",
+            "description": "Teknologi masa depan yang canggih.",
+            "price": 50,
+            "currency": "gems",
+            "icon": "res://assets/border/border_cyber.png",
+            "rarity": "epic",
             "type": "border"
         }
     ]
@@ -1905,31 +2116,58 @@ func _apply_item_to_powerups(item: Dictionary) -> void:
     if id == "":
         return
     var data := _load_powerups_data()
+    var gm = get_tree().get_root().get_node_or_null("Main")
+
     match id:
         "magnet_30s":
             data["magnet_30s_tokens"] = int(data.get("magnet_30s_tokens", 0)) + 1
+            if gm and gm.has_method("activate_magnet") and gm.game_active:
+                gm.activate_magnet(30.0)
+                data["magnet_30s_tokens"] = max(int(data["magnet_30s_tokens"]) - 1, 0)
         "shield_1hit":
             data["shield_1hit_charges"] = int(data.get("shield_1hit_charges", 0)) + 1
+            if gm and gm.game_active:
+                # Perisai 1 hit biasanya pasif charge, tapi kita bisa trigger visual jika ada
+                pass
         "double_coins_run":
             data["double_coins_run_tokens"] = int(data.get("double_coins_run_tokens", 0)) + 1
-        "max_heart_plus1":
-            data["max_heart_bonus"] = int(data.get("max_heart_bonus", 0)) + 1
-        "magnet_duration_plus10":
-            data["magnet_duration_multiplier"] = float(data.get("magnet_duration_multiplier", 1.0)) + 0.1
-        "shield_duration_plus10":
-            data["shield_duration_multiplier"] = float(data.get("shield_duration_multiplier", 1.0)) + 0.1
-        "pickup_range_plus1":
-            data["pickup_range_bonus"] = float(data.get("pickup_range_bonus", 0.0)) + 1.0
-        "double_coins_duration_plus10":
-            data["double_coins_duration_multiplier"] = float(data.get("double_coins_duration_multiplier", 1.0)) + 0.1
-        "double_coins_multiplier_plus025":
-            data["double_coins_gain_multiplier"] = float(data.get("double_coins_gain_multiplier", 2.0)) + 0.25
-        "speed_boost_duration_plus10":
-            data["speed_boost_duration_multiplier"] = float(data.get("speed_boost_duration_multiplier", 1.0)) + 0.1
-        "speed_boost_multiplier_plus10":
-            data["speed_boost_multiplier_multiplier"] = float(data.get("speed_boost_multiplier_multiplier", 1.0)) + 0.1
+            if gm and gm.has_method("activate_double_coins_run") and gm.game_active:
+                gm.activate_double_coins_run()
+                data["double_coins_run_tokens"] = max(int(data["double_coins_run_tokens"]) - 1, 0)
         "speed_boost_run":
             data["speed_boost_tokens"] = int(data.get("speed_boost_tokens", 0)) + 1
+            if gm and gm.has_method("activate_speed_boost") and gm.game_active:
+                gm.activate_speed_boost()
+                data["speed_boost_tokens"] = max(int(data["speed_boost_tokens"]) - 1, 0)
+        "max_heart_plus1":
+            data["max_heart_bonus"] = int(data.get("max_heart_bonus", 0)) + 1
+            if gm and gm.game_active and gm.player:
+                gm.max_heart_bonus = data["max_heart_bonus"]
+                var p = gm.player
+                p.max_health += 1
+                p.current_health = min(p.current_health + 1, p.max_health)
+                gm.set_player_health(p.current_health, p.max_health)
+        "magnet_duration_plus10":
+            data["magnet_duration_multiplier"] = float(data.get("magnet_duration_multiplier", 1.0)) + 0.1
+            if gm: gm.magnet_duration_multiplier = data["magnet_duration_multiplier"]
+        "shield_duration_plus10":
+            data["shield_duration_multiplier"] = float(data.get("shield_duration_multiplier", 1.0)) + 0.1
+            if gm: gm.shield_duration_multiplier = data["shield_duration_multiplier"]
+        "pickup_range_plus1":
+            data["pickup_range_bonus"] = float(data.get("pickup_range_bonus", 0.0)) + 1.0
+            if gm: gm.pickup_range_bonus = data["pickup_range_bonus"]
+        "double_coins_duration_plus10":
+            data["double_coins_duration_multiplier"] = float(data.get("double_coins_duration_multiplier", 1.0)) + 0.1
+            if gm: gm.double_coins_duration_multiplier = data["double_coins_duration_multiplier"]
+        "double_coins_multiplier_plus025":
+            data["double_coins_gain_multiplier"] = float(data.get("double_coins_gain_multiplier", 2.0)) + 0.25
+            if gm: gm.double_coins_gain_multiplier = data["double_coins_gain_multiplier"]
+        "speed_boost_duration_plus10":
+            data["speed_boost_duration_multiplier"] = float(data.get("speed_boost_duration_multiplier", 1.0)) + 0.1
+            if gm: gm.speed_boost_duration_multiplier = data["speed_boost_duration_multiplier"]
+        "speed_boost_multiplier_plus10":
+            data["speed_boost_multiplier_multiplier"] = float(data.get("speed_boost_multiplier_multiplier", 1.0)) + 0.1
+            if gm: gm.speed_boost_multiplier_multiplier = data["speed_boost_multiplier_multiplier"]
         _:
             pass
     _save_powerups_data(data)
@@ -1967,6 +2205,7 @@ func _unlock_skin(id: String) -> void:
     # Auto-equip if newly purchased
     cosmetics["equipped_skin"] = id
     _save_cosmetics_data(cosmetics)
+    _notify_player_cosmetic_change()
 
 func _unlock_border(id: String) -> void:
     var cosmetics := _load_cosmetics_data()
@@ -1980,6 +2219,7 @@ func _unlock_border(id: String) -> void:
     # Auto-equip if newly purchased
     cosmetics["equipped_border"] = id
     _save_cosmetics_data(cosmetics)
+    _notify_player_cosmetic_change()
 
 func _equip_border(id: String) -> void:
     var cosmetics := _load_cosmetics_data()
@@ -1987,6 +2227,7 @@ func _equip_border(id: String) -> void:
     _save_cosmetics_data(cosmetics)
     _update_buy_buttons_state()
     _set_status_text(tr("Border equipped!"))
+    _notify_player_cosmetic_change()
 
 func _equip_skin(id: String) -> void:
     var cosmetics := _load_cosmetics_data()
@@ -1994,6 +2235,15 @@ func _equip_skin(id: String) -> void:
     _save_cosmetics_data(cosmetics)
     _update_buy_buttons_state()
     _set_status_text(tr("Skin equipped!"))
+    _notify_player_cosmetic_change()
+
+func _notify_player_cosmetic_change() -> void:
+    var gm = get_tree().get_root().get_node_or_null("Main")
+    if gm and gm.has_method("update_player_cosmetics"):
+        gm.update_player_cosmetics()
+    elif gm and "player" in gm and is_instance_valid(gm.player):
+        if gm.player.has_method("update_cosmetics"):
+            gm.player.update_cosmetics()
 
 func _on_back_pressed() -> void:
     if not is_inside_tree():
