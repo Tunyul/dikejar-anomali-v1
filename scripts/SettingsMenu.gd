@@ -9,39 +9,30 @@ signal resume_pressed
 signal restart_pressed
 signal menu_pressed
 
-var _bgm_slider: HSlider = null
-var _sfx_slider: HSlider = null
-var _bgm_mute: CheckBox = null
-var _sfx_mute: CheckBox = null
-var _lang_option: OptionButton = null
-var _scroll: ScrollContainer = null
+@onready var _ui: CanvasLayer = %UI
+@onready var _panel: TextureRect = %Panel
+@onready var _close_btn: TextureButton = %CloseButton
+@onready var _scroll: ScrollContainer = %Scroll
+@onready var _vbox: VBoxContainer = %VBox
+@onready var _lang_option: OptionButton = %LanguageOption
+@onready var _bgm_slider: HSlider = %BGMSlider
+@onready var _bgm_mute: CheckBox = %BGMMute
+@onready var _sfx_slider: HSlider = %SFXSlider
+@onready var _sfx_mute: CheckBox = %SFXMute
+@onready var _menu_btn: Button = %MenuButton
+@onready var _restart_btn: Button = %RestartButton
+@onready var _resume_btn: Button = %ResumeButton
+@onready var _title_label: Label = %TitleLabel
+
 var _flag_id: Texture2D = null
 var _flag_en: Texture2D = null
 var _flag_zh: Texture2D = null
-var _close_btn: BaseButton = null
-var _panel: Control = null
-var _vbox: Control = null
-var _resume_btn: Button = null
-var _restart_btn: Button = null
-var _menu_btn: Button = null
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
 var _scroll_drag_active: bool = false
 var _scroll_drag_last_pos: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
-    _bgm_slider = get_node_or_null("UI/Panel/Scroll/Margin/VBox/BGMGroup/BGMSlider") as HSlider
-    _sfx_slider = get_node_or_null("UI/Panel/Scroll/Margin/VBox/SFXGroup/SFXSlider") as HSlider
-    _bgm_mute = get_node_or_null("UI/Panel/Scroll/Margin/VBox/BGMGroup/BGMMute") as CheckBox
-    _sfx_mute = get_node_or_null("UI/Panel/Scroll/Margin/VBox/SFXGroup/SFXMute") as CheckBox
-    _lang_option = get_node_or_null("UI/Panel/Scroll/Margin/VBox/LanguageGroup/LanguageOption") as OptionButton
-    _scroll = get_node_or_null("UI/Panel/Scroll") as ScrollContainer
-    _close_btn = get_node_or_null("UI/Panel/CloseButton") as BaseButton
-    _panel = get_node_or_null("UI/Panel") as Control
-    _vbox = get_node_or_null("UI/Panel/Scroll/Margin/VBox") as Control
-    _resume_btn = get_node_or_null("UI/Panel/ButtonRow/ResumeButton") as Button
-    _restart_btn = get_node_or_null("UI/Panel/ButtonRow/RestartButton") as Button
-    _menu_btn = get_node_or_null("UI/Panel/ButtonRow/MenuButton") as Button
 
     if _resume_btn:
         _resume_btn.pressed.connect(func(): emit_signal("resume_pressed"); _on_back_pressed())
@@ -53,10 +44,22 @@ func _ready() -> void:
     if _panel:
         _panel.pivot_offset = _panel.size * 0.5
     if _scroll:
-        _scroll.gui_input.connect(_on_scroll_gui_input)
-        _scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+        _scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+        _scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+
     if _vbox:
-        _vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        _vbox.mouse_filter = Control.MOUSE_FILTER_PASS
+        for child in _vbox.get_children():
+            if child is Control:
+                child.mouse_filter = Control.MOUSE_FILTER_PASS
+                for sub_child in child.get_children():
+                    if sub_child is Control and not (sub_child is Slider or sub_child is Button or sub_child is OptionButton):
+                        sub_child.mouse_filter = Control.MOUSE_FILTER_PASS
+
+    var margin = _scroll.get_child(0) if _scroll and _scroll.get_child_count() > 0 else null
+    if margin and margin is MarginContainer:
+        margin.mouse_filter = Control.MOUSE_FILTER_PASS
+
     if _bgm_slider:
         _bgm_slider.min_value = 0.0
         _bgm_slider.max_value = 1.0
@@ -86,22 +89,20 @@ func _ready() -> void:
     if _close_btn:
         _close_btn.pressed.connect(_on_back_pressed)
     if get_tree().current_scene != self:
-        var ui := get_node_or_null("UI")
-        if ui:
-            ui.visible = false
+        if _ui:
+            _ui.visible = false
         visible = false
     var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
     var title_font := load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf") as Font
     if ui_font:
         _apply_ui_font(self, ui_font)
     if title_font:
-        var title_label := get_node_or_null("UI/TitleLabel") as Label
-        if title_label:
-            title_label.add_theme_font_override("font", title_font)
-            title_label.add_theme_color_override("font_color", Color(1, 1, 0, 1))
-            title_label.add_theme_constant_override("outline_size", 3)
-            title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-            title_label.add_theme_font_size_override("font_size", 36)
+        if _title_label:
+            _title_label.add_theme_font_override("font", title_font)
+            _title_label.add_theme_color_override("font_color", Color(1, 1, 0, 1))
+            _title_label.add_theme_constant_override("outline_size", 3)
+            _title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+            _title_label.add_theme_font_size_override("font_size", 36)
     _connect_viewport_resize()
 
 
@@ -141,37 +142,53 @@ func _apply_responsive_layout(vp: Vector2) -> void:
     _panel.position = (vp - _panel.size * fit) * 0.5
 
 
-func _on_scroll_gui_input(event: InputEvent) -> void:
-    if _scroll == null:
+func _input(event: InputEvent) -> void:
+    if not is_inside_tree() or not visible or _scroll == null:
         return
-    var st := event as InputEventScreenTouch
-    if st:
-        if st.pressed:
-            _scroll_drag_active = true
-            _scroll_drag_last_pos = st.position
+
+    # Mouse Wheel is handled automatically, but for touch/drag we need manual logic
+    if event is InputEventScreenTouch:
+        var e := event as InputEventScreenTouch
+        if e.pressed:
+            var rect := _scroll.get_global_rect()
+            if rect.has_point(e.position):
+                _scroll_drag_active = true
+                _scroll_drag_last_pos = e.position
         else:
             _scroll_drag_active = false
-        _scroll.accept_event()
         return
-    var sd := event as InputEventScreenDrag
-    if sd:
+
+    if event is InputEventScreenDrag:
+        var e := event as InputEventScreenDrag
         if _scroll_drag_active:
-            _scroll.scroll_vertical = int(_scroll.scroll_vertical - sd.relative.y)
-            _scroll_drag_last_pos = sd.position
-            _scroll.accept_event()
+            # Scroll vertically
+            var old_scroll = _scroll.scroll_vertical
+            _scroll.scroll_vertical = int(_scroll.scroll_vertical - e.relative.y)
+            # If scroll actually changed, consume the event so sliders don't move
+            if _scroll.scroll_vertical != old_scroll:
+                get_viewport().set_input_as_handled()
         return
-    var mb := event as InputEventMouseButton
-    if mb and mb.button_index == MOUSE_BUTTON_LEFT:
-        if mb.pressed:
-            _scroll_drag_active = true
-            _scroll_drag_last_pos = mb.position
-        else:
-            _scroll_drag_active = false
+
+    if event is InputEventMouseButton:
+        var e := event as InputEventMouseButton
+        if e.button_index == MOUSE_BUTTON_LEFT:
+            if e.pressed:
+                var rect := _scroll.get_global_rect()
+                if rect.has_point(e.global_position):
+                    _scroll_drag_active = true
+                    _scroll_drag_last_pos = e.global_position
+            else:
+                _scroll_drag_active = false
         return
-    var mm := event as InputEventMouseMotion
-    if mm and _scroll_drag_active:
-        _scroll.scroll_vertical = int(_scroll.scroll_vertical - mm.relative.y)
-        _scroll.accept_event()
+
+    if event is InputEventMouseMotion:
+        var e := event as InputEventMouseMotion
+        if _scroll_drag_active:
+            var old_scroll = _scroll.scroll_vertical
+            _scroll.scroll_vertical = int(_scroll.scroll_vertical - e.relative.y)
+            if _scroll.scroll_vertical != old_scroll:
+                get_viewport().set_input_as_handled()
+        return
 
 
 func _read_settings_from_save() -> Dictionary:
@@ -424,9 +441,8 @@ func show_overlay(is_ingame: bool = false) -> void:
     if _menu_btn:
         _menu_btn.visible = is_ingame
 
-    var ui := get_node_or_null("UI")
-    if ui:
-        ui.visible = true
+    if _ui:
+        _ui.visible = true
     visible = true
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -439,10 +455,9 @@ func _unhandled_input(event: InputEvent) -> void:
         return
     if not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
         return
-    var panel := get_node_or_null("UI/Panel") as Control
-    if panel == null:
+    if _panel == null:
         return
-    var rect := panel.get_global_rect()
+    var rect := _panel.get_global_rect()
     if rect.has_point(mb.position):
         return
     _on_back_pressed()
@@ -454,9 +469,8 @@ func _on_back_pressed() -> void:
             Preloader.set_next_scene("res://scenes/MainMenu.tscn")
         await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
         return
-    var ui := get_node_or_null("UI")
-    if ui:
-        ui.visible = false
+    if _ui:
+        _ui.visible = false
     visible = false
     emit_signal("overlay_closed")
 

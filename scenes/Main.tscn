@@ -601,6 +601,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="GameOverMenu" type="Control" parent="CanvasLayer" unique_id=772561332]
+unique_name_in_owner = true
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -617,6 +618,7 @@ anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.45)
 
 [node name="CardBackground" type="TextureRect" parent="CanvasLayer/GameOverMenu" unique_id=1801417037]
+unique_name_in_owner = true
 layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
@@ -630,6 +632,7 @@ texture = ExtResource("64_gameover_panel")
 stretch_mode = 3
 
 [node name="Title" type="Label" parent="CanvasLayer/GameOverMenu" unique_id=1821427255]
+unique_name_in_owner = true
 layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
@@ -646,6 +649,7 @@ text = "Game Over"
 horizontal_alignment = 1
 
 [node name="VBox" type="VBoxContainer" parent="CanvasLayer/GameOverMenu" unique_id=212041277]
+unique_name_in_owner = true
 layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
@@ -658,6 +662,7 @@ offset_bottom = 178.0
 alignment = 1
 
 [node name="ScoreLabel" type="Label" parent="CanvasLayer/GameOverMenu/VBox" unique_id=218327338]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("65_nunito_regular")
@@ -666,6 +671,7 @@ text = "Score: 0"
 horizontal_alignment = 1
 
 [node name="DistanceLabel" type="Label" parent="CanvasLayer/GameOverMenu/VBox" unique_id=443795591]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("65_nunito_regular")
@@ -678,24 +684,28 @@ layout_mode = 2
 size_flags_horizontal = 4
 
 [node name="RetryButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox/ButtonRow" unique_id=1334639434]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 icon = ExtResource("66_retry_icon")
 flat = true
 
 [node name="BonusContinueButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox/ButtonRow" unique_id=210911424]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 icon = ExtResource("68_play_icon")
 flat = true
 
 [node name="ContinueButton" type="Button" parent="CanvasLayer/GameOverMenu/VBox/ButtonRow" unique_id=516960039]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 icon = ExtResource("67_home_icon")
 flat = true
 
 [node name="ConfirmPanel" parent="CanvasLayer/GameOverMenu" unique_id=1337889364 instance=ExtResource("72_confirm_panel_scene")]
+unique_name_in_owner = true
 layout_mode = 1
 
 [node name="HealthIcon" parent="CanvasLayer" unique_id=2110214828 instance=ExtResource("59_heart_hud")]

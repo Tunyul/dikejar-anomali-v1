@@ -32,6 +32,19 @@ var _edge_padding_nodes: Array = []
 var _items_margin_nodes: Array = []
 var _fx_rng := RandomNumberGenerator.new()
 var _ad_manager: Node = null
+
+@onready var _ui: CanvasLayer = %UI
+@onready var _title_label: Label = %TitleLabel
+@onready var _status_label: Label = %StatusLabel
+@onready var _coins_label: Label = %CoinsLabel
+@onready var _gems_label: Label = %GemsLabel
+var _status_timer: Timer
+@onready var _coins_icon: TextureRect = %CoinsIcon
+@onready var _gems_icon: TextureRect = %GemsIcon
+@onready var _groups_hbox: HBoxContainer = %GroupsHBox
+@onready var _close_button: BaseButton = %CloseButton
+@onready var _back_button: BaseButton = %BackButton
+
 var _awaiting_rewarded_reason: String = ""
 var _daily_claim_day_bucket: int = -1
 var _daily_claim_count: int = 0
@@ -60,14 +73,14 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
     _fx_rng.randomize()
-    _parallax_bg = get_node_or_null("ParallaxBG") as ParallaxBackground
+    _parallax_bg = %ParallaxBG
     if _parallax_bg:
-        var bg_layer := _parallax_bg.get_node_or_null("BG") as ParallaxLayer
-        var bg_sprite := _parallax_bg.get_node_or_null("BG/Sprite") as Sprite2D
+        var bg_layer := %BG
+        var bg_sprite := %Sprite
         if bg_layer and bg_sprite and bg_sprite.texture:
             bg_layer.motion_mirroring = bg_sprite.texture.get_size()
 
-    _ui_vbox = get_node_or_null("UI/VBox") as VBoxContainer
+    _ui_vbox = %VBox
     if _ui_vbox:
         _ui_vbox.show()
         _ui_vbox.modulate.a = 0.0
@@ -88,36 +101,34 @@ func _ready() -> void:
         _apply_ui_font(self, ui_font)
 
     if title_font:
-        var title := get_node_or_null("UI/VBox/TitleLabel") as Label
-        if title:
-            title.add_theme_font_override("font", title_font)
-            title.add_theme_color_override("font_color", Color(1, 1, 0, 1))
-            title.add_theme_constant_override("outline_size", 3)
-            title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-            title.add_theme_font_size_override("font_size", 36)
-            title.text = tr("Shop")
+        if _title_label:
+            _title_label.add_theme_font_override("font", title_font)
+            _title_label.add_theme_color_override("font_color", Color(1, 1, 0, 1))
+            _title_label.add_theme_constant_override("outline_size", 3)
+            _title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+            _title_label.add_theme_font_size_override("font_size", 36)
+            _title_label.text = tr("Shop")
 
-    var groups_scroll := get_node_or_null("UI/VBox/GroupsScroll") as ScrollContainer
-    _groups_scroll = groups_scroll
-    if groups_scroll:
+    _groups_scroll = %GroupsScroll
+    if _groups_scroll:
         if not Engine.is_editor_hint():
-            groups_scroll.custom_minimum_size = Vector2.ZERO
+            _groups_scroll.custom_minimum_size = Vector2.ZERO
         if groups_scroll_height > 0.0:
-            groups_scroll.custom_minimum_size.y = groups_scroll_height
-            groups_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+            _groups_scroll.custom_minimum_size.y = groups_scroll_height
+            _groups_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
         var bg := StyleBoxFlat.new()
         bg.bg_color = Color(0.08, 0.08, 0.08, 0.0) # Transparan
         bg.corner_radius_top_left = 8
         bg.corner_radius_top_right = 8
         bg.corner_radius_bottom_left = 8
         bg.corner_radius_bottom_right = 8
-        groups_scroll.add_theme_stylebox_override("panel", bg)
-        groups_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-        groups_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+        _groups_scroll.add_theme_stylebox_override("panel", bg)
+        _groups_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+        _groups_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
         if groups_scroll_height <= 0.0:
-            groups_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+            _groups_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
         if Engine.is_editor_hint():
-            groups_scroll.clip_contents = false
+            _groups_scroll.clip_contents = false
         _setup_groups_scroll_input()
 
     if Engine.is_editor_hint():
@@ -127,19 +138,14 @@ func _ready() -> void:
         _build_groups_ui()
 
     if not Engine.is_editor_hint():
-        var back := get_node_or_null("UI/VBox/BackButton") as BaseButton
-        var close_btn := get_node_or_null("UI/CloseButton") as BaseButton
-        var coins_label := get_node_or_null("UI/VBox/CurrencyRow/CoinsLabel")
-        var gems_label := get_node_or_null("UI/VBox/CurrencyRow/GemsLabel")
-        var status_label := get_node_or_null("UI/VBox/StatusLabel") as Label
         _ad_manager = AdManager
         if _ad_manager:
             _ad_manager.move_banner(false) # Banner di bawah untuk shop
 
-        if back and not back.pressed.is_connected(_on_back_pressed):
-            back.pressed.connect(_on_back_pressed)
-        if close_btn and not close_btn.pressed.is_connected(_on_back_pressed):
-            close_btn.pressed.connect(_on_back_pressed)
+        if _back_button and not _back_button.pressed.is_connected(_on_back_pressed):
+            _back_button.pressed.connect(_on_back_pressed)
+        if _close_button and not _close_button.pressed.is_connected(_on_back_pressed):
+            _close_button.pressed.connect(_on_back_pressed)
 
         if _ad_manager and _ad_manager.has_signal("reward_granted"):
             var cb_reward := Callable(self, "_on_reward_granted")
@@ -148,11 +154,11 @@ func _ready() -> void:
 
         current_coins = _load_coins()
         current_gems = _load_gems()
-        _setup_currency_display(coins_label, gems_label)
+        _setup_currency_display(_coins_label, _gems_label)
         _load_daily_claim_progress()
 
-        if status_label:
-            status_label.text = ""
+        if _status_label:
+            _status_label.text = ""
 
         _update_buy_buttons_state()
 
@@ -248,29 +254,25 @@ func _input(event: InputEvent) -> void:
     return
 
 func _init_status_timer() -> void:
-    var timer := get_node_or_null("StatusTimer") as Timer
-    if not timer:
-        timer = Timer.new()
-        timer.name = "StatusTimer"
-        timer.one_shot = true
-        timer.wait_time = 3.0
-        timer.timeout.connect(_on_status_timer_timeout)
-        add_child(timer)
+    if not _status_timer:
+        _status_timer = Timer.new()
+        _status_timer.name = "StatusTimer"
+        _status_timer.one_shot = true
+        _status_timer.wait_time = 3.0
+        _status_timer.timeout.connect(_on_status_timer_timeout)
+        add_child(_status_timer)
 
 func _on_status_timer_timeout() -> void:
     if not is_inside_tree():
         return
-    var status_label := get_node_or_null("UI/VBox/StatusLabel") as Label
-    if status_label:
-        status_label.text = ""
+    if _status_label:
+        _status_label.text = ""
 
 func _set_status_text(text: String) -> void:
-    var status_label := get_node_or_null("UI/VBox/StatusLabel") as Label
-    if status_label:
-        status_label.text = text
-        var timer := get_node_or_null("StatusTimer") as Timer
-        if timer:
-            timer.start()
+    if _status_label:
+        _status_label.text = text
+        if _status_timer:
+            _status_timer.start()
 
 func _exit_tree() -> void:
     set_process(false)
@@ -307,7 +309,7 @@ func _setup_groups_scroll_input() -> void:
         return
     _groups_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 
-    var groups_hbox := get_node_or_null("UI/VBox/GroupsScroll/GroupsHBox") as Control
+    var groups_hbox := %GroupsHBox
     if groups_hbox:
         groups_hbox.mouse_filter = Control.MOUSE_FILTER_PASS
         groups_hbox.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -391,8 +393,8 @@ func _apply_shop_number_font(lbl: Label) -> void:
     lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 
 func _setup_currency_display(coins_label: Label, gems_label: Label) -> void:
-    var coins_icon := get_node_or_null("UI/VBox/CurrencyRow/CoinsIcon") as TextureRect
-    var gems_icon := get_node_or_null("UI/VBox/CurrencyRow/GemsIcon") as TextureRect
+    var coins_icon := _coins_icon
+    var gems_icon := _gems_icon
 
     if coins_icon and _coin_icon_tex:
         coins_icon.texture = _coin_icon_tex
@@ -406,11 +408,11 @@ func _setup_currency_display(coins_label: Label, gems_label: Label) -> void:
         gems_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
         gems_icon.custom_minimum_size = Vector2(32, 32)
 
-    if coins_label and coins_label is Label:
-        (coins_label as Label).text = str(current_coins)
+    if coins_label:
+        coins_label.text = str(current_coins)
         _apply_shop_number_font(coins_label)
-    if gems_label and gems_label is Label:
-        (gems_label as Label).text = str(current_gems)
+    if gems_label:
+        gems_label.text = str(current_gems)
         _apply_shop_number_font(gems_label)
 
 func _load_coins() -> int:
@@ -545,7 +547,7 @@ func _grant_daily_claim_coins(via_ad: bool) -> void:
     _daily_claim_count += 1
     _save_daily_claim_progress()
 
-    var coins_label := get_node_or_null("UI/VBox/CurrencyRow/CoinsLabel") as Label
+    var coins_label := _coins_label
     if coins_label:
         coins_label.text = str(current_coins)
 
@@ -553,7 +555,7 @@ func _grant_daily_claim_coins(via_ad: bool) -> void:
         TransitionManager.play_sfx(&"mission_claim")
 
     var from_btn := _find_buy_button_for_item_id(_DAILY_CLAIM_ITEM_ID) as Control
-    var to_icon := get_node_or_null("UI/VBox/CurrencyRow/CoinsIcon") as Control
+    var to_icon := _coins_icon
     var coin_count := clampi(int(round(float(gain) / 40.0)), 6, 14)
     _play_claim_coin_fly(from_btn, to_icon, coin_count)
 
@@ -568,7 +570,7 @@ func _play_claim_coin_fly(from_control: Control, to_control: Control, count: int
         return
     if count <= 0:
         return
-    var ui_layer := get_node_or_null("UI") as CanvasLayer
+    var ui_layer := _ui
     if ui_layer == null:
         return
 
@@ -634,9 +636,9 @@ func _on_viewport_size_changed() -> void:
 
 func _apply_responsive_layout(vp: Vector2) -> void:
     if _parallax_bg:
-        var bg_sprite := _parallax_bg.get_node_or_null("BG/Sprite") as Sprite2D
+        var bg_sprite := %Sprite
         if bg_sprite and bg_sprite.texture:
-            var ts := bg_sprite.texture.get_size()
+            var ts: Vector2 = bg_sprite.texture.get_size()
             if ts.x > 0.0 and ts.y > 0.0:
                 # Scale to fill viewport while maintaining aspect ratio
                 var s: float = max(vp.x / ts.x, vp.y / ts.y)
@@ -644,7 +646,7 @@ func _apply_responsive_layout(vp: Vector2) -> void:
                 bg_sprite.position = Vector2.ZERO
 
                 # Update mirroring to match new scaled size for seamless parallax
-                var bg_layer := _parallax_bg.get_node_or_null("BG") as ParallaxLayer
+                var bg_layer := %BG
                 if bg_layer:
                     # Use floor to avoid sub-pixel seams
                     bg_layer.motion_mirroring = (ts * s).floor()
@@ -1300,7 +1302,7 @@ func _init_shop_data() -> void:
 func _init_editor_dummy_data() -> void:
     var powerup_items = [
         {"id": _DAILY_CLAIM_ITEM_ID, "name": "Daily Coins Claim", "description": "Klaim %d-%d koin harian. Klaim berikutnya di hari yang sama perlu iklan." % [_DAILY_CLAIM_MIN_COINS, _DAILY_CLAIM_MAX_COINS], "price": 0, "currency": "coins", "icon": "res://assets/coin_animation/png/2x/Coin.png", "rarity": "common"},
-        {"id": "magnet_30s", "name": "Magnet 30s", "description": "Menarik koin otomatis selama 30 detik.", "price": 150, "currency": "coins", "icon": "res://assets/icon/icon_magnet_v1_96x96.png", "rarity": "common"},
+        {"id": "magnet_30s", "name": "Magnet 30s", "description": "Menarik koin otomatis selama 30 detik.", "price": 150, "currency": "coins", "icon": "res://assets/icon/icon_magnet_timer_96x96.png", "rarity": "common"},
         {"id": "shield_1hit", "name": "Perisai 1 Hit", "description": "Melindungi dari satu kali tabrakan.", "price": 200, "currency": "coins", "icon": "res://assets/icon/icon_shield.png", "rarity": "rare"},
         {"id": "double_coins_run", "name": "Double Coins (1 Run)", "description": "Mendapatkan koin 2x lipat selama satu sesi lari.", "price": 250, "currency": "coins", "icon": "res://assets/icon/icon_coinduble_96x96.png", "rarity": "rare"},
         {"id": "speed_boost_run", "name": "Speed Boost (1 Run)", "description": "Meningkatkan kecepatan lari dasar sebesar 50%.", "price": 200, "currency": "coins", "icon": "res://assets/icon/icon_boost_96x96.png", "rarity": "rare"}
@@ -1327,7 +1329,7 @@ func _init_editor_dummy_data() -> void:
             "description": "Menambah durasi efek magnet secara permanen.",
             "price": 800,
             "currency": "coins",
-            "icon": "res://assets/icon/icon_magnet_v1_96x96.png",
+            "icon": "res://assets/icon/icon_magnet_timer_96x96.png",
             "rarity": "rare"
         },
         {
@@ -1436,54 +1438,9 @@ func _init_editor_dummy_data() -> void:
     })
 
     # 3. Cosmetics (Coins) Dummy - 2 items
-    var cosmetic_coin_items: Array = [
-        {
-            "id": "skin_basic",
-            "name": "Skin Basic",
-            "price": 150,
-            "currency": "coins",
-            "icon": "res://assets/mc/run/idle_run.png",
-            "rarity": "common"
-        },
-        {
-            "id": "skin_premium",
-            "name": "Skin Premium",
-            "price": 400,
-            "currency": "coins",
-            "icon": "res://assets/mc/run/idle_run.png",
-            "rarity": "rare"
-        }
-    ]
-    shop_groups.append({
-        "id": "cosmetics_coins",
-        "title": "Cosmetics (Coins)",
-        "items": cosmetic_coin_items
-    })
-
+    var _cosmetic_coin_items: Array = []
     # 4. Cosmetics (Gems) Dummy - 2 items
-    var cosmetic_gem_items: Array = [
-        {
-            "id": "skin_neon",
-            "name": "Skin Neon",
-            "price": 25,
-            "currency": "gems",
-            "icon": "res://assets/mc/run/idle_run.png",
-            "rarity": "epic"
-        },
-        {
-            "id": "skin_shadow",
-            "name": "Skin Shadow",
-            "price": 40,
-            "currency": "gems",
-            "icon": "res://assets/mc/run/idle_run.png",
-            "rarity": "legendary"
-        }
-    ]
-    shop_groups.append({
-        "id": "cosmetics_gems",
-        "title": "Cosmetics (Gems)",
-        "items": cosmetic_gem_items
-    })
+    var _cosmetic_gem_items: Array = []
 
     # 5. Gem Packs (Real) Dummy - 4 items
     var gem_items: Array = [
@@ -1560,8 +1517,8 @@ func _init_editor_dummy_data() -> void:
     })
 
 func _build_groups_ui() -> void:
-    var groups_root := get_node_or_null("UI/VBox/GroupsScroll/GroupsHBox") as HBoxContainer
-    var status_label := get_node_or_null("UI/VBox/StatusLabel") as Label
+    var groups_root := _groups_hbox
+    var status_label := _status_label
     if groups_root == null:
         if status_label:
             status_label.text = tr("[Error] Groups container (HBox) not found")
@@ -1952,19 +1909,19 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
     var confirm_scene := load("res://scenes/ConfirmPanel.tscn") as PackedScene
     if confirm_scene:
         var popup := confirm_scene.instantiate()
-        var ui_layer := get_node_or_null("UI") as CanvasLayer
+        var ui_layer := _ui
         if ui_layer:
             ui_layer.add_child(popup)
         else:
             add_child(popup)
 
-        var msg := popup.get_node_or_null("Message") as Label
+        var msg := popup.get_node_or_null("%Message") as Label
         if msg:
             var currency_name := tr("Coins") if currency == "coins" else (tr("Gems") if currency == "gems" else tr("Money"))
             msg.text = tr("Buy %s\nfor %d %s?") % [tr(String(item.get("name", "Item"))), price, currency_name]
 
-        var yes := popup.get_node_or_null("Buttons/YesButton") as TextureButton
-        var no := popup.get_node_or_null("Buttons/NoButton") as TextureButton
+        var yes := popup.get_node_or_null("%YesButton") as TextureButton
+        var no := popup.get_node_or_null("%NoButton") as TextureButton
 
         if yes:
             yes.pressed.connect(func():
@@ -2000,7 +1957,7 @@ func _execute_purchase(item: Dictionary) -> void:
             else:
                 _apply_item_to_powerups(item)
 
-            var coins_label := get_node_or_null("UI/VBox/CurrencyRow/CoinsLabel") as Label
+            var coins_label := _coins_label
             if coins_label:
                 coins_label.text = str(current_coins)
             _build_groups_ui()
@@ -2019,7 +1976,7 @@ func _execute_purchase(item: Dictionary) -> void:
             else:
                 _apply_item_to_powerups(item)
 
-            var gems_label := get_node_or_null("UI/VBox/CurrencyRow/GemsLabel") as Label
+            var gems_label := _gems_label
             if gems_label:
                 gems_label.text = str(current_gems)
             _build_groups_ui()
@@ -2041,9 +1998,8 @@ func _on_language_changed(_locale: String) -> void:
         return
     if Engine.is_editor_hint():
         return
-    var title := get_node_or_null("UI/VBox/TitleLabel") as Label
-    if title:
-        title.text = tr("Shop")
+    if _title_label:
+        _title_label.text = tr("Shop")
     _build_groups_ui()
     _update_buy_buttons_state()
 
@@ -2092,14 +2048,14 @@ func _apply_real_purchase(item: Dictionary) -> bool:
     if coins_gain > 0:
         current_coins += coins_gain
         _save_coins(current_coins)
-        var coins_label := get_node_or_null("UI/VBox/CurrencyRow/CoinsLabel") as Label
+        var coins_label := _coins_label
         if coins_label:
             coins_label.text = str(current_coins)
 
     if gems_gain > 0:
         current_gems += gems_gain
         _save_gems(current_gems)
-        var gems_label := get_node_or_null("UI/VBox/CurrencyRow/GemsLabel") as Label
+        var gems_label := _gems_label
         if gems_label:
             gems_label.text = str(current_gems)
 
@@ -2282,8 +2238,8 @@ func _editor_init_and_build() -> void:
     _build_groups_ui()
     if _ui_vbox:
         _apply_responsive_layout(get_viewport_rect().size)
-    var coins_label := get_node_or_null("UI/VBox/CurrencyRow/CoinsLabel") as Label
-    var gems_label := get_node_or_null("UI/VBox/CurrencyRow/GemsLabel") as Label
+    var coins_label := _coins_label
+    var gems_label := _gems_label
     if coins_label:
         coins_label.text = "123456789"
         _apply_shop_number_font(coins_label)

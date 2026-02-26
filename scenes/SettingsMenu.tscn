@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://c8rdylqpmqxtr"]
+[gd_scene format=3 uid="uid://c8rdylqpmqxtr"]
 
 [ext_resource type="Script" uid="uid://dxjs68b8i4t6v" path="res://scripts/SettingsMenu.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://deimh4ij40yld" path="res://assets/panel/panel_setting_685x356.png" id="2_panel_setting"]
@@ -8,7 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://b7gkng0ib4y4h" path="res://assets/tombol/tombol_play_96x96.png" id="6_resume"]
 [ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="7_fredoka_bold"]
 
-[node name="SettingsMenu" type="Control"]
+[node name="SettingsMenu" type="Control" unique_id=592590160]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -17,10 +17,11 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=606142894]
+unique_name_in_owner = true
 layer = 200
 
-[node name="Background" type="ColorRect" parent="UI"]
+[node name="Background" type="ColorRect" parent="UI" unique_id=1909023253]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -28,7 +29,8 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.6)
 
-[node name="Panel" type="TextureRect" parent="UI"]
+[node name="Panel" type="TextureRect" parent="UI" unique_id=512105930]
+unique_name_in_owner = true
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -41,7 +43,8 @@ offset_bottom = 268.0
 texture = ExtResource("2_panel_setting")
 stretch_mode = 5
 
-[node name="CloseButton" type="TextureButton" parent="UI/Panel"]
+[node name="CloseButton" type="TextureButton" parent="UI/Panel" unique_id=1407700352]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -53,7 +56,8 @@ offset_bottom = 64.0
 grow_horizontal = 0
 texture_normal = ExtResource("3_tombol_close")
 
-[node name="Scroll" type="ScrollContainer" parent="UI/Panel"]
+[node name="Scroll" type="ScrollContainer" parent="UI/Panel" unique_id=1224936974]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -64,8 +68,10 @@ offset_right = -64.0
 offset_bottom = -130.0
 grow_horizontal = 2
 grow_vertical = 2
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 3
 
-[node name="Margin" type="MarginContainer" parent="UI/Panel/Scroll"]
+[node name="Margin" type="MarginContainer" parent="UI/Panel/Scroll" unique_id=1829915485]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -74,66 +80,72 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="VBox" type="VBoxContainer" parent="UI/Panel/Scroll/Margin"]
+[node name="VBox" type="VBoxContainer" parent="UI/Panel/Scroll/Margin" unique_id=930790048]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 20
 
-[node name="LanguageGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox"]
+[node name="LanguageGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox" unique_id=1357645349]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="LanguageLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/LanguageGroup"]
+[node name="LanguageLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/LanguageGroup" unique_id=2045271382]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Language"
 
-[node name="LanguageOption" type="OptionButton" parent="UI/Panel/Scroll/Margin/VBox/LanguageGroup"]
+[node name="LanguageOption" type="OptionButton" parent="UI/Panel/Scroll/Margin/VBox/LanguageGroup" unique_id=500058913]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 
-[node name="BGMGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox"]
+[node name="BGMGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox" unique_id=409001154]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BGMLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup"]
+[node name="BGMLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup" unique_id=337054662]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "BGM Volume"
 
-[node name="BGMSlider" type="HSlider" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup"]
+[node name="BGMSlider" type="HSlider" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup" unique_id=967016769]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 size_flags_vertical = 4
 
-[node name="BGMMute" type="CheckBox" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup"]
+[node name="BGMMute" type="CheckBox" parent="UI/Panel/Scroll/Margin/VBox/BGMGroup" unique_id=11972802]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_constants/h_separation = 10
 text = "Mute BGM"
 
-[node name="SFXGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox"]
+[node name="SFXGroup" type="VBoxContainer" parent="UI/Panel/Scroll/Margin/VBox" unique_id=1299302494]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="SFXLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup"]
+[node name="SFXLabel" type="Label" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup" unique_id=857657092]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "SFX Volume"
 
-[node name="SFXSlider" type="HSlider" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup"]
+[node name="SFXSlider" type="HSlider" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup" unique_id=67875962]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 size_flags_vertical = 4
 
-[node name="SFXMute" type="CheckBox" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup"]
+[node name="SFXMute" type="CheckBox" parent="UI/Panel/Scroll/Margin/VBox/SFXGroup" unique_id=1923264819]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_constants/h_separation = 10
 text = "Mute SFX"
 
-[node name="ButtonRow" type="HBoxContainer" parent="UI/Panel"]
+[node name="ButtonRow" type="HBoxContainer" parent="UI/Panel" unique_id=840580062]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -149,22 +161,26 @@ grow_vertical = 0
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="MenuButton" type="Button" parent="UI/Panel/ButtonRow"]
+[node name="MenuButton" type="Button" parent="UI/Panel/ButtonRow" unique_id=793415449]
+unique_name_in_owner = true
 layout_mode = 2
 icon = ExtResource("4_home")
 flat = true
 
-[node name="RestartButton" type="Button" parent="UI/Panel/ButtonRow"]
+[node name="RestartButton" type="Button" parent="UI/Panel/ButtonRow" unique_id=1995483011]
+unique_name_in_owner = true
 layout_mode = 2
 icon = ExtResource("5_retry")
 flat = true
 
-[node name="ResumeButton" type="Button" parent="UI/Panel/ButtonRow"]
+[node name="ResumeButton" type="Button" parent="UI/Panel/ButtonRow" unique_id=1454012328]
+unique_name_in_owner = true
 layout_mode = 2
 icon = ExtResource("6_resume")
 flat = true
 
-[node name="TitleLabel" type="Label" parent="UI"]
+[node name="TitleLabel" type="Label" parent="UI" unique_id=961132125]
+unique_name_in_owner = true
 anchors_preset = -1
 anchor_left = 0.25
 anchor_top = 0.17

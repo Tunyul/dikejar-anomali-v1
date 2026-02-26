@@ -24,7 +24,7 @@ var _tiles_passed_accum: float = 0.0
 var _debug_time_accum: float = 0.0
 var _score_offset: int = 0
 var powerups_data: Dictionary = {}
-var pending_level_rewards: Array = []
+var pending_level_rewards: Array[Dictionary] = []
 var max_heart_bonus: int = 0
 var magnet_duration_multiplier: float = 1.0
 var shield_duration_multiplier: float = 1.0
@@ -68,21 +68,21 @@ var speed_boost_multiplier: float = 1.0
 
 @onready var player: Player = $Player
 @onready var anomaly: Node2D = get_node_or_null("AnomalyChaser")
-@onready var terrain = get_node_or_null("Terrain")
+@onready var terrain: Node2D = get_node_or_null("Terrain")
 @onready var ground_a: Node2D = get_node_or_null("Ground")
-@onready var parallax = $ParallaxBackground
-@onready var canvas = $CanvasLayer
-var debug_label: Label
-var spawn_status_label: Label
-var speed_info_label: Label
-var _jump_button: TouchScreenButton
-var _attack_button: TouchScreenButton
-var _jump_button_tint: Panel
-var _attack_button_tint: Panel
+@onready var parallax: ParallaxBackground = $ParallaxBackground
+@onready var canvas: CanvasLayer = $CanvasLayer
+var debug_label: Label = null
+var spawn_status_label: Label = null
+var speed_info_label: Label = null
+var _jump_button: TouchScreenButton = null
+var _attack_button: TouchScreenButton = null
+var _jump_button_tint: Panel = null
+var _attack_button_tint: Panel = null
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
 var _last_safe_area: Rect2i = Rect2i()
-var _ga_layer: Node = null
-var _gb_layer: Node = null
+var _ga_layer: TileMapLayer = null
+var _gb_layer: TileMapLayer = null
 var _scene_verify_running: bool = false
 var _scene_verify_start_ms: int = 0
 var bgm_muted: bool = false
@@ -327,8 +327,8 @@ func _apply_ui_font(node: Node, font: Font) -> void:
         (node as Label).add_theme_font_override("font", font)
     elif node is BaseButton:
         (node as BaseButton).add_theme_font_override("font", font)
-    for child in node.get_children():
-        if child is Node:
+    for child: Node in node.get_children():
+        if child:
             _apply_ui_font(child, font)
 
 
@@ -434,7 +434,7 @@ func _show_missions_toast(msg: String) -> void:
 
     # Styling mobile-friendly (Compact & Clean)
     if missions_toast is Panel:
-        var sb := StyleBoxFlat.new()
+        var sb: StyleBoxFlat = StyleBoxFlat.new()
         sb.bg_color = Color(0, 0, 0, 0.8) # Slightly darker for premium feel
         sb.set_corner_radius_all(8) # Smaller radius for compact look
         sb.border_width_left = 4 # Thicker gold border
@@ -443,40 +443,42 @@ func _show_missions_toast(msg: String) -> void:
 
     # Dynamic Width Calculation (Optional but helpful)
     # Kita asumsikan font size sekitar 16-18px. Kita batasi lebar agar tidak meluap.
-    var text_size = 0
+    var text_size: float = 0.0
     if missions_toast_text and missions_toast_text.get_theme_font("font"):
         text_size = missions_toast_text.get_theme_font("font").get_string_size(msg, HORIZONTAL_ALIGNMENT_CENTER, -1, missions_toast_text.get_theme_font_size("font_size")).x
 
-    var final_width = clampf(text_size + 40.0, 180.0, 320.0)
+    var final_width: float = clampf(text_size + 40.0, 180.0, 320.0)
     missions_toast.offset_left = -final_width - 10.0 # Posisi dari kanan
 
     missions_toast.visible = true
     missions_toast.modulate = Color(1, 1, 1, 0)
     missions_toast.scale = Vector2(0.9, 0.9)
-    missions_toast.pivot_offset = Vector2(final_width, 22) # Center right pivot
 
     if _missions_toast_tween != null:
         _missions_toast_tween.kill()
         _missions_toast_tween = null
-
-    var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    var tween: Tween = create_tween()
     _missions_toast_tween = tween
-    tween.tween_property(missions_toast, "modulate:a", 1.0, 0.3)
-    tween.tween_property(missions_toast, "scale", Vector2.ONE, 0.3)
-
-    # Wait and then hide
-    var hide_tween := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-    hide_tween.tween_interval(3.0) # Longer display time
-    hide_tween.tween_property(missions_toast, "modulate:a", 0.0, 0.3)
-    hide_tween.finished.connect(func():
+    tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+    tween.set_trans(Tween.TRANS_BACK)
+    tween.set_ease(Tween.EASE_OUT)
+    tween.parallel().tween_property(missions_toast, "modulate:a", 1.0, 0.22)
+    tween.parallel().tween_property(missions_toast, "scale", Vector2(1.0, 1.0), 0.25)
+    tween.set_trans(Tween.TRANS_LINEAR)
+    tween.tween_interval(3.2)
+    tween.set_trans(Tween.TRANS_BACK)
+    tween.set_ease(Tween.EASE_IN)
+    tween.parallel().tween_property(missions_toast, "modulate:a", 0.0, 0.22)
+    tween.parallel().tween_property(missions_toast, "scale", Vector2(0.8, 0.8), 0.25)
+    tween.tween_callback(func() -> void:
+        _missions_toast_shown = false
         if missions_toast:
             missions_toast.visible = false
-        _missions_toast_tween = null
-        _missions_toast_shown = false
         if _missions_toast_queue.size() > 0:
             var next_msg: String = _missions_toast_queue.pop_front()
-            call_deferred("_show_missions_toast", next_msg)
+            _show_missions_toast(next_msg)
     )
+    missions_toast.pivot_offset = Vector2(final_width, 22) # Center right pivot
 
 func _on_missions_toast_gui_input(event: InputEvent) -> void:
     if missions_toast == null or not missions_toast.visible:
@@ -733,7 +735,7 @@ func _show_bgm_toast(title: String) -> void:
     if _bgm_toast_tween != null:
         _bgm_toast_tween.kill()
         _bgm_toast_tween = null
-    var tween := create_tween()
+    var tween: Tween = create_tween()
     _bgm_toast_tween = tween
     tween.tween_property(bgm_toast, "modulate:a", 1.0, 0.18)
     tween.tween_interval(2.2)
@@ -2149,10 +2151,10 @@ func _play_game_over_bgm() -> void:
     var bgm := get_node_or_null("BGM") as AudioStreamPlayer
     if bgm == null:
         return
-    var path := _pick_gameover_bgm_path()
+    var path: String = _pick_gameover_bgm_path()
     if path.is_empty():
         return
-    var stream := load(path) as AudioStream
+    var stream: AudioStream = load(path) as AudioStream
     if stream == null:
         return
     if stream is AudioStreamMP3:
@@ -2268,8 +2270,8 @@ func _verify_player_scenes() -> void:
         _append_perf_log("SceneVerify: END duration_ms=" + str(dur))
 
 func _load_progress() -> void:
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
+    var cfg: ConfigFile = ConfigFile.new()
+    var err: Error = cfg.load("user://save.cfg")
     if err != OK:
         bgm_muted = false
         sfx_muted = false
@@ -2316,7 +2318,10 @@ func _load_progress() -> void:
     speed_boost_multiplier_multiplier = float(powerups_data.get("speed_boost_multiplier_multiplier", 1.0))
     var plr_value: Variant = cfg.get_value("rewards", "pending_level_rewards", [])
     if plr_value is Array:
-        pending_level_rewards = plr_value
+        pending_level_rewards.clear()
+        for item in plr_value:
+            if item is Dictionary:
+                pending_level_rewards.append(item)
     else:
         pending_level_rewards = []
 
@@ -2330,8 +2335,8 @@ func _load_progress() -> void:
         update_ui_border(equipped_border)
 
 func _save_progress() -> void:
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
+    var cfg: ConfigFile = ConfigFile.new()
+    var err: Error = cfg.load("user://save.cfg")
     if err != OK:
         cfg = ConfigFile.new()
     cfg.set_value("progress", "best_score", best_score)
@@ -2354,8 +2359,8 @@ func _save_progress() -> void:
 
 
 func _calculate_xp_required(level: int) -> int:
-    var base_xp := 100
-    var step := 25
+    var base_xp: int = 100
+    var step: int = 25
     if level <= 1:
         return base_xp
     return base_xp + (level - 1) * step
@@ -2419,7 +2424,7 @@ func _get_pending_level_rewards_for_range(old_level: int, new_level: int) -> Arr
 
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventAction:
-        var ia := event as InputEventAction
+        var ia: InputEventAction = event as InputEventAction
         if ia.pressed:
             if ia.action == "jump":
                 if player and player.has_method("request_jump"):
@@ -2430,15 +2435,16 @@ func _unhandled_input(event: InputEvent) -> void:
                     player.request_attack()
                 return
     if event is InputEventKey and event.pressed and not event.echo:
+        var ek: InputEventKey = event as InputEventKey
         if Input.is_action_just_pressed("open_missions_menu"):
             open_missions_menu()
             return
-        if OS.is_debug_build() and (Input.is_action_just_pressed("toggle_debug") or event.keycode == KEY_F3):
+        if OS.is_debug_build() and (Input.is_action_just_pressed("toggle_debug") or ek.keycode == KEY_F3):
             debug_info_enabled = not debug_info_enabled
             if debug_label != null:
                 debug_label.visible = debug_info_enabled
             return
-        if OS.is_debug_build() and (Input.is_action_just_pressed("verify_scenes") or event.keycode == KEY_F6):
+        if OS.is_debug_build() and (Input.is_action_just_pressed("verify_scenes") or ek.keycode == KEY_F6):
             call_deferred("_verify_player_scenes")
         elif Input.is_action_pressed("ui_cancel"):
             open_settings_menu()
@@ -2611,10 +2617,10 @@ func _append_perf_log(_line: String) -> void:
 @onready var missions_manager: Node = MissionsManager
 var _next_coin_burst_distance: int = 300
 func _apply_spawn_safety_limits() -> void:
-    var layers: Array = []
+    var layers: Array[TileMapLayer] = []
     if _ga_layer != null:
         layers.append(_ga_layer)
-    for tl in layers:
+    for tl: TileMapLayer in layers:
         if tl != null:
             tl.set("coin_max_children", 40)
             tl.set("coin_spawn_batch_limit", 4)
@@ -2635,12 +2641,12 @@ func _refresh_missions_label() -> void:
         (label as Label).text = "Misi:\n" + txt
 
 func _trigger_coin_burst() -> void:
-    var layers: Array = []
+    var layers: Array[TileMapLayer] = []
     if _ga_layer != null:
         layers.append(_ga_layer)
-    for tl in layers:
+    for tl: TileMapLayer in layers:
         if tl != null and tl.has_method("spawn_bonus_coins"):
-            tl.spawn_bonus_coins(2)
+            tl.call("spawn_bonus_coins", 2)
 
 
 func on_enemy_killed_by_player() -> void:

@@ -21,6 +21,8 @@
 [ext_resource type="Texture2D" uid="uid://v21m5eac8ghe" path="res://assets/icon/icon_border_avatar_gold_128x128.png" id="23_avatar_border"]
 [ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="26_fredoka_bold"]
 [ext_resource type="Texture2D" uid="uid://bg5u0njvop2kr" path="res://assets/profile/profile_basic.png" id="27_profile_basic"]
+[ext_resource type="Texture2D" uid="uid://dwa1i8s1cdeq2" path="res://assets/icon/icon_boost_96x96.png" id="icon_boost"]
+[ext_resource type="Texture2D" uid="uid://cgqcf0k0g66wp" path="res://assets/icon/icon_shield.png" id="icon_shield"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_music_toast_panel"]
 bg_color = Color(0, 0, 0, 0.55)
@@ -68,6 +70,134 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_profile_bg"]
+bg_color = Color(0.08, 0.08, 0.1, 0.95)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 12
+border_color = Color(0.95, 0.78, 0.18, 1)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+shadow_color = Color(0, 0, 0, 0.6)
+shadow_size = 40
+shadow_offset = Vector2(0, 15)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_avatar_bg"]
+bg_color = Color(1, 1, 1, 0.05)
+corner_radius_top_left = 25
+corner_radius_top_right = 25
+corner_radius_bottom_right = 25
+corner_radius_bottom_left = 25
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stats_bg"]
+bg_color = Color(0.12, 0.12, 0.16, 0.8)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 6
+border_color = Color(0.95, 0.78, 0.18, 0.3)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+content_margin_left = 25.0
+content_margin_top = 20.0
+content_margin_right = 25.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_avatar_hover"]
+bg_color = Color(0.2, 0.55, 0.9, 1)
+border_width_bottom = 4
+border_color = Color(0.1, 0.3, 0.6, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+expand_margin_left = 5.0
+expand_margin_top = 2.0
+expand_margin_right = 5.0
+expand_margin_bottom = 2.0
+shadow_color = Color(0.15, 0.45, 0.8, 0.4)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_avatar"]
+bg_color = Color(0.15, 0.45, 0.8, 1)
+border_width_bottom = 6
+border_color = Color(0.1, 0.3, 0.6, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+content_margin_left = 15.0
+content_margin_top = 5.0
+content_margin_right = 15.0
+content_margin_bottom = 5.0
+shadow_color = Color(0, 0, 0, 0.2)
+shadow_size = 5
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_border_hover"]
+bg_color = Color(0.5, 0.3, 0.8, 1)
+border_width_bottom = 4
+border_color = Color(0.3, 0.1, 0.5, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+expand_margin_left = 5.0
+expand_margin_top = 2.0
+expand_margin_right = 5.0
+expand_margin_bottom = 2.0
+shadow_color = Color(0.4, 0.2, 0.7, 0.4)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_border"]
+bg_color = Color(0.4, 0.2, 0.7, 1)
+border_width_bottom = 6
+border_color = Color(0.3, 0.1, 0.5, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+content_margin_left = 15.0
+content_margin_top = 5.0
+content_margin_right = 15.0
+content_margin_bottom = 5.0
+shadow_color = Color(0, 0, 0, 0.2)
+shadow_size = 5
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_close_hover"]
+bg_color = Color(0.9, 0.3, 0.3, 1)
+border_width_bottom = 4
+border_color = Color(0.6, 0.1, 0.1, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0.8, 0.2, 0.2, 0.4)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_close"]
+bg_color = Color(0.8, 0.2, 0.2, 1)
+border_width_bottom = 8
+border_color = Color(0.6, 0.1, 0.1, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 10
+shadow_offset = Vector2(0, 5)
 
 [sub_resource type="Animation" id="Animation_reset"]
 resource_name = "RESET"
@@ -170,9 +300,11 @@ script = ExtResource("1")
 process_mode = 3
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=834925913]
+unique_name_in_owner = true
 layer = 100
 
 [node name="MusicToastPanel" type="PanelContainer" parent="UI" unique_id=1635020147]
+unique_name_in_owner = true
 visible = false
 z_index = 300
 anchors_preset = 5
@@ -186,6 +318,7 @@ grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_music_toast_panel")
 
 [node name="MusicToast" type="Label" parent="UI/MusicToastPanel" unique_id=1350221005]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -207,11 +340,13 @@ theme_override_constants/separation = 24
 alignment = 1
 
 [node name="ButtonsRow" type="HBoxContainer" parent="UI/CenterContainer/VBox" unique_id=365949632]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
 [node name="ShopButton" type="Button" parent="UI/CenterContainer/VBox/ButtonsRow" unique_id=988150807]
+unique_name_in_owner = true
 texture_filter = 2
 custom_minimum_size = Vector2(256, 128)
 layout_mode = 2
@@ -222,6 +357,7 @@ theme_override_styles/hover = SubResource("StyleBoxTexture_shop")
 theme_override_styles/focus = SubResource("StyleBoxTexture_shop")
 
 [node name="PlayButton" type="Button" parent="UI/CenterContainer/VBox/ButtonsRow" unique_id=1974779126]
+unique_name_in_owner = true
 texture_filter = 2
 custom_minimum_size = Vector2(256, 128)
 layout_mode = 2
@@ -238,6 +374,7 @@ theme_override_styles/focus = SubResource("StyleBoxTexture_play")
 text = "Play"
 
 [node name="SettingsButton" type="Button" parent="UI/CenterContainer/VBox/ButtonsRow" unique_id=1781035591]
+unique_name_in_owner = true
 texture_filter = 2
 custom_minimum_size = Vector2(256, 128)
 layout_mode = 2
@@ -248,6 +385,7 @@ theme_override_styles/hover = SubResource("StyleBoxTexture_setting")
 theme_override_styles/focus = SubResource("StyleBoxTexture_setting")
 
 [node name="PlayerHUD" type="HBoxContainer" parent="UI" unique_id=310434092]
+unique_name_in_owner = true
 z_index = 100
 custom_minimum_size = Vector2(48, 48)
 offset_left = 10.0
@@ -257,6 +395,7 @@ offset_bottom = 58.0
 theme_override_constants/separation = 8
 
 [node name="AvatarIcon" type="TextureRect" parent="UI/PlayerHUD" unique_id=418066473]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -265,7 +404,8 @@ texture = ExtResource("23_avatar_border")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="InnerIcon" type="TextureRect" parent="UI/PlayerHUD/AvatarIcon"]
+[node name="InnerIcon" type="TextureRect" parent="UI/PlayerHUD/AvatarIcon" unique_id=123456789]
+unique_name_in_owner = true
 show_behind_parent = true
 layout_mode = 1
 anchors_preset = 15
@@ -282,6 +422,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="LevelLabel" type="Label" parent="UI/PlayerHUD" unique_id=517451708]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -292,6 +433,7 @@ text = "Lv 99"
 vertical_alignment = 1
 
 [node name="XPBar" type="ProgressBar" parent="UI/PlayerHUD" unique_id=48951862]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 20)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -302,6 +444,7 @@ max_value = 1234567.0
 value = 617283.5
 
 [node name="XPLabel" type="Label" parent="UI/PlayerHUD" unique_id=1282517237]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -312,6 +455,7 @@ text = "123456/1234567 XP"
 vertical_alignment = 1
 
 [node name="RewardIcon" type="TextureRect" parent="UI/PlayerHUD" unique_id=861118785]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -320,6 +464,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="RewardPanel" type="Panel" parent="UI" unique_id=1068801739]
+unique_name_in_owner = true
 visible = false
 z_index = 200
 custom_minimum_size = Vector2(400, 260)
@@ -333,7 +478,8 @@ offset_top = -130.0
 offset_right = 200.0
 offset_bottom = 130.0
 
-[node name="Title" type="Label" parent="UI/RewardPanel" unique_id=1741405267]
+[node name="RewardTitle" type="Label" parent="UI/RewardPanel" unique_id=1741405267]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 16.0
 offset_top = 16.0
@@ -341,7 +487,8 @@ offset_right = 384.0
 offset_bottom = 48.0
 text = "Level Rewards"
 
-[node name="InfoLabel" type="Label" parent="UI/RewardPanel" unique_id=2004216036]
+[node name="RewardInfoLabel" type="Label" parent="UI/RewardPanel" unique_id=2004216036]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 16.0
 offset_top = 56.0
@@ -350,7 +497,8 @@ offset_bottom = 200.0
 text = "Tidak ada reward level yang pending."
 autowrap_mode = 2
 
-[node name="ClaimButton" type="Button" parent="UI/RewardPanel" unique_id=722608044]
+[node name="RewardClaimButton" type="Button" parent="UI/RewardPanel" unique_id=722608044]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 56.0
 offset_top = 210.0
@@ -358,7 +506,8 @@ offset_right = 200.0
 offset_bottom = 250.0
 text = "Claim"
 
-[node name="CloseButton" type="Button" parent="UI/RewardPanel" unique_id=225757614]
+[node name="RewardCloseButton" type="Button" parent="UI/RewardPanel" unique_id=225757614]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 216.0
 offset_top = 210.0
@@ -366,114 +515,244 @@ offset_right = 360.0
 offset_bottom = 250.0
 text = "Tutup"
 
-[node name="ProfilePanel" type="Panel" parent="UI" unique_id=20260224]
+[node name="ProfilePanel" type="Control" parent="UI" unique_id=20260224]
+unique_name_in_owner = true
 visible = false
 z_index = 250
-custom_minimum_size = Vector2(450, 350)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Overlay" type="ColorRect" parent="UI/ProfilePanel"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.588235)
+
+[node name="Panel" type="Panel" parent="UI/ProfilePanel"]
+unique_name_in_owner = true
+layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -225.0
-offset_top = -175.0
-offset_right = 225.0
-offset_bottom = 175.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
-
-[node name="Title" type="Label" parent="UI/ProfilePanel" unique_id=885659812]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 50.0
+offset_left = -350.0
+offset_top = -270.0
+offset_right = 350.0
+offset_bottom = 190.0
 grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 1, 0, 1)
+grow_vertical = 2
+pivot_offset = Vector2(350, 230)
+theme_override_styles/panel = SubResource("StyleBoxFlat_profile_bg")
+
+[node name="ProfileTitle" type="Label" parent="UI/ProfilePanel/Panel" unique_id=885659812]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 15.0
+offset_right = 200.0
+offset_bottom = 65.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.843137, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 12
 theme_override_fonts/font = ExtResource("26_fredoka_bold")
-text = "Profil Pemain"
+theme_override_font_sizes/font_size = 32
+text = "PROFIL PEMAIN"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Content" type="VBoxContainer" parent="UI/ProfilePanel" unique_id=1731817437]
+[node name="MainContent" type="HBoxContainer" parent="UI/ProfilePanel/Panel" unique_id=1731817437]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 60.0
-offset_right = -20.0
-offset_bottom = -70.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -315.0
+offset_top = -140.0
+offset_right = 315.0
+offset_bottom = 160.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 40
+alignment = 1
 
-[node name="LargeAvatarIcon" type="TextureRect" parent="UI/ProfilePanel/Content" unique_id=648000957]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(100, 100)
+[node name="LeftSection" type="VBoxContainer" parent="UI/ProfilePanel/Panel/MainContent"]
 layout_mode = 2
-size_flags_horizontal = 4
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="AvatarContainer" type="PanelContainer" parent="UI/ProfilePanel/Panel/MainContent/LeftSection"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_avatar_bg")
+
+[node name="LargeAvatarIcon" type="TextureRect" parent="UI/ProfilePanel/Panel/MainContent/LeftSection/AvatarContainer" unique_id=648000957]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+texture = ExtResource("23_avatar_border")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="InnerIcon" type="TextureRect" parent="UI/ProfilePanel/Content/LargeAvatarIcon"]
+[node name="LargeInnerAvatarIcon" type="TextureRect" parent="UI/ProfilePanel/Panel/MainContent/LeftSection/AvatarContainer/LargeAvatarIcon"]
+unique_name_in_owner = true
 show_behind_parent = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = -8.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("27_profile_basic")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="NameLabel" type="Label" parent="UI/ProfilePanel/Content" unique_id=1347035900]
+[node name="NameLabel" type="Label" parent="UI/ProfilePanel/Panel/MainContent/LeftSection" unique_id=1347035900]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 theme_override_fonts/font = ExtResource("26_fredoka_bold")
-text = "Nama: Player"
+theme_override_font_sizes/font_size = 32
+text = "Player"
+horizontal_alignment = 1
 
-[node name="StatsLabel" type="Label" parent="UI/ProfilePanel/Content" unique_id=1329623724]
-unique_name_in_owner = true
+[node name="RightSection" type="VBoxContainer" parent="UI/ProfilePanel/Panel/MainContent"]
 layout_mode = 2
-text = "Level: 1
-			XP: 0/100
-			Best Score: 0"
-
-[node name="Buttons" type="HBoxContainer" parent="UI/ProfilePanel/Content" unique_id=1172058025]
-layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 15
 alignment = 1
 
-[node name="ChangeAvatarButton" type="Button" parent="UI/ProfilePanel/Content/Buttons" unique_id=373486531]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 45)
+[node name="StatsPanel" type="PanelContainer" parent="UI/ProfilePanel/Panel/MainContent/RightSection"]
+custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
-text = "Ganti Avatar"
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_stats_bg")
 
-[node name="ChangeBorderButton" type="Button" parent="UI/ProfilePanel/Content/Buttons" unique_id=994814561]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 45)
+[node name="StatsGrid" type="GridContainer" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel"]
 layout_mode = 2
-text = "Ganti Border"
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 25
+theme_override_constants/v_separation = 8
+columns = 2
 
-[node name="CloseButton" type="Button" parent="UI/ProfilePanel" unique_id=381857852]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -75.0
-offset_top = -55.0
-offset_right = 75.0
-offset_bottom = -15.0
-grow_horizontal = 2
-grow_vertical = 0
-text = "Tutup"
+[node name="LevelIcon" type="TextureRect" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel/StatsGrid"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("icon_boost")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LevelValue" type="Label" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel/StatsGrid" unique_id=1329623724]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("26_fredoka_bold")
+theme_override_font_sizes/font_size = 22
+text = "Lv. 0"
+
+[node name="XPIcon" type="TextureRect" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel/StatsGrid"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("icon_shield")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="XPValue" type="Label" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel/StatsGrid" unique_id=1429623725]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.9, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("26_fredoka_bold")
+theme_override_font_sizes/font_size = 22
+text = "0 / 0 XP"
+
+[node name="ScoreIcon" type="TextureRect" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel/StatsGrid"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("22_trophy_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ScoreValue" type="Label" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel/StatsGrid" unique_id=1529623726]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("26_fredoka_bold")
+theme_override_font_sizes/font_size = 22
+text = "0"
+
+[node name="ButtonSection" type="VBoxContainer" parent="UI/ProfilePanel/Panel/MainContent/RightSection"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="ChangeAvatarButton" type="Button" parent="UI/ProfilePanel/Panel/MainContent/RightSection/ButtonSection" unique_id=1032338662]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 55)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_fonts/font = ExtResource("26_fredoka_bold")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_avatar")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_avatar_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_avatar")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_avatar")
+text = "GANTI AVATAR"
+alignment = 1
+
+[node name="ChangeBorderButton" type="Button" parent="UI/ProfilePanel/Panel/MainContent/RightSection/ButtonSection" unique_id=648625514]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 55)
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("26_fredoka_bold")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_border")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_border_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_border")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_border")
+text = "GANTI BORDER"
+alignment = 1
+
+[node name="CloseProfileButton" type="Button" parent="UI/ProfilePanel/Panel/MainContent/RightSection/ButtonSection" unique_id=457582570]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 55)
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("26_fredoka_bold")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_close")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_close_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_close")
+theme_override_styles/focus = SubResource("StyleBoxFlat_btn_close")
+text = "TUTUP"
+alignment = 1
 
 [node name="CoinHUDBackground" type="Panel" parent="UI" unique_id=930620297]
 z_index = 90
@@ -485,6 +764,7 @@ offset_bottom = 126.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
 
 [node name="CoinHUD" type="HBoxContainer" parent="UI" unique_id=158204170]
+unique_name_in_owner = true
 z_index = 100
 custom_minimum_size = Vector2(48, 48)
 offset_left = 20.0
@@ -493,6 +773,7 @@ offset_right = 316.0
 offset_bottom = 122.0
 
 [node name="CoinIcon" type="TextureRect" parent="UI/CoinHUD" unique_id=208655020]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -502,6 +783,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="CoinLabel" type="Label" parent="UI/CoinHUD" unique_id=1595700399]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 0, 1)
@@ -522,6 +804,7 @@ offset_bottom = 186.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
 
 [node name="GemHUD" type="HBoxContainer" parent="UI" unique_id=131852187]
+unique_name_in_owner = true
 z_index = 100
 custom_minimum_size = Vector2(48, 48)
 offset_left = 20.0
@@ -530,6 +813,7 @@ offset_right = 316.0
 offset_bottom = 182.0
 
 [node name="GemIcon" type="TextureRect" parent="UI/GemHUD" unique_id=1054817681]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -538,6 +822,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="GemLabel" type="Label" parent="UI/GemHUD" unique_id=1658475427]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 0, 1)
@@ -558,6 +843,7 @@ offset_bottom = 246.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
 
 [node name="ScoreHUD" type="HBoxContainer" parent="UI" unique_id=152363142]
+unique_name_in_owner = true
 z_index = 100
 custom_minimum_size = Vector2(48, 48)
 offset_left = 20.0
@@ -566,6 +852,7 @@ offset_right = 316.0
 offset_bottom = 242.0
 
 [node name="ScoreIcon" type="TextureRect" parent="UI/ScoreHUD" unique_id=1528370314]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 size_flags_horizontal = 0
@@ -575,6 +862,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="ScoreLabel" type="Label" parent="UI/ScoreHUD" unique_id=73746241]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 0, 1)
@@ -586,6 +874,7 @@ text = "1234567890"
 clip_text = true
 
 [node name="DailyButton" type="Button" parent="UI" unique_id=983378437]
+unique_name_in_owner = true
 texture_filter = 2
 anchors_preset = 1
 anchor_left = 1.0
@@ -601,6 +890,7 @@ theme_override_styles/hover = SubResource("StyleBoxTexture_mission")
 theme_override_styles/focus = SubResource("StyleBoxTexture_mission")
 
 [node name="MissionsBadge" type="Panel" parent="UI/DailyButton" unique_id=2044173230]
+unique_name_in_owner = true
 visible = false
 layout_mode = 0
 anchor_left = 1.0
@@ -612,10 +902,12 @@ offset_bottom = 16.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_missions_badge")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="UI/DailyButton" unique_id=1672041222]
+[node name="MissionsAnimator" type="AnimationPlayer" parent="UI/DailyButton" unique_id=1672041222]
+unique_name_in_owner = true
 libraries/ = SubResource("AnimationLibrary_mission_button")
 
 [node name="LanguageButton" type="TextureButton" parent="UI" unique_id=1933372209]
+unique_name_in_owner = true
 texture_filter = 2
 anchors_preset = 1
 anchor_left = 1.0
@@ -626,6 +918,7 @@ offset_right = -40.0
 offset_bottom = 140.0
 
 [node name="VersionLabel" type="Label" parent="UI" unique_id=2074596208]
+unique_name_in_owner = true
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -634,15 +927,18 @@ offset_top = -32.0
 offset_right = 216.0
 offset_bottom = -8.0
 theme_override_font_sizes/font_size = 18
-text = "v1.3.35-beta"
+text = "v1.3.45-beta"
 
 [node name="TitleSprite" type="Sprite2D" parent="UI" unique_id=674183698]
+unique_name_in_owner = true
+texture_filter = 2
 z_index = 100
 position = Vector2(510, 233)
 scale = Vector2(0.30281252, 0.30281252)
 texture = ExtResource("11")
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="." unique_id=198991132]
+unique_name_in_owner = true
 script = ExtResource("2")
 speed = 200.0
 

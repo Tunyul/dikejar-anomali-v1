@@ -1,14 +1,17 @@
 extends Control
 
-@onready var score_label: Label = get_node_or_null("VBox/ScoreLabel")
-@onready var distance_label: Label = get_node_or_null("VBox/DistanceLabel")
-@onready var confirm_panel: Control = get_node_or_null("ConfirmPanel")
-@onready var confirm_message: Label = get_node_or_null("ConfirmPanel/Message")
-@onready var confirm_yes: BaseButton = get_node_or_null("ConfirmPanel/Buttons/YesButton")
-@onready var confirm_no: BaseButton = get_node_or_null("ConfirmPanel/Buttons/NoButton")
-@onready var _card_bg: Control = get_node_or_null("CardBackground")
-@onready var _title: Control = get_node_or_null("Title")
-@onready var _vbox: Control = get_node_or_null("VBox")
+@onready var _score_label: Label = %ScoreLabel
+@onready var _distance_label: Label = %DistanceLabel
+@onready var _confirm_panel: Control = %ConfirmPanel if has_node("%ConfirmPanel") else null
+@onready var _confirm_message: Label = _confirm_panel.get_node("%Message") if _confirm_panel and _confirm_panel.has_node("%Message") else null
+@onready var _confirm_yes: BaseButton = _confirm_panel.get_node("%YesButton") if _confirm_panel and _confirm_panel.has_node("%YesButton") else null
+@onready var _confirm_no: BaseButton = _confirm_panel.get_node("%NoButton") if _confirm_panel and _confirm_panel.has_node("%NoButton") else null
+@onready var _card_bg: Control = %CardBackground
+@onready var _title: Control = %Title
+@onready var _vbox: Control = %VBox
+@onready var _retry_button: BaseButton = %RetryButton
+@onready var _continue_button: BaseButton = %ContinueButton
+@onready var _bonus_continue_button: BaseButton = %BonusContinueButton
 
 var _pending_action: String = ""
 var _final_score: int = 0
@@ -20,29 +23,27 @@ func _ready() -> void:
         visible = false
     else:
         visible = true
-    if confirm_message:
-        confirm_message.add_theme_color_override("font_color", Color(0.2, 0.1, 0, 1))
-        confirm_message.add_theme_font_size_override("font_size", 24)
-    var retry := get_node_or_null("VBox/ButtonRow/RetryButton")
-    var cont := get_node_or_null("VBox/ButtonRow/ContinueButton")
-    var bonus := get_node_or_null("VBox/ButtonRow/BonusContinueButton")
-    if retry:
-        retry.pressed.connect(_on_retry_pressed)
-    if cont:
-        cont.pressed.connect(_on_continue_pressed)
-    if bonus:
-        bonus.pressed.connect(_on_bonus_continue_pressed)
-    if confirm_yes:
-        confirm_yes.pressed.connect(_on_confirm_yes_pressed)
-    if confirm_no:
-        confirm_no.pressed.connect(_on_confirm_no_pressed)
+    if _confirm_message:
+        _confirm_message.add_theme_color_override("font_color", Color(0.2, 0.1, 0, 1))
+        _confirm_message.add_theme_font_size_override("font_size", 24)
+
+    if _retry_button:
+        _retry_button.pressed.connect(_on_retry_pressed)
+    if _continue_button:
+        _continue_button.pressed.connect(_on_continue_pressed)
+    if _bonus_continue_button:
+        _bonus_continue_button.pressed.connect(_on_bonus_continue_pressed)
+    if _confirm_yes:
+        _confirm_yes.pressed.connect(_on_confirm_yes_pressed)
+    if _confirm_no:
+        _confirm_no.pressed.connect(_on_confirm_no_pressed)
 
     var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
     var title_font := load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf") as Font
     if ui_font:
         _apply_ui_font(self, ui_font)
     if title_font:
-        var title_label := get_node_or_null("Title") as Label
+        var title_label := _title as Label
         if title_label:
             title_label.add_theme_font_override("font", title_font)
             title_label.add_theme_color_override("font_color", Color(1, 1, 0, 1))
@@ -100,19 +101,19 @@ func _apply_responsive_layout(vp: Vector2) -> void:
     _card_bg.scale = s
     _title.scale = s
     _vbox.scale = s
-    if confirm_panel:
-        confirm_panel.scale = s
+    if _confirm_panel:
+        _confirm_panel.scale = s
 
 func show_game_over(final_score: int, final_distance: float) -> void:
     _final_score = final_score
     _final_distance = final_distance
     _pending_action = ""
-    if score_label:
-        score_label.text = "%s: %s" % [tr("Score"), str(final_score)]
-    if distance_label:
-        distance_label.text = "%s: %s" % [tr("Distance"), str(int(round(final_distance)))]
-    if confirm_panel:
-        confirm_panel.visible = false
+    if _score_label:
+        _score_label.text = "%s: %s" % [tr("Score"), str(final_score)]
+    if _distance_label:
+        _distance_label.text = "%s: %s" % [tr("Distance"), str(int(round(final_distance)))]
+    if _confirm_panel:
+        _confirm_panel.visible = false
     visible = true
 
 func _on_retry_pressed() -> void:
@@ -126,19 +127,15 @@ func _on_retry_pressed() -> void:
 func _on_continue_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     _pending_action = "home"
-    if confirm_panel and confirm_message:
-        confirm_message.text = tr("Kembali ke menu utama?\nRun ini akan diakhiri.")
-        confirm_panel.visible = true
+    if _confirm_panel and _confirm_message:
+        _confirm_message.text = tr("Kembali ke menu utama?\nRun ini akan diakhiri.")
+        _confirm_panel.visible = true
 
 func _on_bonus_continue_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    var main := get_tree().get_root().get_node_or_null("Main")
-    if not main: # Fallback if Main is not direct child of root (e.g. testing)
-        main = get_tree().current_scene
-
+    var main = get_tree().current_scene
     if main and main.has_method("try_rewarded_continue"):
         main.try_rewarded_continue()
-    # Confirmation removed for smoother flow ("Zero friction")
 
 func _on_confirm_yes_pressed() -> void:
     TransitionManager.play_sfx(&"click")
@@ -149,11 +146,11 @@ func _on_confirm_yes_pressed() -> void:
             if Preloader and Preloader.has_method("set_next_scene"):
                 Preloader.set_next_scene("res://scenes/MainMenu.tscn")
             await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
-    if confirm_panel:
-        confirm_panel.visible = false
+    if _confirm_panel:
+        _confirm_panel.visible = false
 
 func _on_confirm_no_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     _pending_action = ""
-    if confirm_panel:
-        confirm_panel.visible = false
+    if _confirm_panel:
+        _confirm_panel.visible = false

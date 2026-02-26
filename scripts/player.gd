@@ -99,13 +99,13 @@ var _blink_timer: float = 0.0
 var _entry_start_position: Vector2 = Vector2.ZERO
 
 # ===== REFERENCES =====
-var game_manager: Node
-var parallax_background: Node
-var terrain_nodes: Array = []
-var main_camera: Camera2D
-var animated_sprite: AnimatedSprite2D
-var ground_ray: RayCast2D
-var attack_hitbox: Area2D
+@onready var game_manager: Node = get_node_or_null("/root/Main")
+@onready var parallax_background: Node = get_node_or_null("/root/Main/ParallaxBackground")
+@onready var main_camera: Camera2D = get_node_or_null("/root/Main/Camera2D")
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var ground_ray: RayCast2D = $GroundRay
+@onready var attack_hitbox: Area2D = $AttackHitbox
+var terrain_nodes: Array[Node2D] = []
 
 # ===== SIGNALS =====
 signal game_over_signal(cause: String)
@@ -135,32 +135,32 @@ func request_attack() -> void:
 
 func _left_bound_world() -> float:
     var lb: float = 0.0
-    var viewport_rect = get_viewport().get_visible_rect()
+    var viewport_rect: Rect2 = get_viewport().get_visible_rect()
     if main_camera:
         lb = main_camera.position.x - float(viewport_rect.size.x) * 0.5
     return lb + left_game_over_margin
 
 func match_sprite_to_collision_size() -> void:
-    var collision_shape = $CollisionShape2D
+    var collision_shape: CollisionShape2D = $CollisionShape2D
     if not collision_shape or not collision_shape.shape:
         return
-    var shape_size = collision_shape.shape.size
-    var sprite_frames = animated_sprite.sprite_frames
+    var shape_size: Vector2 = collision_shape.shape.size
+    var sprite_frames: SpriteFrames = animated_sprite.sprite_frames
     if not sprite_frames:
         return
-    var run_tex := sprite_frames.get_frame_texture("run", 0) if sprite_frames.has_animation("run") and sprite_frames.get_frame_count("run") > 0 else null
-    var jump_tex := sprite_frames.get_frame_texture("jump", 0) if sprite_frames.has_animation("jump") and sprite_frames.get_frame_count("jump") > 0 else null
+    var run_tex: Texture2D = sprite_frames.get_frame_texture("run", 0) if sprite_frames.has_animation("run") and sprite_frames.get_frame_count("run") > 0 else null
+    var jump_tex: Texture2D = sprite_frames.get_frame_texture("jump", 0) if sprite_frames.has_animation("jump") and sprite_frames.get_frame_count("jump") > 0 else null
     if run_tex == null and jump_tex == null:
         return
-    var run_size := Vector2(run_tex.get_width(), run_tex.get_height()) if run_tex != null else Vector2.ZERO
-    var jump_size := Vector2(jump_tex.get_width(), jump_tex.get_height()) if jump_tex != null else Vector2.ZERO
-    var original_sprite_size := run_size
+    var run_size: Vector2 = Vector2(run_tex.get_width(), run_tex.get_height()) if run_tex != null else Vector2.ZERO
+    var jump_size: Vector2 = Vector2(jump_tex.get_width(), jump_tex.get_height()) if jump_tex != null else Vector2.ZERO
+    var original_sprite_size: Vector2 = run_size
     if jump_size.x > original_sprite_size.x or jump_size.y > original_sprite_size.y:
         original_sprite_size = jump_size
-    var target_scale_x = (shape_size.x * 0.9) / max(original_sprite_size.x, 1.0)
-    var target_scale_y = (shape_size.y * 0.9) / max(original_sprite_size.y, 1.0)
-    var uniform_scale = min(target_scale_x, target_scale_y)
-    var final_scale = Vector2(uniform_scale, uniform_scale)
+    var target_scale_x: float = (shape_size.x * 0.9) / max(original_sprite_size.x, 1.0)
+    var target_scale_y: float = (shape_size.y * 0.9) / max(original_sprite_size.y, 1.0)
+    var uniform_scale: float = min(target_scale_x, target_scale_y)
+    var final_scale: Vector2 = Vector2(uniform_scale, uniform_scale)
     animated_sprite.scale = final_scale
     if enable_debug_logging and OS.is_debug_build():
         print("Sprite resized: orig_run=", run_size, " orig_jump=", jump_size, " collision=", shape_size, " scale=", final_scale)
@@ -172,22 +172,22 @@ func _ready() -> void:
     if OS.is_debug_build():
         if not InputMap.has_action("jump"):
             InputMap.add_action("jump")
-            var ev := InputEventKey.new()
+            var ev: InputEventKey = InputEventKey.new()
             ev.physical_keycode = KEY_SPACE
             InputMap.action_add_event("jump", ev)
         if not InputMap.has_action("attack"):
             InputMap.add_action("attack")
-            var ev_att := InputEventKey.new()
+            var ev_att: InputEventKey = InputEventKey.new()
             ev_att.physical_keycode = KEY_K
             InputMap.action_add_event("attack", ev_att)
     if not InputMap.has_action("toggle_lock_x"):
         InputMap.add_action("toggle_lock_x")
-        var ev2 := InputEventKey.new()
+        var ev2: InputEventKey = InputEventKey.new()
         ev2.physical_keycode = KEY_F4
         InputMap.action_add_event("toggle_lock_x", ev2)
     if not InputMap.has_action("toggle_fall_death"):
         InputMap.add_action("toggle_fall_death")
-        var ev3 := InputEventKey.new()
+        var ev3: InputEventKey = InputEventKey.new()
         ev3.physical_keycode = KEY_F5
         InputMap.action_add_event("toggle_fall_death", ev3)
     initialize_player()
@@ -206,9 +206,9 @@ func initialize_player() -> void:
     set_process_input(true)
 
     # Initialize collision shape size and position
-    var collision_shape = get_node_or_null("CollisionShape2D")
+    var collision_shape: CollisionShape2D = get_node_or_null("CollisionShape2D")
     if collision_shape and collision_shape.shape is RectangleShape2D:
-        var rect_shape = collision_shape.shape as RectangleShape2D
+        var rect_shape: RectangleShape2D = collision_shape.shape as RectangleShape2D
         if not preserve_editor_transform:
             rect_shape.size = collision_size
             collision_shape.position = Vector2(0, 0)
@@ -217,38 +217,31 @@ func initialize_player() -> void:
         if enable_debug_logging and OS.is_debug_build():
             print("Player collision initialized: size=", rect_shape.size, " position=", collision_shape.position)
 
-    # Initialize sprite - AnimatedSprite2D sudah di-set manual di editor
-    animated_sprite = get_node_or_null("AnimatedSprite2D")
+    # Initialize sprite
     if animated_sprite:
         animated_sprite.play("run")
         animated_sprite.speed_scale = 1.0
-        if not animated_sprite.is_playing():
-            animated_sprite.play("run")
         slice_jump_spritesheet_if_needed()
         slice_run_spritesheet_if_needed()
         slice_attack_spritesheet_if_needed()
         _apply_scale_for_anim("run")
         _apply_offset_for_anim("run")
-        animated_sprite.play("run")
         if enable_debug_logging and OS.is_debug_build():
-            print("AnimatedSprite2D initialized: position=", animated_sprite.position, " scale=", animated_sprite.scale, " playing=", animated_sprite.is_playing())
+            print("AnimatedSprite2D initialized: position=", animated_sprite.position, " scale=", animated_sprite.scale)
         _prepare_animation_scales()
         animated_sprite.centered = true
         _prepare_animation_offsets()
     if enable_entry_stop:
         _set_to_entry_stop()
 
-
-    ground_ray = get_node_or_null("GroundRay")
     if ground_ray:
         ground_ray.collision_mask = 1
         ground_ray.enabled = true
-    attack_hitbox = get_node_or_null("AttackHitbox") as Area2D
     if attack_hitbox:
         attack_hitbox.monitoring = false
         attack_hitbox.monitorable = false
-        if not attack_hitbox.is_connected("area_entered", Callable(self, "_on_attack_hitbox_area_entered")):
-            attack_hitbox.area_entered.connect(Callable(self, "_on_attack_hitbox_area_entered"))
+        if not attack_hitbox.area_entered.is_connected(_on_attack_hitbox_area_entered):
+            attack_hitbox.area_entered.connect(_on_attack_hitbox_area_entered)
     if animated_sprite:
         log_animation_scales()
 
@@ -260,7 +253,7 @@ func setup_collision_layers() -> void:
     collision_mask = 1   # Terrain layer
 
 func find_and_cache_references() -> void:
-    var main_node = get_tree().get_root().get_node_or_null("Main")
+    var main_node: Node = get_tree().get_root().get_node_or_null("Main")
     if not main_node:
         push_error("Main node not found! Player references cannot be initialized.")
         return
@@ -275,9 +268,9 @@ func find_and_cache_references() -> void:
 
     # Cache terrain nodes efficiently
     terrain_nodes.clear()
-    for child in main_node.get_children():
+    for child: Node in main_node.get_children():
         if child is Node2D and child.name.begins_with("Terrain"):
-            terrain_nodes.append(child)
+            terrain_nodes.append(child as Node2D)
 
     if enable_debug_logging and OS.is_debug_build():
         print("Player references cached:", {
@@ -290,11 +283,11 @@ func _setup_camera_limits() -> void:
     if not main_camera or not is_instance_valid(main_camera):
         return
 
-    var viewport_size = get_viewport().get_visible_rect().size
+    var viewport_size: Vector2 = get_viewport().get_visible_rect().size
     main_camera.limit_left = -1000
     main_camera.limit_top = 0
     main_camera.limit_right = 10000
-    main_camera.limit_bottom = viewport_size.y
+    main_camera.limit_bottom = int(viewport_size.y)
     main_camera.position_smoothing_enabled = true
     main_camera.position_smoothing_speed = 8.0
 
@@ -514,60 +507,60 @@ func apply_physics(delta: float) -> void:
     _jumping_this_frame = false
 
 func _has_gap_below(ray_len: float) -> bool:
-    var space := get_world_2d().direct_space_state
-    var half_w := collision_size.x * 0.5
-    var foot_y := global_position.y + collision_size.y * 0.5 - 1.0
+    var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+    var half_w: float = collision_size.x * 0.5
+    var foot_y: float = global_position.y + collision_size.y * 0.5 - 1.0
     var ray_len_clamped: float = min(ray_len, collision_size.y * 1.2)
-    var start_left := Vector2(global_position.x - half_w + 2.0, foot_y)
-    var start_mid := Vector2(global_position.x, foot_y)
-    var start_right := Vector2(global_position.x + half_w - 2.0, foot_y)
-    var end_left := start_left + Vector2(0, max(ray_len_clamped, 1.0))
-    var end_mid := start_mid + Vector2(0, max(ray_len_clamped, 1.0))
-    var end_right := start_right + Vector2(0, max(ray_len_clamped, 1.0))
-    var pleft := PhysicsRayQueryParameters2D.create(start_left, end_left, 1, [self])
-    var pmid := PhysicsRayQueryParameters2D.create(start_mid, end_mid, 1, [self])
-    var pright := PhysicsRayQueryParameters2D.create(start_right, end_right, 1, [self])
-    var r1 := space.intersect_ray(pleft)
-    var r2 := space.intersect_ray(pmid)
-    var r3 := space.intersect_ray(pright)
+    var start_left: Vector2 = Vector2(global_position.x - half_w + 2.0, foot_y)
+    var start_mid: Vector2 = Vector2(global_position.x, foot_y)
+    var start_right: Vector2 = Vector2(global_position.x + half_w - 2.0, foot_y)
+    var end_left: Vector2 = start_left + Vector2(0, max(ray_len_clamped, 1.0))
+    var end_mid: Vector2 = start_mid + Vector2(0, max(ray_len_clamped, 1.0))
+    var end_right: Vector2 = start_right + Vector2(0, max(ray_len_clamped, 1.0))
+    var pleft: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_left, end_left, 1, [self])
+    var pmid: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_mid, end_mid, 1, [self])
+    var pright: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_right, end_right, 1, [self])
+    var r1: Dictionary = space.intersect_ray(pleft)
+    var r2: Dictionary = space.intersect_ray(pmid)
+    var r3: Dictionary = space.intersect_ray(pright)
     return r1.is_empty() and r2.is_empty() and r3.is_empty()
 
 func _has_gap_below_long(ray_len: float) -> bool:
-    var space := get_world_2d().direct_space_state
-    var half_w := collision_size.x * 0.5
-    var foot_y := global_position.y + collision_size.y * 0.5 - 1.0
+    var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+    var half_w: float = collision_size.x * 0.5
+    var foot_y: float = global_position.y + collision_size.y * 0.5 - 1.0
     var ray_len_clamped: float = max(ray_len, collision_size.y * 1.2)
-    var start_left := Vector2(global_position.x - half_w + 2.0, foot_y)
-    var start_mid := Vector2(global_position.x, foot_y)
-    var start_right := Vector2(global_position.x + half_w - 2.0, foot_y)
-    var end_left := start_left + Vector2(0, max(ray_len_clamped, 1.0))
-    var end_mid := start_mid + Vector2(0, max(ray_len_clamped, 1.0))
-    var end_right := start_right + Vector2(0, max(ray_len_clamped, 1.0))
-    var pleft := PhysicsRayQueryParameters2D.create(start_left, end_left, 1, [self])
-    var pmid := PhysicsRayQueryParameters2D.create(start_mid, end_mid, 1, [self])
-    var pright := PhysicsRayQueryParameters2D.create(start_right, end_right, 1, [self])
-    var r1 := space.intersect_ray(pleft)
-    var r2 := space.intersect_ray(pmid)
-    var r3 := space.intersect_ray(pright)
+    var start_left: Vector2 = Vector2(global_position.x - half_w + 2.0, foot_y)
+    var start_mid: Vector2 = Vector2(global_position.x, foot_y)
+    var start_right: Vector2 = Vector2(global_position.x + half_w - 2.0, foot_y)
+    var end_left: Vector2 = start_left + Vector2(0, max(ray_len_clamped, 1.0))
+    var end_mid: Vector2 = start_mid + Vector2(0, max(ray_len_clamped, 1.0))
+    var end_right: Vector2 = start_right + Vector2(0, max(ray_len_clamped, 1.0))
+    var pleft: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_left, end_left, 1, [self])
+    var pmid: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_mid, end_mid, 1, [self])
+    var pright: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_right, end_right, 1, [self])
+    var r1: Dictionary = space.intersect_ray(pleft)
+    var r2: Dictionary = space.intersect_ray(pmid)
+    var r3: Dictionary = space.intersect_ray(pright)
     return r1.is_empty() and r2.is_empty() and r3.is_empty()
 
 func _blocked_above(ray_len: float) -> bool:
-    var space := get_world_2d().direct_space_state
-    var half_w := collision_size.x * 0.5
-    var head_y := global_position.y - collision_size.y * 0.5 + 1.0
+    var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+    var half_w: float = collision_size.x * 0.5
+    var head_y: float = global_position.y - collision_size.y * 0.5 + 1.0
     var ray_len_clamped: float = max(1.0, ray_len)
-    var start_left := Vector2(global_position.x - half_w + 2.0, head_y)
-    var start_mid := Vector2(global_position.x, head_y)
-    var start_right := Vector2(global_position.x + half_w - 2.0, head_y)
-    var end_left := start_left + Vector2(0, -ray_len_clamped)
-    var end_mid := start_mid + Vector2(0, -ray_len_clamped)
-    var end_right := start_right + Vector2(0, -ray_len_clamped)
-    var pleft := PhysicsRayQueryParameters2D.create(start_left, end_left, 1, [self])
-    var pmid := PhysicsRayQueryParameters2D.create(start_mid, end_mid, 1, [self])
-    var pright := PhysicsRayQueryParameters2D.create(start_right, end_right, 1, [self])
-    var r1 := space.intersect_ray(pleft)
-    var r2 := space.intersect_ray(pmid)
-    var r3 := space.intersect_ray(pright)
+    var start_left: Vector2 = Vector2(global_position.x - half_w + 2.0, head_y)
+    var start_mid: Vector2 = Vector2(global_position.x, head_y)
+    var start_right: Vector2 = Vector2(global_position.x + half_w - 2.0, head_y)
+    var end_left: Vector2 = start_left + Vector2(0, -ray_len_clamped)
+    var end_mid: Vector2 = start_mid + Vector2(0, -ray_len_clamped)
+    var end_right: Vector2 = start_right + Vector2(0, -ray_len_clamped)
+    var pleft: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_left, end_left, 1, [self])
+    var pmid: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_mid, end_mid, 1, [self])
+    var pright: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start_right, end_right, 1, [self])
+    var r1: Dictionary = space.intersect_ray(pleft)
+    var r2: Dictionary = space.intersect_ray(pmid)
+    var r3: Dictionary = space.intersect_ray(pright)
     return not (r1.is_empty() and r2.is_empty() and r3.is_empty())
 
 func check_game_over_conditions() -> void:
@@ -677,7 +670,7 @@ func set_state(new_state: PlayerState) -> void:
 
 func set_environment_speed(speed: float) -> void:
     var nodes := _get_terrain_nodes()
-    for n in nodes:
+    for n: Node2D in nodes:
         if n and n.has_method("set_speed"):
             n.set_speed(speed)
 
@@ -704,7 +697,7 @@ func sync_environment_speed_if_needed() -> void:
 func enable_environment_movement(enable: bool) -> void:
     # Kontrol terrain scrolling
     var nodes := _get_terrain_nodes()
-    for n in nodes:
+    for n: Node2D in nodes:
         if n and n.has_method("set_movement_enabled"):
             n.set_movement_enabled(enable)
             if enable_debug_logging and OS.is_debug_build():
@@ -716,7 +709,7 @@ func enable_environment_movement(enable: bool) -> void:
 
 func _is_environment_moving() -> bool:
     var nodes := _get_terrain_nodes()
-    for n in nodes:
+    for n: Node2D in nodes:
         var me := false
         if n and n.has_method("get"):
             me = n.get("movement_enabled")
@@ -857,21 +850,23 @@ func get_player_state() -> Dictionary:
         "state_timer": state_timer
     }
 
-func _get_terrain_nodes() -> Array:
-    var nodes: Array = []
+func _get_terrain_nodes() -> Array[Node2D]:
+    var nodes: Array[Node2D] = []
     if terrain_paths.size() > 0:
-        for p in terrain_paths:
-            var n := get_tree().get_root().get_node_or_null(p)
-            if n:
-                nodes.append(n)
+        for p: String in terrain_paths:
+            var n: Node = get_tree().get_root().get_node_or_null(p)
+            if n and n is Node2D:
+                nodes.append(n as Node2D)
     elif terrain_nodes.size() > 0:
-        nodes = terrain_nodes.duplicate()
+        for tn: Node2D in terrain_nodes:
+            if tn:
+                nodes.append(tn)
     else:
-        var main_node := get_tree().get_root().get_node_or_null("Main")
+        var main_node: Node = get_tree().get_root().get_node_or_null("Main")
         if main_node:
-            for child in main_node.get_children():
+            for child: Node in main_node.get_children():
                 if child is Node2D and (child.name.begins_with("Terrain") or child.name.begins_with("Ground")):
-                    nodes.append(child)
+                    nodes.append(child as Node2D)
     return nodes
 
 func _set_to_entry_stop() -> void:
@@ -885,32 +880,32 @@ func _validate_initial_position() -> void:
         _set_to_entry_stop()
 
 func _blocked_ahead(dist: float) -> bool:
-    var half_w := collision_size.x * 0.5
-    var foot_y := global_position.y + collision_size.y * 0.5 - 2.0
-    var mid_y := global_position.y
+    var half_w: float = collision_size.x * 0.5
+    var foot_y: float = global_position.y + collision_size.y * 0.5 - 2.0
+    var mid_y: float = global_position.y
     var d: float = max(dist - front_block_margin, 0.5)
-    var from1 := Vector2(global_position.x + half_w, foot_y)
-    var to1 := Vector2(from1.x + max(d, 0.5), foot_y)
-    var from2 := Vector2(global_position.x + half_w, mid_y)
-    var to2 := Vector2(from2.x + max(d, 0.5), mid_y)
-    var space := get_world_2d().direct_space_state
-    var r1 := space.intersect_ray(PhysicsRayQueryParameters2D.create(from1, to1, 1, [self]))
+    var from1: Vector2 = Vector2(global_position.x + half_w, foot_y)
+    var to1: Vector2 = Vector2(from1.x + max(d, 0.5), foot_y)
+    var from2: Vector2 = Vector2(global_position.x + half_w, mid_y)
+    var to2: Vector2 = Vector2(from2.x + max(d, 0.5), mid_y)
+    var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+    var r1: Dictionary = space.intersect_ray(PhysicsRayQueryParameters2D.create(from1, to1, 1, [self]))
     if not r1.is_empty():
         return true
-    var r2 := space.intersect_ray(PhysicsRayQueryParameters2D.create(from2, to2, 1, [self]))
+    var r2: Dictionary = space.intersect_ray(PhysicsRayQueryParameters2D.create(from2, to2, 1, [self]))
     if not r2.is_empty():
         return true
     # Narrow front probe to avoid early blocking due to full body shape
-    var probe := RectangleShape2D.new()
+    var probe: RectangleShape2D = RectangleShape2D.new()
     probe.size = Vector2(max(front_probe_width, 0.5), max(collision_size.y - 2.0, 1.0))
-    var params := PhysicsShapeQueryParameters2D.new()
+    var params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
     params.shape = probe
-    var xf := Transform2D.IDENTITY
+    var xf: Transform2D = Transform2D.IDENTITY
     xf.origin = global_position + Vector2(half_w + probe.size.x * 0.5, 0)
     params.transform = xf
     params.collision_mask = 1
     params.exclude = [self]
-    var res := space.intersect_shape(params, 1)
+    var res: Array[Dictionary] = space.intersect_shape(params, 1)
     if res.size() > 0:
         return true
     return false
@@ -1045,8 +1040,8 @@ func slice_jump_spritesheet_if_needed() -> void:
     sf.set_animation_loop("jump", false) # Jump shouldn't loop
     sf.set_animation_speed("jump", 12.0)
 
-    for r in range(rows):
-        for c in range(cols):
+    for r: int in range(rows):
+        for c: int in range(cols):
             var at := AtlasTexture.new()
             at.atlas = sheet
             at.region = Rect2(c * cw_f, r * ch_f, cw_f, ch_f)
@@ -1092,8 +1087,8 @@ func slice_run_spritesheet_if_needed() -> void:
     sf.set_animation_loop("run", true)
     sf.set_animation_speed("run", 10.0) # Standard speed
 
-    for r in range(rows):
-        for c in range(cols):
+    for r: int in range(rows):
+        for c: int in range(cols):
             var at := AtlasTexture.new()
             at.atlas = sheet
             # Rect2(x, y, w, h)
@@ -1145,8 +1140,8 @@ func slice_attack_spritesheet_if_needed() -> void:
     sf.set_animation_loop("attack", false) # Attack shouldn't loop
     sf.set_animation_speed("attack", 12.0)
 
-    for r in range(rows):
-        for c in range(cols):
+    for r: int in range(rows):
+        for c: int in range(cols):
             var at := AtlasTexture.new()
             at.atlas = sheet
             at.region = Rect2(c * cw_f, r * ch_f, cw_f, ch_f)
@@ -1192,7 +1187,7 @@ func update_cosmetics() -> void:
             equipped_skin = "default"
 
     # Update animations
-    for anim_name in anim_map.keys():
+    for anim_name: String in anim_map.keys():
         var tex_path = skin_base + anim_map[anim_name]
         if FileAccess.file_exists(tex_path):
             var tex = load(tex_path)

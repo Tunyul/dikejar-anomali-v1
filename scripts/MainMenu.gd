@@ -3,16 +3,42 @@ extends Control
 
 
 var _pending_level_rewards: Array = []
-var _reward_panel: Control = null
-var _profile_panel: Control = null
-var _coin_label: Label = null
+@onready var _reward_panel: Control = %RewardPanel
+@onready var _profile_panel: Control = %ProfilePanel
+@onready var _coin_label: Label = %CoinLabel
 var _total_coins: int = 0
-var _gem_label: Label = null
+@onready var _gem_label: Label = %GemLabel
 var _total_gems: int = 0
-var _reward_icon: TextureRect = null
-var _missions_badge: Control = null
-var _daily_button_animator: AnimationPlayer = null
-var _avatar_icon: TextureRect = null
+@onready var _reward_icon: TextureRect = %RewardIcon
+@onready var _missions_badge: Control = %MissionsBadge
+@onready var _missions_animator: AnimationPlayer = %MissionsAnimator
+@onready var _avatar_icon: TextureRect = %AvatarIcon
+
+const SKIN_MAP: Dictionary = {
+    "skin_basic": "res://assets/profile/profile_basic.png",
+    "skin_premium": "res://assets/profile/profile_premium.png",
+    "skin_chef": "res://assets/profile/profile_chef.png",
+    "skin_firefighter": "res://assets/profile/profile_firefighter.png",
+    "skin_caveman": "res://assets/profile/profile_caveman.png",
+    "skin_cat_explorer": "res://assets/profile/profile_cat_explorer.png",
+    "skin_doctor": "res://assets/profile/profile_doctor.png",
+    "skin_robot": "res://assets/profile/profile_robot.png",
+    "skin_knight": "res://assets/profile/profile_knight.png",
+    "skin_neon": "res://assets/profile/profile_neon.png",
+    "skin_shadow": "res://assets/profile/profile_ninja.png",
+    "skin_astro_white": "res://assets/profile/profile_astro_white.png",
+    "skin_astro_blue": "res://assets/profile/profile_astro_blue.png",
+    "skin_pirate": "res://assets/profile/profile_pirate.png",
+    "skin_wizard": "res://assets/profile/profile_wizard.png",
+    "skin_dragon": "res://assets/profile/profile_dragon.png",
+    "skin_superhero": "res://assets/profile/profile_superhero.png",
+    "skin_green_dragon": "res://assets/profile/profile_green_dragon.png",
+    "skin_superhero_male": "res://assets/profile/profile_superhero_male.png",
+    "skin_superhero_female": "res://assets/profile/profile_superhero_female.png",
+    "skin_witch": "res://assets/profile/profile_witch.png",
+    "skin_pirate_v2": "res://assets/profile/profile_pirate_v2.png",
+    "skin_orc": "res://assets/profile/profile_orc.png"
+}
 
 @export var debug_dummy_stats: bool = false
 
@@ -34,70 +60,80 @@ var _menu_bgm_paths: Array[String] = []
 var _menu_bgm_index: int = 0
 var _menu_bgm_volume: float = 0.8
 var _menu_bgm_muted: bool = false
-var _music_toast_panel: Control = null
-var _music_toast: Label = null
+@onready var _music_toast_panel: Control = %MusicToastPanel
+@onready var _music_toast: Label = %MusicToast
 var _music_toast_tween: Tween = null
-var _title_sprite: Sprite2D = null
+@onready var _title_sprite: Sprite2D = %TitleSprite
+@onready var _parallax_bg: ParallaxBackground = %ParallaxBackground
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
-var _lang_button: TextureButton = null
 var _flag_id: Texture2D = null
 var _flag_en: Texture2D = null
 var _flag_zh: Texture2D = null
 var _lang_confirm_popup: Node = null
 var _lang_popup: PopupMenu = null
 var _settings_menu: Node = null
-var _buttons_row: Control = null
 
+@onready var _play_button: Button = %PlayButton
+@onready var _shop_button: Button = %ShopButton
+@onready var _settings_button: Button = %SettingsButton
+@onready var _player_hud: Control = %PlayerHUD
+@onready var _coin_hud: Control = %CoinHUD
+@onready var _gem_hud: Control = %GemHUD
+@onready var _score_hud: Control = %ScoreHUD
+@onready var _daily_button: Button = %DailyButton
+@onready var _lang_button: TextureButton = %LanguageButton
+@onready var _version_label: Label = %VersionLabel
+@onready var _score_label: Label = %ScoreLabel
+@onready var _level_label: Label = %LevelLabel
+@onready var _xp_bar: ProgressBar = %XPBar
+@onready var _xp_label: Label = %XPLabel
+@onready var _inner_avatar_icon: TextureRect = %InnerIcon
+@onready var _reward_title: Label = %RewardTitle
+@onready var _reward_info_label: Label = %RewardInfoLabel
+@onready var _large_inner_avatar_icon: TextureRect = %LargeInnerAvatarIcon
+@onready var _gem_icon: TextureRect = %GemIcon
+@onready var _profile_panel_inner: Panel = %Panel
+@onready var _profile_overlay: ColorRect = %Overlay
+@onready var _ground: Node = %Ground if has_node("%Ground") else null
+@onready var _ui_layer: CanvasLayer = %UI
+@onready var _daily_button_animator: AnimationPlayer = %MissionsAnimator
+@onready var _missions_menu: Node = %DailyMissionsMenu if has_node("%DailyMissionsMenu") else null
+@onready var _settings_menu_node: Node = %SettingsMenu if has_node("%SettingsMenu") else null
+@onready var _close_profile_button: Button = %CloseProfileButton
+@onready var _change_avatar_button: Button = %ChangeAvatarButton
+@onready var _change_border_button: Button = %ChangeBorderButton
 
 func _ready() -> void:
-    _buttons_row = get_node_or_null("UI/CenterContainer/VBox/ButtonsRow")
     AdManager.load_banner()
     AdManager.show_banner()
     AdManager.move_banner(false) # Banner di bawah untuk menu
-    var play := get_node_or_null("UI/CenterContainer/VBox/ButtonsRow/PlayButton")
-    if play == null:
-        play = get_node_or_null("UI/CenterContainer/VBox/PlayButton")
-    var shop := get_node_or_null("UI/CenterContainer/VBox/ButtonsRow/ShopButton")
-    var settings := get_node_or_null("UI/CenterContainer/VBox/ButtonsRow/SettingsButton")
-    var player_hud := get_node_or_null("UI/PlayerHUD")
-    var coin_hud := get_node_or_null("UI/CoinHUD")
-    var gem_hud := get_node_or_null("UI/GemHUD")
-    var score_hud := get_node_or_null("UI/ScoreHUD")
-    var daily_button := get_node_or_null("UI/DailyButton")
-    _lang_button = get_node_or_null("UI/LanguageButton") as TextureButton
-    _missions_badge = get_node_or_null("UI/DailyButton/MissionsBadge") as Control
-    if daily_button:
-        _daily_button_animator = daily_button.get_node_or_null("AnimationPlayer")
-    _reward_panel = get_node_or_null("UI/RewardPanel") as Control
-    var ver := get_node_or_null("UI/VersionLabel")
 
-    if coin_hud:
-        _coin_label = coin_hud.get_node_or_null("CoinLabel") as Label
-    if gem_hud:
-        _gem_label = gem_hud.get_node_or_null("GemLabel") as Label
-        var gem_icon := gem_hud.get_node_or_null("GemIcon") as TextureRect
-        if gem_icon:
-            var icon_tex := _get_diamond_icon_texture()
-            if icon_tex:
-                gem_icon.texture = icon_tex
-                gem_icon.modulate = Color(1, 1, 1, 1)
-    if play:
-        play.pressed.connect(_on_play_pressed)
-    if shop:
-        shop.pressed.connect(_on_shop_pressed)
-    if settings:
-        settings.pressed.connect(_on_settings_pressed)
-    if daily_button:
-        (daily_button as BaseButton).pressed.connect(_on_daily_pressed)
-    _settings_menu = get_node_or_null("SettingsMenu")
+    if _gem_icon:
+        var icon_tex := _get_diamond_icon_texture()
+        if icon_tex:
+            _gem_icon.texture = icon_tex
+            _gem_icon.modulate = Color(1, 1, 1, 1)
+
+    if _play_button:
+        _play_button.pressed.connect(_on_play_pressed)
+    if _shop_button:
+        _shop_button.pressed.connect(_on_shop_pressed)
+    if _settings_button:
+        _settings_button.pressed.connect(_on_settings_pressed)
+    if _daily_button:
+        _daily_button.pressed.connect(_on_daily_pressed)
+
+    _settings_menu = _settings_menu_node
     if _settings_menu == null:
         var packed_settings := load("res://scenes/SettingsMenu.tscn") as PackedScene
         if packed_settings:
             _settings_menu = packed_settings.instantiate()
             (_settings_menu as Node).name = "SettingsMenu"
             add_child(_settings_menu)
+
     if _settings_menu:
         _wire_settings_menu_signals(_settings_menu as Node)
+
     if _lang_button:
         _init_language_icons()
         _refresh_language_button()
@@ -108,32 +144,25 @@ func _ready() -> void:
             var cb := Callable(self, "_on_language_changed")
             if not TransitionManager.language_changed.is_connected(cb):
                 TransitionManager.language_changed.connect(cb)
-    if coin_hud or gem_hud or score_hud or player_hud:
+
+    if _coin_hud or _gem_hud or _score_hud or _player_hud:
         var cfg := ConfigFile.new()
         var err := cfg.load("user://save.cfg")
         if err == OK:
-            if coin_hud:
-                    _total_coins = int(cfg.get_value("progress", "total_coins", 0))
-                    if _coin_label:
-                        _coin_label.text = str(_total_coins)
-            if gem_hud:
-                    _total_gems = int(cfg.get_value("progress", "total_gems", 0))
-                    if _gem_label:
-                        _gem_label.text = str(_total_gems)
-            if score_hud:
+            if _coin_label:
+                _total_coins = int(cfg.get_value("progress", "total_coins", 0))
+                _coin_label.text = str(_total_coins)
+            if _gem_label:
+                _total_gems = int(cfg.get_value("progress", "total_gems", 0))
+                _gem_label.text = str(_total_gems)
+            if _score_label:
                 var best := int(cfg.get_value("progress", "best_score", 0))
-                var score_label := score_hud.get_node_or_null("ScoreLabel") as Label
-                if score_label:
-                    score_label.text = str(best)
-        if player_hud:
-            _avatar_icon = player_hud.get_node_or_null("AvatarIcon") as TextureRect
+                _score_label.text = str(best)
+
+        if _player_hud:
             var level := int(cfg.get_value("progress", "player_level", 1))
             var xp := int(cfg.get_value("progress", "player_xp", 0))
             var xp_required := int(cfg.get_value("progress", "player_xp_required", 100))
-            var level_label := player_hud.get_node_or_null("LevelLabel") as Label
-            var xp_bar := player_hud.get_node_or_null("XPBar") as ProgressBar
-            var xp_label := player_hud.get_node_or_null("XPLabel") as Label
-            _reward_icon = player_hud.get_node_or_null("RewardIcon") as TextureRect
 
             # Load equipped cosmetics
             var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
@@ -143,20 +172,22 @@ func _ready() -> void:
             _update_avatar_border(equipped_border)
             _update_avatar_icon(equipped_skin)
 
-            if level_label:
-                level_label.text = "Lv " + str(level)
-            if xp_bar:
+            if _level_label:
+                _level_label.text = tr("Lv. %d") % level
+            if _xp_bar:
                 if xp_required <= 0:
                     xp_required = 1
-                xp_bar.max_value = float(xp_required)
-                xp_bar.value = clampf(float(xp), 0.0, float(xp_required))
-            if xp_label:
-                xp_label.text = str(xp) + "/" + str(xp_required) + " XP"
+                _xp_bar.max_value = float(xp_required)
+                _xp_bar.value = clampf(float(xp), 0.0, float(xp_required))
+            if _xp_label:
+                _xp_label.text = tr("%d/%d XP") % [xp, xp_required]
+
             var plr_value = cfg.get_value("rewards", "pending_level_rewards", [])
             if plr_value is Array:
                 _pending_level_rewards = plr_value
             else:
                 _pending_level_rewards = []
+
             if _reward_icon:
                 _update_reward_icon()
                 _reward_icon.gui_input.connect(_on_reward_icon_gui_input)
@@ -164,34 +195,37 @@ func _ready() -> void:
                 _avatar_icon.mouse_filter = Control.MOUSE_FILTER_STOP
                 _avatar_icon.gui_input.connect(_on_avatar_icon_gui_input)
         else:
-            _reset_main_menu_stats_to_default(coin_hud, gem_hud, score_hud, player_hud)
+            _reset_main_menu_stats_to_default()
 
     if debug_dummy_stats and Engine.is_editor_hint():
         _apply_dummy_stats()
-    if daily_button and daily_button is BaseButton:
-        _refresh_daily_button_style(daily_button as BaseButton)
+
+    if _daily_button:
+        _refresh_daily_button_style(_daily_button)
+
     refresh_missions_badge_from_save()
 
-    if ver and ver is Label:
-        (ver as Label).text = ProjectSettings.get_setting("application/config/version", "v0.1.0")
-    var ground := get_node_or_null("Ground")
-    if ground:
-        if ground.has_method("set_title_mode"):
-            ground.set_title_mode(true)
-        if ground.has_method("generate_random"):
-            ground.generate_random()
-        if ground.has_method("set_movement_enabled"):
-            ground.set_movement_enabled(true)
-        if ground.has_method("set_speed_limits"):
-            ground.set_speed_limits(0.0, 300.0)
-        if ground.has_method("set_speed"):
-            ground.set_speed(34.0)
-    var parallax := get_node_or_null("ParallaxBackground")
-    if parallax:
-        if parallax.has_method("set_movement_enabled"):
-            parallax.set_movement_enabled(true)
-        if parallax.has_method("set_speed"):
-            parallax.set_speed(200.0)
+    if _version_label:
+        _version_label.text = ProjectSettings.get_setting("application/config/version", "v0.1.0")
+
+    if _ground:
+        if _ground.has_method("set_title_mode"):
+            _ground.set_title_mode(true)
+        if _ground.has_method("generate_random"):
+            _ground.generate_random()
+        if _ground.has_method("set_movement_enabled"):
+            _ground.set_movement_enabled(true)
+        if _ground.has_method("set_speed_limits"):
+            _ground.set_speed_limits(0.0, 300.0)
+        if _ground.has_method("set_speed"):
+            _ground.set_speed(34.0)
+
+    if _parallax_bg:
+        if _parallax_bg.has_method("set_movement_enabled"):
+            _parallax_bg.set_movement_enabled(true)
+        if _parallax_bg.has_method("set_speed"):
+            _parallax_bg.set_speed(200.0)
+
     var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
     var title_font := load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf") as Font
     if ui_font:
@@ -201,25 +235,16 @@ func _ready() -> void:
             _apply_shop_number_font(_coin_label, title_font)
         if _gem_label:
             _apply_shop_number_font(_gem_label, title_font)
-        if score_hud:
-            var score_label := score_hud.get_node_or_null("ScoreLabel") as Label
-            if score_label:
-                _apply_shop_number_font(score_label, title_font)
-        if player_hud:
-            var level_label := player_hud.get_node_or_null("LevelLabel") as Label
-            if level_label:
-                _apply_shop_number_font(level_label, title_font)
-            var xp_label := player_hud.get_node_or_null("XPLabel") as Label
-            if xp_label:
-                _apply_shop_number_font(xp_label, title_font)
-        if _reward_panel:
-            var reward_title := _reward_panel.get_node_or_null("Title") as Label
-            if reward_title:
-                _apply_shop_title_font(reward_title, title_font)
+        if _score_label:
+            _apply_shop_number_font(_score_label, title_font)
+        if _level_label:
+            _apply_shop_number_font(_level_label, title_font)
+        if _xp_label:
+            _apply_shop_number_font(_xp_label, title_font)
+        if _reward_title:
+            _apply_shop_title_font(_reward_title, title_font)
 
-    _title_sprite = get_node_or_null("UI/TitleSprite") as Sprite2D
     _connect_viewport_resize()
-
     _init_menu_bgm()
 
 
@@ -278,6 +303,7 @@ func _refresh_language_button(_locale: String = "") -> void:
 func _on_language_changed(locale: String) -> void:
     _refresh_language_button(locale)
     _refresh_language_popup_items(locale)
+    _refresh_profile_panel() # Update teks Profile Panel jika sedang terbuka
 
 
 func _on_language_button_pressed() -> void:
@@ -289,7 +315,6 @@ func _ensure_language_popup() -> void:
     if _lang_popup != null and is_instance_valid(_lang_popup):
         return
 
-    var ui := get_node_or_null("UI") as Node
     _lang_popup = PopupMenu.new()
     _lang_popup.name = "LanguagePopup"
     _lang_popup.hide_on_item_selection = true
@@ -297,8 +322,8 @@ func _ensure_language_popup() -> void:
     _lang_popup.transparent = true
     _lang_popup.id_pressed.connect(_on_language_popup_id_pressed)
 
-    if ui:
-        ui.add_child(_lang_popup)
+    if _ui_layer:
+        _ui_layer.add_child(_lang_popup)
     else:
         add_child(_lang_popup)
 
@@ -387,8 +412,7 @@ func _locale_to_display_name(locale: String) -> String:
 
 
 func _show_language_confirm(target_locale: String) -> void:
-    var ui := get_node_or_null("UI")
-    if ui == null:
+    if _ui_layer == null:
         if TransitionManager and TransitionManager.has_method("set_language"):
             TransitionManager.set_language(target_locale)
         _refresh_language_button(target_locale)
@@ -407,17 +431,17 @@ func _show_language_confirm(target_locale: String) -> void:
 
     var popup := confirm_scene.instantiate()
     _lang_confirm_popup = popup
-    ui.add_child(popup)
+    _ui_layer.add_child(popup)
 
     if popup is Control:
         call_deferred("_position_language_confirm_popup", popup as Control)
 
-    var msg := popup.get_node_or_null("Message") as Label
+    var msg := popup.get_node("%Message") as Label
     if msg:
         msg.text = tr("Change language to %s?") % [_locale_to_display_name(target_locale)]
 
-    var yes := popup.get_node_or_null("Buttons/YesButton") as BaseButton
-    var no := popup.get_node_or_null("Buttons/NoButton") as BaseButton
+    var yes := popup.get_node("%YesButton") as BaseButton
+    var no := popup.get_node("%NoButton") as BaseButton
 
     if yes:
         yes.pressed.connect(func():
@@ -465,45 +489,33 @@ func _position_language_confirm_popup(c: Control) -> void:
     c.global_position = desired_top_left
 
 
-func _reset_main_menu_stats_to_default(coin_hud: Node, gem_hud: Node, score_hud: Node, player_hud: Node) -> void:
+func _reset_main_menu_stats_to_default() -> void:
     _total_coins = 0
     _total_gems = 0
     _pending_level_rewards = []
 
-    if coin_hud and _coin_label == null:
-        _coin_label = coin_hud.get_node_or_null("CoinLabel") as Label
     if _coin_label:
         _coin_label.text = "0"
 
-    if gem_hud and _gem_label == null:
-        _gem_label = gem_hud.get_node_or_null("GemLabel") as Label
     if _gem_label:
         _gem_label.text = "0"
 
-    if score_hud:
-        var score_label := score_hud.get_node_or_null("ScoreLabel") as Label
-        if score_label:
-            score_label.text = "0"
+    if _score_label:
+        _score_label.text = "0"
 
-    if player_hud:
-        var level_label := player_hud.get_node_or_null("LevelLabel") as Label
-        var xp_bar := player_hud.get_node_or_null("XPBar") as ProgressBar
-        var xp_label := player_hud.get_node_or_null("XPLabel") as Label
-        _reward_icon = player_hud.get_node_or_null("RewardIcon") as TextureRect
+    if _level_label:
+        _level_label.text = "Lv 1"
+    if _xp_bar:
+        _xp_bar.max_value = 100.0
+        _xp_bar.value = 0.0
+    if _xp_label:
+        _xp_label.text = "0/100 XP"
 
-        if level_label:
-            level_label.text = "Lv 1"
-        if xp_bar:
-            xp_bar.max_value = 100.0
-            xp_bar.value = 0.0
-        if xp_label:
-            xp_label.text = "0/100 XP"
-
-        if _reward_icon:
-            _update_reward_icon()
-            var cb := Callable(self, "_on_reward_icon_gui_input")
-            if not _reward_icon.gui_input.is_connected(cb):
-                _reward_icon.gui_input.connect(cb)
+    if _reward_icon:
+        _update_reward_icon()
+        var cb := Callable(self, "_on_reward_icon_gui_input")
+        if not _reward_icon.gui_input.is_connected(cb):
+            _reward_icon.gui_input.connect(cb)
 
 
 func _apply_dummy_stats() -> void:
@@ -515,26 +527,18 @@ func _apply_dummy_stats() -> void:
     if _gem_label:
         _gem_label.text = str(dummy_big)
 
-    var score_hud := get_node_or_null("UI/ScoreHUD")
-    if score_hud:
-        var score_label := score_hud.get_node_or_null("ScoreLabel") as Label
-        if score_label:
-            score_label.text = str(dummy_big)
+    if _score_label:
+        _score_label.text = str(dummy_big)
 
-    var player_hud := get_node_or_null("UI/PlayerHUD")
-    if player_hud:
-        var level_label := player_hud.get_node_or_null("LevelLabel") as Label
-        if level_label:
-            level_label.text = "Lv 99"
+    if _level_label:
+        _level_label.text = "Lv 99"
 
-        var xp_bar := player_hud.get_node_or_null("XPBar") as ProgressBar
-        if xp_bar:
-            xp_bar.max_value = 1234567.0
-            xp_bar.value = xp_bar.max_value * 0.5
+    if _xp_bar:
+        _xp_bar.max_value = 1234567.0
+        _xp_bar.value = _xp_bar.max_value * 0.5
 
-        var xp_label := player_hud.get_node_or_null("XPLabel") as Label
-        if xp_label:
-            xp_label.text = "123456/1234567 XP"
+    if _xp_label:
+        _xp_label.text = "123456/1234567 XP"
 
 
 func _on_reward_icon_gui_input(event: InputEvent) -> void:
@@ -555,24 +559,40 @@ func _on_avatar_icon_gui_input(event: InputEvent) -> void:
 
 func _show_profile_panel() -> void:
     if _profile_panel == null:
-        _profile_panel = get_node_or_null("UI/ProfilePanel") as Control
-    if _profile_panel == null:
         return
 
-    var close_btn := _profile_panel.get_node_or_null("CloseButton") as Button
+    var inner_panel := _profile_panel_inner
+    if inner_panel == null: return
+
+    var close_btn := _close_profile_button
     if close_btn and not close_btn.pressed.is_connected(_hide_profile_panel):
         close_btn.pressed.connect(_hide_profile_panel)
 
-    var change_avatar_btn := _profile_panel.get_node_or_null("%ChangeAvatarButton") as Button
+    var change_avatar_btn := _change_avatar_button
     if change_avatar_btn and not change_avatar_btn.pressed.is_connected(_on_change_avatar_pressed):
         change_avatar_btn.pressed.connect(_on_change_avatar_pressed)
 
-    var change_border_btn := _profile_panel.get_node_or_null("%ChangeBorderButton") as Button
+    var change_border_btn := _change_border_button
     if change_border_btn and not change_border_btn.pressed.is_connected(_on_change_border_pressed):
         change_border_btn.pressed.connect(_on_change_border_pressed)
 
     _refresh_profile_panel()
+
+    # Animasi buka panel
     _profile_panel.visible = true
+    var overlay := _profile_overlay
+    if overlay:
+        overlay.modulate.a = 0.0
+
+    inner_panel.modulate.a = 0.0
+    inner_panel.scale = Vector2(0.8, 0.8)
+    inner_panel.pivot_offset = inner_panel.size / 2
+
+    var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    if overlay:
+        tw.tween_property(overlay, "modulate:a", 1.0, 0.3)
+    tw.tween_property(inner_panel, "modulate:a", 1.0, 0.3)
+    tw.tween_property(inner_panel, "scale", Vector2.ONE, 0.3)
 
 func _on_change_avatar_pressed() -> void:
     TransitionManager.play_sfx(&"click")
@@ -600,6 +620,13 @@ func _on_change_avatar_pressed() -> void:
     _update_avatar_icon(next_skin)
     _refresh_profile_panel()
 
+    # Feedback visual tombol
+    var btn := _change_avatar_button
+    if btn:
+        var btn_tw := create_tween()
+        btn_tw.tween_property(btn, "scale", Vector2(1.1, 1.1), 0.05)
+        btn_tw.tween_property(btn, "scale", Vector2.ONE, 0.1)
+
 func _on_change_border_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     var cfg := ConfigFile.new()
@@ -608,16 +635,12 @@ func _on_change_border_pressed() -> void:
 
     var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
     var owned_borders: Array = cosmetics.get("owned_borders", [])
-    var current_border := String(cosmetics.get("equipped_border", "border_gold"))
+    var current_border := String(cosmetics.get("equipped_border", ""))
 
     # Buat list pilihan unik
-    var selection_list: Array = [""] # Opsi tanpa border
+    var selection_list: Array = [""] # Opsi tanpa border (Basic)
 
-    # Tambahkan border gold sebagai default yang pasti dimiliki
-    if not selection_list.has("border_gold"):
-        selection_list.append("border_gold")
-
-    # Tambahkan border lain yang sudah dibeli
+    # Tambahkan border premium yang sudah dibeli
     for b in owned_borders:
         var b_str = String(b)
         if b_str != "" and not selection_list.has(b_str):
@@ -625,7 +648,6 @@ func _on_change_border_pressed() -> void:
 
     # Cycle ke border berikutnya
     var idx := selection_list.find(current_border)
-    # Jika border sekarang entah gimana nggak ada di list, mulai dari awal
     if idx == -1: idx = 0
 
     var next_idx := (idx + 1) % selection_list.size()
@@ -635,20 +657,55 @@ func _on_change_border_pressed() -> void:
     cfg.set_value("cosmetics", "data", cosmetics)
     cfg.save("user://save.cfg")
 
+    # Update visual
     _update_avatar_border(next_border)
     _refresh_profile_panel()
+
+    # Feedback visual tombol
+    var btn := %ChangeBorderButton
+    if btn:
+        var btn_tw := create_tween()
+        btn_tw.tween_property(btn, "scale", Vector2(1.1, 1.1), 0.05)
+        btn_tw.tween_property(btn, "scale", Vector2.ONE, 0.1)
 
 func _hide_profile_panel() -> void:
     TransitionManager.play_sfx(&"click")
     if _profile_panel:
-        _profile_panel.visible = false
+        var inner_panel := _profile_panel_inner
+        var overlay := _profile_overlay
+
+        var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+        if overlay:
+            tw.tween_property(overlay, "modulate:a", 0.0, 0.2)
+        if inner_panel:
+            tw.tween_property(inner_panel, "modulate:a", 0.0, 0.2)
+            tw.tween_property(inner_panel, "scale", Vector2(0.8, 0.8), 0.2)
+        tw.chain().tween_callback(func(): _profile_panel.visible = false)
 
 func _refresh_profile_panel() -> void:
     if _profile_panel == null: return
 
-    var name_label := _profile_panel.get_node_or_null("%NameLabel") as Label
-    var stats_label := _profile_panel.get_node_or_null("%StatsLabel") as Label
-    var large_avatar := _profile_panel.get_node_or_null("%LargeAvatarIcon") as TextureRect
+    var inner_panel := _profile_panel_inner
+    if inner_panel == null: return
+
+    var name_label := %NameLabel
+    var lv_label := %LevelValue
+    var xp_label := %XPValue
+    var score_label := %ScoreValue
+    var large_avatar := %LargeAvatarIcon
+    var title_label := %ProfileTitle
+    var change_avatar_btn := %ChangeAvatarButton
+    var change_border_btn := %ChangeBorderButton
+    var close_btn := %CloseProfileButton
+
+    if title_label:
+        title_label.text = tr("PROFIL PEMAIN")
+    if change_avatar_btn:
+        change_avatar_btn.text = tr("GANTI AVATAR")
+    if change_border_btn:
+        change_border_btn.text = tr("GANTI BORDER")
+    if close_btn:
+        close_btn.text = tr("TUTUP")
 
     var cfg := ConfigFile.new()
     var err := cfg.load("user://save.cfg")
@@ -661,35 +718,33 @@ func _refresh_profile_panel() -> void:
     var best_score := int(cfg.get_value("progress", "best_score", 0))
 
     if name_label:
-        name_label.text = "Nama: " + player_name
-    if stats_label:
-        stats_label.text = "Level: %d\nXP: %d/%d\nBest Score: %d" % [level, xp, xp_req, best_score]
+        name_label.text = player_name
+    if lv_label:
+        lv_label.text = tr("Lv. %d") % level
+    if xp_label:
+        xp_label.text = tr("%d/%d XP") % [xp, xp_req]
+    if score_label:
+        score_label.text = str(best_score)
 
     if large_avatar:
         var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
         var equipped_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
         var equipped_border := String(cosmetics.get("equipped_border", ""))
 
-        var icon_path := "res://assets/profile/profile_basic.png"
-        match equipped_skin:
-            "skin_basic": icon_path = "res://assets/profile/profile_basic.png"
-            "skin_premium": icon_path = "res://assets/profile/profile_premium.png"
-            "skin_neon": icon_path = "res://assets/profile/profile_neon.png"
-            "skin_shadow": icon_path = "res://assets/profile/profile_ninja.png"
-            _: icon_path = "res://assets/profile/profile_basic.png"
+        var icon_path: String = SKIN_MAP.get(equipped_skin, "res://assets/profile/profile_basic.png")
 
-        _apply_border_to_icon(large_avatar, equipped_border)
-        var inner := large_avatar.get_node_or_null("InnerIcon") as TextureRect
+        var inner := _large_inner_avatar_icon
         if inner:
             inner.texture = load(icon_path) as Texture2D
+
+        _apply_border_to_icon(large_avatar, equipped_border, _large_inner_avatar_icon)
 
 func _on_play_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     print("PlayButton ditekan")
     TransitionManager.stop_bgm()
-    var ui := get_node_or_null("UI")
-    if ui:
-        ui.visible = false
+    if _ui_layer:
+        _ui_layer.visible = false
     visible = false
     process_mode = Node.PROCESS_MODE_DISABLED
     if Preloader and Preloader.has_method("set_next_scene"):
@@ -708,13 +763,18 @@ func _on_settings_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     var settings_menu := _settings_menu
     if settings_menu == null or not is_instance_valid(settings_menu):
-        settings_menu = get_node_or_null("SettingsMenu")
+        settings_menu = _settings_menu_node
+
     if settings_menu == null:
         var packed := load("res://scenes/SettingsMenu.tscn") as PackedScene
         if packed:
             settings_menu = packed.instantiate()
             (settings_menu as Node).name = "SettingsMenu"
-            add_child(settings_menu)
+            if _ui_layer:
+                _ui_layer.add_child(settings_menu)
+            else:
+                add_child(settings_menu)
+
     _settings_menu = settings_menu
     if settings_menu:
         _wire_settings_menu_signals(settings_menu as Node)
@@ -725,10 +785,15 @@ func _on_settings_pressed() -> void:
 
 func _on_daily_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    var missions_menu := get_node_or_null("DailyMissionsMenu")
-    if missions_menu == null:
-        # Check if old instance exists
-        var old_menu := get_node_or_null("UI/DailyMissionsMenu")
+    var missions_menu := _missions_menu
+    if missions_menu == null or not is_instance_valid(missions_menu):
+        # Check if old instance exists in UI layer or self
+        var old_menu: Node = null
+        if _ui_layer and _ui_layer.has_node("DailyMissionsMenu"):
+            old_menu = _ui_layer.get_node("DailyMissionsMenu")
+        elif has_node("DailyMissionsMenu"):
+            old_menu = get_node("DailyMissionsMenu")
+
         if old_menu:
             old_menu.queue_free()
 
@@ -736,29 +801,30 @@ func _on_daily_pressed() -> void:
         if packed:
             missions_menu = packed.instantiate()
             (missions_menu as Node).name = "DailyMissionsMenu"
-            add_child(missions_menu)
+            if _ui_layer:
+                _ui_layer.add_child(missions_menu)
+            else:
+                add_child(missions_menu)
 
+    _missions_menu = missions_menu
     if missions_menu:
         if missions_menu.has_method("show_overlay"):
-            missions_menu.call("show_overlay")
-        else:
-            (missions_menu as CanvasItem).visible = true
+            missions_menu.call_deferred("show_overlay")
+        elif missions_menu is CanvasItem:
+            missions_menu.visible = true
     call_deferred("refresh_missions_badge_from_save")
-
-    if _reward_panel:
-        var claim_btn := _reward_panel.get_node_or_null("ClaimButton") as BaseButton
-        var close_btn := _reward_panel.get_node_or_null("CloseButton") as BaseButton
-        if claim_btn and not claim_btn.pressed.is_connected(_on_reward_claim_pressed):
-            claim_btn.pressed.connect(_on_reward_claim_pressed)
-        if close_btn and not close_btn.pressed.is_connected(_on_reward_close_pressed):
-            close_btn.pressed.connect(_on_reward_close_pressed)
-
 
 func _show_reward_panel() -> void:
     if _reward_panel == null:
-        _reward_panel = get_node_or_null("UI/RewardPanel") as Control
-    if _reward_panel == null:
         return
+
+    var claim_btn := %RewardClaimButton
+    var close_btn := %RewardCloseButton
+    if claim_btn and not claim_btn.pressed.is_connected(_on_reward_claim_pressed):
+        claim_btn.pressed.connect(_on_reward_claim_pressed)
+    if close_btn and not close_btn.pressed.is_connected(_on_reward_close_pressed):
+        close_btn.pressed.connect(_on_reward_close_pressed)
+
     _refresh_reward_panel()
     _reward_panel.visible = true
 
@@ -771,11 +837,11 @@ func _hide_reward_panel() -> void:
 func _refresh_reward_panel() -> void:
     if _reward_panel == null:
         return
-    var info_label := _reward_panel.get_node_or_null("InfoLabel") as Label
+    var info_label := _reward_info_label
     if info_label == null:
         return
     if _pending_level_rewards.is_empty():
-        info_label.text = "Tidak ada reward level yang pending."
+        info_label.text = tr("No pending level rewards.")
         return
     var lines: Array = []
     var total_coins := 0
@@ -791,20 +857,20 @@ func _refresh_reward_panel() -> void:
             continue
         if coins > 0:
             total_coins += coins
-            lines.append("Level " + str(lvl) + ": +" + str(coins) + " coins")
+            lines.append(tr("Level %d: +%d coins") % [lvl, coins])
         if gems > 0:
             total_gems += gems
-            lines.append("Level " + str(lvl) + ": +" + str(gems) + " gems")
+            lines.append(tr("Level %d: +%d gems") % [lvl, gems])
     if lines.is_empty():
-        info_label.text = "Reward pending siap di-claim."
+        info_label.text = tr("Pending rewards ready to claim.")
     else:
         lines.append("")
         var totals: Array[String] = []
         if total_coins > 0:
-            totals.append("+" + str(total_coins) + " coins")
+            totals.append("+%d coins" % total_coins)
         if total_gems > 0:
-            totals.append("+" + str(total_gems) + " gems")
-        lines.append("Total: " + ", ".join(totals))
+            totals.append("+%d gems" % total_gems)
+        lines.append(tr("Total: %s") % [", ".join(totals)])
         info_label.text = "\n".join(lines)
 
 
@@ -846,20 +912,23 @@ func _update_reward_icon() -> void:
     _reward_icon.visible = not _pending_level_rewards.is_empty()
 
 func _update_avatar_border(border_id: String) -> void:
-    _apply_border_to_icon(_avatar_icon, border_id)
+    _apply_border_to_icon(_avatar_icon, border_id, _inner_avatar_icon)
 
-func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
+func _apply_border_to_icon(icon_node: TextureRect, border_id: String, inner_icon: TextureRect = null) -> void:
     if icon_node == null:
         return
 
-    # We need a child for the actual avatar icon inside the border
-    var inner_icon := icon_node.get_node_or_null("InnerIcon") as TextureRect
+    # If inner_icon not provided, try to find it
     if inner_icon == null:
+        inner_icon = icon_node.get_node_or_null("InnerIcon") as TextureRect
+
+    if inner_icon == null:
+        # Ensure we are modifying the icon_node correctly
         inner_icon = TextureRect.new()
         inner_icon.name = "InnerIcon"
         inner_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         inner_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8) # Padding
+        inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 0)
         inner_icon.show_behind_parent = true
         icon_node.add_child(inner_icon)
 
@@ -869,15 +938,19 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
     match border_id:
         "border_gold_premium":
             border_tex_path = "res://assets/border/border_gold_premium.png"
+            padding = 18 # Increased padding for Gold Premium
         "border_silver_premium":
             border_tex_path = "res://assets/border/border_silver_premium.png"
+            padding = 18 # Increased padding for Silver Premium
         "border_neon_v2":
             border_tex_path = "res://assets/border/border_neon_v2.png"
+            padding = 18
         "border_shadow_v2":
             border_tex_path = "res://assets/border/border_shadow_v2.png"
+            padding = 18
         "border_fire":
-            border_tex_path = "res://assets/border/border_fire.png"
-            padding = 22 # Increased padding for Fire border
+                    border_tex_path = "res://assets/border/border_fire.png"
+                    padding = 24 # Reduced padding for fire
         "border_kraken":
             border_tex_path = "res://assets/border/border_kraken.png"
             padding = 14 # Slightly increased
@@ -887,13 +960,22 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
         "border_cyber":
             border_tex_path = "res://assets/border/border_cyber.png"
             padding = 14 # Slightly increased
-        "border_gold", "border_silver", "border_neon", "border_shadow":
-            border_tex_path = "res://assets/icon/icon_border_avatar_gold_128x128.png"
+        "border_gold":
+            border_tex_path = "res://assets/border/border_gold.png"
+            padding = 4
+        "border_silver":
+            border_tex_path = "res://assets/border/border_silver.png"
+            padding = 4
+        "border_bronze":
+            border_tex_path = "res://assets/border/border_bronze.png"
+            padding = 4
+        "border_white":
+            border_tex_path = "res://assets/border/border_white.png"
             padding = 4
         _:
             border_tex_path = "" # Tidak ada border (default)
 
-    if border_tex_path == "":
+    if border_tex_path == "" or not FileAccess.file_exists(border_tex_path):
         icon_node.texture = null
         if inner_icon:
             inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 0)
@@ -907,22 +989,10 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
 func _update_avatar_icon(skin_id: String) -> void:
     if _avatar_icon == null:
         return
-    var inner_icon := _avatar_icon.get_node_or_null("InnerIcon") as TextureRect
-    if inner_icon == null:
-        # If not created by _update_avatar_border yet
-        _update_avatar_border("") # Trigger creation
-        inner_icon = _avatar_icon.get_node_or_null("InnerIcon") as TextureRect
-
+    var inner_icon := _inner_avatar_icon
     if inner_icon == null: return
 
-    var icon_path := "res://assets/profile/profile_basic.png"
-    match skin_id:
-        "skin_basic": icon_path = "res://assets/profile/profile_basic.png"
-        "skin_premium": icon_path = "res://assets/profile/profile_premium.png"
-        "skin_neon": icon_path = "res://assets/profile/profile_neon.png"
-        "skin_shadow": icon_path = "res://assets/profile/profile_ninja.png"
-        _: icon_path = "res://assets/profile/profile_basic.png"
-
+    var icon_path: String = SKIN_MAP.get(skin_id, "res://assets/profile/profile_basic.png")
     var tex := load(icon_path) as Texture2D
     if tex:
         inner_icon.texture = tex
@@ -940,9 +1010,6 @@ func _save_rewards_and_coins() -> void:
 
 
 func refresh_coin_from_save() -> void:
-    var coin_hud := get_node_or_null("UI/CoinHUD")
-    if coin_hud:
-        _coin_label = coin_hud.get_node_or_null("CoinLabel") as Label
     var cfg := ConfigFile.new()
     var err := cfg.load("user://save.cfg")
     if err != OK:
@@ -953,9 +1020,6 @@ func refresh_coin_from_save() -> void:
 
 
 func refresh_gems_from_save() -> void:
-    var gem_hud := get_node_or_null("UI/GemHUD")
-    if gem_hud:
-        _gem_label = gem_hud.get_node_or_null("GemLabel") as Label
     var cfg := ConfigFile.new()
     var err := cfg.load("user://save.cfg")
     if err != OK:
@@ -969,9 +1033,14 @@ func refresh_missions_badge_from_save() -> void:
     var can_claim: bool = MissionsManager.has_ready_to_claim_missions_in_save()
     if _missions_badge:
         _missions_badge.visible = can_claim
-    var daily_button := get_node_or_null("UI/DailyButton") as BaseButton
-    if daily_button:
-        _refresh_daily_button_style(daily_button)
+    if _missions_animator:
+        if can_claim:
+            if not _missions_animator.is_playing():
+                _missions_animator.play("pulse")
+        else:
+            _missions_animator.stop()
+    if _daily_button:
+        _refresh_daily_button_style(_daily_button)
 
 
 
@@ -1057,12 +1126,6 @@ func _apply_shop_number_font(lbl: Label, title_font: Font) -> void:
 
 
 func _init_menu_bgm() -> void:
-    _music_toast_panel = get_node_or_null("UI/MusicToastPanel") as Control
-    if _music_toast_panel:
-        _music_toast = _music_toast_panel.get_node_or_null("MusicToast") as Label
-    else:
-        _music_toast = get_node_or_null("UI/MusicToast") as Label
-
     # Load settings into TransitionManager
     _load_menu_audio_settings()
 
