@@ -5,6 +5,25 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.48-beta] - 2026-02-27
+
+- **Season Rewards**:
+  - Lazy Loading System: Implementasi pemuatan cerdas untuk mendukung hingga 1000 level hadiah tanpa lag.
+  - UI/UX Refinement: Pengecilan skala card (0.8x), penyesuaian `_item_width` (170px), dan penambahan tinggi container (310px) agar tidak terpotong.
+  - Drag Scrolling: Navigasi daftar hadiah yang halus untuk mouse dan sentuhan.
+  - Fix: Perbaikan error duplikasi koneksi sinyal pada `SeasonRewardItem.gd`.
+- **Audio & BGM**:
+  - Centralization: Migrasi seluruh kontrol BGM ke `TransitionManager.gd` dan pembersihan kode redundan di `GameManager`.
+  - Audio Ducking: Fitur pengecilan volume otomatis saat transisi atau munculnya SFX penting.
+  - Early BGM Fix: Menghapus pemutaran BGM prematur di `LoadingScreen.gd` agar musik hanya mulai setelah loading selesai.
+- **Localization (i18n)**:
+  - CSV Migration: Konversi sistem terjemahan dari `.tres` ke format standar `translations.csv` untuk stabilitas tinggi.
+  - Fix Error: Perbaikan error "No Loader" pada resource terjemahan di `project.godot`.
+- **Optimization**:
+  - Code Cleanup: Penghapusan variabel tak terpakai (`_bgm_base_db`, `_bgm_fade_tween`, `ui_font`) di `game_manager.gd`.
+  - HUD Sync: Sinkronisasi otomatis saldo koin/permata setelah melakukan claim hadiah season.
+- Naik versi proyek ke 1.3.48-beta.
+
 ## [1.3.47-beta] - 2026-02-27
 
 - Fix: Memperbaiki koin yang tembus ke tanah dengan standarisasi height offset (1.5 tiles) dan penambahan fungsi `reset()` pada script koin.

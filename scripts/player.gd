@@ -99,7 +99,7 @@ var _blink_timer: float = 0.0
 var _entry_start_position: Vector2 = Vector2.ZERO
 
 # ===== REFERENCES =====
-@onready var game_manager: Node = get_node_or_null("/root/Main")
+@onready var _main_node: Node = get_node_or_null("/root/Main")
 @onready var parallax_background: Node = get_node_or_null("/root/Main/ParallaxBackground")
 @onready var main_camera: Camera2D = get_node_or_null("/root/Main/Camera2D")
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -258,7 +258,7 @@ func find_and_cache_references() -> void:
         push_error("Main node not found! Player references cannot be initialized.")
         return
 
-    game_manager = main_node
+    _main_node = main_node
     main_camera = main_node.get_node_or_null("Camera2D")
     parallax_background = main_node.get_node_or_null("ParallaxBackground")
 
@@ -384,8 +384,8 @@ func handle_entry_state(_delta: float) -> void:
     if t >= 1.0:
         _entry_start_position = Vector2.ZERO
         set_state(PlayerState.FULL_MOVEMENT)
-        if game_manager and game_manager.has_method("on_player_entry_finished"):
-            game_manager.on_player_entry_finished()
+        if _main_node and _main_node.has_method("on_player_entry_finished"):
+            _main_node.on_player_entry_finished()
 
 
 func handle_game_over_state(_delta: float) -> void:
@@ -398,12 +398,12 @@ func apply_physics(delta: float) -> void:
         velocity = Vector2.ZERO
         return
     var speed_fly: bool = false
-    if game_manager == null or not is_instance_valid(game_manager):
+    if _main_node == null or not is_instance_valid(_main_node):
         var main_node = get_tree().get_root().get_node_or_null("Main")
         if main_node != null:
-            game_manager = main_node
-    if game_manager != null and game_manager.has_method("is_speed_boost_active"):
-        speed_fly = game_manager.is_speed_boost_active()
+            _main_node = main_node
+    if _main_node != null and _main_node.has_method("is_speed_boost_active"):
+        speed_fly = _main_node.is_speed_boost_active()
     if speed_fly:
         _boost_safe_fall_pending = true
         var target_y: float = min(entry_stop_y - speed_boost_fly_height, speed_boost_ceiling_y)
@@ -464,8 +464,8 @@ func apply_physics(delta: float) -> void:
             _jumping_this_frame = true
             _jump_grace_timer = jump_block_grace_time
             TransitionManager.play_sfx(&"jump")
-            if game_manager and game_manager.has_method("on_player_jump"):
-                game_manager.on_player_jump()
+            if _main_node and _main_node.has_method("on_player_jump"):
+                _main_node.on_player_jump()
             jump_requested = false
             jump_buffer_timer = 0.0
     if head_blocked:
@@ -593,8 +593,8 @@ func _update_invincibility(delta: float) -> void:
             animated_sprite.visible = true
 
 func update_health_bar() -> void:
-    if game_manager and game_manager.has_method("set_player_health"):
-        game_manager.set_player_health(current_health, max_health)
+    if _main_node and _main_node.has_method("set_player_health"):
+        _main_node.set_player_health(current_health, max_health)
 
 
 func update_animation_state() -> void:
@@ -679,12 +679,12 @@ func sync_environment_speed_if_needed() -> void:
         return
 
     var boost_active: bool = false
-    if game_manager == null or not is_instance_valid(game_manager):
+    if _main_node == null or not is_instance_valid(_main_node):
         var main_node = get_tree().get_root().get_node_or_null("Main")
         if main_node != null:
-            game_manager = main_node
-    if game_manager != null and game_manager.has_method("is_speed_boost_active"):
-        boost_active = game_manager.is_speed_boost_active()
+            _main_node = main_node
+    if _main_node != null and _main_node.has_method("is_speed_boost_active"):
+        boost_active = _main_node.is_speed_boost_active()
 
     if boost_active:
         return
@@ -745,7 +745,7 @@ func apply_damage(amount: int) -> void:
         return
     if is_invincible:
         return
-    if game_manager and game_manager.has_method("try_consume_shield_hit") and game_manager.try_consume_shield_hit():
+    if _main_node and _main_node.has_method("try_consume_shield_hit") and _main_node.try_consume_shield_hit():
         return
     var next_health := current_health - amount
     if next_health > 0:
@@ -817,8 +817,8 @@ func trigger_game_over(cause: String) -> void:
     set_state(PlayerState.GAME_OVER)
 
     # Notify game manager
-    if game_manager and game_manager.has_method("on_player_game_over"):
-        game_manager.on_player_game_over(cause)
+    if _main_node and _main_node.has_method("on_player_game_over"):
+        _main_node.on_player_game_over(cause)
 
     # Emit signal for other listeners
     game_over_signal.emit(cause)
@@ -1176,7 +1176,8 @@ func update_cosmetics() -> void:
 
     if equipped_skin != "default":
         var custom_skin_dir = "res://assets/skins/" + equipped_skin + "/"
-        if DirAccess.dir_exists_absolute(custom_skin_dir):
+        # Use ResourceLoader.exists on a key file instead of DirAccess for Android compatibility
+        if ResourceLoader.exists(custom_skin_dir + "run.png"):
             skin_base = custom_skin_dir
             anim_map = {
                 "run": "run.png",
@@ -1189,22 +1190,21 @@ func update_cosmetics() -> void:
     # Update animations
     for anim_name: String in anim_map.keys():
         var tex_path = skin_base + anim_map[anim_name]
-        if FileAccess.file_exists(tex_path):
-            var tex = load(tex_path)
-            if tex:
-                if not sf.has_animation(anim_name):
-                    sf.add_animation(anim_name)
+        var tex = load(tex_path) as Texture2D
+        if tex:
+            if not sf.has_animation(anim_name):
+                sf.add_animation(anim_name)
 
-                # Clear existing and add new texture as frame 0 for re-slicing
-                sf.clear(anim_name)
-                sf.add_frame(anim_name, tex)
+            # Clear existing and add new texture as frame 0 for re-slicing
+            sf.clear(anim_name)
+            sf.add_frame(anim_name, tex)
 
-                if anim_name == "run":
-                    slice_run_spritesheet_if_needed()
-                elif anim_name == "jump":
-                    slice_jump_spritesheet_if_needed()
-                elif anim_name == "attack":
-                    slice_attack_spritesheet_if_needed()
+            if anim_name == "run":
+                slice_run_spritesheet_if_needed()
+            elif anim_name == "jump":
+                slice_jump_spritesheet_if_needed()
+            elif anim_name == "attack":
+                slice_attack_spritesheet_if_needed()
 
     # Restart animation to apply changes
     if animated_sprite.animation == "run":
@@ -1221,8 +1221,8 @@ func set_border(border_id: String) -> void:
         # If in-game UI has different path, adjust accordingly
         # But usually in-game player doesn't have the border UI attached directly
         # Let's check if there's a reference to the UI in GameManager
-        if game_manager and game_manager.has_method("update_ui_border"):
-            game_manager.update_ui_border(border_id)
+        if _main_node and _main_node.has_method("update_ui_border"):
+            _main_node.update_ui_border(border_id)
         return
 
     # Apply border logic similar to MainMenu.gd
@@ -1299,13 +1299,21 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
             inner_icon.offset_bottom = 0
             return
 
-    if border_tex_path != "" and FileAccess.file_exists(border_tex_path):
-        icon_node.texture = load(border_tex_path)
-        # Adjust margins for border
-        inner_icon.offset_left = padding
-        inner_icon.offset_top = padding
-        inner_icon.offset_right = -padding
-        inner_icon.offset_bottom = -padding
+    if border_tex_path != "":
+        var tex = load(border_tex_path) as Texture2D
+        if tex:
+            icon_node.texture = tex
+            # Adjust margins for border
+            inner_icon.offset_left = padding
+            inner_icon.offset_top = padding
+            inner_icon.offset_right = -padding
+            inner_icon.offset_bottom = -padding
+        else:
+            icon_node.texture = null
+            inner_icon.offset_left = 0
+            inner_icon.offset_top = 0
+            inner_icon.offset_right = 0
+            inner_icon.offset_bottom = 0
     else:
         icon_node.texture = null
         inner_icon.offset_left = 0

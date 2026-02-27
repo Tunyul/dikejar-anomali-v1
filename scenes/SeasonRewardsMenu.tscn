@@ -1,0 +1,200 @@
+[gd_scene load_steps=5 format=3 uid="uid://sut2og5ij7gn"]
+
+[ext_resource type="Script" path="res://scripts/SeasonRewardsMenu.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Main"]
+bg_color = Color(0.0784314, 0.0784314, 0.0980392, 0.941176)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 10
+border_color = Color(0.25098, 0.25098, 0.313726, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0, 0, 0, 0.470588)
+shadow_size = 20
+shadow_offset = Vector2(0, 10)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Header"]
+bg_color = Color(0.14902, 0.14902, 0.196078, 1)
+border_width_bottom = 2
+border_color = Color(1, 0.843137, 0, 0.392157)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ClaimAll"]
+bg_color = Color(1, 0.752941, 0, 1)
+border_width_bottom = 6
+border_color = Color(0.8, 0.6, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[node name="SeasonRewardsMenu" type="CanvasLayer"]
+layer = 128
+script = ExtResource("1")
+
+[node name="Overlay" type="ColorRect" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.705882)
+
+[node name="Panel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(800, 460)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -230.0
+offset_right = 400.0
+offset_bottom = 230.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_Main")
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Header" type="PanelContainer" parent="Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_Header")
+
+[node name="Margin" type="MarginContainer" parent="Panel/VBox/Header"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 8
+
+[node name="HBox" type="HBoxContainer" parent="Panel/VBox/Header/Margin"]
+layout_mode = 2
+
+[node name="TitleVBox" type="VBoxContainer" parent="Panel/VBox/Header/Margin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="SeasonTitle" type="Label" parent="Panel/VBox/Header/Margin/HBox/TitleVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.843137, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 24
+text = "SEASON 1: AWAKENING"
+vertical_alignment = 1
+
+[node name="TimeLeftLabel" type="Label" parent="Panel/VBox/Header/Margin/HBox/TitleVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "24 DAYS REMAINING"
+
+[node name="CloseButton" type="Button" parent="Panel/VBox/Header/Margin/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 28
+text = "×"
+flat = true
+
+[node name="ProgressBarContainer" type="MarginContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 5
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBox/ProgressBarContainer"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="HBox" type="HBoxContainer" parent="Panel/VBox/ProgressBarContainer/VBox"]
+layout_mode = 2
+
+[node name="XPLabel" type="Label" parent="Panel/VBox/ProgressBarContainer/VBox/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 14
+text = "PROGRESS: 450/1000 XP"
+
+[node name="LevelLabel" type="Label" parent="Panel/VBox/ProgressBarContainer/VBox/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.843137, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+text = "LVL 4"
+
+[node name="SeasonProgressBar" type="ProgressBar" parent="Panel/VBox/ProgressBarContainer/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_Header")
+theme_override_styles/fill = SubResource("StyleBoxFlat_ClaimAll")
+value = 45.0
+show_percentage = false
+
+[node name="Body" type="MarginContainer" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 15
+theme_override_constants/margin_bottom = 5
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body"]
+layout_mode = 2
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 0
+
+[node name="RewardList" type="Control" parent="Panel/VBox/Body/Scroll"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 270)
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Footer" type="MarginContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 12
+
+[node name="HBox" type="HBoxContainer" parent="Panel/VBox/Footer"]
+layout_mode = 2
+alignment = 1
+
+[node name="ClaimAllButton" type="Button" parent="Panel/VBox/Footer/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.1, 0, 1)
+theme_override_colors/font_pressed_color = Color(0.2, 0.1, 0, 1)
+theme_override_colors/font_hover_color = Color(0.3, 0.15, 0, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_ClaimAll")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ClaimAll")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ClaimAll")
+text = "CLAIM ALL"

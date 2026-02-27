@@ -1,0 +1,153 @@
+[gd_scene load_steps=7 format=3 uid="uid://c8n4v7x6y8q2"]
+
+[ext_resource type="Script" path="res://scripts/SeasonRewardItem.gd" id="1_x1a2b"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Card"]
+bg_color = Color(0.121569, 0.121569, 0.156863, 0.8)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 6
+border_color = Color(1, 1, 1, 0.117647)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.235294)
+shadow_size = 8
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Level"]
+bg_color = Color(0.25098, 0.25098, 0.313726, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.843137, 0, 1)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ClaimNormal"]
+bg_color = Color(0.2, 0.6, 0.1, 1)
+border_width_bottom = 4
+border_color = Color(0.1, 0.4, 0.05, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ClaimHover"]
+bg_color = Color(0.25, 0.7, 0.15, 1)
+border_width_bottom = 4
+border_color = Color(0.15, 0.5, 0.1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ClaimDisabled"]
+bg_color = Color(0.2, 0.2, 0.2, 1)
+border_width_bottom = 4
+border_color = Color(0.1, 0.1, 0.1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="SeasonRewardItem" type="PanelContainer"]
+custom_minimum_size = Vector2(180, 260)
+offset_right = 180.0
+offset_bottom = 260.0
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_Card")
+script = ExtResource("1_x1a2b")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+mouse_filter = 1
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 15
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 1
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="LevelBadge" type="PanelContainer" parent="Margin/VBox"]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_Level")
+
+[node name="LevelLabel" type="Label" parent="Margin/VBox/LevelBadge"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.843137, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="IconRect" type="TextureRect" parent="Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RewardVBox" type="VBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="RewardLabel" type="Label" parent="Margin/VBox/RewardVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+text = "+100 COINS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PassTypeLabel" type="Label" parent="Margin/VBox/RewardVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "FREE REWARD"
+horizontal_alignment = 1
+
+[node name="ActionVBox" type="VBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="StatusLabel" type="Label" parent="Margin/VBox/ActionVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 14
+text = "READY"
+horizontal_alignment = 1
+
+[node name="ClaimButton" type="Button" parent="Margin/VBox/ActionVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(130, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_ClaimNormal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ClaimHover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ClaimNormal")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_ClaimDisabled")
+text = "CLAIM"
+
+[connection signal="pressed" from="Margin/VBox/ActionVBox/ClaimButton" to="." method="_on_claim_button_pressed"]

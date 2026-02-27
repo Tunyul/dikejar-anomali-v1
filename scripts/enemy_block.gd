@@ -70,18 +70,18 @@ func on_player_attack_hit(player: Player) -> void:
 func _on_enemy_killed() -> void:
     TransitionManager.play_sfx(&"enemy_kill")
     var root := get_tree().get_root()
-    var main := root.get_node_or_null("Main")
-    if main and main.has_method("on_enemy_killed_by_player"):
-        main.call("on_enemy_killed_by_player")
+    var _main_node := root.get_node_or_null("Main")
+    if _main_node and _main_node.has_method("on_enemy_killed_by_player"):
+        _main_node.call("on_enemy_killed_by_player")
     _spawn_coins()
 
 func _spawn_coins() -> void:
     if coin_scene == null:
         return
-    var main := get_tree().get_root().get_node_or_null("Main")
+    var _main_node := get_tree().get_root().get_node_or_null("Main")
     var seg := "A"
-    if main and main.has_method("get_active_segment_name"):
-        var sn := str(main.call("get_active_segment_name"))
+    if _main_node and _main_node.has_method("get_active_segment_name"):
+        var sn := str(_main_node.call("get_active_segment_name"))
         if sn.ends_with("B"):
             seg = "B"
     var rng := RandomNumberGenerator.new()
@@ -140,9 +140,9 @@ func _spawn_pickup(seg: String, rng: RandomNumberGenerator, is_gem: bool) -> voi
 
 func _get_coin_scale_from_ground() -> float:
     var root := get_tree().get_root()
-    var main := root.get_node_or_null("Main")
-    if main != null:
-        var ground := main.get_node_or_null("Ground")
+    var _main_node := root.get_node_or_null("Main")
+    if _main_node != null:
+        var ground := _main_node.get_node_or_null("Ground")
         if ground != null:
             if ground.has_method("get"):
                 var value = ground.get("coin_scale")

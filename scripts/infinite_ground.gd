@@ -746,14 +746,14 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
         elif heart_spawn_chance <= 0.0:
             can_spawn_heart = false
         if can_spawn_heart:
-            var main: Node = _get_main_node()
-            if main != null and main.has_method("can_spawn_hearts"):
-                var should_spawn: bool = main.call("can_spawn_hearts")
+            var _main_node: Node = _get_main_node()
+            if _main_node != null and _main_node.has_method("can_spawn_hearts"):
+                var should_spawn: bool = _main_node.call("can_spawn_hearts")
                 if not should_spawn:
                     can_spawn_heart = false
                     if OS.is_debug_build() and _debug_heart_spawn_session_count % 10 == 0:
                          print("[InfiniteGround] Heart spawn blocked by GameManager. Player full health.")
-            elif main == null:
+            elif _main_node == null:
                  print("[InfiniteGround] Warning: Main scene not found for heart spawn check.")
 
         if can_spawn_heart:
@@ -1193,9 +1193,9 @@ func request_emergency_magnet(from_world_x: float, min_dist_px: float, max_dist_
     _ensure_initialized()
     if magnet_powerup_scene == null:
         return false
-    var main: Node = _get_main_node()
-    if main != null and main.has_method("is_magnet_active"):
-        if main.call("is_magnet_active"):
+    var _main_node: Node = _get_main_node()
+    if _main_node != null and _main_node.has_method("is_magnet_active"):
+        if _main_node.call("is_magnet_active"):
             return false
     var min_world: float = from_world_x + max(min_dist_px, 0.0)
     var max_world: float = from_world_x + max(max_dist_px, min_dist_px)
@@ -1278,30 +1278,30 @@ func _request_emergency_powerup(from_world_x: float, min_dist_px: float, max_dis
     var max_children: int = 0
     var height_offset: float = 0.0
     var scale_value: float = 1.0
-    var main: Node = _get_main_node()
+    var _main_node: Node = _get_main_node()
     if kind == "shield":
         scene = shield_powerup_scene
         max_children = shield_max_children
         height_offset = shield_height_offset_tiles
         scale_value = shield_scale
-        if main != null and main.has_method("is_shield_active"):
-            if main.call("is_shield_active"):
+        if _main_node != null and _main_node.has_method("is_shield_active"):
+            if _main_node.call("is_shield_active"):
                 return false
     elif kind == "double_coins":
         scene = double_coins_powerup_scene
         max_children = double_coins_max_children
         height_offset = double_coins_height_offset_tiles
         scale_value = double_coins_scale
-        if main != null and main.has_method("is_double_coins_active"):
-            if main.call("is_double_coins_active"):
+        if _main_node != null and _main_node.has_method("is_double_coins_active"):
+            if _main_node.call("is_double_coins_active"):
                 return false
     elif kind == "speed_boost":
         scene = speed_boost_powerup_scene
         max_children = speed_boost_max_children
         height_offset = speed_boost_height_offset_tiles
         scale_value = speed_boost_scale
-        if main != null and main.has_method("is_speed_boost_active"):
-            if main.call("is_speed_boost_active"):
+        if _main_node != null and _main_node.has_method("is_speed_boost_active"):
+            if _main_node.call("is_speed_boost_active"):
                 return false
     if scene == null:
         return false
@@ -1768,10 +1768,10 @@ func _spawn_coin_for_column(tile: TileMapLayer, x: int, height: int, ignore_max_
     if coin_zigzag_enabled and coin_zigzag_amplitude_tiles > 0.0:
         _coin_pattern_index += 1
 
-    var main: Node = _get_main_node()
-    if main and main.has_method("on_coin_collected") and coin.has_signal("collected"):
-        if not coin.collected.is_connected(Callable(main, "on_coin_collected")):
-            coin.collected.connect(Callable(main, "on_coin_collected"))
+    var _main_node: Node = _get_main_node()
+    if _main_node and _main_node.has_method("on_coin_collected") and coin.has_signal("collected"):
+        if not coin.collected.is_connected(Callable(_main_node, "on_coin_collected")):
+            coin.collected.connect(Callable(_main_node, "on_coin_collected"))
 
 func _spawn_diamond_for_column(tile: TileMapLayer, x: int, height: int, ignore_limit: bool = false) -> void:
     if diamond_scene == null:
@@ -1824,9 +1824,9 @@ func _spawn_diamond_for_column(tile: TileMapLayer, x: int, height: int, ignore_l
 
     if diamond.has_method("reset"):
         diamond.call("reset")
-    var main: Node = get_tree().current_scene
-    if main and main.has_method("on_coin_collected") and diamond.has_signal("collected"):
-        diamond.collected.connect(Callable(main, "on_coin_collected"))
+    var _main_node: Node = get_tree().current_scene
+    if _main_node and _main_node.has_method("on_coin_collected") and diamond.has_signal("collected"):
+        diamond.collected.connect(Callable(_main_node, "on_coin_collected"))
 
 func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int, ignore_limit: bool = false) -> void:
     if heart_scene == null:
@@ -1846,9 +1846,9 @@ func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int, ignore_lim
             return
 
     if not ignore_limit:
-        var main: Node = _get_main_node()
-        if main != null and main.has_method("can_spawn_hearts"):
-            if not main.call("can_spawn_hearts"):
+        var _main_node: Node = _get_main_node()
+        if _main_node != null and _main_node.has_method("can_spawn_hearts"):
+            if not _main_node.call("can_spawn_hearts"):
                 if OS.is_debug_build():
                     print("[InfiniteGround] Heart spawn blocked in _spawn_heart_for_column (Health Full)")
                 return

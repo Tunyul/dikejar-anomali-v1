@@ -43,9 +43,9 @@ var _last_preview_sig: String = ""
 var _cloud_textures: Array[Texture2D] = []
 
 const _I18N_TRANSLATIONS: Array[String] = [
-    "res://i18n/id.tres",
-    "res://i18n/en.tres",
-    "res://i18n/zh.tres",
+    "res://i18n/translations.id.translation",
+    "res://i18n/translations.en.translation",
+    "res://i18n/translations.zh.translation",
 ]
 const _I18N_FALLBACK: Dictionary = {
     "en": {
@@ -155,7 +155,10 @@ const _I18N_FALLBACK: Dictionary = {
         "Jump {n} times": "Jump {n} times",
         "Get {n} skills": "Get {n} skills",
         "Reach {n}m distance": "Reach {n}m distance",
-        "Reset misi harian?\nTonton iklan untuk reset.": "Reset daily missions?\nWatch ad to reset."
+        "Reset misi harian?\nTonton iklan untuk reset.": "Reset daily missions?\nWatch ad to reset.",
+        "SEASON_REWARDS_TITLE": "SEASON REWARDS",
+        "CLAIM_ALL": "CLAIM ALL",
+        "TIME_REMAINING_HINT": "SEASON ENDS SOON"
     },
     "id": {
         "Backsound": "Musik",
@@ -264,7 +267,10 @@ const _I18N_FALLBACK: Dictionary = {
         "Jump {n} times": "Lompat {n} kali",
         "Get {n} skills": "Dapatkan {n} skill",
         "Reach {n}m distance": "Capai jarak {n}m",
-        "Reset misi harian?\nTonton iklan untuk reset.": "Reset misi harian?\nTonton iklan untuk reset."
+        "Reset misi harian?\nTonton iklan untuk reset.": "Reset misi harian?\nTonton iklan untuk reset.",
+        "SEASON_REWARDS_TITLE": "HADIAH SEASON",
+        "CLAIM_ALL": "AMBIL SEMUA",
+        "TIME_REMAINING_HINT": "SEASON SEGERA BERAKHIR"
     },
     "zh": {
         "Backsound": "音乐",
@@ -373,7 +379,10 @@ const _I18N_FALLBACK: Dictionary = {
         "Jump {n} times": "跳跃 {n} 次",
         "Get {n} skills": "获得 {n} 个技能",
         "Reach {n}m distance": "达到 {n} 米距离",
-        "Reset misi harian?\nTonton iklan untuk reset.": "重置每日任务？\n观看广告以重置。"
+        "Reset misi harian?\nTonton iklan untuk reset.": "重置每日任务？\n观看广告以重置。",
+        "SEASON_REWARDS_TITLE": "赛季奖励",
+        "CLAIM_ALL": "全部领取",
+        "TIME_REMAINING_HINT": "赛季即将结束"
     }
 }
 const _I18N_SAVE_SECTION := "settings"
@@ -773,9 +782,7 @@ func _request_bgm_duck(id: StringName) -> void:
             dur = 0.35
         _:
             return
-    var main := get_tree().get_root().get_node_or_null("Main")
-    if main and main.has_method("duck_bgm"):
-        main.call("duck_bgm", db, dur)
+    duck_bgm(db, dur)
 
 func _init_sfx() -> void:
     _sfx_rng.randomize()
@@ -803,6 +810,12 @@ func _apply_sfx_mix() -> void:
         if is_instance_valid(p):
             p.volume_db = _sfx_base_db
 
+var _bgm_duck_db: float = 0.0
+var _bgm_duck_tween: Tween = null
+
+func _lin_to_db(v: float) -> float:
+    return -60.0 if v <= 0.0 else 20.0 * log(v) / log(10.0)
+
 func set_bgm_volume(v: float) -> void:
     _bgm_volume = clampf(v, 0.0, 1.0)
     _apply_bgm_mix()
@@ -811,10 +824,25 @@ func set_bgm_muted(m: bool) -> void:
     _bgm_muted = m
     _apply_bgm_mix()
 
+func duck_bgm(reduction_db: float = 6.0, duration_sec: float = 0.22) -> void:
+    if _bgm_muted:
+        return
+    var d := -absf(reduction_db)
+    _bgm_duck_db = minf(_bgm_duck_db, d)
+    _apply_bgm_mix()
+    if _bgm_duck_tween and _bgm_duck_tween.is_running():
+        _bgm_duck_tween.kill()
+    var dur: float = maxf(duration_sec, 0.02)
+    _bgm_duck_tween = create_tween()
+    _bgm_duck_tween.tween_method(func(v2: float) -> void:
+        _bgm_duck_db = v2
+        _apply_bgm_mix()
+    , _bgm_duck_db, 0.0, dur)
+
 func _apply_bgm_mix() -> void:
     if _bgm_player == null:
         return
-    _bgm_player.volume_db = (-60.0 if _bgm_muted else _lin_to_db(_bgm_volume))
+    _bgm_player.volume_db = (-60.0 if _bgm_muted else (_lin_to_db(_bgm_volume) + _bgm_duck_db))
 
 func ensure_bgm_player() -> void:
     if _bgm_player != null and is_instance_valid(_bgm_player):
@@ -1326,7 +1354,3 @@ func _write_pcm16_mono_sample(dst: PackedByteArray, index: int, v: float) -> voi
     var u := (s + 65536) % 65536
     dst[index * 2] = u & 0xFF
     dst[index * 2 + 1] = (u >> 8) & 0xFF
-
-func _lin_to_db(lin: float) -> float:
-    var v := clampf(lin, 0.0, 1.0)
-    return (-60.0 if v <= 0.0 else 20.0 * log(v) / log(10.0))

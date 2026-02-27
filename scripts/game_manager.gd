@@ -25,6 +25,20 @@ var _debug_time_accum: float = 0.0
 var _score_offset: int = 0
 var powerups_data: Dictionary = {}
 var pending_level_rewards: Array[Dictionary] = []
+
+# Season 1 Reward System
+const SEASON_REWARDS: Dictionary = {
+    1: {"type": "coins", "amount": 100},
+    2: {"type": "coins", "amount": 150},
+    3: {"type": "coins", "amount": 200},
+    4: {"type": "gems", "amount": 5},
+    5: {"type": "coins", "amount": 300},
+    6: {"type": "gems", "amount": 10},
+    7: {"type": "coins", "amount": 400},
+    8: {"type": "gems", "amount": 15},
+    9: {"type": "coins", "amount": 500},
+    10: {"type": "gems", "amount": 20} # Special Level 10
+}
 var max_heart_bonus: int = 0
 var magnet_duration_multiplier: float = 1.0
 var shield_duration_multiplier: float = 1.0
@@ -58,6 +72,16 @@ const _SPEED_BOOST_PRE_RUN_MULTIPLIER: float = 1.5
 @export var watchdog_hang_seconds: float = 1.5
 @export var watchdog_print_interval_sec: float = 2.0
 @export var perf_log_to_file: bool = false
+
+@export_group("Powerups Base Settings")
+@export var powerup_magnet_duration_sec: float = 10.0
+@export var powerup_shield_duration_sec: float = 8.0
+@export var powerup_double_coins_duration_sec: float = 12.0
+@export var powerup_speed_boost_duration_sec: float = 5.0
+@export var powerup_speed_boost_multiplier: float = 1.8
+
+@export_group("Ads Settings")
+@export var ads_max_per_session: int = 3
 var magnet_enabled: bool = false
 var shield_enabled: bool = false
 var double_coins_run_active: bool = false
@@ -66,12 +90,13 @@ var speed_boost_timer: float = 0.0
 var speed_boost_multiplier: float = 1.0
 
 
-@onready var player: Player = $Player
-@onready var anomaly: Node2D = get_node_or_null("AnomalyChaser")
-@onready var terrain: Node2D = get_node_or_null("Terrain")
-@onready var ground_a: Node2D = get_node_or_null("Ground")
-@onready var parallax: ParallaxBackground = $ParallaxBackground
-@onready var canvas: CanvasLayer = $CanvasLayer
+var player: Player = null
+var anomaly: Node2D = null
+var terrain: Node2D = null
+var ground_a: Node2D = null
+var parallax: ParallaxBackground = null
+var canvas: CanvasLayer = null
+
 var debug_label: Label = null
 var spawn_status_label: Label = null
 var speed_info_label: Label = null
@@ -100,51 +125,83 @@ var _gameover_bgm_initialized: bool = false
 enum BgmMode { RUN, GAME_OVER }
 var _bgm_mode: BgmMode = BgmMode.RUN
 var _bgm_user_volume: float = 0.8
-var _bgm_base_db: float = 0.0
 var _bgm_duck_db: float = 0.0
 var _sfx_user_volume: float = 0.8
 const _RUN_BGM_OFFSET_DB: float = -2.0
 var _bgm_duck_tween: Tween = null
-var _bgm_fade_tween: Tween = null
 var magnet_timer: float = 0.0
 var shield_timer: float = 0.0
 var _last_health_current: int = -1
 var _last_health_max: int = -1
-@export var powerup_magnet_duration_sec: float = 30.0
-@export var powerup_shield_duration_sec: float = 10.0
-@export var powerup_double_coins_duration_sec: float = 10.0
-@export var powerup_speed_boost_duration_sec: float = 5.0
-@export var powerup_speed_boost_multiplier: float = 2.5
-@export var ads_enabled: bool = true
-@export var ads_max_per_session: int = 2
-@export var rewarded_continue_grace_sec: float = 5.0
 var ads_shown_count: int = 0
 var continue_grace_timer: float = 0.0
 var _carry_over_stats: Dictionary = {}
-@onready var coin_hud_label: Label = $CanvasLayer/CoinHUD/Label
-@onready var gem_hud_label: Label = $CanvasLayer/GemHUD/Label
-@onready var score_hud_label: Label = $CanvasLayer/ScoreHUD/ScoreLabel
-@onready var health_bar: ProgressBar = $CanvasLayer/HealthBar
-@onready var missions_toast: Control = $CanvasLayer/MissionsToast
-@onready var missions_toast_text: Label = $CanvasLayer/MissionsToast/Text
-@onready var bgm_toast: Control = $CanvasLayer/BGMToast
-@onready var bgm_toast_text: Label = $CanvasLayer/BGMToast/Text
-@onready var version_label: Label = $CanvasLayer/VersionLabel
-@onready var settings_button: Control = $CanvasLayer/SettingsButton
-@onready var health_icon: Node2D = $CanvasLayer/HealthIcon
-@onready var heart_spawn_label: Label = $CanvasLayer/HeartSpawnLabel
-@onready var coin_hud: Control = $CanvasLayer/CoinHUD
-@onready var coin_icon_anim: Node2D = $CanvasLayer/CoinIconAnim
-@onready var score_hud: Control = $CanvasLayer/ScoreHUD
-@onready var gem_hud: Control = $CanvasLayer/GemHUD
-@onready var magnet_icon: TextureRect = $CanvasLayer/MagnetIcon
-@onready var magnet_timer_label: Label = $CanvasLayer/MagnetTimerLabel
-@onready var shield_icon: TextureRect = $CanvasLayer/ShieldIcon
-@onready var shield_timer_label: Label = $CanvasLayer/ShieldTimerLabel
-@onready var double_coins_icon: TextureRect = $CanvasLayer/DoubleCoinsIcon
-@onready var double_coins_timer_label: Label = $CanvasLayer/DoubleCoinsTimerLabel
-@onready var speed_boost_icon: TextureRect = $CanvasLayer/SpeedBoostIcon
-@onready var speed_boost_timer_label: Label = $CanvasLayer/SpeedBoostTimerLabel
+
+var coin_hud_label: Label = null
+var gem_hud_label: Label = null
+var score_hud_label: Label = null
+var health_bar: ProgressBar = null
+var missions_toast: Control = null
+var missions_toast_text: Label = null
+var bgm_toast: Control = null
+var bgm_toast_text: Label = null
+var version_label: Label = null
+var settings_button: Control = null
+var health_icon: Node2D = null
+var heart_spawn_label: Label = null
+var coin_hud: Control = null
+var coin_icon_anim: Node2D = null
+var score_hud: Control = null
+var gem_hud: Control = null
+var magnet_icon: TextureRect = null
+var magnet_timer_label: Label = null
+var shield_icon: TextureRect = null
+var shield_timer_label: Label = null
+var double_coins_icon: TextureRect = null
+var double_coins_timer_label: Label = null
+var speed_boost_icon: TextureRect = null
+var speed_boost_timer_label: Label = null
+
+func register_game_nodes(nodes: Dictionary) -> void:
+    player = nodes.get("player")
+    anomaly = nodes.get("anomaly")
+    terrain = nodes.get("terrain")
+    ground_a = nodes.get("ground_a")
+    parallax = nodes.get("parallax")
+    canvas = nodes.get("canvas")
+
+    if player:
+        var go_cb := Callable(self, "on_player_game_over")
+        if not player.game_over_signal.is_connected(go_cb):
+            player.game_over_signal.connect(go_cb)
+        if _base_player_max_health < 0:
+            _base_player_max_health = int(player.max_health)
+
+    if canvas:
+        coin_hud_label = canvas.get_node_or_null("CoinHUD/Label")
+        gem_hud_label = canvas.get_node_or_null("GemHUD/Label")
+        score_hud_label = canvas.get_node_or_null("ScoreHUD/ScoreLabel")
+        health_bar = canvas.get_node_or_null("HealthBar")
+        missions_toast = canvas.get_node_or_null("MissionsToast")
+        missions_toast_text = canvas.get_node_or_null("MissionsToast/Text")
+        bgm_toast = canvas.get_node_or_null("BGMToast")
+        bgm_toast_text = canvas.get_node_or_null("BGMToast/Text")
+        version_label = canvas.get_node_or_null("VersionLabel")
+        settings_button = canvas.get_node_or_null("SettingsButton")
+        health_icon = canvas.get_node_or_null("HealthIcon")
+        heart_spawn_label = canvas.get_node_or_null("HeartSpawnLabel")
+        coin_hud = canvas.get_node_or_null("CoinHUD")
+        coin_icon_anim = canvas.get_node_or_null("CoinIconAnim")
+        score_hud = canvas.get_node_or_null("ScoreHUD")
+        gem_hud = canvas.get_node_or_null("GemHUD")
+        magnet_icon = canvas.get_node_or_null("MagnetIcon")
+        magnet_timer_label = canvas.get_node_or_null("MagnetTimerLabel")
+        shield_icon = canvas.get_node_or_null("ShieldIcon")
+        shield_timer_label = canvas.get_node_or_null("ShieldTimerLabel")
+        double_coins_icon = canvas.get_node_or_null("DoubleCoinsIcon")
+        double_coins_timer_label = canvas.get_node_or_null("DoubleCoinsTimerLabel")
+        speed_boost_icon = canvas.get_node_or_null("SpeedBoostIcon")
+        speed_boost_timer_label = canvas.get_node_or_null("SpeedBoostTimerLabel")
 @export var enemy_ramp_start_distance: float = 400.0
 @export var enemy_ramp_enabled: bool = true
 @export var countdown_duration_sec: float = 3.0
@@ -185,10 +242,8 @@ func _ready() -> void:
         _base_powerup_speed_boost_duration_sec = powerup_speed_boost_duration_sec
     if _base_powerup_speed_boost_multiplier < 0.0:
         _base_powerup_speed_boost_multiplier = powerup_speed_boost_multiplier
-    if _base_player_max_health < 0 and player:
-        _base_player_max_health = int(player.max_health)
-    if player:
-        player.connect("game_over_signal", Callable(self, "on_player_game_over"))
+    if _base_player_max_health < 0:
+        pass # Will be set in register_game_nodes
     if OS.is_debug_build():
         if not InputMap.has_action("verify_scenes"):
             InputMap.add_action("verify_scenes")
@@ -201,24 +256,6 @@ func _ready() -> void:
             ev3.physical_keycode = KEY_F3
             InputMap.action_add_event("toggle_debug", ev3)
     _load_progress()
-
-    var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
-    var title_font := load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf") as Font
-    if ui_font and canvas:
-        _apply_ui_font(canvas, ui_font)
-    if title_font:
-        _apply_shop_number_font(coin_hud_label, title_font)
-        _apply_shop_number_font(gem_hud_label, title_font)
-        _apply_shop_number_font(score_hud_label, title_font)
-        _apply_shop_number_font(magnet_timer_label, title_font)
-        _apply_shop_number_font(shield_timer_label, title_font)
-        _apply_shop_number_font(double_coins_timer_label, title_font)
-        _apply_shop_number_font(speed_boost_timer_label, title_font)
-
-    _init_bukit_bgm()
-    _init_gameover_bgm()
-    _start_bukit_bgm_rotation()
-    call_deferred("_start_play_phase")
     if scene_verify_on_start and OS.is_debug_build():
         call_deferred("_verify_player_scenes")
     if OS.is_debug_build() and canvas and debug_label == null:
@@ -504,38 +541,9 @@ func _on_missions_toast_gui_input(event: InputEvent) -> void:
 
 
 func _init_bukit_bgm() -> void:
-    if _bukit_bgm_initialized:
-        return
-    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
-    if bgm == null:
-        bgm = AudioStreamPlayer.new()
-        bgm.name = "BGM"
-        add_child(bgm)
-    _bukit_bgm_paths = _load_bukit_bgm_paths()
-    if _bukit_bgm_paths.is_empty():
-        push_warning("[GameManager] No Bukit BGM files found in " + _BUKIT_BGM_DIR)
-        return
-    var cb := Callable(self, "_on_bukit_bgm_finished")
-    if not bgm.finished.is_connected(cb):
-        bgm.finished.connect(cb)
     _bukit_bgm_initialized = true
 
-
 func _init_gameover_bgm() -> void:
-    if _gameover_bgm_initialized:
-        return
-    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
-    if bgm == null:
-        bgm = AudioStreamPlayer.new()
-        bgm.name = "BGM"
-        add_child(bgm)
-    _gameover_bgm_paths = _load_gameover_bgm_paths()
-    if _gameover_bgm_paths.is_empty():
-        push_warning("[GameManager] No GameOver BGM files found in " + _GAMEOVER_BGM_DIR)
-        return
-    var cb := Callable(self, "_on_gameover_bgm_finished")
-    if not bgm.finished.is_connected(cb):
-        bgm.finished.connect(cb)
     _gameover_bgm_initialized = true
 
 
@@ -674,30 +682,29 @@ func _save_bukit_bgm_index(i: int) -> void:
     cfg.save("user://save.cfg")
 
 
-func _play_bukit_bgm_index(i: int) -> void:
-    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
-    if bgm == null:
-        return
-    if _bukit_bgm_paths.is_empty():
-        return
-    _bukit_bgm_index = clampi(i, 0, _bukit_bgm_paths.size() - 1)
-    var path := _bukit_bgm_paths[_bukit_bgm_index]
-    var stream := load(path) as AudioStream
-    if stream == null:
-        return
-    bgm.stream = stream
-    _apply_bgm_mix()
-    if not bgm_muted:
-        bgm.play()
-        _show_bgm_toast(_format_track_name(path))
-
-
 func _start_bukit_bgm_rotation() -> void:
     _init_bukit_bgm()
     if _bukit_bgm_paths.is_empty():
         return
-    _bukit_bgm_index = _consume_next_bukit_bgm_index(_bukit_bgm_paths.size())
-    _play_bukit_bgm_index(_bukit_bgm_index)
+
+    if TransitionManager and TransitionManager.has_method("play_playlist"):
+        _bukit_bgm_index = _consume_next_bukit_bgm_index(_bukit_bgm_paths.size())
+        TransitionManager.play_playlist(_bukit_bgm_paths, _bukit_bgm_index)
+        _show_bgm_toast(_format_track_name(_bukit_bgm_paths[_bukit_bgm_index]))
+
+        # Connect signal untuk update toast saat track berubah di playlist
+        if TransitionManager.has_signal("bgm_index_changed"):
+            var cb := Callable(self, "_on_transition_bgm_index_changed")
+            if not TransitionManager.is_connected("bgm_index_changed", cb):
+                TransitionManager.connect("bgm_index_changed", cb)
+
+func _on_transition_bgm_index_changed(index: int) -> void:
+    if phase != Phase.PLAYING:
+        return
+    _bukit_bgm_index = index
+    _save_bukit_bgm_index(_bukit_bgm_index)
+    if _bukit_bgm_index >= 0 and _bukit_bgm_index < _bukit_bgm_paths.size():
+        _show_bgm_toast(_format_track_name(_bukit_bgm_paths[_bukit_bgm_index]))
 
 func update_player_cosmetics() -> void:
     if player and player.has_method("update_cosmetics"):
@@ -711,18 +718,6 @@ func update_ui_border(border_id: String) -> void:
     var avatar_icon = get_node_or_null("CanvasLayer/UI/AvatarIcon")
     if avatar_icon and player and player.has_method("_apply_border_to_icon"):
         player._apply_border_to_icon(avatar_icon, border_id)
-
-
-func _on_bukit_bgm_finished() -> void:
-    if phase != Phase.PLAYING:
-        return
-    if bgm_muted:
-        return
-    if _bukit_bgm_paths.is_empty():
-        return
-    _bukit_bgm_index = (_bukit_bgm_index + 1) % _bukit_bgm_paths.size()
-    _save_bukit_bgm_index(_bukit_bgm_index)
-    _play_bukit_bgm_index(_bukit_bgm_index)
 
 
 func _show_bgm_toast(title: String) -> void:
@@ -1576,34 +1571,18 @@ func grant_continue() -> void:
 
 func set_bgm_volume(v: float) -> void:
     _bgm_user_volume = clampf(v, 0.0, 1.0)
-    _bgm_base_db = (-60.0 if _bgm_user_volume <= 0.0 else 20.0 * log(_bgm_user_volume) / log(10.0))
     if TransitionManager and TransitionManager.has_method("set_bgm_volume"):
         TransitionManager.set_bgm_volume(_bgm_user_volume)
-    _apply_bgm_mix()
+    _save_progress()
 
 func duck_bgm(reduction_db: float = 6.0, duration_sec: float = 0.22) -> void:
     if bgm_muted:
         return
-    if _bgm_mode != BgmMode.RUN:
-        return
-    var d := -absf(reduction_db)
-    _bgm_duck_db = minf(_bgm_duck_db, d)
-    _apply_bgm_mix()
-    if _bgm_duck_tween and _bgm_duck_tween.is_running():
-        _bgm_duck_tween.kill()
-    var dur: float = maxf(duration_sec, 0.02)
-    _bgm_duck_tween = create_tween()
-    _bgm_duck_tween.tween_method(func(v2: float) -> void:
-        _bgm_duck_db = v2
-        _apply_bgm_mix()
-    , _bgm_duck_db, 0.0, dur)
+    if TransitionManager and TransitionManager.has_method("duck_bgm"):
+        TransitionManager.duck_bgm(reduction_db, duration_sec)
 
 func _apply_bgm_mix() -> void:
-    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
-    if bgm == null:
-        return
-    var mode_offset := (_RUN_BGM_OFFSET_DB if _bgm_mode == BgmMode.RUN else 0.0)
-    bgm.volume_db = (-60.0 if bgm_muted else (_bgm_base_db + mode_offset + _bgm_duck_db))
+    pass
 
 func set_sfx_volume(v: float) -> void:
     _sfx_user_volume = clampf(v, 0.0, 1.0)
@@ -1618,14 +1597,6 @@ func set_bgm_muted(m: bool) -> void:
     bgm_muted = m
     if TransitionManager and TransitionManager.has_method("set_bgm_muted"):
         TransitionManager.set_bgm_muted(m)
-    var bgm := get_node_or_null("BGM")
-    if bgm and bgm is AudioStreamPlayer:
-        if m:
-            (bgm as AudioStreamPlayer).stop()
-        else:
-            if (bgm as AudioStreamPlayer).stream != null:
-                (bgm as AudioStreamPlayer).play()
-    _apply_bgm_mix()
     _save_progress()
 
 func set_sfx_muted(m: bool) -> void:
@@ -2148,30 +2119,13 @@ func _play_game_over_bgm() -> void:
         _bgm_duck_tween.kill()
     if bgm_muted:
         return
-    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
-    if bgm == null:
-        return
+
     var path: String = _pick_gameover_bgm_path()
     if path.is_empty():
         return
-    var stream: AudioStream = load(path) as AudioStream
-    if stream == null:
-        return
-    if stream is AudioStreamMP3:
-        (stream as AudioStreamMP3).loop = false
-    if _bgm_fade_tween and _bgm_fade_tween.is_running():
-        _bgm_fade_tween.kill()
-    _bgm_fade_tween = create_tween()
-    _bgm_fade_tween.tween_property(bgm, "volume_db", -60.0, 0.18)
-    _bgm_fade_tween.tween_callback(func() -> void:
-        if bgm:
-            bgm.stop()
-            bgm.stream = stream
-            bgm.play()
-            _apply_bgm_mix()
-            bgm.volume_db = -60.0
-    )
-    _bgm_fade_tween.tween_property(bgm, "volume_db", (_bgm_base_db if not bgm_muted else -60.0), 0.22)
+
+    if TransitionManager and TransitionManager.has_method("play_bgm"):
+        TransitionManager.play_bgm(path)
 
 func restart_game() -> void:
     get_tree().paused = false
@@ -2396,30 +2350,92 @@ func _get_pending_level_rewards_for_range(old_level: int, new_level: int) -> Arr
     if new_level <= old_level:
         return result
     for lvl in range(old_level + 1, new_level + 1):
-        var reward_type: String = ""
-        match lvl:
-            2:
-                reward_type = "coins_50"
-            3:
-                reward_type = "coins_100"
-            4:
-                reward_type = "coins_150"
-            5:
-                reward_type = "coins_200"
-            6:
-                reward_type = "gems_5"
-            7:
-                reward_type = "coins_250"
-            8:
-                reward_type = "gems_10"
-            _:
-                reward_type = ""
-        if reward_type != "":
-            var entry := {"level": lvl, "type": reward_type}
+        var reward_data = get_season_reward_for_level(lvl)
+        if not reward_data.is_empty():
+            var entry := {
+                "level": lvl,
+                "type": reward_data["type"],
+                "amount": reward_data["amount"]
+            }
             result.append(entry)
     return result
 
 
+func get_season_reward_for_level(lvl: int) -> Dictionary:
+    # Jika level ada di definisi manual, gunakan itu
+    if SEASON_REWARDS.has(lvl):
+        return SEASON_REWARDS[lvl]
+
+    # Jika tidak ada (untuk level 11-1000), gunakan generator dinamis
+    # Pola: Level kelipatan 5 atau 10 beri Gems, sisanya Coins
+    if lvl > 1000: return {} # Limit sampai 1000
+
+    if lvl % 10 == 0:
+        return {"type": "gems", "amount": 20 + int(lvl * 0.5)} # Gems bertambah tiap 10 level (Gunakan perkalian float)
+    elif lvl % 5 == 0:
+        return {"type": "gems", "amount": 5 + int(lvl * 0.2)} # Gems kecil tiap 5 level
+    else:
+        return {"type": "coins", "amount": 500 + (lvl * 50)} # Coins bertambah tiap level
+
+
+func claim_season_reward(lvl: int) -> Dictionary:
+    var reward_found: Dictionary = {}
+    var found_idx: int = -1
+
+    for i in range(pending_level_rewards.size()):
+        var r = pending_level_rewards[i]
+        if r is Dictionary and r.get("level") == lvl:
+            reward_found = r
+            found_idx = i
+            break
+
+    if reward_found.is_empty():
+        return {}
+
+    # Remove from pending
+    pending_level_rewards.remove_at(found_idx)
+
+    # Apply reward
+    var type = reward_found.get("type", "coins")
+    var amount = reward_found.get("amount", 0)
+
+    if type == "coins":
+        total_coins += amount
+    elif type == "gems":
+        total_gems += amount
+
+    _save_progress()
+    return reward_found
+
+
+func claim_all_pending_rewards() -> Dictionary:
+    var total_claimed := {"coins": 0, "gems": 0, "count": 0}
+
+    if pending_level_rewards.is_empty():
+        return total_claimed
+
+    for r in pending_level_rewards:
+        if not (r is Dictionary): continue
+        var type = r.get("type", "coins")
+        var amount = r.get("amount", 0)
+
+        if type == "coins":
+            total_claimed["coins"] += amount
+            total_coins += amount
+        elif type == "gems":
+            total_claimed["gems"] += amount
+            total_gems += amount
+        total_claimed["count"] += 1
+
+    pending_level_rewards.clear()
+    _save_progress()
+
+    # Notify MainMenu if it exists
+    var main_menu = get_tree().root.find_child("MainMenu", true, false)
+    if main_menu and main_menu.has_method("_update_reward_icon"):
+        main_menu.call("_update_reward_icon")
+
+    return total_claimed
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -2589,11 +2605,10 @@ func _start_play_phase() -> void:
         terrain.set_movement_enabled(false)
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(false)
-    var bgm2 := get_node_or_null("BGM")
-    if bgm2 and bgm2 is AudioStreamPlayer:
-        (bgm2 as AudioStreamPlayer).stop()
-    if TransitionManager and TransitionManager.has_method("stop_bgm"):
-        TransitionManager.stop_bgm()
+
+    # Inisialisasi BGM Gameplay melalui TransitionManager
+    _start_bukit_bgm_rotation()
+
     if anomaly:
         anomaly.hide()
 

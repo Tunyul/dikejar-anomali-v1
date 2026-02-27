@@ -2072,58 +2072,58 @@ func _apply_item_to_powerups(item: Dictionary) -> void:
     if id == "":
         return
     var data := _load_powerups_data()
-    var gm = get_tree().get_root().get_node_or_null("Main")
+    var _main_node = get_tree().get_root().get_node_or_null("Main")
 
     match id:
         "magnet_30s":
             data["magnet_30s_tokens"] = int(data.get("magnet_30s_tokens", 0)) + 1
-            if gm and gm.has_method("activate_magnet") and gm.game_active:
-                gm.activate_magnet(30.0)
+            if _main_node and _main_node.has_method("activate_magnet") and _main_node.game_active:
+                _main_node.activate_magnet(30.0)
                 data["magnet_30s_tokens"] = max(int(data["magnet_30s_tokens"]) - 1, 0)
         "shield_1hit":
             data["shield_1hit_charges"] = int(data.get("shield_1hit_charges", 0)) + 1
-            if gm and gm.game_active:
+            if _main_node and _main_node.game_active:
                 # Perisai 1 hit biasanya pasif charge, tapi kita bisa trigger visual jika ada
                 pass
         "double_coins_run":
             data["double_coins_run_tokens"] = int(data.get("double_coins_run_tokens", 0)) + 1
-            if gm and gm.has_method("activate_double_coins_run") and gm.game_active:
-                gm.activate_double_coins_run()
+            if _main_node and _main_node.has_method("activate_double_coins_run") and _main_node.game_active:
+                _main_node.activate_double_coins_run()
                 data["double_coins_run_tokens"] = max(int(data["double_coins_run_tokens"]) - 1, 0)
         "speed_boost_run":
             data["speed_boost_tokens"] = int(data.get("speed_boost_tokens", 0)) + 1
-            if gm and gm.has_method("activate_speed_boost") and gm.game_active:
-                gm.activate_speed_boost()
+            if _main_node and _main_node.has_method("activate_speed_boost") and _main_node.game_active:
+                _main_node.activate_speed_boost()
                 data["speed_boost_tokens"] = max(int(data["speed_boost_tokens"]) - 1, 0)
         "max_heart_plus1":
             data["max_heart_bonus"] = int(data.get("max_heart_bonus", 0)) + 1
-            if gm and gm.game_active and gm.player:
-                gm.max_heart_bonus = data["max_heart_bonus"]
-                var p = gm.player
+            if _main_node and _main_node.game_active and _main_node.player:
+                _main_node.max_heart_bonus = data["max_heart_bonus"]
+                var p = _main_node.player
                 p.max_health += 1
                 p.current_health = min(p.current_health + 1, p.max_health)
-                gm.set_player_health(p.current_health, p.max_health)
+                _main_node.set_player_health(p.current_health, p.max_health)
         "magnet_duration_plus10":
             data["magnet_duration_multiplier"] = float(data.get("magnet_duration_multiplier", 1.0)) + 0.1
-            if gm: gm.magnet_duration_multiplier = data["magnet_duration_multiplier"]
+            if _main_node: _main_node.magnet_duration_multiplier = data["magnet_duration_multiplier"]
         "shield_duration_plus10":
             data["shield_duration_multiplier"] = float(data.get("shield_duration_multiplier", 1.0)) + 0.1
-            if gm: gm.shield_duration_multiplier = data["shield_duration_multiplier"]
+            if _main_node: _main_node.shield_duration_multiplier = data["shield_duration_multiplier"]
         "pickup_range_plus1":
             data["pickup_range_bonus"] = float(data.get("pickup_range_bonus", 0.0)) + 1.0
-            if gm: gm.pickup_range_bonus = data["pickup_range_bonus"]
+            if _main_node: _main_node.pickup_range_bonus = data["pickup_range_bonus"]
         "double_coins_duration_plus10":
             data["double_coins_duration_multiplier"] = float(data.get("double_coins_duration_multiplier", 1.0)) + 0.1
-            if gm: gm.double_coins_duration_multiplier = data["double_coins_duration_multiplier"]
+            if _main_node: _main_node.double_coins_duration_multiplier = data["double_coins_duration_multiplier"]
         "double_coins_multiplier_plus025":
             data["double_coins_gain_multiplier"] = float(data.get("double_coins_gain_multiplier", 2.0)) + 0.25
-            if gm: gm.double_coins_gain_multiplier = data["double_coins_gain_multiplier"]
+            if _main_node: _main_node.double_coins_gain_multiplier = data["double_coins_gain_multiplier"]
         "speed_boost_duration_plus10":
             data["speed_boost_duration_multiplier"] = float(data.get("speed_boost_duration_multiplier", 1.0)) + 0.1
-            if gm: gm.speed_boost_duration_multiplier = data["speed_boost_duration_multiplier"]
+            if _main_node: _main_node.speed_boost_duration_multiplier = data["speed_boost_duration_multiplier"]
         "speed_boost_multiplier_plus10":
             data["speed_boost_multiplier_multiplier"] = float(data.get("speed_boost_multiplier_multiplier", 1.0)) + 0.1
-            if gm: gm.speed_boost_multiplier_multiplier = data["speed_boost_multiplier_multiplier"]
+            if _main_node: _main_node.speed_boost_multiplier_multiplier = data["speed_boost_multiplier_multiplier"]
         _:
             pass
     _save_powerups_data(data)
@@ -2194,12 +2194,12 @@ func _equip_skin(id: String) -> void:
     _notify_player_cosmetic_change()
 
 func _notify_player_cosmetic_change() -> void:
-    var gm = get_tree().get_root().get_node_or_null("Main")
-    if gm and gm.has_method("update_player_cosmetics"):
-        gm.update_player_cosmetics()
-    elif gm and "player" in gm and is_instance_valid(gm.player):
-        if gm.player.has_method("update_cosmetics"):
-            gm.player.update_cosmetics()
+    var _main_node = get_tree().get_root().get_node_or_null("Main")
+    if _main_node and _main_node.has_method("update_player_cosmetics"):
+        _main_node.update_player_cosmetics()
+    elif _main_node and "player" in _main_node and is_instance_valid(_main_node.player):
+        if _main_node.player.has_method("update_cosmetics"):
+            _main_node.player.update_cosmetics()
 
 func _on_back_pressed() -> void:
     if not is_inside_tree():

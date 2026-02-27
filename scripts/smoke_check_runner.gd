@@ -2,9 +2,9 @@ extends SceneTree
 
 func _initialize() -> void:
     var tpaths: Array[String] = [
-        "res://i18n/id.tres",
-        "res://i18n/en.tres",
-        "res://i18n/zh.tres"
+        "res://i18n/translations.id.translation",
+        "res://i18n/translations.en.translation",
+        "res://i18n/translations.zh.translation"
     ]
     for tp in tpaths:
         load(tp)

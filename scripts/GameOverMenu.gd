@@ -133,9 +133,9 @@ func _on_continue_pressed() -> void:
 
 func _on_bonus_continue_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    var main = get_tree().current_scene
-    if main and main.has_method("try_rewarded_continue"):
-        main.try_rewarded_continue()
+    var _main_node = get_tree().current_scene
+    if _main_node and _main_node.has_method("try_rewarded_continue"):
+        _main_node.try_rewarded_continue()
 
 func _on_confirm_yes_pressed() -> void:
     TransitionManager.play_sfx(&"click")

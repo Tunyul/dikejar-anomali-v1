@@ -62,10 +62,10 @@ func _ready() -> void:
         anim.modulate = tint
     var cs: CollisionShape2D = get_node_or_null("CollisionShape2D")
     var root := get_tree().get_root()
-    var main := root.get_node_or_null("Main")
+    var _main_node := root.get_node_or_null("Main")
     var pickup_bonus: float = 0.0
-    if main and main.has_method("get"):
-        pickup_bonus = float(main.get("pickup_range_bonus"))
+    if _main_node and _main_node.has_method("get"):
+        pickup_bonus = float(_main_node.get("pickup_range_bonus"))
     if pickup_bonus > 0.0 and cs and cs.shape:
         cs.shape = cs.shape.duplicate()
         if cs.shape is RectangleShape2D:
@@ -107,9 +107,9 @@ func _capture_base_y() -> void:
 
 func _find_player() -> Node2D:
     var root := get_tree().get_root()
-    var main := root.get_node_or_null("Main")
-    if main:
-        var from_main := main.get_node_or_null("Player") as Node2D
+    var _main_node := root.get_node_or_null("Main")
+    if _main_node:
+        var from_main := _main_node.get_node_or_null("Player") as Node2D
         if from_main:
             return from_main
     for child in root.get_children():
@@ -126,10 +126,10 @@ func _physics_process(delta: float) -> void:
         return
     _t += delta
     var root := get_tree().get_root()
-    var main := root.get_node_or_null("Main")
+    var _main_node := root.get_node_or_null("Main")
     var mag: bool = always_magnet
-    if main and main.has_method("get") and not mag:
-        mag = bool(main.get("magnet_enabled"))
+    if _main_node and _main_node.has_method("get") and not mag:
+        mag = bool(_main_node.get("magnet_enabled"))
     if not mag:
         position.y = _base_y + abs(sin(_t * TAU * osc_frequency)) * osc_amplitude
         return

@@ -18,10 +18,10 @@ var _has_caught_player: bool = false
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_PAUSABLE
-    var main := get_tree().get_root().get_node_or_null("Main")
-    if main:
-        _player = main.get_node_or_null("Player")
-        _camera = main.get_node_or_null("Camera2D")
+    var _main_node := get_tree().get_root().get_node_or_null("Main")
+    if _main_node:
+        _player = _main_node.get_node_or_null("Player")
+        _camera = _main_node.get_node_or_null("Camera2D")
     collision_layer = 4
     collision_mask = 1
     if collider:

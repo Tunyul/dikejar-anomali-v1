@@ -436,6 +436,7 @@ vertical_alignment = 1
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 20)
 layout_mode = 2
+mouse_filter = 0
 size_flags_horizontal = 4
 size_flags_vertical = 4
 theme_override_styles/background = SubResource("StyleBoxFlat_xp_bg")
@@ -446,6 +447,7 @@ value = 617283.5
 [node name="XPLabel" type="Label" parent="UI/PlayerHUD" unique_id=1282517237]
 unique_name_in_owner = true
 layout_mode = 2
+mouse_filter = 0
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
@@ -458,10 +460,14 @@ vertical_alignment = 1
 unique_name_in_owner = true
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
+mouse_filter = 0
 size_flags_horizontal = 0
 size_flags_vertical = 4
 expand_mode = 1
 stretch_mode = 5
+
+[node name="RewardIconAnimator" type="AnimationPlayer" parent="UI/PlayerHUD/RewardIcon"]
+unique_name_in_owner = true
 
 [node name="RewardPanel" type="Panel" parent="UI" unique_id=1068801739]
 unique_name_in_owner = true
