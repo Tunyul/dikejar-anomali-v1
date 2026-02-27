@@ -3,8 +3,35 @@ extends Control
 signal overlay_closed
 
 
+@onready var _ui: CanvasLayer = %UI
+@onready var _title_label: Label = %TitleLabel
+@onready var _daily_button: Button = %DailyButton
+@onready var _mission_button: Button = %MissionButton
+@onready var _weekly_button: Button = %WeeklyButton
+@onready var _monthly_button: Button = %MonthlyButton
+@onready var _challenge_button: Button = %ChallengeButton
+@onready var _back_button: Button = %BackButton
+@onready var _close_button: TextureButton = %CloseButton
+@onready var _mission_panel: Control = %MissionPanel
+@onready var _panel_content: Control = %PanelContent
+@onready var _reset_header_row: HBoxContainer = %ResetHeaderRow
+@onready var _reset_label: Label = %ResetTimeLabel
+@onready var _reset_daily_button: Button = %ResetDailyButton
+@onready var _reset_spacer: Control = %Spacer
+@onready var _daily_summary: Control = %DailyGroup
+@onready var _daily_total_label: Label = %DailyTotalLabel
+@onready var _daily_total_bar: ProgressBar = %DailyTotalBar
+@onready var _daily_all_reward_label: Label = %DailyAllRewardLabel
+@onready var _daily_all_claim_button: Button = %ClaimDailyAllButton
+@onready var _missions_scroll: ScrollContainer = %MissionsScroll
+@onready var _missions_panel_node: VBoxContainer = %MissionsPanel
+@onready var _confirm_panel: Control = %ConfirmPanel
+
+var _confirm_message: Label = null
+var _confirm_yes: BaseButton = null
+var _confirm_no: BaseButton = null
+
 var _current_tab := "daily"
-var _reset_label: Label = null
 var _reset_time_accum: float = 0.0
 var _tab_style_normal: StyleBox = null
 var _tab_style_active: StyleBox = null
@@ -16,26 +43,12 @@ var _coin_fx_rng := RandomNumberGenerator.new()
 
 @export var daily_all_complete_reward_gems: int = 1
 
-var _reset_daily_button: BaseButton = null
-var _reset_header_row: HBoxContainer = null
-var _reset_spacer: Control = null
-var _confirm_panel: Control = null
-var _confirm_message: Label = null
-var _confirm_yes: BaseButton = null
-var _confirm_no: BaseButton = null
 var _pending_action: String = ""
 var _awaiting_rewarded_reason: String = ""
 var _ad_manager: Node = null
 var _missions_manager: Node = null
-var _mission_panel: Control = null
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
 var _mission_panel_target_scale: float = 1.0
-
-var _daily_summary: Control = null
-var _daily_total_label: Label = null
-var _daily_total_bar: ProgressBar = null
-var _daily_all_reward_label: Label = null
-var _daily_all_claim_button: BaseButton = null
 
 const _MISSION_PANEL_BASE_SIZE := Vector2(685.0, 385.0)
 const _MISSION_PANEL_SCALE_MIN := 0.35
@@ -48,35 +61,22 @@ func _notification(what: int) -> void:
 
 func _refresh_all_ui_texts() -> void:
     # Update Judul
-    var title_label := get_node_or_null("UI/TitleLabel") as Label
-    if title_label:
-        title_label.text = tr("MISSIONS")
+    if _title_label:
+        _title_label.text = tr("MISSIONS")
 
     # Update Tab Buttons
-    var daily_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/DailyButton") as BaseButton
-    if daily_btn: daily_btn.text = tr("DAILY")
-    var mission_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MissionButton") as BaseButton
-    if mission_btn: mission_btn.text = tr("MISSION")
-    var weekly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/WeeklyButton") as BaseButton
-    if weekly_btn: weekly_btn.text = tr("WEEKLY")
-    var monthly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MonthlyButton") as BaseButton
-    if monthly_btn: monthly_btn.text = tr("MONTHLY")
-    var challenge_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/ChallengeButton") as BaseButton
-    if challenge_btn: challenge_btn.text = tr("CHALLENGE")
+    if _daily_button: _daily_button.text = tr("DAILY")
+    if _mission_button: _mission_button.text = tr("MISSION")
+    if _weekly_button: _weekly_button.text = tr("WEEKLY")
+    if _monthly_button: _monthly_button.text = tr("MONTHLY")
+    if _challenge_button: _challenge_button.text = tr("CHALLENGE")
 
     # Update Back Button
-    var back := get_node_or_null("UI/MissionPanel/PanelContent/VBox/BackButton") as BaseButton
-    if back: back.text = tr("BACK")
-
-    # Update Reset Label
-    if _reset_label:
-        # Reset label text biasanya diupdate di _process, tapi kita panggil manual jika perlu
-        pass
+    if _back_button: _back_button.text = tr("BACK")
 
     # Update Mission List
-    var missions_panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-    if missions_panel:
-        _refresh_missions_panel(missions_panel)
+    if _missions_panel_node:
+        _refresh_missions_panel(_missions_panel_node)
 
     # Update Daily Summary
     if _daily_summary and _daily_summary.visible:
@@ -89,39 +89,29 @@ func _refresh_all_ui_texts() -> void:
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     _refresh_all_ui_texts()
-    var back := get_node_or_null("UI/MissionPanel/PanelContent/VBox/BackButton") as BaseButton
-    if back:
-        back.pressed.connect(_on_back_pressed)
+    if _back_button:
+        _back_button.pressed.connect(_on_back_pressed)
     var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
     var title_font := load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf") as Font
     if ui_font:
         _apply_ui_font(self, ui_font)
     if title_font:
-        var title_label := get_node_or_null("UI/TitleLabel") as Label
-        if title_label:
-            title_label.add_theme_font_override("font", title_font)
-            title_label.add_theme_color_override("font_color", Color(1, 1, 0, 1))
-            title_label.add_theme_constant_override("outline_size", 3)
-            title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-            title_label.add_theme_font_size_override("font_size", 36)
-    _reset_label = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/ResetTimeLabel") as Label
+        if _title_label:
+            _title_label.add_theme_font_override("font", title_font)
+            _title_label.add_theme_color_override("font_color", Color(1, 1, 0, 1))
+            _title_label.add_theme_constant_override("outline_size", 3)
+            _title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+            _title_label.add_theme_font_size_override("font_size", 36)
     if _reset_label:
         _reset_label.add_theme_color_override("font_color", Color(0, 0, 0))
-    _reset_header_row = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow") as HBoxContainer
-    _reset_spacer = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/Spacer") as Control
     _apply_mission_name_color()
     _apply_mission_reward_color()
-    _daily_summary = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup") as Control
-    _daily_total_label = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup/DailyTotalLabel") as Label
-    _daily_total_bar = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup/DailyTotalBar") as ProgressBar
     if ui_font and _daily_total_label:
         _daily_total_label.add_theme_font_override("font", ui_font)
         _daily_total_label.add_theme_color_override("font_color", Color(0, 0, 0, 1))
         _daily_total_label.add_theme_constant_override("outline_size", 0)
         _daily_total_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
         _daily_total_label.add_theme_font_size_override("font_size", 18)
-    _daily_all_reward_label = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup/DailyAllRewardLabel") as Label
-    _daily_all_claim_button = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/DailyGroup/ClaimDailyAllButton") as BaseButton
     if _daily_all_claim_button and not _daily_all_claim_button.pressed.is_connected(_on_claim_daily_all_pressed):
         _daily_all_claim_button.pressed.connect(_on_claim_daily_all_pressed)
     _apply_daily_summary_color()
@@ -140,29 +130,22 @@ func _ready() -> void:
     _claim_tex_disabled = _load_button_texture("res://assets/tombol/tombol_claim_nonaktif_108x64.png")
     _coin_fx_tex = load("res://assets/coin_animation/png/2x/Coin.png") as Texture2D
     _diamond_fx_tex = load("res://assets/diamond_animation/diamond-1024x1024.png") as Texture2D
-    var missions_panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-    if missions_panel:
-        _refresh_missions_panel(missions_panel)
-        _connect_claim_buttons(missions_panel)
-    var daily_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/DailyButton") as BaseButton
-    var mission_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MissionButton") as BaseButton
-    var weekly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/WeeklyButton") as BaseButton
-    var monthly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MonthlyButton") as BaseButton
-    var challenge_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/ChallengeButton") as BaseButton
-    if daily_btn:
-        daily_btn.pressed.connect(func(): _on_tab_pressed("daily"))
-    if mission_btn:
-        mission_btn.pressed.connect(func(): _on_tab_pressed("mission"))
-    if weekly_btn:
-        weekly_btn.pressed.connect(func(): _on_tab_pressed("week"))
-    if monthly_btn:
-        monthly_btn.pressed.connect(func(): _on_tab_pressed("month"))
-    if challenge_btn:
-        challenge_btn.pressed.connect(func(): _on_tab_pressed("challenge"))
+    if _missions_panel_node:
+        _refresh_missions_panel(_missions_panel_node)
+        _connect_claim_buttons(_missions_panel_node)
+    if _daily_button:
+        _daily_button.pressed.connect(func(): _on_tab_pressed("daily"))
+    if _mission_button:
+        _mission_button.pressed.connect(func(): _on_tab_pressed("mission"))
+    if _weekly_button:
+        _weekly_button.pressed.connect(func(): _on_tab_pressed("week"))
+    if _monthly_button:
+        _monthly_button.pressed.connect(func(): _on_tab_pressed("month"))
+    if _challenge_button:
+        _challenge_button.pressed.connect(func(): _on_tab_pressed("challenge"))
     _update_tab_buttons()
     _update_reset_time_label()
 
-    _reset_daily_button = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/ResetDailyButton") as BaseButton
     if _reset_daily_button:
         _reset_daily_button.pressed.connect(_on_reset_daily_pressed)
         if _reset_header_row:
@@ -171,16 +154,16 @@ func _ready() -> void:
                 h = 44.0
             _reset_header_row.custom_minimum_size = Vector2(_reset_header_row.custom_minimum_size.x, h)
 
-    _confirm_panel = get_node_or_null("UI/ConfirmPanel") as Control
-    _confirm_message = get_node_or_null("UI/ConfirmPanel/Message") as Label
-    _confirm_yes = get_node_or_null("UI/ConfirmPanel/Buttons/YesButton") as BaseButton
-    _confirm_no = get_node_or_null("UI/ConfirmPanel/Buttons/NoButton") as BaseButton
     if _confirm_panel:
         _confirm_panel.visible = false
-    if _confirm_yes:
-        _confirm_yes.pressed.connect(_on_confirm_yes_pressed)
-    if _confirm_no:
-        _confirm_no.pressed.connect(_on_confirm_no_pressed)
+        _confirm_message = _confirm_panel.get_node("%Message") as Label
+        _confirm_yes = _confirm_panel.get_node("%YesButton") as BaseButton
+        _confirm_no = _confirm_panel.get_node("%NoButton") as BaseButton
+
+        if _confirm_yes:
+            _confirm_yes.pressed.connect(_on_confirm_yes_pressed)
+        if _confirm_no:
+            _confirm_no.pressed.connect(_on_confirm_no_pressed)
 
     _ad_manager = AdManager
     _missions_manager = MissionsManager
@@ -191,16 +174,13 @@ func _ready() -> void:
 
     _update_reset_daily_button_state()
     _update_reset_header_layout()
-    var close_btn := get_node_or_null("UI/MissionPanel/CloseButton") as BaseButton
-    if close_btn and not close_btn.pressed.is_connected(_on_close_pressed):
-        close_btn.pressed.connect(_on_close_pressed)
+    if _close_button and not _close_button.pressed.is_connected(_on_close_pressed):
+        _close_button.pressed.connect(_on_close_pressed)
     if get_tree().current_scene != self:
-        var ui := get_node_or_null("UI")
-        if ui:
-            ui.visible = false
+        if _ui:
+            _ui.visible = false
         visible = false
 
-    _mission_panel = get_node_or_null("UI/MissionPanel") as Control
     _connect_viewport_resize()
     if TransitionManager and TransitionManager.has_signal("language_changed"):
         var cb_lang := Callable(self, "_on_language_changed")
@@ -211,9 +191,8 @@ func _ready() -> void:
 func _on_language_changed(_locale: String) -> void:
     _refresh_all_ui_texts()
     _update_reset_time_label()
-    var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-    if panel:
-        _refresh_missions_panel(panel)
+    if _missions_panel_node:
+        _refresh_missions_panel(_missions_panel_node)
 
 
 func _connect_viewport_resize() -> void:
@@ -275,22 +254,20 @@ func _apply_responsive_layout(vp: Vector2) -> void:
     _mission_panel.pivot_offset = base_size * 0.5
     _mission_panel.scale = Vector2.ONE * _mission_panel_target_scale
 
-    var pc := get_node_or_null("UI/MissionPanel/PanelContent") as Control
-    if pc:
+    if _panel_content:
         var lm := clampf(base_size.x * 0.08, 44.0, 72.0)
         var tm := clampf(base_size.y * 0.145, 52.0, 84.0)
         var bm := clampf(base_size.y * 0.11, 40.0, 72.0)
-        pc.offset_left = lm
-        pc.offset_right = -lm
-        pc.offset_top = tm
-        pc.offset_bottom = -bm
+        _panel_content.offset_left = lm
+        _panel_content.offset_right = -lm
+        _panel_content.offset_top = tm
+        _panel_content.offset_bottom = -bm
 
 
 func _apply_mission_name_color() -> void:
-    var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel") as VBoxContainer
-    if panel == null:
+    if _missions_panel_node == null:
         return
-    for slot in panel.get_children():
+    for slot in _missions_panel_node.get_children():
         var row := slot as Control
         if row == null:
             continue
@@ -300,10 +277,9 @@ func _apply_mission_name_color() -> void:
 
 
 func _apply_mission_reward_color() -> void:
-    var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel") as VBoxContainer
-    if panel == null:
+    if _missions_panel_node == null:
         return
-    for slot in panel.get_children():
+    for slot in _missions_panel_node.get_children():
         var row := slot as Control
         if row == null:
             continue
@@ -360,6 +336,9 @@ func _clear_mission_row(row: Control) -> void:
         name_label.visible = true
         name_label.add_theme_color_override("font_color", Color(0, 0, 0))
         name_label.text = ""
+        name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        name_label.clip_text = false
+        name_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
     if bar:
         bar.visible = false
         bar.value = 0
@@ -373,9 +352,8 @@ func _clear_mission_row(row: Control) -> void:
         claim_button.set_meta("mission_id", "")
 
 func show_overlay() -> void:
-    var ui := get_node_or_null("UI")
-    if ui:
-        ui.visible = true
+    if _ui:
+        _ui.visible = true
     visible = true
 
     var vp := get_viewport().get_visible_rect().size
@@ -394,9 +372,8 @@ func show_overlay() -> void:
         tween.tween_property(_mission_panel, "scale", target_scale, 0.3)
 
     _reset_missions_scroll_to_top()
-    var missions_panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-    if missions_panel:
-        _refresh_missions_panel(missions_panel)
+    if _missions_panel_node:
+        _refresh_missions_panel(_missions_panel_node)
     _update_tab_buttons()
     _update_reset_time_label()
     _update_reset_daily_button_state()
@@ -404,9 +381,9 @@ func show_overlay() -> void:
 
 
 func _reset_missions_scroll_to_top() -> void:
-    var sc := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll") as ScrollContainer
-    if sc:
-        sc.scroll_vertical = 0
+    if _missions_scroll:
+        _missions_scroll.scroll_vertical = 0
+
 
 func _unhandled_input(_event: InputEvent) -> void:
     return
@@ -423,9 +400,8 @@ func _close_overlay_only() -> void:
         tween.tween_property(_mission_panel, "scale", close_scale, 0.2)
         await tween.finished
 
-    var ui := get_node_or_null("UI")
-    if ui:
-        ui.visible = false
+    if _ui:
+        _ui.visible = false
     visible = false
     overlay_closed.emit()
 
@@ -452,9 +428,8 @@ func _on_tab_pressed(tab: String) -> void:
     _current_tab = tab
     _update_tab_buttons()
     _reset_missions_scroll_to_top()
-    var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-    if panel:
-        _refresh_missions_panel(panel)
+    if _missions_panel_node:
+        _refresh_missions_panel(_missions_panel_node)
     _update_reset_time_label()
     _update_reset_daily_button_state()
     _update_reset_header_layout()
@@ -494,8 +469,6 @@ func _are_all_daily_missions_completed_in_save() -> bool:
 
 func _update_reset_daily_button_state() -> void:
     if _reset_daily_button == null:
-        _reset_daily_button = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/ResetDailyButton") as BaseButton
-    if _reset_daily_button == null:
         return
     var can_show := _current_tab == "daily" and _are_all_daily_missions_completed_in_save()
     _reset_daily_button.visible = can_show
@@ -511,14 +484,12 @@ func _update_reset_daily_button_state() -> void:
 
 func _update_reset_header_layout() -> void:
     if _reset_header_row == null:
-        _reset_header_row = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow") as HBoxContainer
-    if _reset_header_row == null:
         return
 
     _reset_header_row.visible = true
 
     if _reset_spacer == null:
-        _reset_spacer = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/Spacer") as Control
+        return
 
     if _current_tab == "daily":
         if _reset_spacer:
@@ -582,9 +553,8 @@ func _apply_rewarded_daily_reset() -> void:
     if not did_reset:
         did_reset = _reset_daily_in_save_direct()
     if did_reset:
-        var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-        if panel:
-            _refresh_missions_panel(panel)
+        if _missions_panel_node:
+            _refresh_missions_panel(_missions_panel_node)
         _update_reset_time_label()
         _update_reset_daily_button_state()
         var root_scene := get_tree().current_scene
@@ -731,9 +701,8 @@ func _on_claim_daily_all_pressed() -> void:
     if _missions_manager and _missions_manager.has_method("reload_from_save"):
         _missions_manager.call("reload_from_save")
 
-    var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-    if panel:
-        _refresh_missions_panel(panel)
+    if _missions_panel_node:
+        _refresh_missions_panel(_missions_panel_node)
     root_scene = get_tree().current_scene
     if root_scene and root_scene.has_method("refresh_gems_from_save"):
         root_scene.call("refresh_gems_from_save")
@@ -753,11 +722,11 @@ func _process(delta: float) -> void:
 
 
 func _update_tab_buttons() -> void:
-    var daily_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/DailyButton") as BaseButton
-    var mission_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MissionButton") as BaseButton
-    var weekly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/WeeklyButton") as BaseButton
-    var monthly_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/MonthlyButton") as BaseButton
-    var challenge_btn := get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs/ChallengeButton") as BaseButton
+    var daily_btn := _daily_button
+    var mission_btn := _mission_button
+    var weekly_btn := _weekly_button
+    var monthly_btn := _monthly_button
+    var challenge_btn := _challenge_button
 
     _apply_tab_style(daily_btn, _current_tab == "daily")
     _apply_tab_style(mission_btn, _current_tab == "mission")
@@ -954,6 +923,10 @@ func _refresh_missions_panel(panel: Node) -> void:
             continue
 
         slot.visible = true
+        slot.custom_minimum_size.y = 64.0 # Tingkatkan tinggi standar agar tombol besar muat
+        slot.alignment = BoxContainer.ALIGNMENT_CENTER # Vertikal center semua elemen
+        slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL # Responsif lebar baris
+
         var m_any = filtered[i]
         if not (m_any is Dictionary):
             _clear_mission_row(slot)
@@ -979,10 +952,16 @@ func _refresh_missions_panel(panel: Node) -> void:
 
         if name_label:
             name_label.visible = true
+            name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER # Center teks secara vertikal
             name_label.add_theme_color_override("font_color", Color(0, 0, 0))
             name_label.layout_direction = Control.LAYOUT_DIRECTION_LTR
             name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-            name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_WORD_ELLIPSIS
+            name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+            name_label.custom_minimum_size.x = 180 # Atur lebar minimum
+            name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL # Berbagi ruang dengan Bar
+            name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER # Pastikan label di tengah
+            name_label.clip_text = false # Matikan clipping agar teks yang turun tidak terpotong
+            name_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 
             # Fix localization with target numbers
             var localized_text := tr(mname)
@@ -997,6 +976,9 @@ func _refresh_missions_panel(panel: Node) -> void:
             bar.show_percentage = false
             bar.max_value = target
             bar.value = clampf(prog, 0.0, target)
+            bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER # Center ProgressBar
+            bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL # Responsif lebar baris
+            bar.custom_minimum_size.x = 120 # Pastikan bar tidak terlalu kecil
             var default_h: float
             if bar.has_meta("default_min_h"):
                 default_h = float(bar.get_meta("default_min_h"))
@@ -1004,16 +986,18 @@ func _refresh_missions_panel(panel: Node) -> void:
                 default_h = float(bar.custom_minimum_size.y)
                 bar.set_meta("default_min_h", default_h)
             var h := default_h
-            if _current_tab == "daily":
-                h = minf(h, 10.0)
             bar.custom_minimum_size = Vector2(bar.custom_minimum_size.x, h)
         if reward_label:
             reward_label.visible = true
             reward_label.add_theme_color_override("font_color", Color(0, 0, 0))
             reward_label.text = "+" + str(reward) + "c"
+            reward_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+            reward_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         if claim_button:
             claim_button.visible = true
             claim_button.disabled = not is_completed or is_claimed or reward <= 0 or id_str.is_empty()
+            claim_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+            claim_button.custom_minimum_size = Vector2(72, 48) # Perbesar tombol claim
             _apply_claim_button_style(claim_button)
             claim_button.set_meta("mission_id", id_str)
 
@@ -1231,8 +1215,6 @@ func _get_remaining_reset_seconds(t: String) -> int:
 
 func _update_reset_time_label() -> void:
     if _reset_label == null:
-        _reset_label = get_node_or_null("UI/MissionPanel/PanelContent/VBox/ResetHeaderRow/ResetTimeLabel") as Label
-    if _reset_label == null:
         return
     var t := _get_reset_type_for_current_tab()
     if t == "":
@@ -1253,9 +1235,8 @@ func _update_reset_time_label() -> void:
             prefix = tr("Reset")
     if remaining <= 0:
         _reset_label.text = tr("%s: Now") % [prefix]
-        var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-        if panel:
-            _refresh_missions_panel(panel)
+        if _missions_panel_node:
+            _refresh_missions_panel(_missions_panel_node)
         return
     var hours: int = int(remaining / 3600.0)
     var minutes: int = int((remaining % 3600) / 60.0)
@@ -1686,9 +1667,8 @@ func _on_claim_button_pressed(button: BaseButton) -> void:
     var coin_count: int = _coin_fx_rng.randi_range(5, 10)
     _play_claim_coin_fly(button as Control, coin_target, coin_count)
 
-    var panel := get_node_or_null("UI/MissionPanel/PanelContent/VBox/MissionListContainer/MissionsScroll/MissionsPanel")
-    if panel:
-        _refresh_missions_panel(panel)
+    if _missions_panel_node:
+        _refresh_missions_panel(_missions_panel_node)
     if root_scene and root_scene.has_method("refresh_coin_from_save"):
         root_scene.call("refresh_coin_from_save")
     if root_scene and root_scene.has_method("refresh_missions_badge_from_save"):
@@ -1702,7 +1682,7 @@ func _play_claim_coin_fly(from_control: Control, to_control: Control, count: int
         return
     if count <= 0:
         return
-    var ui_layer := get_node_or_null("UI") as CanvasLayer
+    var ui_layer := _ui
     if ui_layer == null:
         return
 
@@ -1749,7 +1729,7 @@ func _play_claim_diamond_fly(from_control: Control, to_control: Control, count: 
         return
     if count <= 0:
         return
-    var ui_layer := get_node_or_null("UI") as CanvasLayer
+    var ui_layer := _ui
     if ui_layer == null:
         return
 

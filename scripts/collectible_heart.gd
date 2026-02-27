@@ -20,6 +20,12 @@ func _ready() -> void:
         collision_layer = 0
         collision_mask = 0
 
+func reset() -> void:
+    _base_y = position.y
+    _t = 0.0
+    visible = true
+    set_deferred("monitoring", true)
+
 func _physics_process(delta: float) -> void:
     if not enable_bobbing:
         return

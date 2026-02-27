@@ -90,6 +90,18 @@ func _ready() -> void:
     call_deferred("_capture_base_y")
     body_entered.connect(_on_body_entered)
 
+func reset() -> void:
+    _base_y = position.y
+    _t = 0.0
+    _collected = false
+    monitoring = true
+    var anim: AnimatedSprite2D = get_node_or_null("AnimatedSprite2D")
+    if anim:
+        anim.play()
+    visible = true
+    # Force immediate base_y capture instead of deferred
+    _capture_base_y()
+
 func _capture_base_y() -> void:
     _base_y = position.y
 

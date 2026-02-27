@@ -21,6 +21,16 @@ func _ready() -> void:
         anim.play()
     body_entered.connect(_on_body_entered)
 
+func reset() -> void:
+    _base_y = position.y
+    _t = 0.0
+    _initialized = true
+    visible = true
+    set_deferred("monitoring", true)
+    var anim := get_node_or_null("AnimatedSprite2D")
+    if anim:
+        anim.play()
+
 func _process(delta: float) -> void:
     if not _initialized:
         _base_y = position.y

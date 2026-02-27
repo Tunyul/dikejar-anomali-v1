@@ -5,6 +5,52 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.47-beta] - 2026-02-27
+
+- Fix: Memperbaiki koin yang tembus ke tanah dengan standarisasi height offset (1.5 tiles) dan penambahan fungsi `reset()` pada script koin.
+- Fix: Implementasi fungsi `reset()` pada `HeartPickup.gd` dan `CollectibleHeart.gd` untuk memastikan state yang bersih saat diambil dari object pool.
+- Fix: Memperbaiki error "Identifier not declared" pada `infinite_ground.gd` dengan merestorasi variabel @export yang hilang.
+- Gameplay: Menyeimbangkan tinggi spawn untuk koin, diamond, heart, dan powerup agar tidak terlalu tinggi dan lebih mudah dijangkau.
+- UI/UX: Memperbaiki teks misi yang terpotong/hilang dengan mengaktifkan autowrap dan penyesuaian size flags pada `DailyMissionsMenu.gd`.
+- UI/UX: Standardisasi tinggi baris misi (64px) dan vertical alignment (Center) untuk tampilan yang lebih rapi dan konsisten.
+- UI/UX: Memperbesar tombol Claim (72x48px) dan meningkatkan responsivitas layout panel misi di berbagai ukuran layar.
+- Naik versi proyek ke 1.3.47-beta.
+
+## [1.3.46-beta] - 2026-02-26
+
+- UI/UX: Implementasi fitur sembunyi scrollbar pada Shop Menu dan Settings Menu untuk tampilan yang lebih bersih.
+- UI/UX: Perbaikan sistem scroll pada Settings Menu agar dapat di-drag langsung pada item (Label, Slider, Button).
+- UI/UX: Optimasi input handling pada Settings Menu untuk mencegah konflik antara scrolling dan interaksi slider.
+- UI/UX: Penambahan logic otomatis untuk mengatur `mouse_filter` pada elemen UI di dalam scroll container.
+
+## [1.3.45-beta] - 2026-02-26
+
+- Localization: Implementasi sistem lokalisasi real-time pada Profile Panel (Judul, Tombol Ganti Avatar/Border, Tutup).
+- Localization: Penambahan key terjemahan baru untuk elemen profil di `id.tres`, `en.tres`, dan `zh.tres`.
+- Fix: Perbaikan bug bahasa yang tidak berubah pada Profile Panel tanpa menutup panel terlebih dahulu.
+- Fix: Pembersihan total kesalahan indentasi (Tab vs Space) pada `MainMenu.gd` untuk standarisasi 4 spasi.
+- UI/UX: Sinkronisasi visual Profile Panel agar konsisten dengan tema game di seluruh bahasa.
+
+## [1.3.44-beta] - 2026-02-26
+
+- UI/UX: Optimasi Profile Panel agar 100% aman dari gangguan AdMob Banner (jarak bebas >100px dari dasar layar).
+- UI/UX: Sinkronisasi lebar Stats Card (Lv, XP, Score) menjadi 280px agar sejajar sempurna dengan tombol di bawahnya.
+- UI/UX: Perbaikan visual judul "PROFIL PEMAIN" menggunakan font standar game (Fredoka Bold) dengan outline tegas.
+- UI/UX: Penyesuaian ukuran ikon statistik (32x32) dan font (22px) agar kartu profil lebih compact dan profesional.
+- UI/UX: Perbaikan masalah panel terpotong di bagian atas pada layar landscape dengan penyesuaian offset_top (-270px).
+- UI/UX: Rebalancing posisi elemen vertikal agar seluruh konten panel berada tepat di tengah (centered) dan lega.
+
+## [1.3.43-beta] - 2026-02-25
+
+- UI/UX: Refactor Profile Panel ke layout horizontal (HBox) untuk kompatibilitas layar landscape (1024x576).
+- UI/UX: Implementasi icon-based stats (Level, XP, Trophy) pada Profile Panel untuk tampilan yang lebih modern dan bersih.
+- UI/UX: Penambahan efek Glassmorphism pada panel profil dengan shadow dan border yang lebih halus.
+- UI/UX: Penambahan animasi hover (scale & glow) pada semua tombol interaktif di Profile Panel.
+- UI/UX: Perbaikan alignment judul "PROFIL PEMAIN" dan layouting tombol agar tidak tumpang tindih.
+- Avatar Border: Standarisasi padding untuk semua Premium Border (Gold, Silver, Neon, Shadow) agar avatar tidak terpotong.
+- Avatar Border: Penyesuaian khusus padding Fire Border (32px) untuk memastikan avatar berada tepat di dalam lubang api.
+- Fix: Perbaikan path node `CloseProfileButton` pada script `MainMenu.gd` agar sesuai dengan struktur UI baru.
+
 ## [1.3.42-beta] - 2026-02-25
 
 - Avatar Border: Perbaikan misalignment pada Fire Border agar presisi di tengah icon.
