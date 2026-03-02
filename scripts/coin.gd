@@ -39,6 +39,12 @@ static func _get_diamond_frames() -> SpriteFrames:
         _diamond_frames = SpriteFrames.new()
     return _diamond_frames
 
+func _get_game_manager() -> Node:
+    var root := get_tree().get_root()
+    if root:
+        return root.get_node_or_null("GameManager")
+    return null
+
 func _ready() -> void:
     collision_layer = 8
     collision_mask = 2
@@ -61,11 +67,14 @@ func _ready() -> void:
         anim.speed_scale = anim_fps / 12.0
         anim.modulate = tint
     var cs: CollisionShape2D = get_node_or_null("CollisionShape2D")
-    var root := get_tree().get_root()
-    var _main_node := root.get_node_or_null("Main")
     var pickup_bonus: float = 0.0
-    if _main_node and _main_node.has_method("get"):
-        pickup_bonus = float(_main_node.get("pickup_range_bonus"))
+    var gm := _get_game_manager()
+    if gm and gm.has_method("get"):
+        var bonus_value: Variant = gm.get("pickup_range_bonus")
+        if bonus_value is float:
+            pickup_bonus = bonus_value
+        elif bonus_value is int:
+            pickup_bonus = float(bonus_value)
     if pickup_bonus > 0.0 and cs and cs.shape:
         cs.shape = cs.shape.duplicate()
         if cs.shape is RectangleShape2D:
@@ -107,9 +116,9 @@ func _capture_base_y() -> void:
 
 func _find_player() -> Node2D:
     var root := get_tree().get_root()
-    var _main_node := root.get_node_or_null("Main")
-    if _main_node:
-        var from_main := _main_node.get_node_or_null("Player") as Node2D
+    var main := root.get_node_or_null("Main")
+    if main:
+        var from_main := main.get_node_or_null("Player") as Node2D
         if from_main:
             return from_main
     for child in root.get_children():
@@ -125,11 +134,14 @@ func _physics_process(delta: float) -> void:
     if not is_inside_tree():
         return
     _t += delta
-    var root := get_tree().get_root()
-    var _main_node := root.get_node_or_null("Main")
     var mag: bool = always_magnet
-    if _main_node and _main_node.has_method("get") and not mag:
-        mag = bool(_main_node.get("magnet_enabled"))
+    var gm := _get_game_manager()
+    if gm and gm.has_method("get") and not mag:
+        var magnet_value: Variant = gm.get("magnet_enabled")
+        if magnet_value is bool:
+            mag = magnet_value
+        elif magnet_value is int:
+            mag = magnet_value != 0
     if not mag:
         position.y = _base_y + abs(sin(_t * TAU * osc_frequency)) * osc_amplitude
         return

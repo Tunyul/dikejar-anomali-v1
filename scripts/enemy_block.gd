@@ -18,6 +18,18 @@ extends Node2D
 var _velocity: Vector2 = Vector2.ZERO
 var _alive: bool = true
 
+func _get_game_manager() -> Node:
+    var root := get_tree().get_root()
+    if root == null:
+        return null
+    return root.get_node_or_null("GameManager")
+
+func _get_main_scene() -> Node:
+    var tree := get_tree()
+    if tree:
+        return tree.current_scene
+    return null
+
 func _ready() -> void:
     var spr: AnimatedSprite2D = $AnimatedSprite2D
     if spr != null:
@@ -69,19 +81,18 @@ func on_player_attack_hit(player: Player) -> void:
 
 func _on_enemy_killed() -> void:
     TransitionManager.play_sfx(&"enemy_kill")
-    var root := get_tree().get_root()
-    var _main_node := root.get_node_or_null("Main")
-    if _main_node and _main_node.has_method("on_enemy_killed_by_player"):
-        _main_node.call("on_enemy_killed_by_player")
+    var gm := _get_game_manager()
+    if gm and gm.has_method("on_enemy_killed_by_player"):
+        gm.call("on_enemy_killed_by_player")
     _spawn_coins()
 
 func _spawn_coins() -> void:
     if coin_scene == null:
         return
-    var _main_node := get_tree().get_root().get_node_or_null("Main")
+    var gm := _get_game_manager()
     var seg := "A"
-    if _main_node and _main_node.has_method("get_active_segment_name"):
-        var sn := str(_main_node.call("get_active_segment_name"))
+    if gm and gm.has_method("get_active_segment_name"):
+        var sn := str(gm.call("get_active_segment_name"))
         if sn.ends_with("B"):
             seg = "B"
     var rng := RandomNumberGenerator.new()
@@ -114,13 +125,15 @@ func _spawn_pickup(seg: String, rng: RandomNumberGenerator, is_gem: bool) -> voi
         pickup.set("amount", a)
         pickup.set("tint", enemy_gem_tint)
     var root := get_tree().get_root()
-    var main_node := root.get_node_or_null("Main")
-    if main_node:
-        main_node.add_child(pickup)
+    var main_scene := _get_main_scene()
+    if main_scene:
+        main_scene.add_child(pickup)
     else:
         root.add_child(pickup)
-    if main_node and main_node.has_method("on_coin_collected") and pickup.has_signal("collected"):
-        pickup.collected.connect(Callable(main_node, "on_coin_collected"))
+    var gm := _get_game_manager()
+    if gm and gm.has_method("on_coin_collected") and pickup.has_signal("collected"):
+        if not pickup.collected.is_connected(Callable(gm, "on_coin_collected")):
+            pickup.collected.connect(Callable(gm, "on_coin_collected"))
     var origin := global_position
     var hitbox_node := get_node_or_null("Hitbox") as Node2D
     if hitbox_node:
@@ -139,10 +152,9 @@ func _spawn_pickup(seg: String, rng: RandomNumberGenerator, is_gem: bool) -> voi
     pickup.global_position = origin + offset
 
 func _get_coin_scale_from_ground() -> float:
-    var root := get_tree().get_root()
-    var _main_node := root.get_node_or_null("Main")
-    if _main_node != null:
-        var ground := _main_node.get_node_or_null("Ground")
+    var main_scene := _get_main_scene()
+    if main_scene != null:
+        var ground := main_scene.get_node_or_null("Ground")
         if ground != null:
             if ground.has_method("get"):
                 var value = ground.get("coin_scale")

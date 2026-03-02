@@ -3,11 +3,11 @@ extends Area2D
 @export var damage_on_hit: int = 25
 
 func _try_consume_shield_hit() -> bool:
-    var _main_node := get_tree().get_root().get_node_or_null("Main")
-    if _main_node and _main_node.has_method("try_consume_shield_hit"):
-        return bool(_main_node.call("try_consume_shield_hit"))
-    if _main_node and _main_node.has_method("is_shield_active"):
-        return bool(_main_node.call("is_shield_active"))
+    var gm := get_tree().get_root().get_node_or_null("GameManager")
+    if gm and gm.has_method("try_consume_shield_hit"):
+        return bool(gm.call("try_consume_shield_hit"))
+    if gm and gm.has_method("is_shield_active"):
+        return bool(gm.call("is_shield_active"))
     return false
 
 func _ready() -> void:

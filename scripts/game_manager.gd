@@ -39,6 +39,7 @@ const SEASON_REWARDS: Dictionary = {
     9: {"type": "coins", "amount": 500},
     10: {"type": "gems", "amount": 20} # Special Level 10
 }
+
 var max_heart_bonus: int = 0
 var magnet_duration_multiplier: float = 1.0
 var shield_duration_multiplier: float = 1.0
@@ -72,16 +73,6 @@ const _SPEED_BOOST_PRE_RUN_MULTIPLIER: float = 1.5
 @export var watchdog_hang_seconds: float = 1.5
 @export var watchdog_print_interval_sec: float = 2.0
 @export var perf_log_to_file: bool = false
-
-@export_group("Powerups Base Settings")
-@export var powerup_magnet_duration_sec: float = 10.0
-@export var powerup_shield_duration_sec: float = 8.0
-@export var powerup_double_coins_duration_sec: float = 12.0
-@export var powerup_speed_boost_duration_sec: float = 5.0
-@export var powerup_speed_boost_multiplier: float = 1.8
-
-@export_group("Ads Settings")
-@export var ads_max_per_session: int = 3
 var magnet_enabled: bool = false
 var shield_enabled: bool = false
 var double_coins_run_active: bool = false
@@ -90,13 +81,14 @@ var speed_boost_timer: float = 0.0
 var speed_boost_multiplier: float = 1.0
 
 
+# Removed _bgm_fade_tween since it's unused
+
 var player: Player = null
 var anomaly: Node2D = null
 var terrain: Node2D = null
 var ground_a: Node2D = null
 var parallax: ParallaxBackground = null
 var canvas: CanvasLayer = null
-
 var debug_label: Label = null
 var spawn_status_label: Label = null
 var speed_info_label: Label = null
@@ -125,6 +117,7 @@ var _gameover_bgm_initialized: bool = false
 enum BgmMode { RUN, GAME_OVER }
 var _bgm_mode: BgmMode = BgmMode.RUN
 var _bgm_user_volume: float = 0.8
+var _bgm_base_db: float = 0.0
 var _bgm_duck_db: float = 0.0
 var _sfx_user_volume: float = 0.8
 const _RUN_BGM_OFFSET_DB: float = -2.0
@@ -133,10 +126,19 @@ var magnet_timer: float = 0.0
 var shield_timer: float = 0.0
 var _last_health_current: int = -1
 var _last_health_max: int = -1
+@export_group("Powerups Base Settings")
+@export var powerup_magnet_duration_sec: float = 30.0
+@export var powerup_shield_duration_sec: float = 10.0
+@export var powerup_double_coins_duration_sec: float = 10.0
+@export var powerup_speed_boost_duration_sec: float = 5.0
+@export var powerup_speed_boost_multiplier: float = 2.5
+@export var ads_enabled: bool = true
+@export_group("Ads Settings")
+@export var ads_max_per_session: int = 2
+@export var rewarded_continue_grace_sec: float = 5.0
 var ads_shown_count: int = 0
 var continue_grace_timer: float = 0.0
 var _carry_over_stats: Dictionary = {}
-
 var coin_hud_label: Label = null
 var gem_hud_label: Label = null
 var score_hud_label: Label = null
@@ -146,6 +148,7 @@ var missions_toast_text: Label = null
 var bgm_toast: Control = null
 var bgm_toast_text: Label = null
 var version_label: Label = null
+var countdown_label: Label = null
 var settings_button: Control = null
 var health_icon: Node2D = null
 var heart_spawn_label: Label = null
@@ -161,47 +164,6 @@ var double_coins_icon: TextureRect = null
 var double_coins_timer_label: Label = null
 var speed_boost_icon: TextureRect = null
 var speed_boost_timer_label: Label = null
-
-func register_game_nodes(nodes: Dictionary) -> void:
-    player = nodes.get("player")
-    anomaly = nodes.get("anomaly")
-    terrain = nodes.get("terrain")
-    ground_a = nodes.get("ground_a")
-    parallax = nodes.get("parallax")
-    canvas = nodes.get("canvas")
-
-    if player:
-        var go_cb := Callable(self, "on_player_game_over")
-        if not player.game_over_signal.is_connected(go_cb):
-            player.game_over_signal.connect(go_cb)
-        if _base_player_max_health < 0:
-            _base_player_max_health = int(player.max_health)
-
-    if canvas:
-        coin_hud_label = canvas.get_node_or_null("CoinHUD/Label")
-        gem_hud_label = canvas.get_node_or_null("GemHUD/Label")
-        score_hud_label = canvas.get_node_or_null("ScoreHUD/ScoreLabel")
-        health_bar = canvas.get_node_or_null("HealthBar")
-        missions_toast = canvas.get_node_or_null("MissionsToast")
-        missions_toast_text = canvas.get_node_or_null("MissionsToast/Text")
-        bgm_toast = canvas.get_node_or_null("BGMToast")
-        bgm_toast_text = canvas.get_node_or_null("BGMToast/Text")
-        version_label = canvas.get_node_or_null("VersionLabel")
-        settings_button = canvas.get_node_or_null("SettingsButton")
-        health_icon = canvas.get_node_or_null("HealthIcon")
-        heart_spawn_label = canvas.get_node_or_null("HeartSpawnLabel")
-        coin_hud = canvas.get_node_or_null("CoinHUD")
-        coin_icon_anim = canvas.get_node_or_null("CoinIconAnim")
-        score_hud = canvas.get_node_or_null("ScoreHUD")
-        gem_hud = canvas.get_node_or_null("GemHUD")
-        magnet_icon = canvas.get_node_or_null("MagnetIcon")
-        magnet_timer_label = canvas.get_node_or_null("MagnetTimerLabel")
-        shield_icon = canvas.get_node_or_null("ShieldIcon")
-        shield_timer_label = canvas.get_node_or_null("ShieldTimerLabel")
-        double_coins_icon = canvas.get_node_or_null("DoubleCoinsIcon")
-        double_coins_timer_label = canvas.get_node_or_null("DoubleCoinsTimerLabel")
-        speed_boost_icon = canvas.get_node_or_null("SpeedBoostIcon")
-        speed_boost_timer_label = canvas.get_node_or_null("SpeedBoostTimerLabel")
 @export var enemy_ramp_start_distance: float = 400.0
 @export var enemy_ramp_enabled: bool = true
 @export var countdown_duration_sec: float = 3.0
@@ -223,14 +185,6 @@ var _settings_menu_was_paused: bool = false
 
 func _ready() -> void:
     AdManager.move_banner(true) # Banner di atas untuk ingame
-    if missions_manager and missions_manager.has_signal("ready_to_claim_changed"):
-        var cb := Callable(self, "_on_missions_ready_to_claim_changed")
-        if not missions_manager.is_connected("ready_to_claim_changed", cb):
-            missions_manager.connect("ready_to_claim_changed", cb)
-    if missions_manager and missions_manager.has_signal("mission_became_ready"):
-        var cb2 := Callable(self, "_on_mission_became_ready")
-        if not missions_manager.is_connected("mission_became_ready", cb2):
-            missions_manager.connect("mission_became_ready", cb2)
     process_mode = Node.PROCESS_MODE_ALWAYS
     if _base_powerup_magnet_duration_sec < 0.0:
         _base_powerup_magnet_duration_sec = powerup_magnet_duration_sec
@@ -242,8 +196,9 @@ func _ready() -> void:
         _base_powerup_speed_boost_duration_sec = powerup_speed_boost_duration_sec
     if _base_powerup_speed_boost_multiplier < 0.0:
         _base_powerup_speed_boost_multiplier = powerup_speed_boost_multiplier
-    if _base_player_max_health < 0:
-        pass # Will be set in register_game_nodes
+
+    # Initial player state and signals handled via register_game_nodes()
+
     if OS.is_debug_build():
         if not InputMap.has_action("verify_scenes"):
             InputMap.add_action("verify_scenes")
@@ -256,6 +211,18 @@ func _ready() -> void:
             ev3.physical_keycode = KEY_F3
             InputMap.action_add_event("toggle_debug", ev3)
     _load_progress()
+
+    var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
+    if ui_font and canvas:
+        _apply_ui_font(canvas, ui_font)
+    _apply_ingame_hud_fonts()
+
+    # BGM rotation and play phase initialization moved to manual triggers to avoid
+    # early BGM start before LoadingScreen and MainMenu are ready.
+    # _init_bukit_bgm()
+    # _init_gameover_bgm()
+    # _start_bukit_bgm_rotation()
+    # call_deferred("_start_play_phase")
     if scene_verify_on_start and OS.is_debug_build():
         call_deferred("_verify_player_scenes")
     if OS.is_debug_build() and canvas and debug_label == null:
@@ -338,15 +305,99 @@ func _ready() -> void:
     _connect_mobile_buttons()
     _connect_viewport_resize()
 
-    if canvas:
-        var settings_btn := canvas.get_node_or_null("SettingsButton") as BaseButton
-        if settings_btn and settings_btn.has_signal("pressed"):
-            settings_btn.pressed.connect(_on_settings_button_pressed)
-        if missions_toast:
-            missions_toast.mouse_filter = Control.MOUSE_FILTER_STOP
-            var cb3 := Callable(self, "_on_missions_toast_gui_input")
-            if not missions_toast.gui_input.is_connected(cb3):
-                missions_toast.gui_input.connect(cb3)
+func register_game_nodes(nodes: Dictionary) -> void:
+    if nodes.has("player"):
+        player = nodes["player"]
+        if player:
+            if not player.game_over_signal.is_connected(on_player_game_over):
+                player.game_over_signal.connect(on_player_game_over)
+            if _base_player_max_health < 0:
+                _base_player_max_health = int(player.max_health)
+
+    if nodes.has("anomaly"):
+        anomaly = nodes["anomaly"]
+        if anomaly:
+            print("[GameManager] Anomaly node registered: ", anomaly.name)
+        else:
+            print("[GameManager] WARNING: Anomaly node in 'nodes' dictionary is NULL!")
+    if nodes.has("terrain"): terrain = nodes["terrain"]
+    if nodes.has("ground_a"):
+        ground_a = nodes["ground_a"]
+        if ground_a:
+            _ga_layer = ground_a.get_node_or_null("TileMapLayerA")
+            _gb_layer = ground_a.get_node_or_null("TileMapLayerB")
+
+    if nodes.has("parallax"): parallax = nodes["parallax"]
+    if nodes.has("canvas"):
+        canvas = nodes["canvas"]
+        if canvas:
+            _setup_ui_elements()
+            # Apply base UI font first, then re-apply bold HUD font so numbers stay readable.
+            var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
+            if ui_font:
+                _apply_ui_font(canvas, ui_font)
+            _apply_ingame_hud_fonts()
+            # Ensure HUD/mobile layout already uses final in-game layout during countdown (ENTRY).
+            _connect_mobile_buttons()
+
+    if player and canvas:
+        _start_play_phase()
+
+func _setup_ui_elements() -> void:
+    if not canvas: return
+
+    coin_hud_label = canvas.get_node_or_null("CoinHUD/Label")
+    gem_hud_label = canvas.get_node_or_null("GemHUD/Label")
+    score_hud_label = canvas.get_node_or_null("ScoreHUD/ScoreLabel")
+    countdown_label = canvas.get_node_or_null("CountdownLabel")
+    if countdown_label:
+        print("[GameManager] CountdownLabel found in canvas")
+        # Ensure it's correctly layered and centered
+        countdown_label.z_index = 500
+        countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        countdown_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+        countdown_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+        countdown_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        countdown_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+        countdown_label.add_theme_font_size_override("font_size", 128)
+        # Force it to be hidden initially
+        countdown_label.visible = false
+    else:
+        print("[GameManager] ERROR: CountdownLabel NOT found in canvas!")
+    health_bar = canvas.get_node_or_null("HealthBar")
+    missions_toast = canvas.get_node_or_null("MissionsToast")
+    missions_toast_text = canvas.get_node_or_null("MissionsToast/Text")
+    bgm_toast = canvas.get_node_or_null("BGMToast")
+    bgm_toast_text = canvas.get_node_or_null("BGMToast/Text")
+    version_label = canvas.get_node_or_null("VersionLabel")
+    settings_button = canvas.get_node_or_null("SettingsButton")
+    health_icon = canvas.get_node_or_null("HealthIcon")
+    heart_spawn_label = canvas.get_node_or_null("HeartSpawnLabel")
+    coin_hud = canvas.get_node_or_null("CoinHUD")
+    coin_icon_anim = canvas.get_node_or_null("CoinIconAnim")
+    score_hud = canvas.get_node_or_null("ScoreHUD")
+    gem_hud = canvas.get_node_or_null("GemHUD")
+    magnet_icon = canvas.get_node_or_null("MagnetIcon")
+    magnet_timer_label = canvas.get_node_or_null("MagnetTimerLabel")
+    shield_icon = canvas.get_node_or_null("ShieldIcon")
+    shield_timer_label = canvas.get_node_or_null("ShieldTimerLabel")
+    double_coins_icon = canvas.get_node_or_null("DoubleCoinsIcon")
+    double_coins_timer_label = canvas.get_node_or_null("DoubleCoinsTimerLabel")
+    speed_boost_icon = canvas.get_node_or_null("SpeedBoostIcon")
+    speed_boost_timer_label = canvas.get_node_or_null("SpeedBoostTimerLabel")
+
+    var gom := canvas.get_node_or_null("GameOverMenu")
+    if gom: gom.visible = false
+
+    if settings_button and settings_button is BaseButton:
+        if not settings_button.pressed.is_connected(_on_settings_button_pressed):
+            settings_button.pressed.connect(_on_settings_button_pressed)
+
+    if missions_toast:
+        missions_toast.mouse_filter = Control.MOUSE_FILTER_STOP
+        var cb3 := Callable(self, "_on_missions_toast_gui_input")
+        if not missions_toast.gui_input.is_connected(cb3):
+            missions_toast.gui_input.connect(cb3)
 
     if missions_manager and missions_manager.has_signal("ready_to_claim_changed"):
         var cb := Callable(self, "_on_ready_to_claim_changed")
@@ -367,6 +418,38 @@ func _apply_ui_font(node: Node, font: Font) -> void:
     for child: Node in node.get_children():
         if child:
             _apply_ui_font(child, font)
+
+
+func _apply_ingame_hud_fonts() -> void:
+    var title_font := load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf") as Font
+    if not title_font:
+        return
+    _apply_shop_number_font(coin_hud_label, title_font)
+    _apply_shop_number_font(gem_hud_label, title_font)
+    _apply_shop_number_font(score_hud_label, title_font)
+    _apply_shop_number_font(magnet_timer_label, title_font)
+    _apply_shop_number_font(shield_timer_label, title_font)
+    _apply_shop_number_font(double_coins_timer_label, title_font)
+    _apply_shop_number_font(speed_boost_timer_label, title_font)
+    if coin_hud_label:
+        coin_hud_label.add_theme_font_size_override("font_size", 34)
+    if gem_hud_label:
+        gem_hud_label.add_theme_font_size_override("font_size", 34)
+    if score_hud_label:
+        score_hud_label.add_theme_font_size_override("font_size", 34)
+    if magnet_timer_label:
+        magnet_timer_label.add_theme_font_size_override("font_size", 25)
+    if shield_timer_label:
+        shield_timer_label.add_theme_font_size_override("font_size", 25)
+    if double_coins_timer_label:
+        double_coins_timer_label.add_theme_font_size_override("font_size", 25)
+    if speed_boost_timer_label:
+        speed_boost_timer_label.add_theme_font_size_override("font_size", 25)
+    if countdown_label:
+        countdown_label.add_theme_font_override("font", title_font)
+        countdown_label.add_theme_font_size_override("font_size", 136)
+        countdown_label.add_theme_constant_override("outline_size", 6)
+        countdown_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 
 
 func _apply_shop_number_font(lbl: Label, title_font: Font) -> void:
@@ -541,44 +624,33 @@ func _on_missions_toast_gui_input(event: InputEvent) -> void:
 
 
 func _init_bukit_bgm() -> void:
+    _bukit_bgm_paths.clear()
+    var dir := DirAccess.open(_BUKIT_BGM_DIR)
+    if dir:
+        dir.list_dir_begin()
+        var file := dir.get_next()
+        while file != "":
+            if not dir.current_is_dir() and file.begins_with(_BUKIT_BGM_PREFIX) and (file.ends_with(".mp3") or file.ends_with(".ogg") or file.ends_with(".wav")):
+                _bukit_bgm_paths.append(_BUKIT_BGM_DIR + "/" + file)
+            file = dir.get_next()
+        dir.list_dir_end()
+    _bukit_bgm_paths.sort()
     _bukit_bgm_initialized = true
 
+
 func _init_gameover_bgm() -> void:
-    _gameover_bgm_initialized = true
-
-
-func _load_gameover_bgm_paths() -> Array[String]:
-    var out: Array[String] = []
+    _gameover_bgm_paths.clear()
     var dir := DirAccess.open(_GAMEOVER_BGM_DIR)
-    if dir == null:
-        return out
-    var files := dir.get_files()
-    for f in files:
-        var fs := String(f)
-        var lower := fs.to_lower()
-        var actual_file := lower
-        if actual_file.ends_with(".remap"):
-            actual_file = actual_file.trim_suffix(".remap")
-        elif actual_file.ends_with(".import"):
-            actual_file = actual_file.trim_suffix(".import")
-
-        if not actual_file.ends_with(".mp3"):
-            continue
-
-        var clean_fs := fs
-        if fs.to_lower().ends_with(".remap"):
-            clean_fs = fs.left(-6)
-        elif fs.to_lower().ends_with(".import"):
-            clean_fs = fs.left(-7)
-
-        if not clean_fs.begins_with(_GAMEOVER_BGM_PREFIX):
-            continue
-
-        var full_path := _GAMEOVER_BGM_DIR + "/" + clean_fs
-        if not out.has(full_path):
-            out.append(full_path)
-    out.sort()
-    return out
+    if dir:
+        dir.list_dir_begin()
+        var file := dir.get_next()
+        while file != "":
+            if not dir.current_is_dir() and file.begins_with(_GAMEOVER_BGM_PREFIX) and (file.ends_with(".mp3") or file.ends_with(".ogg") or file.ends_with(".wav")):
+                _gameover_bgm_paths.append(_GAMEOVER_BGM_DIR + "/" + file)
+            file = dir.get_next()
+        dir.list_dir_end()
+    _gameover_bgm_paths.sort()
+    _gameover_bgm_initialized = true
 
 
 func _consume_next_gameover_bgm_index(size: int) -> int:
@@ -625,40 +697,6 @@ func _on_gameover_bgm_finished() -> void:
     _play_game_over_bgm()
 
 
-func _load_bukit_bgm_paths() -> Array[String]:
-    var out: Array[String] = []
-    var dir := DirAccess.open(_BUKIT_BGM_DIR)
-    if dir == null:
-        return out
-    var files := dir.get_files()
-    for f in files:
-        var fs := String(f)
-        var lower := fs.to_lower()
-        var actual_file := lower
-        if actual_file.ends_with(".remap"):
-            actual_file = actual_file.trim_suffix(".remap")
-        elif actual_file.ends_with(".import"):
-            actual_file = actual_file.trim_suffix(".import")
-
-        if not actual_file.ends_with(".mp3"):
-            continue
-
-        var clean_fs := fs
-        if fs.to_lower().ends_with(".remap"):
-            clean_fs = fs.left(-6)
-        elif fs.to_lower().ends_with(".import"):
-            clean_fs = fs.left(-7)
-
-        if not clean_fs.begins_with(_BUKIT_BGM_PREFIX):
-            continue
-
-        var full_path := _BUKIT_BGM_DIR + "/" + clean_fs
-        if not out.has(full_path):
-            out.append(full_path)
-    out.sort()
-    return out
-
-
 func _consume_next_bukit_bgm_index(size: int) -> int:
     if size <= 0:
         return 0
@@ -682,29 +720,25 @@ func _save_bukit_bgm_index(i: int) -> void:
     cfg.save("user://save.cfg")
 
 
+func _play_bukit_bgm_index(i: int) -> void:
+    if _bukit_bgm_paths.is_empty():
+        return
+    _bukit_bgm_index = clampi(i, 0, _bukit_bgm_paths.size() - 1)
+    var path := _bukit_bgm_paths[_bukit_bgm_index]
+    if TransitionManager:
+        TransitionManager.play_bgm(path)
+        _show_bgm_toast(_format_track_name(path))
+
+
 func _start_bukit_bgm_rotation() -> void:
+    if TransitionManager and TransitionManager.has_method("stop_bgm"):
+        TransitionManager.stop_bgm()
+
     _init_bukit_bgm()
     if _bukit_bgm_paths.is_empty():
         return
-
-    if TransitionManager and TransitionManager.has_method("play_playlist"):
-        _bukit_bgm_index = _consume_next_bukit_bgm_index(_bukit_bgm_paths.size())
-        TransitionManager.play_playlist(_bukit_bgm_paths, _bukit_bgm_index)
-        _show_bgm_toast(_format_track_name(_bukit_bgm_paths[_bukit_bgm_index]))
-
-        # Connect signal untuk update toast saat track berubah di playlist
-        if TransitionManager.has_signal("bgm_index_changed"):
-            var cb := Callable(self, "_on_transition_bgm_index_changed")
-            if not TransitionManager.is_connected("bgm_index_changed", cb):
-                TransitionManager.connect("bgm_index_changed", cb)
-
-func _on_transition_bgm_index_changed(index: int) -> void:
-    if phase != Phase.PLAYING:
-        return
-    _bukit_bgm_index = index
-    _save_bukit_bgm_index(_bukit_bgm_index)
-    if _bukit_bgm_index >= 0 and _bukit_bgm_index < _bukit_bgm_paths.size():
-        _show_bgm_toast(_format_track_name(_bukit_bgm_paths[_bukit_bgm_index]))
+    _bukit_bgm_index = _consume_next_bukit_bgm_index(_bukit_bgm_paths.size())
+    _play_bukit_bgm_index(_bukit_bgm_index)
 
 func update_player_cosmetics() -> void:
     if player and player.has_method("update_cosmetics"):
@@ -718,6 +752,18 @@ func update_ui_border(border_id: String) -> void:
     var avatar_icon = get_node_or_null("CanvasLayer/UI/AvatarIcon")
     if avatar_icon and player and player.has_method("_apply_border_to_icon"):
         player._apply_border_to_icon(avatar_icon, border_id)
+
+
+func _on_bukit_bgm_finished() -> void:
+    if phase != Phase.PLAYING:
+        return
+    if bgm_muted:
+        return
+    if _bukit_bgm_paths.is_empty():
+        return
+    _bukit_bgm_index = (_bukit_bgm_index + 1) % _bukit_bgm_paths.size()
+    _save_bukit_bgm_index(_bukit_bgm_index)
+    _play_bukit_bgm_index(_bukit_bgm_index)
 
 
 func _show_bgm_toast(title: String) -> void:
@@ -901,10 +947,10 @@ func _update_mobile_controls_layout(force: bool) -> void:
     _update_safe_ui_layout(safe, vp)
 
     if _jump_button != null and _attack_button != null:
-        # Config Layout Baru (Lebih naik & ke tengah)
-        var margin_right: float = 80.0
-        var margin_bottom: float = 60.0
-        var spacing: float = 32.0
+        # Config Layout Baru (Lebih seimbang & nyaman untuk jempol)
+        var margin_right: float = 78.0
+        var margin_bottom: float = 90.0
+        var spacing: float = 40.0
 
         var jt := _jump_button.texture_normal
         var at := _attack_button.texture_normal
@@ -914,27 +960,27 @@ func _update_mobile_controls_layout(force: bool) -> void:
         var asz := at.get_size() if at != null else Vector2(96, 96)
 
         # Perbesar tombol (Scale Up)
-        var button_scale: float = 1.3
+        var button_scale: float = 1.25
         _jump_button.scale = Vector2(button_scale, button_scale)
         _attack_button.scale = Vector2(button_scale, button_scale)
 
-        # Transparansi agar tidak menghalangi pandangan (50% Opacity)
-        _jump_button.modulate.a = 0.5
-        _attack_button.modulate.a = 0.5
+        # Transparansi agar tidak menghalangi pandangan (60% Opacity)
+        _jump_button.modulate.a = 0.6
+        _attack_button.modulate.a = 0.6
 
         # Hitung ukuran efektif setelah di-scale
         var js_scaled := js * button_scale
         var asz_scaled := asz * button_scale
 
         # Log posisi untuk debugging
-        # Jump Button: Posisi acuan (Kanan Atas dari cluster tombol)
+        # Jump Button: Posisi utama (Kanan)
         var jump_pos := Vector2(
             safe.position.x + safe.size.x - margin_right - js_scaled.x,
             safe.position.y + safe.size.y - margin_bottom - js_scaled.y
         )
 
-        # Attack Button: Sebelah kiri Jump, sedikit turun (formasi arc natural jempol)
-        var attack_y_offset: float = 40.0
+        # Attack Button: Sebelah kiri Jump, sedikit lebih rendah (arc natural)
+        var attack_y_offset: float = 20.0
         var attack_pos := Vector2(
             jump_pos.x - spacing - asz_scaled.x,
             jump_pos.y + attack_y_offset
@@ -965,6 +1011,7 @@ func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
     # Hapus pengaturan settings_button di sini karena dipindah ke bawah (RIGHT GROUP) agar logic-nya menyatu
 
     if version_label:
+        version_label.text = "v" + str(ProjectSettings.get_setting("application/config/version"))
         version_label.offset_top = -32.0 - inset_bottom
         version_label.offset_bottom = -8.0 - inset_bottom
 
@@ -988,7 +1035,9 @@ func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
     var rx := safe.position.x + safe.size.x
 
     # HUD Scaling (Kembalikan ke ukuran yang lebih wajar tapi tetap compact)
-    var hud_scale := Vector2(0.85, 0.85)
+    var left_hud_scale := Vector2(0.92, 0.92)
+    var right_hud_scale := Vector2(0.98, 0.98)
+    var powerup_icon_scale := Vector2(1.15, 1.15)
 
     # LEFT GROUP (Health & Coin)
     if health_icon:
@@ -999,12 +1048,12 @@ func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
         heart_spawn_label.position = Vector2(sx + 248.0, sy + 12.0)
 
     if coin_hud:
-        coin_hud.scale = hud_scale
+        coin_hud.scale = left_hud_scale
         # Geser text lebih ke kanan agar tidak menumpuk dengan icon
         coin_hud.position = Vector2(sx + 60.0, sy + 64.0)
     if coin_icon_anim:
         # Perbesar sedikit icon dan geser agar tidak terlalu mepet kiri
-        coin_icon_anim.scale = Vector2(0.25, 0.25)
+        coin_icon_anim.scale = Vector2(0.28, 0.28)
         coin_icon_anim.position = Vector2(sx + 25.0, sy + 76.0)
 
     # RIGHT GROUP (Score, Gem, Settings)
@@ -1020,33 +1069,37 @@ func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
         settings_button.offset_bottom = 72.0 + inset_top_hud
 
     # Score & Gem di sebelah kiri Settings Button
-    var right_hud_margin := 90.0 # Space untuk settings button
+    var right_hud_margin := 96.0 # Space untuk settings button
 
     if score_hud:
-        score_hud.scale = hud_scale
+        score_hud.scale = right_hud_scale
         # Posisi X: Kanan layar - Margin Settings - Lebar estimasi Score
         score_hud.position = Vector2(rx - right_hud_margin - 140.0, sy + 20.0)
 
     if gem_hud:
-        gem_hud.scale = hud_scale
+        gem_hud.scale = right_hud_scale
         gem_hud.position = Vector2(rx - right_hud_margin - 140.0, sy + 55.0)
 
     var icon_x := sx + 16.0
-    var label_x := sx + 56.0
+    var label_x := sx + 60.0
 
     if magnet_icon:
+        magnet_icon.scale = powerup_icon_scale
         magnet_icon.position = Vector2(icon_x, sy + 96.0)
     if magnet_timer_label:
         magnet_timer_label.position = Vector2(label_x, sy + 96.0)
     if shield_icon:
+        shield_icon.scale = powerup_icon_scale
         shield_icon.position = Vector2(icon_x, sy + 128.0)
     if shield_timer_label:
         shield_timer_label.position = Vector2(label_x, sy + 128.0)
     if double_coins_icon:
+        double_coins_icon.scale = powerup_icon_scale
         double_coins_icon.position = Vector2(icon_x, sy + 160.0)
     if double_coins_timer_label:
         double_coins_timer_label.position = Vector2(label_x, sy + 160.0)
     if speed_boost_icon:
+        speed_boost_icon.scale = powerup_icon_scale
         speed_boost_icon.position = Vector2(icon_x, sy + 192.0)
     if speed_boost_timer_label:
         speed_boost_timer_label.position = Vector2(label_x, sy + 192.0)
@@ -1104,20 +1157,26 @@ func _wire_settings_menu_signals(settings_menu: Node) -> void:
 func _process(delta: float) -> void:
     if not is_inside_tree():
         return
-    if countdown_active and game_active:
-        var lbl := canvas.get_node_or_null("CountdownLabel") if canvas else null
+    if countdown_active:
         countdown_timer = max(countdown_timer - delta, 0.0)
-        if lbl and lbl is Label:
+        if countdown_label:
             var t := int(ceil(countdown_timer))
             if countdown_timer <= 0.0:
-                (lbl as Label).visible = false
+                countdown_label.visible = false
+                print("[GameManager] Countdown ended, label hidden")
             elif t > 0:
-                (lbl as Label).visible = true
-                (lbl as Label).text = str(t)
+                countdown_label.visible = true
+                countdown_label.text = str(t)
+                # print("[GameManager] Countdown: ", t) # Too much noise if we print every frame
         if countdown_timer <= 0.0:
             countdown_active = false
-            if phase == Phase.ENTRY and entry_finished:
-                set_playing_phase()
+            print("[GameManager] Countdown timer hit 0. entry_finished: ", entry_finished)
+            if phase == Phase.ENTRY:
+                if entry_finished:
+                    print("[GameManager] Both countdown and entry finished, starting play phase")
+                    set_playing_phase()
+                else:
+                    print("[GameManager] Countdown finished but waiting for entry...")
 
     var magnet_was_enabled: bool = magnet_enabled
     var shield_was_enabled: bool = shield_enabled
@@ -1518,11 +1577,15 @@ func _on_settings_overlay_closed() -> void:
 func try_rewarded_continue() -> void:
     if ads_shown_count >= ads_max_per_session:
         print("[GameManager] Max ads reached, cannot continue.")
+        _enqueue_missions_toast(tr("Jatah lanjut via iklan sudah habis."))
         return
     var adm = AdManager
     if adm and adm.has_method("show_rewarded"):
         if adm.has_method("is_rewarded_available") and not adm.is_rewarded_available():
             print("[GameManager] Rewarded ad not available.")
+            if adm.has_method("load_rewarded"):
+                adm.call("load_rewarded")
+            _enqueue_missions_toast(tr("Iklan belum siap. Coba lagi sebentar."))
             return
         if adm.has_signal("reward_granted"):
             var cb := Callable(self, "_on_reward_granted")
@@ -1533,6 +1596,7 @@ func try_rewarded_continue() -> void:
         adm.show_rewarded("continue")
     else:
         print("[GameManager] AdManager not found or missing method.")
+        _enqueue_missions_toast(tr("AdManager tidak tersedia."))
 
 func _on_reward_granted(reason: String) -> void:
     print("[GameManager] _on_reward_granted called with reason: ", reason)
@@ -1571,18 +1635,34 @@ func grant_continue() -> void:
 
 func set_bgm_volume(v: float) -> void:
     _bgm_user_volume = clampf(v, 0.0, 1.0)
+    _bgm_base_db = (-60.0 if _bgm_user_volume <= 0.0 else 20.0 * log(_bgm_user_volume) / log(10.0))
     if TransitionManager and TransitionManager.has_method("set_bgm_volume"):
         TransitionManager.set_bgm_volume(_bgm_user_volume)
-    _save_progress()
+    _apply_bgm_mix()
 
 func duck_bgm(reduction_db: float = 6.0, duration_sec: float = 0.22) -> void:
     if bgm_muted:
         return
-    if TransitionManager and TransitionManager.has_method("duck_bgm"):
-        TransitionManager.duck_bgm(reduction_db, duration_sec)
+    if _bgm_mode != BgmMode.RUN:
+        return
+    var d := -absf(reduction_db)
+    _bgm_duck_db = minf(_bgm_duck_db, d)
+    _apply_bgm_mix()
+    if _bgm_duck_tween and _bgm_duck_tween.is_running():
+        _bgm_duck_tween.kill()
+    var dur: float = maxf(duration_sec, 0.02)
+    _bgm_duck_tween = create_tween()
+    _bgm_duck_tween.tween_method(func(v2: float) -> void:
+        _bgm_duck_db = v2
+        _apply_bgm_mix()
+    , _bgm_duck_db, 0.0, dur)
 
 func _apply_bgm_mix() -> void:
-    pass
+    var bgm := get_node_or_null("BGM") as AudioStreamPlayer
+    if bgm == null:
+        return
+    var mode_offset := (_RUN_BGM_OFFSET_DB if _bgm_mode == BgmMode.RUN else 0.0)
+    bgm.volume_db = (-60.0 if bgm_muted else (_bgm_base_db + mode_offset + _bgm_duck_db))
 
 func set_sfx_volume(v: float) -> void:
     _sfx_user_volume = clampf(v, 0.0, 1.0)
@@ -1597,6 +1677,14 @@ func set_bgm_muted(m: bool) -> void:
     bgm_muted = m
     if TransitionManager and TransitionManager.has_method("set_bgm_muted"):
         TransitionManager.set_bgm_muted(m)
+    var bgm := get_node_or_null("BGM")
+    if bgm and bgm is AudioStreamPlayer:
+        if m:
+            (bgm as AudioStreamPlayer).stop()
+        else:
+            if (bgm as AudioStreamPlayer).stream != null:
+                (bgm as AudioStreamPlayer).play()
+    _apply_bgm_mix()
     _save_progress()
 
 func set_sfx_muted(m: bool) -> void:
@@ -1873,17 +1961,19 @@ func _ensure_hearts_for_low_health() -> void:
     if _last_health_current >= _last_health_max:
         return
 
-    if OS.is_debug_build():
-        print("[GameManager] Low health detected: %d/%d. Checking for hearts..." % [_last_health_current, _last_health_max])
+    if OS.is_debug_build() and _last_health_current < _last_health_max:
+        # Reduced logging for health checks
+        if int(Time.get_ticks_msec() / 1000.0) % 10 == 0:
+            print("[GameManager] Low health check: %d/%d" % [_last_health_current, _last_health_max])
 
     if _has_any_heart_on_ground():
-        if OS.is_debug_build():
+        if OS.is_debug_build() and int(Time.get_ticks_msec() / 1000.0) % 15 == 0:
             var d: float = _get_nearest_heart_distance_px()
-            print("[GameManager] Heart found ahead at distance: %.2f px. Skipping spawn." % d)
+            print("[GameManager] Heart exists ahead (%.2f px)" % d)
         return
 
     if OS.is_debug_build():
-        print("[GameManager] No heart found ahead. Requesting emergency spawn...")
+        print("[GameManager] Emergency heart spawn requested.")
 
     if not ground_a.has_method("request_emergency_heart"):
         return
@@ -1958,12 +2048,18 @@ func _apply_enemy_ramp_if_needed() -> void:
 
 
 func set_playing_phase() -> void:
+    print("[GameManager] Switching to PLAYING phase")
     phase = Phase.PLAYING
     game_active = true
     _bgm_mode = BgmMode.RUN
     _bgm_duck_db = 0.0
     _apply_spawn_safety_limits()
     _update_mobile_controls_layout(true)
+
+    # Visual transition into playing phase
+    if TransitionManager and TransitionManager.has_method("fade_in"):
+        TransitionManager.fade_in(0.3)
+
     if ground_a and ground_a.has_method("set_speed_limits"):
         var max_with_boost: float = max_speed
         if powerup_speed_boost_multiplier > 1.0:
@@ -1990,10 +2086,23 @@ func set_playing_phase() -> void:
         parallax.set_speed(p_speed)
 
     _start_bukit_bgm_rotation()
+
+    if anomaly == null:
+        print("[GameManager] Anomaly null in set_playing_phase, attempting to find manually...")
+        anomaly = get_tree().get_first_node_in_group("anomaly")
+        if anomaly == null:
+            # Try to find by name in the current scene
+            var root = get_tree().current_scene
+            if root:
+                anomaly = root.get_node_or_null("AnomalyChaser")
+
     if anomaly:
+        print("[GameManager] Anomaly found, starting appearance")
         if anomaly.has_method("start_appear"):
             anomaly.start_appear()
         anomaly.show()
+    else:
+        push_error("[GameManager] ERROR: Anomaly node is null in set_playing_phase")
     if canvas:
         var pm2 := canvas.get_node_or_null("PauseMenu")
         if pm2:
@@ -2003,129 +2112,13 @@ func set_playing_phase() -> void:
             gom2.visible = false
 
 
-func _apply_powerups_for_new_run() -> void:
-    if powerups_data.is_empty():
-        shield_hit_charges_run = 0
-    else:
-        shield_hit_charges_run = int(powerups_data.get("shield_1hit_charges", 0))
-
-    var changed := false
-    var double_tokens: int = int(powerups_data.get("double_coins_run_tokens", 0))
-    if double_tokens > 0:
-        activate_double_coins_run()
-        powerups_data["double_coins_run_tokens"] = max(double_tokens - 1, 0)
-        changed = true
-
-    # 4. Magnet Run (Pre-active)
-    var magnet_run_tokens: int = int(powerups_data.get("magnet_30s_tokens", 0))
-    if magnet_run_tokens > 0:
-        powerup_magnet_duration_sec = _base_powerup_magnet_duration_sec * max(magnet_duration_multiplier, 0.1)
-        magnet_timer = powerup_magnet_duration_sec
-        magnet_enabled = true
-        powerups_data["magnet_30s_tokens"] = max(magnet_run_tokens - 1, 0)
-        changed = true
-
-    # 5. Speed Boost Run (Pre-active)
-    var speed_boost_tokens: int = int(powerups_data.get("speed_boost_tokens", 0))
-    if speed_boost_tokens > 0:
-        var dur_mul: float = max(speed_boost_duration_multiplier, 0.1)
-        var mul_mul: float = max(speed_boost_multiplier_multiplier, 0.1)
-        speed_boost_timer = _SPEED_BOOST_PRE_RUN_DURATION_SEC * dur_mul
-        speed_boost_multiplier = max(_SPEED_BOOST_PRE_RUN_MULTIPLIER * mul_mul, 1.0)
-        powerups_data["speed_boost_tokens"] = max(speed_boost_tokens - 1, 0)
-        changed = true
-
-    if player and player is Player:
-        var p := player as Player
-        var base_max: int = (_base_player_max_health if _base_player_max_health > 0 else int(p.max_health))
-        var effective_max: int = base_max + max_heart_bonus
-        p.max_health = effective_max
-        p.starting_health = effective_max
-        p.current_health = effective_max
-
-        set_player_health(effective_max, effective_max)
-
-    powerup_magnet_duration_sec = _base_powerup_magnet_duration_sec * max(magnet_duration_multiplier, 0.1)
-    powerup_shield_duration_sec = _base_powerup_shield_duration_sec * max(shield_duration_multiplier, 0.1)
-    if _base_powerup_double_coins_duration_sec < 0.0:
-        _base_powerup_double_coins_duration_sec = powerup_double_coins_duration_sec
-    if _base_powerup_speed_boost_duration_sec < 0.0:
-        _base_powerup_speed_boost_duration_sec = powerup_speed_boost_duration_sec
-    if _base_powerup_speed_boost_multiplier < 0.0:
-        _base_powerup_speed_boost_multiplier = powerup_speed_boost_multiplier
-    powerup_double_coins_duration_sec = _base_powerup_double_coins_duration_sec * max(double_coins_duration_multiplier, 0.1)
-    powerup_speed_boost_duration_sec = _base_powerup_speed_boost_duration_sec * max(speed_boost_duration_multiplier, 0.1)
-    powerup_speed_boost_multiplier = _base_powerup_speed_boost_multiplier * max(speed_boost_multiplier_multiplier, 0.1)
-    if changed:
-        _save_progress()
-
-
-func on_player_entry_finished() -> void:
-    if phase != Phase.ENTRY:
-        return
-    entry_finished = true
-    if not countdown_active:
-        set_playing_phase()
-
-func on_player_game_over(_cause: String) -> void:
-    if phase == Phase.GAME_OVER:
-        return
-    phase = Phase.GAME_OVER
-    game_active = false
-    if _jump_button: _jump_button.visible = false
-    if _attack_button: _attack_button.visible = false
-    TransitionManager.play_sfx(&"game_over")
-    if terrain and terrain.has_method("set_movement_enabled"):
-        terrain.set_movement_enabled(false)
-    if ground_a and ground_a.has_method("set_movement_enabled"):
-        ground_a.set_movement_enabled(false)
-    if ground_a and ground_a.has_method("set_speed"):
-        ground_a.set_speed(0.0)
-
-    last_score = score
-    last_coins = coin_collected_a + coin_collected_b
-    last_gems = gem_collected_a + gem_collected_b
-    total_coins += last_coins
-    total_gems += last_gems
-    var xp_gain_from_distance: int = int(distance * xp_per_meter)
-    var xp_gain_from_coins: int = int(float(last_coins) * xp_per_coin)
-    var xp_gain: int = xp_gain_from_distance + xp_gain_from_coins
-    if xp_gain > 0:
-        _apply_xp_gain(xp_gain)
-    if missions_manager and missions_manager.has_method("update_distance"):
-        missions_manager.update_distance(distance)
-    if missions_manager and missions_manager.has_method("add_run_played"):
-        missions_manager.add_run_played()
-    if score > best_score:
-        best_score = score
-    _save_progress()
-    _play_game_over_bgm()
-    if anomaly:
-        anomaly.hide()
-
-    if parallax and parallax.has_method("set_speed"):
-        parallax.set_speed(0.0)
-    if debug_label != null:
-        debug_label.visible = false
-    if canvas:
-        var gom := canvas.get_node_or_null("GameOverMenu")
-        if gom and gom.has_method("show_game_over"):
-            gom.show_game_over(score, distance)
-
 func _play_game_over_bgm() -> void:
     _bgm_mode = BgmMode.GAME_OVER
-    _bgm_duck_db = 0.0
-    if _bgm_duck_tween and _bgm_duck_tween.is_running():
-        _bgm_duck_tween.kill()
-    if bgm_muted:
-        return
-
     var path: String = _pick_gameover_bgm_path()
     if path.is_empty():
         return
-
-    if TransitionManager and TransitionManager.has_method("play_bgm"):
-        TransitionManager.play_bgm(path)
+    if TransitionManager:
+        TransitionManager.play_bgm(path, 0.4) # Slightly faster fade for game over
 
 func restart_game() -> void:
     get_tree().paused = false
@@ -2277,7 +2270,7 @@ func _load_progress() -> void:
             if item is Dictionary:
                 pending_level_rewards.append(item)
     else:
-        pending_level_rewards = []
+        pending_level_rewards.clear()
 
     # Load equipped cosmetics
     var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
@@ -2334,19 +2327,20 @@ func _apply_xp_gain(amount: int) -> void:
         player_level += 1
         player_xp_required = _calculate_xp_required(player_level)
     if player_level > old_level:
-        var new_rewards: Array = _get_pending_level_rewards_for_range(old_level, player_level)
+        var new_rewards: Array[Dictionary] = _get_pending_level_rewards_for_range(old_level, player_level)
         if new_rewards.size() > 0:
-            var merged: Array = []
+            var merged: Array[Dictionary] = []
             for r in pending_level_rewards:
-                merged.append(r)
+                if r is Dictionary:
+                    merged.append(r)
             for r2 in new_rewards:
                 if not merged.has(r2):
                     merged.append(r2)
             pending_level_rewards = merged
 
 
-func _get_pending_level_rewards_for_range(old_level: int, new_level: int) -> Array:
-    var result: Array = []
+func _get_pending_level_rewards_for_range(old_level: int, new_level: int) -> Array[Dictionary]:
+    var result: Array[Dictionary] = []
     if new_level <= old_level:
         return result
     for lvl in range(old_level + 1, new_level + 1):
@@ -2436,6 +2430,8 @@ func claim_all_pending_rewards() -> Dictionary:
         main_menu.call("_update_reward_icon")
 
     return total_claimed
+
+
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -2544,12 +2540,30 @@ func set_player_health(current: int, maximum: int) -> void:
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return
+
+    # Wait for a frame to ensure all nodes in the new scene are fully ready and rendered
+    await get_tree().process_frame
+
     get_tree().paused = false
+
+    print("[GameManager] Starting play phase (ENTRY sequence). Anomaly: ", anomaly)
+    if anomaly == null:
+        anomaly = get_tree().get_first_node_in_group("anomaly")
+        if anomaly:
+            print("[GameManager] Found anomaly via group in _start_play_phase: ", anomaly.name)
+
+    # Ensure any previous BGM is stopped before starting a new run
+    if TransitionManager and TransitionManager.has_method("stop_bgm"):
+        TransitionManager.stop_bgm()
+
     phase = Phase.ENTRY
     game_active = true
     _bgm_mode = BgmMode.RUN
     _bgm_duck_db = 0.0
     distance = 0.0
+    # Keep HUD style/layout identical between countdown and post-countdown.
+    _apply_ingame_hud_fonts()
+    _update_mobile_controls_layout(true)
 
     score = 0
     _score_offset = 0
@@ -2583,11 +2597,26 @@ func _start_play_phase() -> void:
     shield_timer = 0.0
     double_coins_run_active = false
     double_coins_timer = 0.0
-    double_coins_run_active = false
     _last_health_current = -1
     _last_health_max = -1
+    countdown_duration_sec = 3.0
     countdown_active = true
     countdown_timer = countdown_duration_sec
+    print("[GameManager] Starting play phase, countdown active: ", countdown_active, " timer: ", countdown_timer)
+    if countdown_label:
+        countdown_label.visible = true
+        countdown_label.text = str(int(ceil(countdown_timer)))
+        print("[GameManager] CountdownLabel set visible, text: ", countdown_label.text)
+    else:
+        print("[GameManager] ERROR: countdown_label is null in _start_play_phase")
+    if anomaly:
+        print("[GameManager] Starting anomaly appearance early in ENTRY phase")
+        if anomaly.has_method("start_appear"):
+            anomaly.start_appear()
+        anomaly.show()
+    else:
+        print("[GameManager] WARNING: Anomaly not available for early appearance")
+
     entry_finished = false
     _missions_completed_type_toasted.clear()
     _apply_powerups_for_new_run()
@@ -2597,7 +2626,16 @@ func _start_play_phase() -> void:
         elif ground_a.has_method("_run_generate_now"):
             ground_a.call("_run_generate_now", true, true)
     if player and player.has_method("reset_player"):
+        print("[GameManager] Resetting player for new run...")
         player.reset_player()
+    else:
+        print("[GameManager] ERROR: Player node or reset_player method missing!")
+        # Attempt to find player if null
+        if player == null:
+            player = get_tree().get_first_node_in_group("player")
+            if player:
+                print("[GameManager] Found player via group: ", player.name)
+                player.reset_player()
     _clear_existing_hearts()
     _next_coin_burst_distance = 300
     _apply_spawn_safety_limits()
@@ -2606,8 +2644,8 @@ func _start_play_phase() -> void:
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(false)
 
-    # Inisialisasi BGM Gameplay melalui TransitionManager
-    _start_bukit_bgm_rotation()
+    # TransitionManager.stop_bgm() call removed to prevent BGM interruption during loading.
+    # The BGM will be managed by the next scene (MainMenu) or manually if needed.
 
     if anomaly:
         anomaly.hide()
@@ -2624,6 +2662,126 @@ func _start_play_phase() -> void:
             player.enable_environment_movement(false)
         if player.has_method("start_entry_sequence"):
             player.start_entry_sequence()
+
+
+func _apply_powerups_for_new_run() -> void:
+    if powerups_data.is_empty():
+        shield_hit_charges_run = 0
+    else:
+        shield_hit_charges_run = int(powerups_data.get("shield_1hit_charges", 0))
+
+    var changed := false
+    var double_tokens: int = int(powerups_data.get("double_coins_run_tokens", 0))
+    if double_tokens > 0:
+        activate_double_coins_run()
+        powerups_data["double_coins_run_tokens"] = max(double_tokens - 1, 0)
+        changed = true
+
+    # 4. Magnet Run (Pre-active)
+    var magnet_run_tokens: int = int(powerups_data.get("magnet_30s_tokens", 0))
+    if magnet_run_tokens > 0:
+        powerup_magnet_duration_sec = _base_powerup_magnet_duration_sec * max(magnet_duration_multiplier, 0.1)
+        magnet_timer = powerup_magnet_duration_sec
+        magnet_enabled = true
+        powerups_data["magnet_30s_tokens"] = max(magnet_run_tokens - 1, 0)
+        changed = true
+
+    # 5. Speed Boost Run (Pre-active)
+    var speed_boost_tokens: int = int(powerups_data.get("speed_boost_tokens", 0))
+    if speed_boost_tokens > 0:
+        var dur_mul: float = max(speed_boost_duration_multiplier, 0.1)
+        var mul_mul: float = max(speed_boost_multiplier_multiplier, 0.1)
+        speed_boost_timer = _SPEED_BOOST_PRE_RUN_DURATION_SEC * dur_mul
+        speed_boost_multiplier = max(_SPEED_BOOST_PRE_RUN_MULTIPLIER * mul_mul, 1.0)
+        powerups_data["speed_boost_tokens"] = max(speed_boost_tokens - 1, 0)
+        changed = true
+
+    if player and player is Player:
+        var p := player as Player
+        var base_max: int = (_base_player_max_health if _base_player_max_health > 0 else int(p.max_health))
+        var effective_max: int = base_max + max_heart_bonus
+        p.max_health = effective_max
+        p.starting_health = effective_max
+        p.current_health = effective_max
+
+        set_player_health(effective_max, effective_max)
+
+    powerup_magnet_duration_sec = _base_powerup_magnet_duration_sec * max(magnet_duration_multiplier, 0.1)
+    powerup_shield_duration_sec = _base_powerup_shield_duration_sec * max(shield_duration_multiplier, 0.1)
+    if _base_powerup_double_coins_duration_sec < 0.0:
+        _base_powerup_double_coins_duration_sec = powerup_double_coins_duration_sec
+    if _base_powerup_speed_boost_duration_sec < 0.0:
+        _base_powerup_speed_boost_duration_sec = powerup_speed_boost_duration_sec
+    if _base_powerup_speed_boost_multiplier < 0.0:
+        _base_powerup_speed_boost_multiplier = powerup_speed_boost_multiplier
+    powerup_double_coins_duration_sec = _base_powerup_double_coins_duration_sec * max(double_coins_duration_multiplier, 0.1)
+    powerup_speed_boost_duration_sec = _base_powerup_speed_boost_duration_sec * max(speed_boost_duration_multiplier, 0.1)
+    powerup_speed_boost_multiplier = _base_powerup_speed_boost_multiplier * max(speed_boost_multiplier_multiplier, 0.1)
+    if changed:
+        _save_progress()
+
+
+func on_player_entry_finished() -> void:
+    print("[GameManager] Player entry finished, current phase: ", phase, " countdown_active: ", countdown_active)
+    if phase != Phase.ENTRY:
+        return
+    entry_finished = true
+    if not countdown_active:
+        print("[GameManager] Entry finished and countdown done, starting play phase")
+        set_playing_phase()
+    else:
+        print("[GameManager] Entry finished but countdown still active, waiting for countdown...")
+
+
+func on_player_game_over(_cause: String) -> void:
+    if phase == Phase.GAME_OVER:
+        return
+    phase = Phase.GAME_OVER
+    game_active = false
+    if _jump_button: _jump_button.visible = false
+    if _attack_button: _attack_button.visible = false
+    TransitionManager.play_sfx(&"game_over")
+    if terrain and terrain.has_method("set_movement_enabled"):
+        terrain.set_movement_enabled(false)
+    if ground_a and ground_a.has_method("set_movement_enabled"):
+        ground_a.set_movement_enabled(false)
+    if ground_a and ground_a.has_method("set_speed"):
+        ground_a.set_speed(0.0)
+
+    last_score = score
+    last_coins = coin_collected_a + coin_collected_b
+    last_gems = gem_collected_a + gem_collected_b
+    total_coins += last_coins
+    total_gems += last_gems
+    var xp_gain_from_distance: int = int(distance * xp_per_meter)
+    var xp_gain_from_coins: int = int(float(last_coins) * xp_per_coin)
+    var xp_gain: int = xp_gain_from_distance + xp_gain_from_coins
+    if xp_gain > 0:
+        _apply_xp_gain(xp_gain)
+    if missions_manager and missions_manager.has_method("update_distance"):
+        missions_manager.update_distance(distance)
+    if missions_manager and missions_manager.has_method("add_run_played"):
+        missions_manager.add_run_played()
+    if score > best_score:
+        best_score = score
+    _save_progress()
+    _play_game_over_bgm()
+    if anomaly:
+        anomaly.hide()
+
+    if parallax and parallax.has_method("set_speed"):
+        parallax.set_speed(0.0)
+    if debug_label != null:
+        debug_label.visible = false
+    if canvas:
+        var gom := canvas.get_node_or_null("GameOverMenu")
+        if gom:
+            if gom.has_method("show_game_over"):
+                gom.show_game_over(score, distance)
+            gom.visible = true
+            if gom is Control:
+                gom.set_deferred("visible", true)
+                gom.move_to_front()
 
 func _append_perf_log(_line: String) -> void:
     pass
@@ -2653,7 +2811,7 @@ func _refresh_missions_label() -> void:
             txt = String(missions_manager.call("get_ingame_missions_text"))
         elif missions_manager.has_method("get_missions_text"):
             txt = String(missions_manager.call("get_missions_text"))
-        (label as Label).text = "Misi:\n" + txt
+        (label as Label).text = tr("MISSIONS") + ":\n" + txt
 
 func _trigger_coin_burst() -> void:
     var layers: Array[TileMapLayer] = []

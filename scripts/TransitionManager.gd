@@ -640,23 +640,8 @@ func cloud_sweep_to_scene(scene_path: String, duration: float = -1.0, count: int
     await fade_in(0.2)
 
 func play_transition_to_scene(scene_path: String) -> void:
-    var use_clouds := true
-    if transition_mode == 1:
-        use_clouds = false
-    elif transition_mode == 2:
-        use_clouds = cloud_count <= 32
-
-    # Force use_clouds to true if not in editor for visual consistency if desired,
-    # but based on line 621 it was forced false. Let's make it more flexible.
-    if not Engine.is_editor_hint():
-        # Jika bukan di editor, kita bisa aktifkan cloud jika diinginkan
-        # Untuk sekarang biarkan mengikuti transition_mode
-        pass
-
-    if use_clouds:
-        await cloud_sweep_to_scene(scene_path)
-    else:
-        await fade_to_scene(scene_path, 0.4)
+    # Keep transition deterministic across devices and avoid mixed transition states.
+    await fade_to_scene(scene_path, 0.4)
 
 func _spawn_preview_clouds() -> void:
     _rng.randomize()
