@@ -1,8 +1,8 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/obstacle.gd" id="1_obstacle_script"]
-[ext_resource type="Texture2D" path="res://assets/enemy/4x/Mace.png" id="2_obstacle_tex"]
-[ext_resource type="Texture2D" path="res://assets/generated/svg/saw.svg" id="3_obstacle_svg"]
+[ext_resource type="Script" uid="uid://nu5p67g16euj" path="res://scripts/obstacle.gd" id="1_obstacle_script"]
+[ext_resource type="Texture2D" uid="uid://d2bwehkfg1nii" path="res://assets/enemy/4x/Mace.png" id="2_obstacle_tex"]
+[ext_resource type="Texture2D" uid="uid://bft0km3kk8ed3" path="res://assets/generated/svg/saw.svg" id="3_obstacle_svg"]
 
 [node name="Obstacle" type="Area2D"]
 script = ExtResource("1_obstacle_script")

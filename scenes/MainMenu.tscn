@@ -21,8 +21,8 @@
 [ext_resource type="Texture2D" uid="uid://v21m5eac8ghe" path="res://assets/icon/icon_border_avatar_gold_128x128.png" id="23_avatar_border"]
 [ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="26_fredoka_bold"]
 [ext_resource type="Texture2D" uid="uid://bg5u0njvop2kr" path="res://assets/profile/profile_basic.png" id="27_profile_basic"]
-[ext_resource type="Texture2D" uid="uid://dwa1i8s1cdeq2" path="res://assets/icon/icon_boost_96x96.png" id="icon_boost"]
-[ext_resource type="Texture2D" uid="uid://cgqcf0k0g66wp" path="res://assets/icon/icon_shield.png" id="icon_shield"]
+[ext_resource type="Texture2D" uid="uid://dwa1i8s1cdeq2" path="res://assets/icon/icon_boost_96x96.png" id="28_icon_boost"]
+[ext_resource type="Texture2D" uid="uid://cgqcf0k0g66wp" path="res://assets/icon/icon_shield.png" id="29_icon_shield"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_music_toast_panel"]
 bg_color = Color(0, 0, 0, 0.55)
@@ -661,7 +661,7 @@ columns = 2
 [node name="LevelIcon" type="TextureRect" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel/StatsGrid"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-texture = ExtResource("icon_boost")
+texture = ExtResource("28_icon_boost")
 expand_mode = 1
 stretch_mode = 5
 
@@ -678,7 +678,7 @@ text = "Lv. 0"
 [node name="XPIcon" type="TextureRect" parent="UI/ProfilePanel/Panel/MainContent/RightSection/StatsPanel/StatsGrid"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
-texture = ExtResource("icon_shield")
+texture = ExtResource("29_icon_shield")
 expand_mode = 1
 stretch_mode = 5
 

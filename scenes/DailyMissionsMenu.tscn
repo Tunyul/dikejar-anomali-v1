@@ -1,6 +1,6 @@
 [gd_scene load_steps=16 format=3 uid="uid://o2sawx16hsop"]
 
-[ext_resource type="Script" uid="uid://b2xdttjwbstit" path="res://scripts/DailyMissionsMenu.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/DailyMissionsMenu.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://bg71h4rnsov6r" path="res://assets/panel/panel_mission.png" id="2"]
 [ext_resource type="FontFile" uid="uid://did5ru2tyvvwu" path="res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf" id="3_nunito_regular"]
 [ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="4_fredoka_bold"]
@@ -8,7 +8,7 @@
 [ext_resource type="Script" path="res://scripts/MissionsListScroll.gd" id="6_missions_list_scroll"]
 [ext_resource type="Texture2D" uid="uid://cpwsk0io7g2su" path="res://assets/tombol/tombol_claim_aktif_108x64.png" id="7_claim_active"]
 [ext_resource type="Texture2D" uid="uid://yrdaorbs24i0" path="res://assets/tombol/tombol_x_96.png" id="9_close_x"]
-[ext_resource type="PackedScene" uid="uid://civfdm736wgj6" path="res://scenes/ConfirmPanel.tscn" id="10_confirm_panel_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ConfirmPanel.tscn" id="10_confirm_panel_scene"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tab_mission"]
 texture = ExtResource("5_tab_mission")

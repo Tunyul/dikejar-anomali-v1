@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/double_coins_powerup.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/icon/icon_coinduble_96x96.png" id="2"]
+[ext_resource type="Script" uid="uid://dylyn66hxdy5p" path="res://scripts/double_coins_powerup.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://cis3quibaooqs" path="res://assets/icon/icon_coinduble_96x96.png" id="2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_double_coins"]
 radius = 32.0

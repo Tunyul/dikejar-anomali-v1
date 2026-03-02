@@ -1,4 +1,4 @@
-[gd_scene load_steps=58 format=3 uid="uid://crwodo0j4kllr"]
+[gd_scene format=3 uid="uid://pajel2upahnn"]
 
 [ext_resource type="Texture2D" uid="uid://c3bwrfvu0o1ep" path="res://assets/mc/run/idle_run.png" id="1_player_run_tex"]
 [ext_resource type="Texture2D" uid="uid://dqmmglr4yqrso" path="res://assets/enemy/sprite-256px-36.png" id="2_anomaly_tex"]
@@ -384,7 +384,7 @@ animations = [{
 "speed": 12.0
 }]
 
-[node name="LoadingScreen" type="Control"]
+[node name="LoadingScreen" type="Control" unique_id=1546860182]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -393,36 +393,32 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("3_loading_script")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=1214630436]
 layout_mode = 0
-anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0, 0, 0, 1)
 
-[node name="Characters" type="Node2D" parent="."]
+[node name="Characters" type="Node2D" parent="." unique_id=704193190]
 
-[node name="PlayerSprite" type="AnimatedSprite2D" parent="Characters"]
+[node name="PlayerSprite" type="AnimatedSprite2D" parent="Characters" unique_id=1102552756]
 position = Vector2(220, 440)
 scale = Vector2(0.462, 0.6)
 sprite_frames = SubResource("SpriteFrames_player_loading")
 animation = &"run"
 
-[node name="AnomalySprite" type="AnimatedSprite2D" parent="Characters"]
+[node name="AnomalySprite" type="AnimatedSprite2D" parent="Characters" unique_id=1887103686]
 position = Vector2(80, 440)
 scale = Vector2(0.5, 0.5)
 sprite_frames = SubResource("SpriteFrames_anomaly_loading")
 animation = &"run"
 
-[node name="LoadingLabel" type="Label" parent="."]
+[node name="LoadingLabel" type="Label" parent="." unique_id=427823602]
 layout_mode = 0
-anchor_left = 0.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 0.0
 offset_top = -56.0
-offset_right = 0.0
 offset_bottom = -16.0
 text = "Loading 0%"
 horizontal_alignment = 1

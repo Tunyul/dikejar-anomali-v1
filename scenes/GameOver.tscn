@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://l1q21u47e1pc" path="res://assets/tombol/tombol_retry_96x96.png" id="4"]
 [ext_resource type="Texture2D" uid="uid://dagxdwg0jt5xe" path="res://assets/tombol/tombol_home_96x96.png" id="5"]
 [ext_resource type="Texture2D" uid="uid://b7gkng0ib4y4h" path="res://assets/tombol/tombol_play_96x96.png" id="6"]
-[ext_resource type="PackedScene" uid="uid://civfdm736wgj6" path="res://scenes/ConfirmPanel.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/ConfirmPanel.tscn" id="7"]
 
 [node name="GameOver" type="Control"]
 layout_mode = 3

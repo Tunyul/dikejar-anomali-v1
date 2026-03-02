@@ -181,26 +181,26 @@ func _has_ready_to_claim_missions_in_memory() -> bool:
 
 func _init_default() -> void:
     missions = [
-        {"id": "m1", "name": "Kumpulkan 50 koin", "target": 50, "progress": 0, "type": "daily", "reward": 25, "kind": "coins"},
-        {"id": "m2", "name": "Dapatkan 1 skill", "target": 1, "progress": 0, "type": "daily", "reward": 30, "kind": "skills"},
-        {"id": "m3", "name": "Lompat 50 kali", "target": 50, "progress": 0, "type": "daily", "reward": 35, "kind": "jumps"},
+        {"id": "m1", "name": "Kumpulkan {n} koin", "target": 50, "progress": 0, "type": "daily", "reward": 25, "kind": "coins"},
+        {"id": "m2", "name": "Dapatkan {n} skill", "target": 1, "progress": 0, "type": "daily", "reward": 30, "kind": "skills"},
+        {"id": "m3", "name": "Lompat {n} kali", "target": 50, "progress": 0, "type": "daily", "reward": 35, "kind": "jumps"},
 
-        {"id": "m4", "name": "Kalahkan 5 musuh", "target": 5, "progress": 0, "type": "daily", "reward": 40, "kind": "enemies"},
-        {"id": "m5", "name": "Capai jarak 1000m", "target": 1000, "progress": 0, "type": "daily", "reward": 45, "kind": "distance"},
+        {"id": "m4", "name": "Kalahkan {n} musuh", "target": 5, "progress": 0, "type": "daily", "reward": 40, "kind": "enemies"},
+        {"id": "m5", "name": "Capai jarak {n}m", "target": 1000, "progress": 0, "type": "daily", "reward": 45, "kind": "distance"},
 
-        {"id": "ms1", "name": "Kumpulkan 200 koin", "target": 200, "progress": 0, "type": "mission", "reward": 70, "kind": "coins"},
-        {"id": "ms2", "name": "Dapatkan 3 skill", "target": 3, "progress": 0, "type": "mission", "reward": 90, "kind": "skills"},
-        {"id": "ms3", "name": "Lompat 200 kali", "target": 200, "progress": 0, "type": "mission", "reward": 120, "kind": "jumps"},
-        {"id": "ms4", "name": "Kalahkan 20 musuh", "target": 20, "progress": 0, "type": "mission", "reward": 140, "kind": "enemies"},
+        {"id": "ms1", "name": "Kumpulkan {n} koin", "target": 200, "progress": 0, "type": "mission", "reward": 70, "kind": "coins"},
+        {"id": "ms2", "name": "Dapatkan {n} skill", "target": 3, "progress": 0, "type": "mission", "reward": 90, "kind": "skills"},
+        {"id": "ms3", "name": "Lompat {n} kali", "target": 200, "progress": 0, "type": "mission", "reward": 120, "kind": "jumps"},
+        {"id": "ms4", "name": "Kalahkan {n} musuh", "target": 20, "progress": 0, "type": "mission", "reward": 140, "kind": "enemies"},
 
-        {"id": "w1", "name": "Kumpulkan 1000 koin", "target": 1000, "progress": 0, "type": "week", "reward": 150, "kind": "coins"},
-        {"id": "w2", "name": "Dapatkan 10 skill", "target": 10, "progress": 0, "type": "week", "reward": 200, "kind": "skills"},
-        {"id": "w3", "name": "Mainkan 20 run", "target": 20, "progress": 0, "type": "week", "reward": 260, "kind": "runs"},
-        {"id": "w4", "name": "Kalahkan 60 musuh", "target": 60, "progress": 0, "type": "week", "reward": 300, "kind": "enemies"},
+        {"id": "w1", "name": "Kumpulkan {n} koin", "target": 1000, "progress": 0, "type": "week", "reward": 150, "kind": "coins"},
+        {"id": "w2", "name": "Dapatkan {n} skill", "target": 10, "progress": 0, "type": "week", "reward": 200, "kind": "skills"},
+        {"id": "w3", "name": "Mainkan {n} run", "target": 20, "progress": 0, "type": "week", "reward": 260, "kind": "runs"},
+        {"id": "w4", "name": "Kalahkan {n} musuh", "target": 60, "progress": 0, "type": "week", "reward": 300, "kind": "enemies"},
 
-        {"id": "mo1", "name": "Kumpulkan 5000 koin", "target": 5000, "progress": 0, "type": "month", "reward": 350, "kind": "coins"},
-        {"id": "mo2", "name": "Capai jarak 20000m", "target": 20000, "progress": 0, "type": "month", "reward": 450, "kind": "distance"},
-        {"id": "mo3", "name": "Kalahkan 150 musuh", "target": 150, "progress": 0, "type": "month", "reward": 550, "kind": "enemies"}
+        {"id": "mo1", "name": "Kumpulkan {n} koin", "target": 5000, "progress": 0, "type": "month", "reward": 350, "kind": "coins"},
+        {"id": "mo2", "name": "Capai jarak {n}m", "target": 20000, "progress": 0, "type": "month", "reward": 450, "kind": "distance"},
+        {"id": "mo3", "name": "Kalahkan {n} musuh", "target": 150, "progress": 0, "type": "month", "reward": 550, "kind": "enemies"}
     ]
     coins_collected = 0
     max_distance = 0
@@ -270,97 +270,97 @@ func _ensure_missions_upgraded() -> void:
             continue
         match id_str:
             "m1":
-                m["name"] = "Kumpulkan 50 koin"
+                m["name"] = "Kumpulkan {n} koin"
                 m["target"] = 50
                 m["type"] = "daily"
                 m["reward"] = 25
                 m["kind"] = "coins"
             "m2":
-                m["name"] = "Dapatkan 1 skill"
+                m["name"] = "Dapatkan {n} skill"
                 m["target"] = 1
                 m["type"] = "daily"
                 m["reward"] = 30
                 m["kind"] = "skills"
             "m3":
-                m["name"] = "Lompat 50 kali"
+                m["name"] = "Lompat {n} kali"
                 m["target"] = 50
                 m["type"] = "daily"
                 m["reward"] = 35
                 m["kind"] = "jumps"
             "m4":
-                m["name"] = "Kalahkan 5 musuh"
+                m["name"] = "Kalahkan {n} musuh"
                 m["target"] = 5
                 m["type"] = "daily"
                 m["reward"] = 40
                 m["kind"] = "enemies"
             "m5":
-                m["name"] = "Capai jarak 1000m"
+                m["name"] = "Capai jarak {n}m"
                 m["target"] = 1000
                 m["type"] = "daily"
                 m["reward"] = 45
                 m["kind"] = "distance"
             "ms1":
-                m["name"] = "Kumpulkan 200 koin"
+                m["name"] = "Kumpulkan {n} koin"
                 m["target"] = 200
                 m["type"] = "mission"
                 m["reward"] = 70
                 m["kind"] = "coins"
             "ms2":
-                m["name"] = "Dapatkan 3 skill"
+                m["name"] = "Dapatkan {n} skill"
                 m["target"] = 3
                 m["type"] = "mission"
                 m["reward"] = 90
                 m["kind"] = "skills"
             "ms3":
-                m["name"] = "Lompat 200 kali"
+                m["name"] = "Lompat {n} kali"
                 m["target"] = 200
                 m["type"] = "mission"
                 m["reward"] = 120
                 m["kind"] = "jumps"
             "ms4":
-                m["name"] = "Kalahkan 20 musuh"
+                m["name"] = "Kalahkan {n} musuh"
                 m["target"] = 20
                 m["type"] = "mission"
                 m["reward"] = 140
                 m["kind"] = "enemies"
             "w1":
-                m["name"] = "Kumpulkan 1000 koin"
+                m["name"] = "Kumpulkan {n} koin"
                 m["target"] = 1000
                 m["type"] = "week"
                 m["reward"] = 150
                 m["kind"] = "coins"
             "w2":
-                m["name"] = "Dapatkan 10 skill"
+                m["name"] = "Dapatkan {n} skill"
                 m["target"] = 10
                 m["type"] = "week"
                 m["reward"] = 200
                 m["kind"] = "skills"
             "w3":
-                m["name"] = "Mainkan 20 run"
+                m["name"] = "Mainkan {n} run"
                 m["target"] = 20
                 m["type"] = "week"
                 m["reward"] = 260
                 m["kind"] = "runs"
             "w4":
-                m["name"] = "Kalahkan 60 musuh"
+                m["name"] = "Kalahkan {n} musuh"
                 m["target"] = 60
                 m["type"] = "week"
                 m["reward"] = 300
                 m["kind"] = "enemies"
             "mo1":
-                m["name"] = "Kumpulkan 5000 koin"
+                m["name"] = "Kumpulkan {n} koin"
                 m["target"] = 5000
                 m["type"] = "month"
                 m["reward"] = 350
                 m["kind"] = "coins"
             "mo2":
-                m["name"] = "Capai jarak 20000m"
+                m["name"] = "Capai jarak {n}m"
                 m["target"] = 20000
                 m["type"] = "month"
                 m["reward"] = 450
                 m["kind"] = "distance"
             "mo3":
-                m["name"] = "Kalahkan 150 musuh"
+                m["name"] = "Kalahkan {n} musuh"
                 m["target"] = 150
                 m["type"] = "month"
                 m["reward"] = 550
@@ -388,29 +388,29 @@ func _ensure_missions_upgraded() -> void:
         filtered.append(m)
     missions = filtered
     if not ids.has("m5"):
-        missions.append({"id": "m5", "name": "Capai jarak 1000m", "target": 1000, "progress": 0, "type": "daily", "reward": 45, "kind": "distance"})
+        missions.append({"id": "m5", "name": "Capai jarak {n}m", "target": 1000, "progress": 0, "type": "daily", "reward": 45, "kind": "distance"})
     if not ids.has("ms1"):
-        missions.append({"id": "ms1", "name": "Kumpulkan 200 koin", "target": 200, "progress": 0, "type": "mission", "reward": 70, "kind": "coins"})
+        missions.append({"id": "ms1", "name": "Kumpulkan {n} koin", "target": 200, "progress": 0, "type": "mission", "reward": 70, "kind": "coins"})
     if not ids.has("ms2"):
-        missions.append({"id": "ms2", "name": "Dapatkan 3 skill", "target": 3, "progress": 0, "type": "mission", "reward": 90, "kind": "skills"})
+        missions.append({"id": "ms2", "name": "Dapatkan {n} skill", "target": 3, "progress": 0, "type": "mission", "reward": 90, "kind": "skills"})
     if not ids.has("ms3"):
-        missions.append({"id": "ms3", "name": "Lompat 200 kali", "target": 200, "progress": 0, "type": "mission", "reward": 120, "kind": "jumps"})
+        missions.append({"id": "ms3", "name": "Lompat {n} kali", "target": 200, "progress": 0, "type": "mission", "reward": 120, "kind": "jumps"})
     if not ids.has("ms4"):
-        missions.append({"id": "ms4", "name": "Kalahkan 20 musuh", "target": 20, "progress": 0, "type": "mission", "reward": 140, "kind": "enemies"})
+        missions.append({"id": "ms4", "name": "Kalahkan {n} musuh", "target": 20, "progress": 0, "type": "mission", "reward": 140, "kind": "enemies"})
     if not ids.has("w1"):
-        missions.append({"id": "w1", "name": "Kumpulkan 1000 koin", "target": 1000, "progress": 0, "type": "week", "reward": 150, "kind": "coins"})
+        missions.append({"id": "w1", "name": "Kumpulkan {n} koin", "target": 1000, "progress": 0, "type": "week", "reward": 150, "kind": "coins"})
     if not ids.has("w2"):
-        missions.append({"id": "w2", "name": "Dapatkan 10 skill", "target": 10, "progress": 0, "type": "week", "reward": 200, "kind": "skills"})
+        missions.append({"id": "w2", "name": "Dapatkan {n} skill", "target": 10, "progress": 0, "type": "week", "reward": 200, "kind": "skills"})
     if not ids.has("w3"):
-        missions.append({"id": "w3", "name": "Mainkan 20 run", "target": 20, "progress": 0, "type": "week", "reward": 260, "kind": "runs"})
+        missions.append({"id": "w3", "name": "Mainkan {n} run", "target": 20, "progress": 0, "type": "week", "reward": 260, "kind": "runs"})
     if not ids.has("w4"):
-        missions.append({"id": "w4", "name": "Kalahkan 60 musuh", "target": 60, "progress": 0, "type": "week", "reward": 300, "kind": "enemies"})
+        missions.append({"id": "w4", "name": "Kalahkan {n} musuh", "target": 60, "progress": 0, "type": "week", "reward": 300, "kind": "enemies"})
     if not ids.has("mo1"):
-        missions.append({"id": "mo1", "name": "Kumpulkan 5000 koin", "target": 5000, "progress": 0, "type": "month", "reward": 350, "kind": "coins"})
+        missions.append({"id": "mo1", "name": "Kumpulkan {n} koin", "target": 5000, "progress": 0, "type": "month", "reward": 350, "kind": "coins"})
     if not ids.has("mo2"):
-        missions.append({"id": "mo2", "name": "Capai jarak 20000m", "target": 20000, "progress": 0, "type": "month", "reward": 450, "kind": "distance"})
+        missions.append({"id": "mo2", "name": "Capai jarak {n}m", "target": 20000, "progress": 0, "type": "month", "reward": 450, "kind": "distance"})
     if not ids.has("mo3"):
-        missions.append({"id": "mo3", "name": "Kalahkan 150 musuh", "target": 150, "progress": 0, "type": "month", "reward": 550, "kind": "enemies"})
+        missions.append({"id": "mo3", "name": "Kalahkan {n} musuh", "target": 150, "progress": 0, "type": "month", "reward": 550, "kind": "enemies"})
     for m in missions:
         if not (m is Dictionary):
             continue
@@ -548,7 +548,7 @@ func _set_challenge_missions_in_memory() -> void:
     var kill_target := _challenge_kill_target_for_abs_level(challenge_kill_level)
     missions.append({
         "id": "ck",
-        "name": "Kalahkan %d musuh" % kill_target,
+        "name": "Kalahkan {n} musuh",
         "target": kill_target,
         "progress": 0,
         "type": "challenge",
@@ -558,7 +558,7 @@ func _set_challenge_missions_in_memory() -> void:
     var shield_target := _challenge_powerup_target_for_abs_level(challenge_shield_level)
     missions.append({
         "id": "csh",
-        "name": "Dapatkan Shield %d kali" % shield_target,
+        "name": "Dapatkan Shield {n} kali",
         "target": shield_target,
         "progress": 0,
         "type": "challenge",
@@ -568,7 +568,7 @@ func _set_challenge_missions_in_memory() -> void:
     var double_target := _challenge_powerup_target_for_abs_level(challenge_double_coins_level)
     missions.append({
         "id": "cdc",
-        "name": "Dapatkan DoubleCoins %d kali" % double_target,
+        "name": "Dapatkan DoubleCoins {n} kali",
         "target": double_target,
         "progress": 0,
         "type": "challenge",
@@ -578,7 +578,7 @@ func _set_challenge_missions_in_memory() -> void:
     var coins_target := _challenge_coins_target_for_abs_level(challenge_coins_level)
     missions.append({
         "id": "cc",
-        "name": "Kumpulkan %d koin" % coins_target,
+        "name": "Kumpulkan {n} koin",
         "target": coins_target,
         "progress": 0,
         "type": "challenge",
@@ -588,7 +588,7 @@ func _set_challenge_missions_in_memory() -> void:
     var dist_target := _challenge_distance_target_for_abs_level(challenge_distance_level)
     missions.append({
         "id": "cd",
-        "name": "Capai jarak %dm" % dist_target,
+        "name": "Capai jarak {n}m",
         "target": dist_target,
         "progress": 0,
         "type": "challenge",

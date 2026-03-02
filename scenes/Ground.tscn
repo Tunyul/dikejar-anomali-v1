@@ -1,10 +1,10 @@
 [gd_scene load_steps=15 format=4 uid="uid://bdwwn7sxcph1g"]
 
 [ext_resource type="PackedScene" uid="uid://ddpqyikpv4h24" path="res://scenes/Coin.tscn" id="2_hs2qo"]
-[ext_resource type="PackedScene" path="res://scenes/Diamond.tscn" id="diamond_scene"]
+[ext_resource type="PackedScene" uid="uid://dhvkb47tp6oo3" path="res://scenes/Diamond.tscn" id="diamond_scene"]
 [ext_resource type="Texture2D" uid="uid://dthntxgdb4ycj" path="res://assets/Tiles/png/tiles 2d/Spring/128x128/GrassMid.png" id="2_wgy8j"]
 [ext_resource type="Texture2D" uid="uid://blpxq3xkivtob" path="res://assets/Tiles/png/tiles 2d/Spring/128x128/Dirt.png" id="3"]
-[ext_resource type="PackedScene" path="res://scenes/HeartPickup.tscn" id="3_8cosm"]
+[ext_resource type="PackedScene" path="res://scenes/CollectibleHeart.tscn" id="3_8cosm"]
 [ext_resource type="PackedScene" uid="uid://7k5iilghm0po" path="res://scenes/EnemyBlock.tscn" id="3_8nkse"]
 [ext_resource type="PackedScene" uid="uid://dddfqh8a72i3q" path="res://scenes/EnemyCone.tscn" id="4_8cosm"]
 [ext_resource type="Script" uid="uid://bj1cetfknxpp4" path="res://scripts/infinite_ground.gd" id="5"]

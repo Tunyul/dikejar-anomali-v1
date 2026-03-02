@@ -1,6 +1,8 @@
 extends Area2D
-# class_name HeartPickup
+class_name HeartPickup
 
+@export var heal_amount: int = 25
+@export var heal_percent: float = 0.0
 @export var bob_amplitude: float = 8.0
 @export var bob_frequency: float = 1.2
 @export var enable_bobbing: bool = true
@@ -33,9 +35,15 @@ func _physics_process(delta: float) -> void:
     position.y = _base_y + sin(_t * TAU * bob_frequency) * bob_amplitude
 
 func _on_body_entered(body: Node) -> void:
-    if body.is_in_group("player"):
+    if body.is_in_group("player") or body is Player:
         if body.has_method("heal"):
-            body.heal(1)
+            var amount: int = heal_amount
+            if heal_percent > 0.0 and body.has_method("get"):
+                var max_h: int = int(body.get("max_health"))
+                if max_h > 0:
+                    amount = int(round(float(max_h) * heal_percent))
+                    if amount <= 0: amount = 1
+            body.heal(amount)
             if has_node("/root/TransitionManager"):
                 get_node("/root/TransitionManager").play_sfx("heart_pickup")
     queue_free()

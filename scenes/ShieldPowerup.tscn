@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://scripts/shield_powerup.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/icon/icon_shield.png" id="2"]
+[ext_resource type="Script" uid="uid://by8pa5g6qayxk" path="res://scripts/shield_powerup.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://cgqcf0k0g66wp" path="res://assets/icon/icon_shield.png" id="2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_shield"]
 radius = 32.0

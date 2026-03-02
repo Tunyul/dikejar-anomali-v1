@@ -126,9 +126,7 @@ func get_layer_speed(layer_index: int = 0) -> float:
 
 # Fungsi internal untuk memastikan settingan kritis tidak berubah saat runtime
 func _verify_system_integrity() -> void:
+    # Hanya log jika terdeteksi masalah (misal: follow_viewport_enabled berubah)
     if follow_viewport_enabled:
         push_warning("[Parallax] WARNING: follow_viewport_enabled terdeteksi TRUE! Memaksa kembali ke FALSE untuk mencegah bug visual.")
         follow_viewport_enabled = false
-
-    if Engine.get_frames_drawn() % 300 == 0:
-        print("[Parallax] Integrity Check OK - Offset: ", int(scroll_base_offset.x))

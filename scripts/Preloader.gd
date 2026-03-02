@@ -36,7 +36,7 @@ func start_preloading() -> void:
         "res://scenes/player.tscn",
         "res://scenes/Coin.tscn",
         "res://scenes/Diamond.tscn",
-        "res://scenes/HeartPickup.tscn",
+        "res://scenes/CollectibleHeart.tscn", # Fixed from HeartPickup.tscn
         "res://scenes/EnemyBlock.tscn",
         "res://scenes/EnemyCone.tscn",
         "res://scenes/MagnetPowerup.tscn",

@@ -52,8 +52,8 @@ class_name Player
 @export var jump_horizontal_damping: float = 0.1  # Redupsi kecepatan horizontal saat loncat (0.0-1.0)
 @export var entry_stop_x: float = 280.0
 @export var entry_stop_y: float = 444.0
-@export var entry_duration_sec: float = 1.5
-@export var entry_start_offset_x: float = -800.0
+@export var entry_duration_sec: float = 1.2
+@export var entry_start_offset_x: float = -400.0
 @export var enable_entry_sequence: bool = true
 @export var front_check_distance: float = 24.0
 @export var front_block_margin: float = 2.0
@@ -99,7 +99,6 @@ var _blink_timer: float = 0.0
 var _entry_start_position: Vector2 = Vector2.ZERO
 
 # ===== REFERENCES =====
-@onready var _main_node: Node = get_node_or_null("/root/Main")
 @onready var parallax_background: Node = get_node_or_null("/root/Main/ParallaxBackground")
 @onready var main_camera: Camera2D = get_node_or_null("/root/Main/Camera2D")
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -200,6 +199,7 @@ func _ready() -> void:
     start_initial_state_sequence()
 
 func initialize_player() -> void:
+    add_to_group("player")
     visible = true
     set_process(true)
     set_physics_process(true)
@@ -258,7 +258,6 @@ func find_and_cache_references() -> void:
         push_error("Main node not found! Player references cannot be initialized.")
         return
 
-    _main_node = main_node
     main_camera = main_node.get_node_or_null("Camera2D")
     parallax_background = main_node.get_node_or_null("ParallaxBackground")
 
@@ -367,6 +366,7 @@ func handle_entry_state(_delta: float) -> void:
         global_position = _entry_start_position
         position = _entry_start_position
         velocity = Vector2.ZERO
+        print("[Player] Starting ENTRY sequence from: ", _entry_start_position, " to: ", entry_stop_x)
 
         # Force apply scaling and offset at the very beginning of entry
         if animated_sprite:
@@ -376,16 +376,19 @@ func handle_entry_state(_delta: float) -> void:
     var t: float = 1.0
     if entry_duration_sec > 0.0:
         t = clamp(state_timer / entry_duration_sec, 0.0, 1.0)
+
     var new_x: float = lerpf(_entry_start_position.x, entry_stop_x, t)
     global_position.x = new_x
     position.x = new_x
     velocity = Vector2.ZERO
     update_animation_state()
+
     if t >= 1.0:
+        print("[Player] ENTRY sequence finished, transition to FULL_MOVEMENT")
         _entry_start_position = Vector2.ZERO
         set_state(PlayerState.FULL_MOVEMENT)
-        if _main_node and _main_node.has_method("on_player_entry_finished"):
-            _main_node.on_player_entry_finished()
+        if GameManager.has_method("on_player_entry_finished"):
+            GameManager.on_player_entry_finished()
 
 
 func handle_game_over_state(_delta: float) -> void:
@@ -398,12 +401,8 @@ func apply_physics(delta: float) -> void:
         velocity = Vector2.ZERO
         return
     var speed_fly: bool = false
-    if _main_node == null or not is_instance_valid(_main_node):
-        var main_node = get_tree().get_root().get_node_or_null("Main")
-        if main_node != null:
-            _main_node = main_node
-    if _main_node != null and _main_node.has_method("is_speed_boost_active"):
-        speed_fly = _main_node.is_speed_boost_active()
+    if GameManager.has_method("is_speed_boost_active"):
+        speed_fly = GameManager.is_speed_boost_active()
     if speed_fly:
         _boost_safe_fall_pending = true
         var target_y: float = min(entry_stop_y - speed_boost_fly_height, speed_boost_ceiling_y)
@@ -464,8 +463,8 @@ func apply_physics(delta: float) -> void:
             _jumping_this_frame = true
             _jump_grace_timer = jump_block_grace_time
             TransitionManager.play_sfx(&"jump")
-            if _main_node and _main_node.has_method("on_player_jump"):
-                _main_node.on_player_jump()
+            if GameManager.has_method("on_player_jump"):
+                GameManager.on_player_jump()
             jump_requested = false
             jump_buffer_timer = 0.0
     if head_blocked:
@@ -593,8 +592,8 @@ func _update_invincibility(delta: float) -> void:
             animated_sprite.visible = true
 
 func update_health_bar() -> void:
-    if _main_node and _main_node.has_method("set_player_health"):
-        _main_node.set_player_health(current_health, max_health)
+    if GameManager.has_method("set_player_health"):
+        GameManager.set_player_health(current_health, max_health)
 
 
 func update_animation_state() -> void:
@@ -679,12 +678,8 @@ func sync_environment_speed_if_needed() -> void:
         return
 
     var boost_active: bool = false
-    if _main_node == null or not is_instance_valid(_main_node):
-        var main_node = get_tree().get_root().get_node_or_null("Main")
-        if main_node != null:
-            _main_node = main_node
-    if _main_node != null and _main_node.has_method("is_speed_boost_active"):
-        boost_active = _main_node.is_speed_boost_active()
+    if GameManager.has_method("is_speed_boost_active"):
+        boost_active = GameManager.is_speed_boost_active()
 
     if boost_active:
         return
@@ -745,7 +740,7 @@ func apply_damage(amount: int) -> void:
         return
     if is_invincible:
         return
-    if _main_node and _main_node.has_method("try_consume_shield_hit") and _main_node.try_consume_shield_hit():
+    if GameManager.has_method("try_consume_shield_hit") and GameManager.try_consume_shield_hit():
         return
     var next_health := current_health - amount
     if next_health > 0:
@@ -817,8 +812,8 @@ func trigger_game_over(cause: String) -> void:
     set_state(PlayerState.GAME_OVER)
 
     # Notify game manager
-    if _main_node and _main_node.has_method("on_player_game_over"):
-        _main_node.on_player_game_over(cause)
+    if GameManager.has_method("on_player_game_over"):
+        GameManager.on_player_game_over(cause)
 
     # Emit signal for other listeners
     game_over_signal.emit(cause)
@@ -832,10 +827,11 @@ func reset_player() -> void:
     is_invincible = false
     invincible_timer = 0.0
     _blink_timer = 0.0
+    countdown_active = false
     if animated_sprite:
         animated_sprite.visible = true
     if enable_entry_sequence:
-        set_state(PlayerState.ENTRY)
+        start_entry_sequence()
     else:
         _set_to_entry_stop()
         set_state(PlayerState.FULL_MOVEMENT)
@@ -1176,8 +1172,7 @@ func update_cosmetics() -> void:
 
     if equipped_skin != "default":
         var custom_skin_dir = "res://assets/skins/" + equipped_skin + "/"
-        # Use ResourceLoader.exists on a key file instead of DirAccess for Android compatibility
-        if ResourceLoader.exists(custom_skin_dir + "run.png"):
+        if DirAccess.dir_exists_absolute(custom_skin_dir):
             skin_base = custom_skin_dir
             anim_map = {
                 "run": "run.png",
@@ -1190,21 +1185,22 @@ func update_cosmetics() -> void:
     # Update animations
     for anim_name: String in anim_map.keys():
         var tex_path = skin_base + anim_map[anim_name]
-        var tex = load(tex_path) as Texture2D
-        if tex:
-            if not sf.has_animation(anim_name):
-                sf.add_animation(anim_name)
+        if FileAccess.file_exists(tex_path):
+            var tex = load(tex_path)
+            if tex:
+                if not sf.has_animation(anim_name):
+                    sf.add_animation(anim_name)
 
-            # Clear existing and add new texture as frame 0 for re-slicing
-            sf.clear(anim_name)
-            sf.add_frame(anim_name, tex)
+                # Clear existing and add new texture as frame 0 for re-slicing
+                sf.clear(anim_name)
+                sf.add_frame(anim_name, tex)
 
-            if anim_name == "run":
-                slice_run_spritesheet_if_needed()
-            elif anim_name == "jump":
-                slice_jump_spritesheet_if_needed()
-            elif anim_name == "attack":
-                slice_attack_spritesheet_if_needed()
+                if anim_name == "run":
+                    slice_run_spritesheet_if_needed()
+                elif anim_name == "jump":
+                    slice_jump_spritesheet_if_needed()
+                elif anim_name == "attack":
+                    slice_attack_spritesheet_if_needed()
 
     # Restart animation to apply changes
     if animated_sprite.animation == "run":
@@ -1221,8 +1217,8 @@ func set_border(border_id: String) -> void:
         # If in-game UI has different path, adjust accordingly
         # But usually in-game player doesn't have the border UI attached directly
         # Let's check if there's a reference to the UI in GameManager
-        if _main_node and _main_node.has_method("update_ui_border"):
-            _main_node.update_ui_border(border_id)
+        if GameManager.has_method("update_ui_border"):
+            GameManager.update_ui_border(border_id)
         return
 
     # Apply border logic similar to MainMenu.gd
@@ -1299,21 +1295,13 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
             inner_icon.offset_bottom = 0
             return
 
-    if border_tex_path != "":
-        var tex = load(border_tex_path) as Texture2D
-        if tex:
-            icon_node.texture = tex
-            # Adjust margins for border
-            inner_icon.offset_left = padding
-            inner_icon.offset_top = padding
-            inner_icon.offset_right = -padding
-            inner_icon.offset_bottom = -padding
-        else:
-            icon_node.texture = null
-            inner_icon.offset_left = 0
-            inner_icon.offset_top = 0
-            inner_icon.offset_right = 0
-            inner_icon.offset_bottom = 0
+    if border_tex_path != "" and FileAccess.file_exists(border_tex_path):
+        icon_node.texture = load(border_tex_path)
+        # Adjust margins for border
+        inner_icon.offset_left = padding
+        inner_icon.offset_top = padding
+        inner_icon.offset_right = -padding
+        inner_icon.offset_bottom = -padding
     else:
         icon_node.texture = null
         inner_icon.offset_left = 0

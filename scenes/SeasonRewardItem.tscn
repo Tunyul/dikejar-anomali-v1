@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://c8n4v7x6y8q2"]
 
-[ext_resource type="Script" path="res://scripts/SeasonRewardItem.gd" id="1_x1a2b"]
+[ext_resource type="Script" uid="uid://bni5a1moukhue" path="res://scripts/SeasonRewardItem.gd" id="1_x1a2b"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Card"]
 bg_color = Color(0.121569, 0.121569, 0.156863, 0.8)
