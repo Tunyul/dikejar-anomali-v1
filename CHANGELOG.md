@@ -5,6 +5,15 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.49-beta] - 2026-03-02
+
+- Gameplay: Menstabilkan alur in-game (entry, countdown, dan transisi) agar tidak langsung lompat ke fase bermain.
+- Core: Migrasi routing event gameplay ke autoload `GameManager` (coin, diamond, skill/powerup, shield check, pause state, enemy drop/kill callback).
+- Fix: Memperbaiki tombol lanjut via iklan di Game Over agar memanggil `GameManager.try_rewarded_continue()` dan menampilkan feedback saat ad belum siap.
+- Fix: Memperbaiki type mismatch `Array` ke `Array[Dictionary]` pada sistem pending level rewards saat kalkulasi XP/game over.
+- UI/Profile: Menambahkan fallback loading avatar border saat file border legacy tidak ditemukan.
+- UI In-game: Menyesuaikan keterbacaan HUD (font/icon) dan menyetel ulang ukuran/posisi tombol mobile agar lebih proporsional.
+
 ## [1.3.48-beta] - 2026-02-27
 
 - **Season Rewards**:
