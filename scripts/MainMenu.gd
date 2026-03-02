@@ -789,7 +789,10 @@ func _refresh_profile_panel() -> void:
 func _on_play_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     print("PlayButton ditekan")
-    # TransitionManager.stop_bgm() # Jangan stop di sini agar transisi mulus
+    # Stop BGM before transition to prevent double BGM in LoadingScreen and Main gameplay
+    if TransitionManager and TransitionManager.has_method("stop_bgm"):
+        TransitionManager.stop_bgm()
+        
     if _ui_layer:
         _ui_layer.visible = false
     visible = false
@@ -1071,6 +1074,14 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String, inner_icon
             padding = 4
         _:
             border_tex_path = "" # Tidak ada border (default)
+
+    # Avoid noisy load errors on missing legacy border files.
+    if border_tex_path != "" and not ResourceLoader.exists(border_tex_path):
+        if border_id == "border_gold":
+            var gold_fallback := "res://assets/icon/icon_border_avatar_gold_128x128.png"
+            border_tex_path = gold_fallback if ResourceLoader.exists(gold_fallback) else ""
+        else:
+            border_tex_path = ""
 
     if border_tex_path == "":
         icon_node.texture = null
