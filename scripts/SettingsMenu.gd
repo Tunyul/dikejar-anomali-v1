@@ -192,6 +192,10 @@ func _input(event: InputEvent) -> void:
 
 
 func _read_settings_from_save() -> Dictionary:
+    if GameManager and GameManager.has_method("get_settings_snapshot"):
+        var snapshot: Variant = GameManager.get_settings_snapshot()
+        if snapshot is Dictionary:
+            return snapshot
     var bgm_volume: float = 0.8
     var sfx_volume: float = 0.8
     var bgm_muted: bool = false
@@ -380,12 +384,8 @@ func _on_language_selected(_index: int) -> void:
     if _lang_option == null:
         return
     var locale := _index_to_language(_lang_option.get_selected_id())
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        cfg = ConfigFile.new()
-    cfg.set_value("settings", "language", locale)
-    cfg.save("user://save.cfg")
+    if GameManager and GameManager.has_method("update_settings"):
+        GameManager.update_settings({"language": locale}, true)
     if TransitionManager and TransitionManager.has_method("set_language"):
         TransitionManager.set_language(locale)
     _refresh_language_option_items()
@@ -396,41 +396,31 @@ func _on_translation_changed(_locale: String = "") -> void:
 
 func _on_bgm_volume_changed(v: float) -> void:
     emit_signal("bgm_volume_changed", v)
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        cfg = ConfigFile.new()
-    cfg.set_value("settings", "bgm_volume", v)
-    cfg.save("user://save.cfg")
+    if GameManager and GameManager.has_method("update_settings"):
+        GameManager.update_settings({"bgm_volume": v}, true)
+    elif TransitionManager and TransitionManager.has_method("set_bgm_volume"):
+        TransitionManager.set_bgm_volume(v)
 
 func _on_sfx_volume_changed(v: float) -> void:
     emit_signal("sfx_volume_changed", v)
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        cfg = ConfigFile.new()
-    cfg.set_value("settings", "sfx_volume", v)
-    cfg.save("user://save.cfg")
-    TransitionManager.set_sfx_volume(v)
+    if GameManager and GameManager.has_method("update_settings"):
+        GameManager.update_settings({"sfx_volume": v}, true)
+    elif TransitionManager and TransitionManager.has_method("set_sfx_volume"):
+        TransitionManager.set_sfx_volume(v)
 
 func _on_bgm_mute_toggled(pressed: bool) -> void:
     emit_signal("bgm_mute_changed", pressed)
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        cfg = ConfigFile.new()
-    cfg.set_value("settings", "bgm_muted", pressed)
-    cfg.save("user://save.cfg")
+    if GameManager and GameManager.has_method("update_settings"):
+        GameManager.update_settings({"bgm_muted": pressed}, true)
+    elif TransitionManager and TransitionManager.has_method("set_bgm_muted"):
+        TransitionManager.set_bgm_muted(pressed)
 
 func _on_sfx_mute_toggled(pressed: bool) -> void:
     emit_signal("sfx_mute_changed", pressed)
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        cfg = ConfigFile.new()
-    cfg.set_value("settings", "sfx_muted", pressed)
-    cfg.save("user://save.cfg")
-    TransitionManager.set_sfx_muted(pressed)
+    if GameManager and GameManager.has_method("update_settings"):
+        GameManager.update_settings({"sfx_muted": pressed}, true)
+    elif TransitionManager and TransitionManager.has_method("set_sfx_muted"):
+        TransitionManager.set_sfx_muted(pressed)
 
 func show_overlay(is_ingame: bool = false) -> void:
     _sync_controls_from_save()

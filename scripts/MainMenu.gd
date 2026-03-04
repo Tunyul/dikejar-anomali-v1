@@ -146,26 +146,45 @@ func _ready() -> void:
                 TransitionManager.language_changed.connect(cb)
 
     if _coin_hud or _gem_hud or _score_hud or _player_hud:
-        var cfg := ConfigFile.new()
-        var err := cfg.load("user://save.cfg")
-        if err == OK:
-            if _coin_label:
+        var best: int = 0
+        var level: int = 1
+        var xp: int = 0
+        var xp_required: int = 100
+
+        if GameManager:
+            _total_coins = int(GameManager.total_coins)
+            _total_gems = int(GameManager.total_gems)
+            best = int(GameManager.best_score)
+            level = int(GameManager.player_level)
+            xp = int(GameManager.player_xp)
+            xp_required = int(GameManager.player_xp_required)
+            _pending_level_rewards = GameManager.pending_level_rewards
+        else:
+            var cfg := ConfigFile.new()
+            var err := cfg.load("user://save.cfg")
+            if err == OK:
                 _total_coins = int(cfg.get_value("progress", "total_coins", 0))
-                _coin_label.text = str(_total_coins)
-            if _gem_label:
                 _total_gems = int(cfg.get_value("progress", "total_gems", 0))
-                _gem_label.text = str(_total_gems)
-            if _score_label:
-                var best := int(cfg.get_value("progress", "best_score", 0))
-                _score_label.text = str(best)
+                best = int(cfg.get_value("progress", "best_score", 0))
+                level = int(cfg.get_value("progress", "player_level", 1))
+                xp = int(cfg.get_value("progress", "player_xp", 0))
+                xp_required = int(cfg.get_value("progress", "player_xp_required", 100))
+                var plr_value = cfg.get_value("rewards", "pending_level_rewards", [])
+                if plr_value is Array:
+                    _pending_level_rewards = plr_value
+                else:
+                    _pending_level_rewards = []
+
+        if _coin_label:
+            _coin_label.text = str(_total_coins)
+        if _gem_label:
+            _gem_label.text = str(_total_gems)
+        if _score_label:
+            _score_label.text = str(best)
 
         if _player_hud:
-            var level := int(cfg.get_value("progress", "player_level", 1))
-            var xp := int(cfg.get_value("progress", "player_xp", 0))
-            var xp_required := int(cfg.get_value("progress", "player_xp_required", 100))
-
             # Load equipped cosmetics
-            var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+            var cosmetics: Dictionary = _get_cosmetics_snapshot()
             var equipped_border := String(cosmetics.get("equipped_border", "border_gold"))
             var equipped_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
 
@@ -189,12 +208,6 @@ func _ready() -> void:
                 _xp_label.mouse_filter = Control.MOUSE_FILTER_STOP
                 if not _xp_label.gui_input.is_connected(_on_xp_bar_gui_input):
                     _xp_label.gui_input.connect(_on_xp_bar_gui_input)
-
-            var plr_value = cfg.get_value("rewards", "pending_level_rewards", [])
-            if plr_value is Array:
-                _pending_level_rewards = plr_value
-            else:
-                _pending_level_rewards = []
 
             if _reward_icon:
                 _update_reward_icon()
@@ -656,11 +669,7 @@ func _show_profile_panel() -> void:
 
 func _on_change_avatar_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK: return
-
-    var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+    var cosmetics: Dictionary = _get_cosmetics_snapshot()
     var owned_skins: Array = cosmetics.get("owned_skins", ["skin_basic"])
     var current_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
 
@@ -674,8 +683,7 @@ func _on_change_avatar_pressed() -> void:
     var next_skin := String(owned_skins[next_idx])
 
     cosmetics["equipped_skin"] = next_skin
-    cfg.set_value("cosmetics", "data", cosmetics)
-    cfg.save("user://save.cfg")
+    _set_cosmetics_snapshot(cosmetics)
 
     _update_avatar_icon(next_skin)
     _refresh_profile_panel()
@@ -689,11 +697,7 @@ func _on_change_avatar_pressed() -> void:
 
 func _on_change_border_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK: return
-
-    var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+    var cosmetics: Dictionary = _get_cosmetics_snapshot()
     var owned_borders: Array = cosmetics.get("owned_borders", [])
     var current_border := String(cosmetics.get("equipped_border", ""))
 
@@ -714,8 +718,7 @@ func _on_change_border_pressed() -> void:
     var next_border := String(selection_list[next_idx])
 
     cosmetics["equipped_border"] = next_border
-    cfg.set_value("cosmetics", "data", cosmetics)
-    cfg.save("user://save.cfg")
+    _set_cosmetics_snapshot(cosmetics)
 
     # Update visual
     _update_avatar_border(next_border)
@@ -767,15 +770,26 @@ func _refresh_profile_panel() -> void:
     if close_btn:
         close_btn.text = tr("TUTUP")
 
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK: return
+    var player_name := "Player"
+    var level := 1
+    var xp := 0
+    var xp_req := 100
+    var best_score := 0
 
-    var player_name := String(cfg.get_value("profile", "name", "Player"))
-    var level := int(cfg.get_value("progress", "player_level", 1))
-    var xp := int(cfg.get_value("progress", "player_xp", 0))
-    var xp_req := int(cfg.get_value("progress", "player_xp_required", 100))
-    var best_score := int(cfg.get_value("progress", "best_score", 0))
+    if GameManager:
+        level = int(GameManager.player_level)
+        xp = int(GameManager.player_xp)
+        xp_req = int(GameManager.player_xp_required)
+        best_score = int(GameManager.best_score)
+    else:
+        var cfg := ConfigFile.new()
+        var err := cfg.load("user://save.cfg")
+        if err == OK:
+            player_name = String(cfg.get_value("profile", "name", "Player"))
+            level = int(cfg.get_value("progress", "player_level", 1))
+            xp = int(cfg.get_value("progress", "player_xp", 0))
+            xp_req = int(cfg.get_value("progress", "player_xp_required", 100))
+            best_score = int(cfg.get_value("progress", "best_score", 0))
 
     if name_label:
         name_label.text = player_name
@@ -787,7 +801,7 @@ func _refresh_profile_panel() -> void:
         score_label.text = str(best_score)
 
     if large_avatar:
-        var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
+        var cosmetics: Dictionary = _get_cosmetics_snapshot()
         var equipped_skin := String(cosmetics.get("equipped_skin", "skin_basic"))
         var equipped_border := String(cosmetics.get("equipped_border", ""))
 
@@ -1245,3 +1259,26 @@ func _save_rewards_and_coins() -> void:
         GameManager.pending_level_rewards = _pending_level_rewards
         if GameManager.has_method("_save_progress"):
             GameManager.call("_save_progress")
+
+
+func _get_cosmetics_snapshot() -> Dictionary:
+    if GameManager and GameManager.has_method("get_cosmetics_snapshot"):
+        var snapshot: Variant = GameManager.get_cosmetics_snapshot()
+        if snapshot is Dictionary:
+            return snapshot
+    var cfg := ConfigFile.new()
+    var err := cfg.load("user://save.cfg")
+    if err != OK:
+        return {}
+    var cosmetics_value: Variant = cfg.get_value("cosmetics", "data", {})
+    if cosmetics_value is Dictionary:
+        return cosmetics_value
+    return {}
+
+
+func _set_cosmetics_snapshot(cosmetics: Dictionary) -> void:
+    if GameManager and GameManager.has_method("update_cosmetics"):
+        GameManager.update_cosmetics(cosmetics, true)
+        if GameManager.has_method("update_player_cosmetics"):
+            GameManager.update_player_cosmetics()
+    return

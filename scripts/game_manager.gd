@@ -4,9 +4,29 @@ enum Phase { ENTRY, PLAYING, GAME_OVER }
 signal currencies_changed(total_coins: int, total_gems: int)
 signal powerups_changed(powerups: Dictionary)
 signal season_rewards_changed(pending_count: int)
+signal shop_state_changed(shop_data: Dictionary)
+signal cosmetics_changed(cosmetics_data: Dictionary)
+signal settings_changed(settings_data: Dictionary)
 
 const SAVE_PATH := "user://save.cfg"
 const SAVE_SCHEMA_VERSION := 2
+const _SHOP_DEFAULT := {
+    "daily_coins_claim_day": -1,
+    "daily_coins_claim_count": 0
+}
+const _COSMETICS_DEFAULT := {
+    "owned_skins": ["skin_basic"],
+    "equipped_skin": "skin_basic",
+    "owned_borders": ["border_gold"],
+    "equipped_border": "border_gold"
+}
+const _SETTINGS_DEFAULT := {
+    "bgm_volume": 0.8,
+    "sfx_volume": 0.8,
+    "bgm_muted": false,
+    "sfx_muted": false,
+    "language": "id"
+}
 const _POWERUPS_DEFAULT := {
     "magnet_30s_tokens": 0,
     "shield_1hit_charges": 0,
@@ -2526,6 +2546,177 @@ func get_skill_progress_snapshot() -> Array[Dictionary]:
         })
     return snapshot
 
+func _read_save_cfg() -> ConfigFile:
+    var cfg := ConfigFile.new()
+    var err := cfg.load(SAVE_PATH)
+    if err != OK:
+        cfg = ConfigFile.new()
+    return cfg
+
+func _normalize_shop_data(value: Variant) -> Dictionary:
+    var merged := _SHOP_DEFAULT.duplicate(true)
+    if value is Dictionary:
+        var d := value as Dictionary
+        if d.has("daily_coins_claim_day"):
+            merged["daily_coins_claim_day"] = int(d["daily_coins_claim_day"])
+        if d.has("daily_coins_claim_count"):
+            merged["daily_coins_claim_count"] = maxi(int(d["daily_coins_claim_count"]), 0)
+    return merged
+
+func _normalize_cosmetics_data(value: Variant) -> Dictionary:
+    var merged := _COSMETICS_DEFAULT.duplicate(true)
+    if value is Dictionary:
+        var d := value as Dictionary
+        var owned_skins: Array[String] = []
+        var owned_skins_raw: Variant = d.get("owned_skins", [])
+        if owned_skins_raw is Array:
+            for skin_any in (owned_skins_raw as Array):
+                var skin_id := String(skin_any).strip_edges()
+                if not skin_id.is_empty() and not owned_skins.has(skin_id):
+                    owned_skins.append(skin_id)
+        var equipped_skin := String(d.get("equipped_skin", "skin_basic")).strip_edges()
+        if equipped_skin.is_empty():
+            equipped_skin = "skin_basic"
+        if not owned_skins.has(equipped_skin):
+            owned_skins.append(equipped_skin)
+        if owned_skins.is_empty():
+            owned_skins = ["skin_basic"]
+            equipped_skin = "skin_basic"
+        merged["owned_skins"] = owned_skins
+        merged["equipped_skin"] = equipped_skin
+
+        var owned_borders: Array[String] = []
+        var owned_borders_raw: Variant = d.get("owned_borders", [])
+        if owned_borders_raw is Array:
+            for border_any in (owned_borders_raw as Array):
+                var border_id := String(border_any).strip_edges()
+                if not border_id.is_empty() and not owned_borders.has(border_id):
+                    owned_borders.append(border_id)
+        var equipped_border := String(d.get("equipped_border", "border_gold")).strip_edges()
+        if equipped_border.is_empty():
+            equipped_border = "border_gold"
+        if not owned_borders.has(equipped_border):
+            owned_borders.append(equipped_border)
+        if owned_borders.is_empty():
+            owned_borders = ["border_gold"]
+            equipped_border = "border_gold"
+        merged["owned_borders"] = owned_borders
+        merged["equipped_border"] = equipped_border
+    return merged
+
+func _normalize_settings_data(value: Variant) -> Dictionary:
+    var merged := _SETTINGS_DEFAULT.duplicate(true)
+    if value is Dictionary:
+        var d := value as Dictionary
+        merged["bgm_volume"] = clampf(float(d.get("bgm_volume", merged["bgm_volume"])), 0.0, 1.0)
+        merged["sfx_volume"] = clampf(float(d.get("sfx_volume", merged["sfx_volume"])), 0.0, 1.0)
+        merged["bgm_muted"] = bool(d.get("bgm_muted", merged["bgm_muted"]))
+        merged["sfx_muted"] = bool(d.get("sfx_muted", merged["sfx_muted"]))
+        var language := String(d.get("language", merged["language"])).strip_edges()
+        merged["language"] = ("id" if language.is_empty() else language)
+    return merged
+
+func get_shop_snapshot() -> Dictionary:
+    var cfg := _read_save_cfg()
+    var legacy_data := {
+        "daily_coins_claim_day": int(cfg.get_value("shop", "daily_coins_claim_day", -1)),
+        "daily_coins_claim_count": maxi(int(cfg.get_value("shop", "daily_coins_claim_count", 0)), 0)
+    }
+    var raw: Variant = cfg.get_value("shop", "data", legacy_data)
+    return _normalize_shop_data(raw)
+
+func update_shop_state(changes: Dictionary, save_after: bool = true) -> Dictionary:
+    var next := _normalize_shop_data(get_shop_snapshot())
+    for key_any in changes.keys():
+        var key := String(key_any)
+        if not next.has(key):
+            continue
+        next[key] = changes[key_any]
+    next = _normalize_shop_data(next)
+    if save_after:
+        var cfg := _read_save_cfg()
+        cfg.set_value("shop", "daily_coins_claim_day", int(next.get("daily_coins_claim_day", -1)))
+        cfg.set_value("shop", "daily_coins_claim_count", maxi(int(next.get("daily_coins_claim_count", 0)), 0))
+        cfg.set_value("shop", "data", next)
+        cfg.save(SAVE_PATH)
+    shop_state_changed.emit(next)
+    return {
+        "ok": true,
+        "error": "",
+        "shop": next
+    }
+
+func get_cosmetics_snapshot() -> Dictionary:
+    var cfg := _read_save_cfg()
+    return _normalize_cosmetics_data(cfg.get_value("cosmetics", "data", {}))
+
+func update_cosmetics(cosmetics: Dictionary, save_after: bool = true) -> Dictionary:
+    var next := _normalize_cosmetics_data(cosmetics)
+    if save_after:
+        var cfg := _read_save_cfg()
+        cfg.set_value("cosmetics", "data", next)
+        cfg.save(SAVE_PATH)
+    cosmetics_changed.emit(next)
+    return {
+        "ok": true,
+        "error": "",
+        "cosmetics": next
+    }
+
+func get_settings_snapshot() -> Dictionary:
+    var cfg := _read_save_cfg()
+    var raw := {
+        "bgm_volume": float(cfg.get_value("settings", "bgm_volume", _bgm_user_volume)),
+        "sfx_volume": float(cfg.get_value("settings", "sfx_volume", _sfx_user_volume)),
+        "bgm_muted": bool(cfg.get_value("settings", "bgm_muted", bgm_muted)),
+        "sfx_muted": bool(cfg.get_value("settings", "sfx_muted", sfx_muted)),
+        "language": String(cfg.get_value("settings", "language", _SETTINGS_DEFAULT["language"]))
+    }
+    return _normalize_settings_data(raw)
+
+func update_settings(changes: Dictionary, save_after: bool = true) -> Dictionary:
+    var current := get_settings_snapshot()
+    for key_any in changes.keys():
+        var key := String(key_any)
+        if current.has(key):
+            current[key] = changes[key_any]
+    var next := _normalize_settings_data(current)
+    set_bgm_volume(float(next.get("bgm_volume", _bgm_user_volume)))
+    set_sfx_volume(float(next.get("sfx_volume", _sfx_user_volume)))
+    if bool(next.get("bgm_muted", bgm_muted)) != bgm_muted:
+        bgm_muted = bool(next.get("bgm_muted", bgm_muted))
+        if TransitionManager and TransitionManager.has_method("set_bgm_muted"):
+            TransitionManager.set_bgm_muted(bgm_muted)
+        var bgm := get_node_or_null("BGM") as AudioStreamPlayer
+        if bgm:
+            if bgm_muted:
+                bgm.stop()
+            elif bgm.stream != null and not bgm.playing:
+                bgm.play()
+        _apply_bgm_mix()
+    if bool(next.get("sfx_muted", sfx_muted)) != sfx_muted:
+        sfx_muted = bool(next.get("sfx_muted", sfx_muted))
+        if TransitionManager and TransitionManager.has_method("set_sfx_muted"):
+            TransitionManager.set_sfx_muted(sfx_muted)
+        var sfx := get_node_or_null("SFXJump") as AudioStreamPlayer
+        if sfx:
+            var db: float = (-60.0 if _sfx_user_volume <= 0.0 else 20.0 * log(_sfx_user_volume) / log(10.0))
+            sfx.volume_db = (-60.0 if sfx_muted else db)
+    if save_after:
+        var cfg := _read_save_cfg()
+        cfg.set_value("settings", "bgm_volume", float(next.get("bgm_volume", _bgm_user_volume)))
+        cfg.set_value("settings", "sfx_volume", float(next.get("sfx_volume", _sfx_user_volume)))
+        cfg.set_value("settings", "bgm_muted", bool(next.get("bgm_muted", bgm_muted)))
+        cfg.set_value("settings", "sfx_muted", bool(next.get("sfx_muted", sfx_muted)))
+        cfg.set_value("settings", "language", String(next.get("language", _SETTINGS_DEFAULT["language"])))
+        cfg.save(SAVE_PATH)
+    settings_changed.emit(next)
+    return {
+        "ok": true,
+        "error": "",
+        "settings": next
+    }
+
 func get_currency_snapshot() -> Dictionary:
     return {"coins": total_coins, "gems": total_gems}
 
@@ -2712,12 +2903,20 @@ func _load_progress() -> void:
         player_xp_required = _calculate_xp_required(player_level)
         should_resave = true
 
-    bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
-    sfx_muted = bool(cfg.get_value("settings", "sfx_muted", false))
-    var bgm_volume: float = float(cfg.get_value("settings", "bgm_volume", 0.8))
-    var sfx_volume: float = float(cfg.get_value("settings", "sfx_volume", 0.8))
-    set_bgm_volume(bgm_volume)
-    set_sfx_volume(sfx_volume)
+    var settings_raw := {
+        "bgm_muted": bool(cfg.get_value("settings", "bgm_muted", false)),
+        "sfx_muted": bool(cfg.get_value("settings", "sfx_muted", false)),
+        "bgm_volume": float(cfg.get_value("settings", "bgm_volume", 0.8)),
+        "sfx_volume": float(cfg.get_value("settings", "sfx_volume", 0.8)),
+        "language": String(cfg.get_value("settings", "language", _SETTINGS_DEFAULT["language"]))
+    }
+    var settings_norm := _normalize_settings_data(settings_raw)
+    if settings_norm != settings_raw:
+        should_resave = true
+    bgm_muted = bool(settings_norm.get("bgm_muted", false))
+    sfx_muted = bool(settings_norm.get("sfx_muted", false))
+    set_bgm_volume(float(settings_norm.get("bgm_volume", 0.8)))
+    set_sfx_volume(float(settings_norm.get("sfx_volume", 0.8)))
     if TransitionManager and TransitionManager.has_method("set_sfx_muted"):
         TransitionManager.set_sfx_muted(sfx_muted)
     if TransitionManager and TransitionManager.has_method("set_bgm_muted"):
@@ -2751,6 +2950,9 @@ func _load_progress() -> void:
         currencies_changed.emit(total_coins, total_gems)
         powerups_changed.emit(get_powerups_snapshot())
         season_rewards_changed.emit(pending_level_rewards.size())
+        shop_state_changed.emit(get_shop_snapshot())
+        cosmetics_changed.emit(get_cosmetics_snapshot())
+        settings_changed.emit(get_settings_snapshot())
 
 func _save_progress() -> void:
     powerups_data = _normalize_powerups_data(powerups_data)
@@ -2771,8 +2973,12 @@ func _save_progress() -> void:
     cfg.set_value("progress", "player_level", player_level)
     cfg.set_value("progress", "player_xp", player_xp)
     cfg.set_value("progress", "player_xp_required", player_xp_required)
+    var language := String(cfg.get_value("settings", "language", _SETTINGS_DEFAULT["language"]))
+    cfg.set_value("settings", "bgm_volume", _bgm_user_volume)
+    cfg.set_value("settings", "sfx_volume", _sfx_user_volume)
     cfg.set_value("settings", "bgm_muted", bgm_muted)
     cfg.set_value("settings", "sfx_muted", sfx_muted)
+    cfg.set_value("settings", "language", language)
     cfg.set_value("powerups", "data", powerups_data)
     cfg.set_value("rewards", "pending_level_rewards", pending_level_rewards)
     var ver = ProjectSettings.get_setting("application/config/version")
@@ -2782,6 +2988,9 @@ func _save_progress() -> void:
     currencies_changed.emit(total_coins, total_gems)
     powerups_changed.emit(get_powerups_snapshot())
     season_rewards_changed.emit(pending_level_rewards.size())
+    shop_state_changed.emit(get_shop_snapshot())
+    cosmetics_changed.emit(get_cosmetics_snapshot())
+    settings_changed.emit(get_settings_snapshot())
 
 
 func _calculate_xp_required(level: int) -> int:
@@ -2918,11 +3127,6 @@ func claim_all_pending_rewards() -> Dictionary:
 
     pending_level_rewards.clear()
     _save_progress()
-
-    # Notify MainMenu if it exists
-    var main_menu = get_tree().root.find_child("MainMenu", true, false)
-    if main_menu and main_menu.has_method("_update_reward_icon"):
-        main_menu.call("_update_reward_icon")
 
     return {
         "ok": true,

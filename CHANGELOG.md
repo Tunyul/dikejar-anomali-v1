@@ -5,6 +5,16 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.51-beta] - 2026-03-04
+
+- Skill Progress Panel: perombakan rendering card dan layout horizontal agar stabil saat buka-tutup panel, posisi awal konsisten, serta drag-scroll horizontal kembali responsif.
+- Skill Progress Panel: perbaikan visual teks (judul ganda/artefak subtitle), trimming label nilai, dan sinkronisasi font/theme agar tetap rapi di resolusi mobile.
+- Shop Menu: sinkronisasi perilaku scroll saat panel progress aktif, serta perapian alur input agar drag panel tidak bentrok dengan drag daftar item shop.
+- Shop Economy: harga upgrade permanen kini dihitung dinamis per level (growth coins/gems) dan status `MAX` ditangani konsisten di tampilan serta eksekusi pembelian.
+- GameManager API: penambahan domain API/signal untuk `shop`, `cosmetics`, dan `settings` (`get_*_snapshot`, `update_*`, dan signal perubahan) sebagai sumber kebenaran tunggal data UI.
+- MainMenu/Settings/Shop: migrasi baca-tulis save ke API `GameManager` untuk domain terkait, mengurangi penulisan langsung `ConfigFile` dari UI layer.
+- Runtime Stability: menonaktifkan mode `@tool` pada `ShopMenu.gd` untuk mencegah konflik eksekusi editor terhadap UI runtime saat debugging.
+
 ## [1.3.50-beta] - 2026-03-04
 
 - Core Save/Data: Konsolidasi domain data gameplay dengan `GameManager` sebagai owner `progress/powerups/rewards` dan `MissionsManager` sebagai owner `missions`, termasuk migrasi schema save v2 yang kompatibel dengan data lama.

@@ -13,26 +13,27 @@ const _TOKEN_LABEL_MAP := {
     "double_coins_duration": "Double Coins Tokens",
     "speed_boost_duration": "Speed Boost Tokens"
 }
+
 const _TOKEN_ICON_MAP := {
     "magnet_duration": "res://assets/icon/icon_magnet_timer_96x96.png",
     "shield_duration": "res://assets/icon/icon_shield.png",
     "double_coins_duration": "res://assets/icon/icon_coinduble_96x96.png",
     "speed_boost_duration": "res://assets/icon/icon_boost_96x96.png"
 }
+
 const _TOKEN_ACCENT_MAP := {
-    "magnet_duration": Color(0.13, 0.74, 1.0, 1.0),
-    "shield_duration": Color(0.48, 0.86, 1.0, 1.0),
-    "double_coins_duration": Color(0.99, 0.75, 0.2, 1.0),
-    "speed_boost_duration": Color(0.94, 0.48, 0.2, 1.0)
+    "magnet_duration": Color(0.08, 0.78, 1.0, 1.0),
+    "shield_duration": Color(0.34, 0.84, 1.0, 1.0),
+    "double_coins_duration": Color(0.98, 0.77, 0.22, 1.0),
+    "speed_boost_duration": Color(0.96, 0.53, 0.18, 1.0)
 }
 
 @onready var _overlay: ColorRect = %Overlay
 @onready var _panel: PanelContainer = %Panel
 @onready var _scroll: ScrollContainer = %Scroll
 @onready var _title_label: Label = %TitleLabel
-@onready var _subtitle_label: Label = %SubtitleLabel
 @onready var _close_button: Button = %CloseButton
-@onready var _skill_list: BoxContainer = %SkillList
+@onready var _skill_list: HBoxContainer = %SkillList
 @onready var _token_panel: PanelContainer = %TokenPanel
 @onready var _token_title: Label = %TokenTitle
 @onready var _token_grid: GridContainer = %TokenGrid
@@ -46,8 +47,11 @@ var _opening_frame: bool = false
 var _closing: bool = false
 var _dragging: bool = false
 var _drag_pointer_id: int = -1
-var _drag_start_y: float = 0.0
+var _drag_start_x: float = 0.0
 var _drag_start_scroll: int = 0
+var _layout_busy: bool = false
+var _last_layout_size: Vector2 = Vector2.ZERO
+var _last_layout_child_count: int = -1
 
 func _ready() -> void:
     visible = false
@@ -56,14 +60,11 @@ func _ready() -> void:
         _close_button.pressed.connect(_on_close_pressed)
     if _overlay and not _overlay.gui_input.is_connected(_on_overlay_gui_input):
         _overlay.gui_input.connect(_on_overlay_gui_input)
-    if _scroll and not _scroll.resized.is_connected(_on_layout_changed):
-        _scroll.resized.connect(_on_layout_changed)
-        _scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+    if _scroll:
         _scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-        if not _scroll.gui_input.is_connected(_on_scroll_gui_input):
-            _scroll.gui_input.connect(_on_scroll_gui_input)
-    if _skill_list and not _skill_list.gui_input.is_connected(_on_scroll_gui_input):
-        _skill_list.gui_input.connect(_on_scroll_gui_input)
+        _scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+        if not _scroll.resized.is_connected(_on_layout_changed):
+            _scroll.resized.connect(_on_layout_changed)
     if GameManager and GameManager.has_signal("powerups_changed"):
         var cb_powerups := Callable(self, "_on_powerups_changed")
         if not GameManager.powerups_changed.is_connected(cb_powerups):
@@ -89,88 +90,114 @@ func _exit_tree() -> void:
 
 func open_panel() -> void:
     _refresh_texts()
-    _refresh_content()
     if visible:
+        _refresh_content()
+        _apply_content_layout()
+        _reset_scroll_position()
         return
     _closing = false
+    _dragging = false
+    _drag_pointer_id = -1
     visible = true
     _opening_frame = true
-    _reset_scroll_position()
-    _overlay.modulate.a = 0.0
-    _panel.modulate.a = 0.0
+    if _overlay:
+        _overlay.modulate.a = 0.0
+    if _panel:
+        _panel.modulate.a = 0.0
     var tw := create_tween().set_parallel(true)
-    tw.tween_property(_overlay, "modulate:a", 1.0, 0.18)
-    tw.tween_property(_panel, "modulate:a", 1.0, 0.18)
+    if _overlay:
+        tw.tween_property(_overlay, "modulate:a", 1.0, 0.16)
+    if _panel:
+        tw.tween_property(_panel, "modulate:a", 1.0, 0.16)
     await get_tree().process_frame
+    _refresh_content()
+    _apply_content_layout()
+    _reset_scroll_position()
     _opening_frame = false
 
 func close_panel() -> void:
     if not visible or _closing:
         return
     _closing = true
+    _dragging = false
+    _drag_pointer_id = -1
     var tw := create_tween().set_parallel(true)
-    tw.tween_property(_overlay, "modulate:a", 0.0, 0.15)
-    tw.tween_property(_panel, "modulate:a", 0.0, 0.15)
+    if _overlay:
+        tw.tween_property(_overlay, "modulate:a", 0.0, 0.14)
+    if _panel:
+        tw.tween_property(_panel, "modulate:a", 0.0, 0.14)
     await tw.finished
     visible = false
     _closing = false
 
 func _on_close_pressed() -> void:
-    if is_instance_valid(TransitionManager) and TransitionManager.has_method("play_sfx"):
+    if TransitionManager and TransitionManager.has_method("play_sfx"):
         TransitionManager.play_sfx(&"click")
     close_panel()
 
 func _on_overlay_gui_input(event: InputEvent) -> void:
     if _opening_frame:
         return
-    var is_mouse_close: bool = false
     if event is InputEventMouseButton:
         var mb := event as InputEventMouseButton
-        is_mouse_close = mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT
-    var is_touch_close: bool = false
+        if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+            _on_close_pressed()
+            return
     if event is InputEventScreenTouch:
         var st := event as InputEventScreenTouch
-        is_touch_close = st.pressed
-    if is_mouse_close or is_touch_close:
-        _on_close_pressed()
+        if st.pressed:
+            _on_close_pressed()
 
 func _on_powerups_changed(_powerups: Dictionary) -> void:
     if visible:
         _refresh_content()
 
-func _on_layout_changed() -> void:
-    _apply_content_layout()
+func _on_language_changed(_locale: String) -> void:
+    _refresh_texts()
+    if visible:
+        _refresh_content()
 
-func _on_scroll_gui_input(event: InputEvent) -> void:
-    if _scroll == null:
+func _on_layout_changed() -> void:
+    call_deferred("_apply_content_layout")
+
+func _input(event: InputEvent) -> void:
+    if _scroll == null or not visible:
         return
-    var max_scroll := int(_scroll.get_h_scroll_bar().max_value)
+    var max_scroll := _get_max_horizontal_scroll()
+    if max_scroll <= 0:
+        return
+    var scroll_rect := _scroll.get_global_rect()
+    if scroll_rect.size.x <= 0.0 or scroll_rect.size.y <= 0.0:
+        return
     if event is InputEventMouseButton:
         var mb := event as InputEventMouseButton
         if mb.button_index == MOUSE_BUTTON_LEFT:
             if mb.pressed:
-                _dragging = true
-                _drag_pointer_id = 0
-                _drag_start_y = mb.global_position.x
-                _drag_start_scroll = _scroll.scroll_horizontal
+                if scroll_rect.has_point(mb.position):
+                    _dragging = true
+                    _drag_pointer_id = 0
+                    _drag_start_x = mb.global_position.x
+                    _drag_start_scroll = _scroll.scroll_horizontal
             else:
-                _dragging = false
-                _drag_pointer_id = -1
+                if _drag_pointer_id == 0:
+                    _dragging = false
+                    _drag_pointer_id = -1
         return
     if event is InputEventMouseMotion:
         var mm := event as InputEventMouseMotion
         if _dragging and _drag_pointer_id == 0 and (mm.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
-            var dx := mm.global_position.x - _drag_start_y
+            var dx := mm.global_position.x - _drag_start_x
             _scroll.scroll_horizontal = clampi(_drag_start_scroll - int(dx), 0, max_scroll)
             get_viewport().set_input_as_handled()
         return
     if event is InputEventScreenTouch:
         var st := event as InputEventScreenTouch
         if st.pressed:
-            _dragging = true
-            _drag_pointer_id = st.index
-            _drag_start_y = st.position.x
-            _drag_start_scroll = _scroll.scroll_horizontal
+            if scroll_rect.has_point(st.position):
+                _dragging = true
+                _drag_pointer_id = st.index
+                _drag_start_x = st.position.x
+                _drag_start_scroll = _scroll.scroll_horizontal
         elif st.index == _drag_pointer_id:
             _dragging = false
             _drag_pointer_id = -1
@@ -178,82 +205,81 @@ func _on_scroll_gui_input(event: InputEvent) -> void:
     if event is InputEventScreenDrag:
         var sd := event as InputEventScreenDrag
         if _dragging and sd.index == _drag_pointer_id:
-            var dx2 := sd.position.x - _drag_start_y
+            var dx2 := sd.position.x - _drag_start_x
             _scroll.scroll_horizontal = clampi(_drag_start_scroll - int(dx2), 0, max_scroll)
             get_viewport().set_input_as_handled()
 
-func _on_language_changed(_locale: String) -> void:
-    _refresh_texts()
-    if visible:
-        _refresh_content()
+func _get_max_horizontal_scroll() -> int:
+    if _scroll == null:
+        return 0
+    var max_scroll := 0
+    var bar := _scroll.get_h_scroll_bar()
+    if bar:
+        max_scroll = maxi(max_scroll, int(bar.max_value))
+    if _skill_list:
+        max_scroll = maxi(max_scroll, int(maxf(_skill_list.size.x - _scroll.size.x, 0.0)))
+    return maxi(max_scroll, 0)
 
 func _refresh_texts() -> void:
     if _title_label:
         _title_label.text = tr("Skill Progress")
-    if _subtitle_label:
-        _subtitle_label.text = ""
-        _subtitle_label.visible = false
     if _close_button:
         _close_button.text = tr("Tutup")
     if _token_title:
         _token_title.text = tr("Skill Tokens")
 
 func _load_fonts() -> void:
-    _title_font = load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-SemiBold.ttf") as Font
+    _title_font = load("res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf") as Font
     _body_font = load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Medium.ttf") as Font
     _value_font = load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Bold.ttf") as Font
 
 func _reset_scroll_position() -> void:
-    if _scroll == null:
-        return
-    _scroll.scroll_horizontal = 0
-    _scroll.scroll_vertical = 0
+    if _scroll:
+        _scroll.scroll_horizontal = 0
+        _scroll.scroll_vertical = 0
 
 func _apply_visual_theme() -> void:
-    _overlay.color = Color(0.02, 0.05, 0.1, 0.62)
+    if _overlay:
+        _overlay.color = Color(0.01, 0.05, 0.11, 0.62)
+
     if _panel:
-        var frame := StyleBoxFlat.new()
-        frame.bg_color = Color(0.04, 0.09, 0.16, 0.96)
-        frame.border_color = Color(0.08, 0.68, 0.9, 0.82)
-        frame.set_border_width_all(2)
-        frame.set_corner_radius_all(16)
-        frame.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
-        frame.shadow_size = 10
-        frame.shadow_offset = Vector2(0, 3)
-        _panel.add_theme_stylebox_override("panel", frame)
-    if _token_panel:
-        var token_box := StyleBoxFlat.new()
-        token_box.bg_color = Color(0.03, 0.07, 0.12, 0.9)
-        token_box.border_color = Color(0.98, 0.8, 0.15, 0.5)
-        token_box.set_border_width_all(1)
-        token_box.set_corner_radius_all(10)
-        token_box.content_margin_left = 8
-        token_box.content_margin_right = 8
-        token_box.content_margin_top = 8
-        token_box.content_margin_bottom = 8
-        _token_panel.add_theme_stylebox_override("panel", token_box)
+        var panel_style := StyleBoxFlat.new()
+        panel_style.bg_color = Color(0.03, 0.09, 0.17, 0.97)
+        panel_style.border_color = Color(0.06, 0.72, 0.96, 0.86)
+        panel_style.set_border_width_all(2)
+        panel_style.set_corner_radius_all(18)
+        panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.34)
+        panel_style.shadow_size = 10
+        panel_style.shadow_offset = Vector2(0, 3)
+        _panel.add_theme_stylebox_override("panel", panel_style)
+
     if _scroll:
-        var scroll_bg := StyleBoxFlat.new()
-        scroll_bg.bg_color = Color(0.02, 0.06, 0.1, 0.3)
-        scroll_bg.set_corner_radius_all(12)
-        _scroll.add_theme_stylebox_override("panel", scroll_bg)
+        var scroll_style := StyleBoxFlat.new()
+        scroll_style.bg_color = Color(0.01, 0.06, 0.12, 0.46)
+        scroll_style.set_corner_radius_all(12)
+        _scroll.add_theme_stylebox_override("panel", scroll_style)
+
+    if _token_panel:
+        var token_style := StyleBoxFlat.new()
+        token_style.bg_color = Color(0.02, 0.07, 0.13, 0.9)
+        token_style.border_color = Color(0.98, 0.83, 0.2, 0.6)
+        token_style.set_border_width_all(1)
+        token_style.set_corner_radius_all(12)
+        _token_panel.add_theme_stylebox_override("panel", token_style)
+
     if _title_label:
         if _title_font:
             _title_label.add_theme_font_override("font", _title_font)
         _title_label.add_theme_font_size_override("font_size", 28)
         _title_label.add_theme_color_override("font_color", Color(0.99, 0.87, 0.22, 1.0))
-        _title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.0))
         _title_label.add_theme_constant_override("outline_size", 0)
-    if _subtitle_label:
-        if _body_font:
-            _subtitle_label.add_theme_font_override("font", _body_font)
-        _subtitle_label.add_theme_color_override("font_color", Color(0.76, 0.9, 1.0, 0.9))
-        _subtitle_label.add_theme_font_size_override("font_size", 13)
+
     if _token_title:
         if _title_font:
             _token_title.add_theme_font_override("font", _title_font)
+        _token_title.add_theme_font_size_override("font_size", 19)
         _token_title.add_theme_color_override("font_color", Color(0.99, 0.83, 0.17, 1.0))
-        _token_title.add_theme_font_size_override("font_size", 20)
+
     if _close_button:
         if _title_font:
             _close_button.add_theme_font_override("font", _title_font)
@@ -265,150 +291,125 @@ func _apply_visual_theme() -> void:
         close_normal.set_border_width_all(2)
         close_normal.set_corner_radius_all(9)
         var close_hover := close_normal.duplicate() as StyleBoxFlat
-        close_hover.bg_color = Color(0.1, 0.26, 0.42, 1.0)
+        close_hover.bg_color = Color(0.1, 0.27, 0.42, 1.0)
         var close_pressed := close_normal.duplicate() as StyleBoxFlat
-        close_pressed.bg_color = Color(0.04, 0.11, 0.2, 1.0)
+        close_pressed.bg_color = Color(0.05, 0.12, 0.2, 1.0)
         _close_button.add_theme_stylebox_override("normal", close_normal)
         _close_button.add_theme_stylebox_override("hover", close_hover)
         _close_button.add_theme_stylebox_override("pressed", close_pressed)
         _close_button.add_theme_stylebox_override("focus", close_normal)
 
-func _animate_rows() -> void:
+func _refresh_content() -> void:
     if _skill_list == null:
         return
-    for child in _skill_list.get_children():
-        if not (child is Control):
-            continue
-        var c := child as Control
-        c.modulate.a = 1.0
-
-func _category_color(category: String) -> Color:
-    match category:
-        "duration":
-            return Color(0.13, 0.74, 1.0, 1.0)
-        "gain":
-            return Color(0.99, 0.75, 0.2, 1.0)
-        "boost":
-            return Color(0.94, 0.48, 0.2, 1.0)
-        "survivability":
-            return Color(0.95, 0.34, 0.42, 1.0)
-        "utility":
-            return Color(0.47, 0.91, 0.58, 1.0)
-        _:
-            return Color(0.67, 0.79, 0.89, 1.0)
-
-func _refresh_content() -> void:
-    for child in _skill_list.get_children():
+    var old_children := _skill_list.get_children()
+    for child in old_children:
+        _skill_list.remove_child(child)
         child.queue_free()
+
     var snapshot: Array = []
     if GameManager and GameManager.has_method("get_skill_progress_snapshot"):
         snapshot = GameManager.get_skill_progress_snapshot()
     _last_snapshot = snapshot.duplicate(true)
+
     for item_any in snapshot:
         if not (item_any is Dictionary):
             continue
-        var row := _build_skill_row(item_any)
-        _skill_list.add_child(row)
-    _apply_content_layout()
+        var row: Dictionary = item_any
+        var card := _build_skill_card(row)
+        _skill_list.add_child(card)
+
+    _last_layout_size = Vector2.ZERO
+    _last_layout_child_count = -1
     _refresh_token_inventory(snapshot)
-    _animate_rows()
+    call_deferred("_apply_content_layout")
 
 func _apply_content_layout() -> void:
-    if _skill_list == null:
+    if _layout_busy:
         return
-    var card_width := 320.0
-    var card_height := 138.0
-    if _scroll:
-        card_height = clampf(_scroll.size.y * 0.86, 120.0, 182.0)
-        card_width = clampf(card_height * 2.05, 300.0, 388.0)
+    if _scroll == null or _skill_list == null:
+        return
+    var size_key := _scroll.size
+    if size_key.x <= 0.0 or size_key.y <= 0.0:
+        return
     var child_count := 0
+    for child in _skill_list.get_children():
+        if child is Control:
+            child_count += 1
+    if absf(size_key.x - _last_layout_size.x) < 1.0 and absf(size_key.y - _last_layout_size.y) < 1.0 and child_count == _last_layout_child_count:
+        var max_scroll_unchanged := int(_scroll.get_h_scroll_bar().max_value)
+        _scroll.scroll_horizontal = clampi(_scroll.scroll_horizontal, 0, max_scroll_unchanged)
+        _update_token_grid_columns()
+        return
+
+    _layout_busy = true
+    _last_layout_size = size_key
+    _last_layout_child_count = child_count
+    var card_height := clampf(_scroll.size.y * 0.84, 160.0, 210.0)
+    var card_width := clampf(_scroll.size.x * 0.86, 320.0, 520.0)
     for child in _skill_list.get_children():
         if child is Control:
             var ctl := child as Control
             ctl.custom_minimum_size = Vector2(card_width, card_height)
-            child_count += 1
-    var gap := 10.0
-    if _skill_list is BoxContainer:
-        var box := _skill_list as BoxContainer
-        gap = float(box.get_theme_constant("separation"))
-    var total_width := 12.0
+    var gap := float(_skill_list.get_theme_constant("separation"))
+    var total_width := 24.0
     if child_count > 0:
         total_width += float(child_count) * card_width
         total_width += float(maxi(child_count - 1, 0)) * gap
-    _skill_list.custom_minimum_size = Vector2(maxf(total_width, card_width), card_height)
-    if _scroll:
-        var max_scroll := int(_scroll.get_h_scroll_bar().max_value)
-        _scroll.scroll_horizontal = clampi(_scroll.scroll_horizontal, 0, max_scroll)
+    _skill_list.custom_minimum_size = Vector2(maxf(total_width, _scroll.size.x), card_height)
+    var max_scroll := _get_max_horizontal_scroll()
+    _scroll.scroll_horizontal = clampi(_scroll.scroll_horizontal, 0, max_scroll)
     _update_token_grid_columns()
+    _layout_busy = false
 
-func _build_skill_row(item: Dictionary) -> Control:
-    var panel := PanelContainer.new()
-    panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-    panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    panel.custom_minimum_size.y = 138.0
-    panel.clip_contents = true
-    panel.mouse_filter = Control.MOUSE_FILTER_PASS
+func _build_skill_card(item: Dictionary) -> Control:
     var category := String(item.get("category", ""))
     var accent := _category_color(category)
-    var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.06, 0.12, 0.2, 0.92)
-    style.border_color = accent.lerp(Color(1.0, 1.0, 1.0, 1.0), 0.1)
-    style.set_border_width_all(1)
-    style.set_corner_radius_all(11)
-    style.content_margin_left = 0
-    style.content_margin_right = 0
-    style.content_margin_top = 0
-    style.content_margin_bottom = 0
-    panel.add_theme_stylebox_override("panel", style)
 
-    var frame := HBoxContainer.new()
-    frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    frame.add_theme_constant_override("separation", 0)
-    frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    panel.add_child(frame)
+    var card := PanelContainer.new()
+    card.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    card.clip_contents = true
+    card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var card_style := StyleBoxFlat.new()
+    card_style.bg_color = Color(0.05, 0.12, 0.2, 0.94)
+    card_style.border_color = accent
+    card_style.set_border_width_all(2)
+    card_style.set_corner_radius_all(14)
+    card_style.content_margin_left = 10
+    card_style.content_margin_right = 10
+    card_style.content_margin_top = 10
+    card_style.content_margin_bottom = 10
+    card.add_theme_stylebox_override("panel", card_style)
 
-    var accent_bar := ColorRect.new()
-    accent_bar.color = accent
-    accent_bar.custom_minimum_size = Vector2(5, 0)
-    accent_bar.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    accent_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    frame.add_child(accent_bar)
+    var root := VBoxContainer.new()
+    root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    root.add_theme_constant_override("separation", 8)
+    root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    card.add_child(root)
 
-    var content_margin := MarginContainer.new()
-    content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    content_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    content_margin.add_theme_constant_override("margin_left", 9)
-    content_margin.add_theme_constant_override("margin_right", 9)
-    content_margin.add_theme_constant_override("margin_top", 8)
-    content_margin.add_theme_constant_override("margin_bottom", 8)
-    content_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    frame.add_child(content_margin)
-
-    var hbox := HBoxContainer.new()
-    hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    hbox.add_theme_constant_override("separation", 9)
-    hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    content_margin.add_child(hbox)
+    var top := HBoxContainer.new()
+    top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    top.add_theme_constant_override("separation", 8)
+    top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    root.add_child(top)
 
     var icon_wrap := PanelContainer.new()
-    icon_wrap.custom_minimum_size = Vector2(42, 42)
-    icon_wrap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    icon_wrap.custom_minimum_size = Vector2(56, 56)
     icon_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
     var icon_style := StyleBoxFlat.new()
-    icon_style.bg_color = accent.darkened(0.65)
+    icon_style.bg_color = accent.darkened(0.67)
     icon_style.border_color = accent
     icon_style.set_border_width_all(2)
-    icon_style.set_corner_radius_all(28)
+    icon_style.set_corner_radius_all(30)
     icon_wrap.add_theme_stylebox_override("panel", icon_style)
-    hbox.add_child(icon_wrap)
+    top.add_child(icon_wrap)
 
     var icon := TextureRect.new()
-    icon.custom_minimum_size = Vector2(28, 28)
+    icon.custom_minimum_size = Vector2(36, 36)
     icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-    icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
     var icon_path := String(item.get("icon_path", ""))
     var tex := _get_icon(icon_path)
@@ -418,143 +419,136 @@ func _build_skill_row(item: Dictionary) -> Control:
         icon.modulate = Color(1, 1, 1, 0.0)
     icon_wrap.add_child(icon)
 
-    var body := VBoxContainer.new()
-    body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    body.add_theme_constant_override("separation", 7)
-    body.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    hbox.add_child(body)
+    var title_box := VBoxContainer.new()
+    title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    title_box.add_theme_constant_override("separation", 2)
+    title_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    top.add_child(title_box)
 
-    var top_row := HBoxContainer.new()
-    top_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    top_row.add_theme_constant_override("separation", 6)
-    top_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    body.add_child(top_row)
+    var title_row := HBoxContainer.new()
+    title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    title_box.add_child(title_row)
 
-    var name_lbl := Label.new()
-    name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    name_lbl.custom_minimum_size.y = 24.0
-    name_lbl.text = tr(String(item.get("name_key", "")))
+    var title := Label.new()
+    title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    title.text = tr(String(item.get("name_key", "")))
+    title.autowrap_mode = TextServer.AUTOWRAP_OFF
+    title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+    title.clip_text = true
+    title.mouse_filter = Control.MOUSE_FILTER_IGNORE
     if _title_font:
-        name_lbl.add_theme_font_override("font", _title_font)
+        title.add_theme_font_override("font", _title_font)
     elif _value_font:
-        name_lbl.add_theme_font_override("font", _value_font)
-    name_lbl.add_theme_font_size_override("font_size", 17)
-    name_lbl.add_theme_color_override("font_color", Color(0.96, 0.96, 0.99, 1.0))
-    name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    name_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
-    name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-    name_lbl.clip_text = true
-    name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    top_row.add_child(name_lbl)
+        title.add_theme_font_override("font", _value_font)
+    title.add_theme_font_size_override("font_size", 20)
+    title.add_theme_color_override("font_color", Color(0.96, 0.97, 1.0, 1.0))
+    title_row.add_child(title)
 
-    var lv_lbl := Label.new()
-    lv_lbl.custom_minimum_size = Vector2(74, 22)
-    lv_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-    lv_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    lv_lbl.text = "%s %d/%d" % [
-        tr("Lv"),
-        int(item.get("level_current", 1)),
-        int(item.get("level_max", 1))
-    ]
+    var lv := Label.new()
+    lv.custom_minimum_size = Vector2(84, 24)
+    lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    lv.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    lv.text = "%s %d/%d" % [tr("Lv"), int(item.get("level_current", 1)), int(item.get("level_max", 1))]
     if _value_font:
-        lv_lbl.add_theme_font_override("font", _value_font)
-    elif _title_font:
-        lv_lbl.add_theme_font_override("font", _title_font)
-    lv_lbl.add_theme_font_size_override("font_size", 15)
-    lv_lbl.add_theme_color_override("font_color", Color(1.0, 0.86, 0.24, 1.0))
-    lv_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-    lv_lbl.clip_text = true
-    lv_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    top_row.add_child(lv_lbl)
+        lv.add_theme_font_override("font", _value_font)
+    lv.add_theme_font_size_override("font_size", 16)
+    lv.add_theme_color_override("font_color", Color(0.99, 0.86, 0.2, 1.0))
+    lv.autowrap_mode = TextServer.AUTOWRAP_OFF
+    lv.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+    lv.clip_text = true
+    lv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    title_row.add_child(lv)
 
     var progress := ProgressBar.new()
-    progress.custom_minimum_size = Vector2(0, 7)
+    progress.custom_minimum_size = Vector2(0, 10)
     progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     progress.max_value = float(maxi(int(item.get("level_max", 1)), 1))
     progress.value = float(clampi(int(item.get("level_current", 1)), 1, int(progress.max_value)))
     progress.show_percentage = false
     progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    var pb_bg := StyleBoxFlat.new()
-    pb_bg.bg_color = Color(0.02, 0.04, 0.08, 0.95)
-    pb_bg.set_corner_radius_all(5)
-    var pb_fill := StyleBoxFlat.new()
-    pb_fill.bg_color = accent
-    pb_fill.set_corner_radius_all(5)
-    progress.add_theme_stylebox_override("background", pb_bg)
-    progress.add_theme_stylebox_override("fill", pb_fill)
-    body.add_child(progress)
+    var p_bg := StyleBoxFlat.new()
+    p_bg.bg_color = Color(0.02, 0.05, 0.09, 0.96)
+    p_bg.set_corner_radius_all(6)
+    var p_fill := StyleBoxFlat.new()
+    p_fill.bg_color = accent
+    p_fill.set_corner_radius_all(6)
+    progress.add_theme_stylebox_override("background", p_bg)
+    progress.add_theme_stylebox_override("fill", p_fill)
+    root.add_child(progress)
 
-    var stats_row := VBoxContainer.new()
-    stats_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    stats_row.add_theme_constant_override("separation", 5)
-    stats_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    body.add_child(stats_row)
+    var stats := VBoxContainer.new()
+    stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    stats.add_theme_constant_override("separation", 6)
+    stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    root.add_child(stats)
 
     var unit := String(item.get("unit", ""))
     var current_value := _format_value(item.get("current_value"), unit)
-    var next_value := tr("MAX") if bool(item.get("is_max", false)) else _format_value(item.get("next_value"), unit)
-    stats_row.add_child(_make_value_pill(tr("Current"), current_value, accent))
-    stats_row.add_child(_make_value_pill(tr("Next"), next_value, accent))
+    var next_value := (tr("MAX") if bool(item.get("is_max", false)) else _format_value(item.get("next_value"), unit))
+    var base_value := _format_value(item.get("base_value"), unit)
+    stats.add_child(_make_stat_pill(tr("Current"), current_value, accent))
+    stats.add_child(_make_stat_pill(tr("Next"), next_value, accent))
+    stats.add_child(_make_stat_pill(tr("Base"), base_value, accent))
 
-    return panel
+    return card
 
-func _make_value_pill(label_text: String, value_text: String, accent: Color) -> Control:
-    var block := PanelContainer.new()
-    block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    block.custom_minimum_size.y = 28.0
-    block.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    var block_style := StyleBoxFlat.new()
-    block_style.bg_color = Color(0.05, 0.09, 0.15, 0.9)
-    block_style.border_color = accent.darkened(0.4)
-    block_style.set_border_width_all(1)
-    block_style.set_corner_radius_all(6)
-    block_style.content_margin_left = 6
-    block_style.content_margin_right = 6
-    block_style.content_margin_top = 2
-    block_style.content_margin_bottom = 2
-    block.add_theme_stylebox_override("panel", block_style)
+func _make_stat_pill(label_text: String, value_text: String, accent: Color) -> Control:
+    var pill := PanelContainer.new()
+    pill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    pill.custom_minimum_size.y = 30.0
+    pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var pill_style := StyleBoxFlat.new()
+    pill_style.bg_color = Color(0.04, 0.09, 0.15, 0.9)
+    pill_style.border_color = accent.darkened(0.35)
+    pill_style.set_border_width_all(1)
+    pill_style.set_corner_radius_all(7)
+    pill_style.content_margin_left = 8
+    pill_style.content_margin_right = 8
+    pill_style.content_margin_top = 3
+    pill_style.content_margin_bottom = 3
+    pill.add_theme_stylebox_override("panel", pill_style)
 
     var row := HBoxContainer.new()
     row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     row.add_theme_constant_override("separation", 8)
     row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    block.add_child(row)
+    pill.add_child(row)
 
-    var title_lbl := Label.new()
-    title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-    title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    title_lbl.text = label_text
-    title_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
-    title_lbl.clip_text = true
-    title_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+    var label := Label.new()
+    label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    label.text = label_text
+    label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+    label.autowrap_mode = TextServer.AUTOWRAP_OFF
+    label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+    label.clip_text = true
+    label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     if _body_font:
-        title_lbl.add_theme_font_override("font", _body_font)
-    title_lbl.add_theme_font_size_override("font_size", 12)
-    title_lbl.add_theme_color_override("font_color", Color(0.76, 0.88, 0.98, 0.94))
-    title_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    row.add_child(title_lbl)
+        label.add_theme_font_override("font", _body_font)
+    label.add_theme_font_size_override("font_size", 13)
+    label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0, 0.95))
+    row.add_child(label)
 
-    var value_lbl := Label.new()
-    value_lbl.custom_minimum_size.x = 96.0
-    value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-    value_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    value_lbl.text = value_text
-    value_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
-    value_lbl.clip_text = true
-    value_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+    var value := Label.new()
+    value.custom_minimum_size = Vector2(100, 0)
+    value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    value.text = value_text
+    value.autowrap_mode = TextServer.AUTOWRAP_OFF
+    value.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+    value.clip_text = true
+    value.mouse_filter = Control.MOUSE_FILTER_IGNORE
     if _value_font:
-        value_lbl.add_theme_font_override("font", _value_font)
-    elif _body_font:
-        value_lbl.add_theme_font_override("font", _body_font)
-    value_lbl.add_theme_font_size_override("font_size", 12)
-    value_lbl.add_theme_color_override("font_color", Color(0.95, 0.98, 1.0, 1.0))
-    value_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    row.add_child(value_lbl)
-    return block
+        value.add_theme_font_override("font", _value_font)
+    value.add_theme_font_size_override("font_size", 13)
+    value.add_theme_color_override("font_color", Color(0.97, 0.98, 1.0, 1.0))
+    row.add_child(value)
+
+    return pill
 
 func _refresh_token_inventory(snapshot: Array) -> void:
+    if _token_grid == null:
+        return
     var counts := {
         "magnet_duration": 0,
         "shield_duration": 0,
@@ -564,45 +558,41 @@ func _refresh_token_inventory(snapshot: Array) -> void:
     for item_any in snapshot:
         if not (item_any is Dictionary):
             continue
-        var id := String(item_any.get("id", ""))
+        var item: Dictionary = item_any
+        var id := String(item.get("id", ""))
         if counts.has(id):
-            counts[id] = int(item_any.get("token_count", 0))
+            counts[id] = int(item.get("token_count", 0))
 
     for child in _token_grid.get_children():
         child.queue_free()
-
-    _update_token_grid_columns()
     _token_grid.add_theme_constant_override("h_separation", 10)
     _token_grid.add_theme_constant_override("v_separation", 10)
 
     for token_id in _TOKEN_ORDER:
         var accent := Color(_TOKEN_ACCENT_MAP.get(token_id, Color(0.67, 0.79, 0.89, 1.0)))
-        var token_card := PanelContainer.new()
-        token_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        token_card.custom_minimum_size.y = 72.0
-        token_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        var token_style := StyleBoxFlat.new()
-        token_style.bg_color = Color(0.05, 0.1, 0.17, 0.9)
-        token_style.border_color = accent
-        token_style.set_border_width_all(1)
-        token_style.set_corner_radius_all(9)
-        token_style.content_margin_left = 8
-        token_style.content_margin_right = 8
-        token_style.content_margin_top = 6
-        token_style.content_margin_bottom = 6
-        token_card.add_theme_stylebox_override("panel", token_style)
+        var card := PanelContainer.new()
+        card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        card.custom_minimum_size.y = 74.0
+        var card_style := StyleBoxFlat.new()
+        card_style.bg_color = Color(0.05, 0.1, 0.17, 0.92)
+        card_style.border_color = accent
+        card_style.set_border_width_all(1)
+        card_style.set_corner_radius_all(10)
+        card_style.content_margin_left = 8
+        card_style.content_margin_right = 8
+        card_style.content_margin_top = 6
+        card_style.content_margin_bottom = 6
+        card.add_theme_stylebox_override("panel", card_style)
 
         var row := HBoxContainer.new()
         row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         row.add_theme_constant_override("separation", 8)
-        row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        token_card.add_child(row)
+        card.add_child(row)
 
         var icon := TextureRect.new()
-        icon.custom_minimum_size = Vector2(28, 28)
+        icon.custom_minimum_size = Vector2(30, 30)
         icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-        icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
         var icon_tex := _get_icon(String(_TOKEN_ICON_MAP.get(token_id, "")))
         if icon_tex:
             icon.texture = icon_tex
@@ -611,44 +601,57 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         var right := VBoxContainer.new()
         right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         right.add_theme_constant_override("separation", 2)
-        right.mouse_filter = Control.MOUSE_FILTER_IGNORE
         row.add_child(right)
 
-        var label_text := tr(String(_TOKEN_LABEL_MAP.get(token_id, token_id)))
         var name_lbl := Label.new()
+        name_lbl.text = tr(String(_TOKEN_LABEL_MAP.get(token_id, token_id)))
+        name_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+        name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+        name_lbl.clip_text = true
         if _body_font:
             name_lbl.add_theme_font_override("font", _body_font)
         name_lbl.add_theme_font_size_override("font_size", 13)
         name_lbl.add_theme_color_override("font_color", Color(0.78, 0.9, 1.0, 0.95))
-        name_lbl.text = label_text
-        name_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
-        name_lbl.clip_text = true
-        name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
         right.add_child(name_lbl)
 
         var value_lbl := Label.new()
+        value_lbl.text = str(int(counts.get(token_id, 0)))
+        value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
         if _title_font:
             value_lbl.add_theme_font_override("font", _title_font)
         value_lbl.add_theme_font_size_override("font_size", 24)
         value_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2, 1.0))
-        value_lbl.text = str(int(counts.get(token_id, 0)))
-        value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-        value_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
         right.add_child(value_lbl)
 
-        _token_grid.add_child(token_card)
+        _token_grid.add_child(card)
+
+    _update_token_grid_columns()
 
 func _update_token_grid_columns() -> void:
     if _token_grid == null:
         return
     var width_ref := _token_grid.size.x
     if width_ref <= 0.0 and _token_panel:
-        width_ref = _token_panel.size.x - 16.0
+        width_ref = _token_panel.size.x - 20.0
     var columns := 4
-    if width_ref > 0.0 and width_ref < 560.0:
+    if width_ref > 0.0 and width_ref < 620.0:
         columns = 2
-    if _token_grid.columns != columns:
-        _token_grid.columns = columns
+    _token_grid.columns = columns
+
+func _category_color(category: String) -> Color:
+    match category:
+        "duration":
+            return Color(0.11, 0.78, 1.0, 1.0)
+        "gain":
+            return Color(0.99, 0.76, 0.23, 1.0)
+        "boost":
+            return Color(0.95, 0.52, 0.2, 1.0)
+        "survivability":
+            return Color(0.96, 0.35, 0.44, 1.0)
+        "utility":
+            return Color(0.49, 0.91, 0.59, 1.0)
+        _:
+            return Color(0.67, 0.79, 0.89, 1.0)
 
 func _format_value(raw_value: Variant, unit: String) -> String:
     if raw_value == null:

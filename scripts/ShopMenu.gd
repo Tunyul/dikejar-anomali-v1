@@ -1,4 +1,3 @@
-@tool
 extends Control
 
 @export var refresh_editor: bool = false : set = _set_refresh_editor
@@ -56,6 +55,18 @@ const _DAILY_CLAIM_ITEM_ID := "daily_coins_claim"
 const _DAILY_CLAIM_MIN_COINS := 100
 const _DAILY_CLAIM_MAX_COINS := 500
 const _DAILY_CLAIM_AD_REASON := "shop_daily_coins_claim"
+const _UPGRADE_SKILL_ID_BY_ITEM := {
+    "max_heart_plus1": "max_heart",
+    "magnet_duration_plus10": "magnet_duration",
+    "shield_duration_plus10": "shield_duration",
+    "double_coins_duration_plus10": "double_coins_duration",
+    "double_coins_multiplier_plus025": "double_coins_gain",
+    "speed_boost_duration_plus10": "speed_boost_duration",
+    "speed_boost_multiplier_plus10": "speed_boost_multiplier",
+    "pickup_range_plus1": "pickup_range"
+}
+const _UPGRADE_PRICE_GROWTH_COINS := 1.18
+const _UPGRADE_PRICE_GROWTH_GEMS := 1.14
 
 func _set_refresh_editor(_val: bool) -> void:
     if Engine.is_editor_hint():
@@ -357,10 +368,12 @@ func _setup_groups_scroll_input() -> void:
         groups_hbox.mouse_filter = Control.MOUSE_FILTER_PASS
         groups_hbox.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 
-    if not _groups_scroll.gui_input.is_connected(_on_groups_scroll_gui_input):
-        _groups_scroll.gui_input.connect(_on_groups_scroll_gui_input)
+    if _groups_scroll.gui_input.is_connected(_on_groups_scroll_gui_input):
+        _groups_scroll.gui_input.disconnect(_on_groups_scroll_gui_input)
 
 func _on_groups_scroll_gui_input(event: InputEvent) -> void:
+    if _is_skill_progress_open():
+        return
     if not is_inside_tree():
         return
     if _groups_scroll == null:
@@ -494,25 +507,29 @@ func _get_today_claim_bucket() -> int:
 
 
 func _load_daily_claim_progress() -> void:
-    var cfg := ConfigFile.new()
-    var err := cfg.load(SAVE_PATH)
-    if err == OK:
-        _daily_claim_day_bucket = int(cfg.get_value("shop", "daily_coins_claim_day", -1))
-        _daily_claim_count = maxi(int(cfg.get_value("shop", "daily_coins_claim_count", 0)), 0)
+    if GameManager and GameManager.has_method("get_shop_snapshot"):
+        var shop_snapshot: Dictionary = GameManager.get_shop_snapshot()
+        _daily_claim_day_bucket = int(shop_snapshot.get("daily_coins_claim_day", -1))
+        _daily_claim_count = maxi(int(shop_snapshot.get("daily_coins_claim_count", 0)), 0)
     else:
-        _daily_claim_day_bucket = -1
-        _daily_claim_count = 0
+        var cfg := ConfigFile.new()
+        var err := cfg.load(SAVE_PATH)
+        if err == OK:
+            _daily_claim_day_bucket = int(cfg.get_value("shop", "daily_coins_claim_day", -1))
+            _daily_claim_count = maxi(int(cfg.get_value("shop", "daily_coins_claim_count", 0)), 0)
+        else:
+            _daily_claim_day_bucket = -1
+            _daily_claim_count = 0
     _sync_daily_claim_state(true)
 
 
 func _save_daily_claim_progress() -> void:
-    var cfg := ConfigFile.new()
-    var err := cfg.load(SAVE_PATH)
-    if err != OK:
-        cfg = ConfigFile.new()
-    cfg.set_value("shop", "daily_coins_claim_day", _daily_claim_day_bucket)
-    cfg.set_value("shop", "daily_coins_claim_count", maxi(_daily_claim_count, 0))
-    cfg.save(SAVE_PATH)
+    if GameManager and GameManager.has_method("update_shop_state"):
+        GameManager.update_shop_state({
+            "daily_coins_claim_day": _daily_claim_day_bucket,
+            "daily_coins_claim_count": maxi(_daily_claim_count, 0)
+        }, true)
+    return
 
 
 func _sync_daily_claim_state(save_if_reset: bool = false) -> void:
@@ -758,6 +775,10 @@ func _save_powerups_data(data: Dictionary) -> void:
 
 
 func _load_cosmetics_data() -> Dictionary:
+    if GameManager and GameManager.has_method("get_cosmetics_snapshot"):
+        var snapshot: Variant = GameManager.get_cosmetics_snapshot()
+        if snapshot is Dictionary:
+            return snapshot
     var cfg := ConfigFile.new()
     var err := cfg.load(SAVE_PATH)
     if err != OK:
@@ -769,12 +790,9 @@ func _load_cosmetics_data() -> Dictionary:
 
 
 func _save_cosmetics_data(data: Dictionary) -> void:
-    var cfg := ConfigFile.new()
-    var err := cfg.load(SAVE_PATH)
-    if err != OK:
-        cfg = ConfigFile.new()
-    cfg.set_value("cosmetics", "data", data)
-    cfg.save(SAVE_PATH)
+    if GameManager and GameManager.has_method("update_cosmetics"):
+        GameManager.update_cosmetics(data, true)
+    return
 
 func _init_shop_data() -> void:
     shop_groups.clear()
@@ -1572,6 +1590,59 @@ func _init_editor_dummy_data() -> void:
         "items": bundle_items
     })
 
+func _is_upgrade_item_id(item_id: String) -> bool:
+    return _UPGRADE_SKILL_ID_BY_ITEM.has(item_id)
+
+
+func _get_skill_progress_map() -> Dictionary:
+    var out: Dictionary = {}
+    if GameManager == null or not GameManager.has_method("get_skill_progress_snapshot"):
+        return out
+    var rows: Variant = GameManager.get_skill_progress_snapshot()
+    if not (rows is Array):
+        return out
+    for row_any in (rows as Array):
+        if not (row_any is Dictionary):
+            continue
+        var row: Dictionary = row_any
+        var key := String(row.get("id", "")).strip_edges()
+        if key.is_empty():
+            continue
+        out[key] = row
+    return out
+
+
+func _resolve_runtime_item(item: Dictionary, progress_map: Dictionary) -> Dictionary:
+    var runtime := item.duplicate(true)
+    var id := String(runtime.get("id", "")).strip_edges()
+    if not _is_upgrade_item_id(id):
+        return runtime
+
+    runtime["is_upgrade"] = true
+    var progress_id := String(_UPGRADE_SKILL_ID_BY_ITEM.get(id, ""))
+    var progress_row: Dictionary = {}
+    if progress_map.has(progress_id) and progress_map[progress_id] is Dictionary:
+        progress_row = progress_map[progress_id]
+    var level_current := int(progress_row.get("level_current", 1))
+    var level_max := int(progress_row.get("level_max", 1))
+    var is_max := bool(progress_row.get("is_max", false))
+    runtime["level_current"] = level_current
+    runtime["level_max"] = level_max
+    runtime["is_max"] = is_max
+
+    if is_max:
+        runtime["display_price"] = tr("MAX")
+        return runtime
+
+    var base_price := maxi(int(runtime.get("price", 0)), 1)
+    var currency := String(runtime.get("currency", "coins"))
+    var growth := (_UPGRADE_PRICE_GROWTH_GEMS if currency == "gems" else _UPGRADE_PRICE_GROWTH_COINS)
+    var step_index := maxi(level_current - 1, 0)
+    var scaled := int(ceil(float(base_price) * pow(growth, float(step_index))))
+    runtime["price"] = maxi(scaled, base_price)
+    return runtime
+
+
 func _build_groups_ui() -> void:
     var groups_root := _groups_hbox
     var status_label := _status_label
@@ -1594,6 +1665,7 @@ func _build_groups_ui() -> void:
     _edge_padding_nodes.clear()
     _items_margin_nodes.clear()
     var edge_padding := _get_products_padding(get_viewport_rect().size.x)
+    var progress_map := _get_skill_progress_map()
 
     var left_pad := Control.new()
     left_pad.custom_minimum_size.x = edge_padding
@@ -1644,7 +1716,9 @@ func _build_groups_ui() -> void:
             for item in items:
                 if not (item is Dictionary):
                     continue
-                var card := _create_item_card(item)
+                var item_dict: Dictionary = item
+                var runtime_item := _resolve_runtime_item(item_dict, progress_map)
+                var card := _create_item_card(runtime_item)
                 if card:
                     items_row.add_child(card)
 
@@ -1754,6 +1828,21 @@ func _create_item_card(item: Dictionary) -> Control:
     name_lbl.mouse_filter = Control.MOUSE_FILTER_PASS
     vbox.add_child(name_lbl)
 
+    if bool(item.get("is_upgrade", false)):
+        var lv_lbl := Label.new()
+        lv_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        lv_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        lv_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+        lv_lbl.clip_text = false
+        lv_lbl.add_theme_color_override("font_color", Color(0.96, 0.9, 0.35, 1.0))
+        lv_lbl.add_theme_font_size_override("font_size", 14)
+        lv_lbl.text = "%s %d/%d" % [
+            tr("Lv"),
+            int(item.get("level_current", 1)),
+            int(item.get("level_max", 1))
+        ]
+        vbox.add_child(lv_lbl)
+
     # Price
     var id := String(item.get("id", ""))
     var display_price := String(item.get("display_price", ""))
@@ -1792,8 +1881,8 @@ func _create_item_card(item: Dictionary) -> Control:
         var price_lbl := Label.new()
         price_lbl.text = price_text
         price_lbl.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-        price_lbl.custom_minimum_size.x = 56.0
-        price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+        price_lbl.custom_minimum_size = Vector2.ZERO
+        price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         price_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
         price_lbl.clip_text = false
         price_lbl.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
@@ -1816,8 +1905,8 @@ func _create_item_card(item: Dictionary) -> Control:
         price_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         price_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
-        price_lbl.clip_text = true
-        price_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+        price_lbl.clip_text = false
+        price_lbl.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
         price_lbl.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
         price_lbl.add_theme_font_size_override("font_size", 20)
         price_lbl.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -1850,6 +1939,9 @@ func _create_item_card(item: Dictionary) -> Control:
 
     var button := Button.new()
     button.text = tr("Claim") if id == _DAILY_CLAIM_ITEM_ID else tr("Buy")
+    if bool(item.get("is_upgrade", false)) and bool(item.get("is_max", false)):
+        button.text = tr("MAX")
+        button.disabled = true
     button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     button.custom_minimum_size = Vector2(0, 40)
     button.clip_text = true
@@ -1892,6 +1984,9 @@ func _update_buy_buttons_state() -> void:
             continue
         var id := String(it.get("id", ""))
         var currency := String(it.get("currency", "coins"))
+        var is_upgrade := _is_upgrade_item_id(id)
+        var is_upgrade_max := bool(it.get("is_max", false))
+        var effective_price := int(it.get("price", 0))
 
         if id == _DAILY_CLAIM_ITEM_ID:
             var free_claim := _is_daily_free_claim_available()
@@ -1904,10 +1999,16 @@ func _update_buy_buttons_state() -> void:
                     (b as Button).text = tr("Claim") + " +Ad"
             continue
 
+        if is_upgrade and is_upgrade_max:
+            (b as BaseButton).disabled = true
+            if b is Button:
+                (b as Button).text = tr("MAX")
+            continue
+
         if _is_skin_id(id):
             var owned := owned_set.has(id)
             var equipped := (equipped_skin == id)
-            var price_skin := int(it.get("price", 0))
+            var price_skin := effective_price
 
             if b is Button:
                 if equipped:
@@ -1927,7 +2028,7 @@ func _update_buy_buttons_state() -> void:
         if _is_border_id(id):
             var owned := owned_borders_set.has(id)
             var equipped := (equipped_border == id)
-            var price_border := int(it.get("price", 0))
+            var price_border := effective_price
 
             if b is Button:
                 if equipped:
@@ -1943,7 +2044,7 @@ func _update_buy_buttons_state() -> void:
                     else:
                         (b as BaseButton).disabled = current_coins < price_border
             continue
-        var price := int(it.get("price", 0))
+        var price := effective_price
         match currency:
             "coins":
                 (b as BaseButton).disabled = current_coins < price
@@ -1963,12 +2064,18 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
     if not Engine.is_editor_hint():
         if is_instance_valid(TransitionManager) and TransitionManager.has_method("play_sfx"):
             TransitionManager.play_sfx(&"click")
-    var price := int(item.get("price", 0))
-    var currency := String(item.get("currency", "coins"))
-    var id := String(item.get("id", ""))
+    var runtime_item := _resolve_runtime_item(item, _get_skill_progress_map())
+    var price := int(runtime_item.get("price", 0))
+    var currency := String(runtime_item.get("currency", "coins"))
+    var id := String(runtime_item.get("id", ""))
 
     if id == _DAILY_CLAIM_ITEM_ID:
         _on_daily_claim_pressed()
+        return
+
+    if bool(runtime_item.get("is_upgrade", false)) and bool(runtime_item.get("is_max", false)):
+        _set_status_text(tr("MAX"))
+        _update_buy_buttons_state()
         return
 
     if _is_skin_id(id) and _is_skin_owned(id):
@@ -1992,7 +2099,7 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
         var msg := popup.get_node_or_null("%Message") as Label
         if msg:
             var currency_name := tr("Coins") if currency == "coins" else (tr("Gems") if currency == "gems" else tr("Money"))
-            msg.text = tr("Buy %s\nfor %d %s?") % [tr(String(item.get("name", "Item"))), price, currency_name]
+            msg.text = tr("Buy %s\nfor %d %s?") % [tr(String(runtime_item.get("name", "Item"))), price, currency_name]
 
         var yes := popup.get_node_or_null("%YesButton") as TextureButton
         var no := popup.get_node_or_null("%NoButton") as TextureButton
@@ -2000,7 +2107,7 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
         if yes:
             yes.pressed.connect(func():
                 popup.queue_free()
-                _execute_purchase(item)
+                _execute_purchase(runtime_item)
             )
         if no:
             no.pressed.connect(func():
@@ -2008,14 +2115,20 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
             )
     else:
         # Fallback to direct purchase if popup scene missing
-        _execute_purchase(item)
+        _execute_purchase(runtime_item)
 
 func _execute_purchase(item: Dictionary) -> void:
     if Engine.is_editor_hint():
         return
-    var price := int(item.get("price", 0))
-    var currency := String(item.get("currency", "coins"))
-    var id := String(item.get("id", ""))
+    var effective_item := _resolve_runtime_item(item, _get_skill_progress_map())
+    var price := int(effective_item.get("price", 0))
+    var currency := String(effective_item.get("currency", "coins"))
+    var id := String(effective_item.get("id", ""))
+
+    if bool(effective_item.get("is_upgrade", false)) and bool(effective_item.get("is_max", false)):
+        _set_status_text(tr("MAX"))
+        _update_buy_buttons_state()
+        return
 
     match currency:
         "coins":
@@ -2029,14 +2142,14 @@ func _execute_purchase(item: Dictionary) -> void:
             elif _is_border_id(id):
                 _unlock_border(id)
             else:
-                _apply_item_to_powerups(item)
+                _apply_item_to_powerups(effective_item)
 
             var coins_label := _coins_label
             if coins_label:
                 coins_label.text = str(current_coins)
             _build_groups_ui()
             _update_buy_buttons_state()
-            _set_status_text(tr("Purchase successful: %s") % tr(String(item.get("name", "Item"))))
+            _set_status_text(tr("Purchase successful: %s") % tr(String(effective_item.get("name", "Item"))))
         "gems":
             if current_gems < price:
                 _set_status_text(tr("Not enough gems."))
@@ -2048,16 +2161,16 @@ func _execute_purchase(item: Dictionary) -> void:
             elif _is_border_id(id):
                 _unlock_border(id)
             else:
-                _apply_item_to_powerups(item)
+                _apply_item_to_powerups(effective_item)
 
             var gems_label := _gems_label
             if gems_label:
                 gems_label.text = str(current_gems)
             _build_groups_ui()
             _update_buy_buttons_state()
-            _set_status_text(tr("Purchase successful: %s") % tr(String(item.get("name", "Item"))))
+            _set_status_text(tr("Purchase successful: %s") % tr(String(effective_item.get("name", "Item"))))
         "real":
-            var ok := _apply_real_purchase(item)
+            var ok := _apply_real_purchase(effective_item)
             _build_groups_ui()
             _update_buy_buttons_state()
             _update_buy_buttons_state()
@@ -2230,12 +2343,8 @@ func _equip_skin(id: String) -> void:
     _notify_player_cosmetic_change()
 
 func _notify_player_cosmetic_change() -> void:
-    var _main_node = get_tree().get_root().get_node_or_null("Main")
-    if _main_node and _main_node.has_method("update_player_cosmetics"):
-        _main_node.update_player_cosmetics()
-    elif _main_node and "player" in _main_node and is_instance_valid(_main_node.player):
-        if _main_node.player.has_method("update_cosmetics"):
-            _main_node.player.update_cosmetics()
+    if GameManager and GameManager.has_method("update_player_cosmetics"):
+        GameManager.update_player_cosmetics()
 
 func _on_back_pressed() -> void:
     if not is_inside_tree():
