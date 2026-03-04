@@ -21,7 +21,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Anomaly Rush!"
-config/version="1.3.49-beta"
+config/version="1.3.50-beta"
 run/main_scene="res://scenes/LoadingScreen.tscn"
 config/features=PackedStringArray("4.6")
 config/icon="uid://cs8vxi0qroewf"
@@ -76,6 +76,10 @@ open_missions_menu={
 
 pointing/emulate_touch_from_mouse=true
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://i18n/translations.id.translation", "res://i18n/translations.en.translation", "res://i18n/translations.zh.translation")
+
 [remote_content]
 
 base_url=""
@@ -93,7 +97,3 @@ textures/vram_compression/import_etc2_astc=true
 2d/snap/snap_2d_transforms_to_pixel=true
 textures/vram_compression/import_etc=true
 textures/vram_compression/import_s3tc=true
-
-[internationalization]
-
-locale/translations=PackedStringArray("res://i18n/translations.id.translation", "res://i18n/translations.en.translation", "res://i18n/translations.zh.translation")

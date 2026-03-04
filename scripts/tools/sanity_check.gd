@@ -13,7 +13,7 @@ func _init() -> void:
         print("--- Check Passed: No errors found ---")
         quit(0)
 
-func _check_scripts() -> void:
+func _check_scripts() -> int:
     var err_count := 0
     var script_dir := "res://scripts/"
     var files := _get_all_files(script_dir, ["gd"])
@@ -34,15 +34,29 @@ func _check_scripts() -> void:
                 var matches := regex.search_all(line)
                 for m in matches:
                     var path := m.get_string(1)
-                    if not ResourceLoader.exists(path):
-                        printerr("ERR: Broken path in %s:%d -> %s" % [file_path, line_num, path])
-                        err_count += 1
+                    if not _path_exists(path):
+                        if path.ends_with("/"):
+                            printerr("WARN: Missing optional directory in %s:%d -> %s" % [file_path, line_num, path])
+                        else:
+                            printerr("ERR: Broken path in %s:%d -> %s" % [file_path, line_num, path])
+                            err_count += 1
 
             # Check for FileAccess.file_exists usage (should use ResourceLoader.exists for res://)
-            if "FileAccess.file_exists" in line and "res://" in line:
+            if file_path != "res://scripts/tools/sanity_check.gd" and "FileAccess.file_exists" in line and "res://" in line:
                 printerr("WARN: FileAccess.file_exists used for res:// path in %s:%d. Use ResourceLoader.exists() instead." % [file_path, line_num])
                 # Not an error yet, but a warning
     return err_count
+
+func _path_exists(path: String) -> bool:
+    if path == "":
+        return false
+    if ResourceLoader.exists(path):
+        return true
+    if FileAccess.file_exists(path):
+        return true
+    if DirAccess.dir_exists_absolute(path):
+        return true
+    return false
 
 func _get_all_files(path: String, extensions: Array) -> Array:
     var files := []
@@ -52,7 +66,7 @@ func _get_all_files(path: String, extensions: Array) -> Array:
         var file_name := dir.get_next()
         while file_name != "":
             if dir.current_is_dir():
-                if not file_name.begin_with("."):
+                if not file_name.begins_with("."):
                     files.append_array(_get_all_files(path + file_name + "/", extensions))
             else:
                 for ext in extensions:

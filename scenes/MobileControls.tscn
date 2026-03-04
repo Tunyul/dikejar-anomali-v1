@@ -1,38 +1,34 @@
-[gd_scene load_steps=5 format=3 uid="uid://bj0vpeb24e585"]
+[gd_scene format=3 uid="uid://bj0vpeb24e585"]
 
-[ext_resource type="Script" path="res://scripts/MobileControls.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://cjnrkfpjy8lru" path="res://assets/tombol/tombol_jump_96.png" id="1_c6u6f"]
+[ext_resource type="Script" path="res://scripts/MobileControls.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://34a561mugc7b" path="res://assets/tombol/tombol_atk_96.png" id="2_hon3h"]
 [ext_resource type="Shape2D" uid="uid://cssv5cq62heo5" path="res://shape/tombol_circle.tres" id="2_oueyw"]
 
-[node name="MobileControls" type="Control"]
-script = ExtResource("1_script")
+[node name="MobileControls" type="Control" unique_id=787236616]
 layout_mode = 3
-mouse_filter = 2
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
 
-[node name="JumpButton" type="TouchScreenButton" parent="."]
+[node name="JumpButton" type="TouchScreenButton" parent="." unique_id=1158174614]
 modulate = Color(1, 1, 1, 0.6)
 z_index = 100
 position = Vector2(819, 371)
 scale = Vector2(1.2, 1.2)
 texture_normal = ExtResource("1_c6u6f")
 shape = ExtResource("2_oueyw")
-shape_centered = true
-shape_visible = true
 action = "jump"
 
-[node name="AttackButton" type="TouchScreenButton" parent="."]
+[node name="AttackButton" type="TouchScreenButton" parent="." unique_id=1542844833]
 modulate = Color(1, 1, 1, 0.6)
 z_index = 100
 position = Vector2(664, 391)
 scale = Vector2(1.2, 1.2)
 texture_normal = ExtResource("2_hon3h")
 shape = ExtResource("2_oueyw")
-shape_centered = true
-shape_visible = true
 action = "attack"

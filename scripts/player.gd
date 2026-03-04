@@ -99,8 +99,8 @@ var _blink_timer: float = 0.0
 var _entry_start_position: Vector2 = Vector2.ZERO
 
 # ===== REFERENCES =====
-@onready var parallax_background: Node = get_node_or_null("/root/Main/ParallaxBackground")
-@onready var main_camera: Camera2D = get_node_or_null("/root/Main/Camera2D")
+var parallax_background: Node = null
+var main_camera: Camera2D = null
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var ground_ray: RayCast2D = $GroundRay
 @onready var attack_hitbox: Area2D = $AttackHitbox
@@ -252,8 +252,33 @@ func setup_collision_layers() -> void:
     collision_layer = 2  # Player layer
     collision_mask = 1   # Terrain layer
 
+func _resolve_main_node() -> Node:
+    var parent_node: Node = get_parent()
+    while parent_node:
+        if parent_node.name == "Main":
+            return parent_node
+        parent_node = parent_node.get_parent()
+
+    var tree: SceneTree = get_tree()
+    if not tree:
+        return null
+
+    var scene_root: Node = tree.current_scene
+    if scene_root:
+        if scene_root.name == "Main":
+            return scene_root
+        var nested_main: Node = scene_root.get_node_or_null("Main")
+        if nested_main:
+            return nested_main
+
+    var root: Node = tree.get_root()
+    if root:
+        return root.get_node_or_null("Main")
+
+    return null
+
 func find_and_cache_references() -> void:
-    var main_node: Node = get_tree().get_root().get_node_or_null("Main")
+    var main_node: Node = _resolve_main_node()
     if not main_node:
         push_error("Main node not found! Player references cannot be initialized.")
         return
@@ -858,7 +883,7 @@ func _get_terrain_nodes() -> Array[Node2D]:
             if tn:
                 nodes.append(tn)
     else:
-        var main_node: Node = get_tree().get_root().get_node_or_null("Main")
+        var main_node: Node = _resolve_main_node()
         if main_node:
             for child: Node in main_node.get_children():
                 if child is Node2D and (child.name.begins_with("Terrain") or child.name.begins_with("Ground")):
@@ -1185,7 +1210,7 @@ func update_cosmetics() -> void:
     # Update animations
     for anim_name: String in anim_map.keys():
         var tex_path = skin_base + anim_map[anim_name]
-        if FileAccess.file_exists(tex_path):
+        if ResourceLoader.exists(tex_path):
             var tex = load(tex_path)
             if tex:
                 if not sf.has_animation(anim_name):
@@ -1275,17 +1300,17 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
             border_tex_path = "res://assets/border/border_cyber.png"
             padding = 14 # Slightly increased
         "border_gold":
-            border_tex_path = "res://assets/border/border_gold.png"
-            padding = 4
+            border_tex_path = "res://assets/border/border_gold_premium.png"
+            padding = 18
         "border_silver":
-            border_tex_path = "res://assets/border/border_silver.png"
-            padding = 4
+            border_tex_path = "res://assets/border/border_silver_premium.png"
+            padding = 18
         "border_bronze":
-            border_tex_path = "res://assets/border/border_bronze.png"
-            padding = 4
+            border_tex_path = "res://assets/border/border_fire.png"
+            padding = 24
         "border_white":
-            border_tex_path = "res://assets/border/border_white.png"
-            padding = 4
+            border_tex_path = "res://assets/border/border_shadow_v2.png"
+            padding = 18
         _:
             # Default or none
             icon_node.texture = null
@@ -1295,7 +1320,7 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String) -> void:
             inner_icon.offset_bottom = 0
             return
 
-    if border_tex_path != "" and FileAccess.file_exists(border_tex_path):
+    if border_tex_path != "" and ResourceLoader.exists(border_tex_path):
         icon_node.texture = load(border_tex_path)
         # Adjust margins for border
         inner_icon.offset_left = padding

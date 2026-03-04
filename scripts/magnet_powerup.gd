@@ -16,7 +16,7 @@ func _ready() -> void:
 func _on_body_entered(body: Node) -> void:
     if body is Node:
         var gm := get_tree().get_root().get_node_or_null("GameManager")
-        if gm != null and gm.has_method("activate_magnet"):
-            gm.activate_magnet(duration_sec)
+        if gm != null and gm.has_method("activate_skill"):
+            gm.activate_skill("magnet_30s", "pickup", duration_sec, 0.0)
             TransitionManager.play_sfx(&"magnet_pickup")
     queue_free()

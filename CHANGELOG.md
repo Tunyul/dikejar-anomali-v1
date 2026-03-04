@@ -5,6 +5,17 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.50-beta] - 2026-03-04
+
+- Core Save/Data: Konsolidasi domain data gameplay dengan `GameManager` sebagai owner `progress/powerups/rewards` dan `MissionsManager` sebagai owner `missions`, termasuk migrasi schema save v2 yang kompatibel dengan data lama.
+- Missions/Rewards: Standarisasi alur claim (mission claim, daily-all claim, season claim, claim-all season) ke API manager dengan kontrak return deterministik.
+- Skill System: Penyeragaman dispatcher aktivasi skill lintas pickup/shop/pre-run, termasuk sinkronisasi tracking used-skill dan konsumsi token yang konsisten.
+- Shop/UI: Penambahan panel `Skill Progress` di Shop untuk menampilkan level, nilai saat ini, nilai berikutnya, dan stok token skill secara realtime.
+- UI/UX: Refine besar pada panel `Skill Progress` (layout responsif, drag-scroll horizontal, tipografi konsisten, trimming teks, dan sinkronisasi tema).
+- Fix: Perbaikan bug tampilan harga di Shop yang membuat angka kebutuhan koin/diamond terlihat hilang karena label collapse.
+- Localization: Sinkronisasi resource terjemahan (`translations.csv` dan file `.translation`) untuk label skill progress dan UI shop/missions terbaru.
+- QA/Smoke: Pembaruan sanity/smoke checks untuk mencakup scene dan flow baru agar integrasi MainMenu/Shop/SeasonRewards tetap aman.
+
 ## [1.3.49-beta] - 2026-03-02
 
 - Gameplay: Menstabilkan alur in-game (entry, countdown, dan transisi) agar tidak langsung lompat ke fase bermain.

@@ -1,6 +1,142 @@
 extends Node2D
 
 enum Phase { ENTRY, PLAYING, GAME_OVER }
+signal currencies_changed(total_coins: int, total_gems: int)
+signal powerups_changed(powerups: Dictionary)
+signal season_rewards_changed(pending_count: int)
+
+const SAVE_PATH := "user://save.cfg"
+const SAVE_SCHEMA_VERSION := 2
+const _POWERUPS_DEFAULT := {
+    "magnet_30s_tokens": 0,
+    "shield_1hit_charges": 0,
+    "double_coins_run_tokens": 0,
+    "speed_boost_tokens": 0,
+    "max_heart_bonus": 0,
+    "magnet_duration_multiplier": 1.0,
+    "shield_duration_multiplier": 1.0,
+    "double_coins_duration_multiplier": 1.0,
+    "double_coins_gain_multiplier": 2.0,
+    "speed_boost_duration_multiplier": 1.0,
+    "speed_boost_multiplier_multiplier": 1.0,
+    "pickup_range_bonus": 0.0
+}
+const _POWERUPS_CAP := {
+    "magnet_30s_tokens": 9999,
+    "shield_1hit_charges": 9999,
+    "double_coins_run_tokens": 9999,
+    "speed_boost_tokens": 9999,
+    "max_heart_bonus": 10,
+    "magnet_duration_multiplier": 3.0,
+    "shield_duration_multiplier": 3.0,
+    "double_coins_duration_multiplier": 3.0,
+    "double_coins_gain_multiplier": 5.0,
+    "speed_boost_duration_multiplier": 3.0,
+    "speed_boost_multiplier_multiplier": 2.5,
+    "pickup_range_bonus": 8.0
+}
+const _SKILL_PROGRESS_META := [
+    {
+        "id": "magnet_duration",
+        "name_key": "Magnet Duration",
+        "category": "duration",
+        "powerup_key": "magnet_duration_multiplier",
+        "base_powerup": 1.0,
+        "step": 0.1,
+        "cap_key": "magnet_duration_multiplier",
+        "effect_mode": "duration_magnet",
+        "unit": "s",
+        "token_key": "magnet_30s_tokens",
+        "icon_path": "res://assets/icon/icon_magnet_timer_96x96.png"
+    },
+    {
+        "id": "shield_duration",
+        "name_key": "Shield Duration",
+        "category": "duration",
+        "powerup_key": "shield_duration_multiplier",
+        "base_powerup": 1.0,
+        "step": 0.1,
+        "cap_key": "shield_duration_multiplier",
+        "effect_mode": "duration_shield",
+        "unit": "s",
+        "token_key": "shield_1hit_charges",
+        "icon_path": "res://assets/icon/icon_shield.png"
+    },
+    {
+        "id": "double_coins_duration",
+        "name_key": "Double Coins Duration",
+        "category": "duration",
+        "powerup_key": "double_coins_duration_multiplier",
+        "base_powerup": 1.0,
+        "step": 0.1,
+        "cap_key": "double_coins_duration_multiplier",
+        "effect_mode": "duration_double_coins",
+        "unit": "s",
+        "token_key": "double_coins_run_tokens",
+        "icon_path": "res://assets/icon/icon_coinduble_96x96.png"
+    },
+    {
+        "id": "double_coins_gain",
+        "name_key": "Double Coins Multiplier",
+        "category": "gain",
+        "powerup_key": "double_coins_gain_multiplier",
+        "base_powerup": 2.0,
+        "step": 0.25,
+        "cap_key": "double_coins_gain_multiplier",
+        "effect_mode": "gain_double_coins",
+        "unit": "x",
+        "icon_path": "res://assets/icon/icon_coin_multiplier_96x96.png"
+    },
+    {
+        "id": "speed_boost_duration",
+        "name_key": "Speed Boost Duration",
+        "category": "duration",
+        "powerup_key": "speed_boost_duration_multiplier",
+        "base_powerup": 1.0,
+        "step": 0.1,
+        "cap_key": "speed_boost_duration_multiplier",
+        "effect_mode": "duration_speed_boost",
+        "unit": "s",
+        "token_key": "speed_boost_tokens",
+        "icon_path": "res://assets/icon/icon_boost_96x96.png"
+    },
+    {
+        "id": "speed_boost_multiplier",
+        "name_key": "Speed Boost Multiplier",
+        "category": "boost",
+        "powerup_key": "speed_boost_multiplier_multiplier",
+        "base_powerup": 1.0,
+        "step": 0.1,
+        "cap_key": "speed_boost_multiplier_multiplier",
+        "effect_mode": "multiplier_speed_boost",
+        "unit": "x",
+        "icon_path": "res://assets/icon/icon_boost_96x96.png"
+    },
+    {
+        "id": "max_heart",
+        "name_key": "Max Heart",
+        "category": "survivability",
+        "powerup_key": "max_heart_bonus",
+        "base_powerup": 0.0,
+        "step": 1.0,
+        "cap_key": "max_heart_bonus",
+        "effect_mode": "max_heart",
+        "unit": "heart",
+        "icon_path": "res://assets/icon/icon_heart_96x96.png"
+    },
+    {
+        "id": "pickup_range",
+        "name_key": "Pickup Range",
+        "category": "utility",
+        "powerup_key": "pickup_range_bonus",
+        "base_powerup": 0.0,
+        "step": 1.0,
+        "cap_key": "pickup_range_bonus",
+        "effect_mode": "pickup_range_bonus",
+        "unit": "tile",
+        "icon_path": "res://assets/icon/icon_magnet_v1_96x96.png"
+    }
+]
 var phase: Phase = Phase.ENTRY
 var game_active: bool = false
 var score: int = 0
@@ -949,7 +1085,7 @@ func _update_mobile_controls_layout(force: bool) -> void:
     if _jump_button != null and _attack_button != null:
         # Config Layout Baru (Lebih seimbang & nyaman untuk jempol)
         var margin_right: float = 78.0
-        var margin_bottom: float = 90.0
+        var margin_bottom: float = 70.0
         var spacing: float = 40.0
 
         var jt := _jump_button.texture_normal
@@ -980,7 +1116,7 @@ func _update_mobile_controls_layout(force: bool) -> void:
         )
 
         # Attack Button: Sebelah kiri Jump, sedikit lebih rendah (arc natural)
-        var attack_y_offset: float = 20.0
+        var attack_y_offset: float = 26.0
         var attack_pos := Vector2(
             jump_pos.x - spacing - asz_scaled.x,
             jump_pos.y + attack_y_offset
@@ -1703,14 +1839,8 @@ func activate_magnet(d: float) -> void:
         dur = powerup_magnet_duration_sec
     else:
         dur *= max(magnet_duration_multiplier, 0.1)
-    magnet_timer = max(dur, 0.0)
+    magnet_timer = max(magnet_timer, max(dur, 0.0))
     magnet_enabled = magnet_timer > 0.0
-    shield_timer = 0.0
-    shield_enabled = false
-    speed_boost_timer = 0.0
-    speed_boost_multiplier = 1.0
-    double_coins_timer = 0.0
-    double_coins_run_active = false
     if missions_manager and missions_manager.has_method("add_skill"):
         missions_manager.add_skill()
 
@@ -1720,14 +1850,8 @@ func activate_shield(d: float) -> void:
         dur = powerup_shield_duration_sec
     else:
         dur *= max(shield_duration_multiplier, 0.1)
-    shield_timer = max(dur, 0.0)
+    shield_timer = max(shield_timer, max(dur, 0.0))
     shield_enabled = shield_timer > 0.0
-    magnet_timer = 0.0
-    magnet_enabled = false
-    speed_boost_timer = 0.0
-    speed_boost_multiplier = 1.0
-    double_coins_timer = 0.0
-    double_coins_run_active = false
     if missions_manager and missions_manager.has_method("add_skill"):
         missions_manager.add_skill()
     if missions_manager and missions_manager.has_method("add_shield_skill"):
@@ -1803,16 +1927,10 @@ func activate_speed_boost(d: float = 0.0, m: float = 0.0) -> void:
         mul = powerup_speed_boost_multiplier
     else:
         mul *= max(speed_boost_multiplier_multiplier, 0.1)
-    speed_boost_timer = max(dur, 0.0)
-    speed_boost_multiplier = max(mul, 1.0)
+    speed_boost_timer = max(speed_boost_timer, max(dur, 0.0))
+    speed_boost_multiplier = max(speed_boost_multiplier, max(mul, 1.0))
     if (not was_active) and (speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0):
         TransitionManager.play_sfx(&"speed_boost_start")
-    magnet_timer = 0.0
-    magnet_enabled = false
-    shield_timer = 0.0
-    shield_enabled = false
-    double_coins_timer = 0.0
-    double_coins_run_active = false
     if missions_manager and missions_manager.has_method("add_skill"):
         missions_manager.add_skill()
 
@@ -2216,15 +2334,371 @@ func _verify_player_scenes() -> void:
     if perf_log_to_file:
         _append_perf_log("SceneVerify: END duration_ms=" + str(dur))
 
+func _normalize_powerups_data(value: Variant) -> Dictionary:
+    var merged: Dictionary = _POWERUPS_DEFAULT.duplicate(true)
+    if value is Dictionary:
+        var src: Dictionary = value
+        for key_any in src.keys():
+            var key := String(key_any)
+            if not merged.has(key):
+                continue
+            match key:
+                "max_heart_bonus", "magnet_30s_tokens", "shield_1hit_charges", "double_coins_run_tokens", "speed_boost_tokens":
+                    merged[key] = maxi(int(src[key]), 0)
+                _:
+                    merged[key] = float(src[key])
+    merged["magnet_duration_multiplier"] = maxf(float(merged["magnet_duration_multiplier"]), 0.1)
+    merged["shield_duration_multiplier"] = maxf(float(merged["shield_duration_multiplier"]), 0.1)
+    merged["double_coins_duration_multiplier"] = maxf(float(merged["double_coins_duration_multiplier"]), 0.1)
+    merged["double_coins_gain_multiplier"] = maxf(float(merged["double_coins_gain_multiplier"]), 1.0)
+    merged["speed_boost_duration_multiplier"] = maxf(float(merged["speed_boost_duration_multiplier"]), 0.1)
+    merged["speed_boost_multiplier_multiplier"] = maxf(float(merged["speed_boost_multiplier_multiplier"]), 0.1)
+    merged["pickup_range_bonus"] = maxf(float(merged["pickup_range_bonus"]), 0.0)
+    merged["magnet_30s_tokens"] = mini(int(merged["magnet_30s_tokens"]), int(_POWERUPS_CAP["magnet_30s_tokens"]))
+    merged["shield_1hit_charges"] = mini(int(merged["shield_1hit_charges"]), int(_POWERUPS_CAP["shield_1hit_charges"]))
+    merged["double_coins_run_tokens"] = mini(int(merged["double_coins_run_tokens"]), int(_POWERUPS_CAP["double_coins_run_tokens"]))
+    merged["speed_boost_tokens"] = mini(int(merged["speed_boost_tokens"]), int(_POWERUPS_CAP["speed_boost_tokens"]))
+    merged["max_heart_bonus"] = mini(int(merged["max_heart_bonus"]), int(_POWERUPS_CAP["max_heart_bonus"]))
+    merged["magnet_duration_multiplier"] = minf(float(merged["magnet_duration_multiplier"]), float(_POWERUPS_CAP["magnet_duration_multiplier"]))
+    merged["shield_duration_multiplier"] = minf(float(merged["shield_duration_multiplier"]), float(_POWERUPS_CAP["shield_duration_multiplier"]))
+    merged["double_coins_duration_multiplier"] = minf(float(merged["double_coins_duration_multiplier"]), float(_POWERUPS_CAP["double_coins_duration_multiplier"]))
+    merged["double_coins_gain_multiplier"] = minf(float(merged["double_coins_gain_multiplier"]), float(_POWERUPS_CAP["double_coins_gain_multiplier"]))
+    merged["speed_boost_duration_multiplier"] = minf(float(merged["speed_boost_duration_multiplier"]), float(_POWERUPS_CAP["speed_boost_duration_multiplier"]))
+    merged["speed_boost_multiplier_multiplier"] = minf(float(merged["speed_boost_multiplier_multiplier"]), float(_POWERUPS_CAP["speed_boost_multiplier_multiplier"]))
+    merged["pickup_range_bonus"] = minf(float(merged["pickup_range_bonus"]), float(_POWERUPS_CAP["pickup_range_bonus"]))
+    return merged
+
+func _normalize_pending_level_rewards(value: Variant) -> Array[Dictionary]:
+    var out: Array[Dictionary] = []
+    if not (value is Array):
+        return out
+    var seen: Dictionary = {}
+    for item in value:
+        if not (item is Dictionary):
+            continue
+        var d: Dictionary = item
+        var lvl: int = int(d.get("level", 0))
+        var typ: String = String(d.get("type", ""))
+        var amt: int = int(d.get("amount", 0))
+        if lvl <= 0:
+            continue
+        if typ != "coins" and typ != "gems":
+            continue
+        if amt <= 0:
+            continue
+        var key := "%d:%s" % [lvl, typ]
+        if seen.has(key):
+            continue
+        seen[key] = true
+        out.append({
+            "level": lvl,
+            "type": typ,
+            "amount": amt
+        })
+    out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+        return int(a.get("level", 0)) < int(b.get("level", 0))
+    )
+    return out
+
+func _apply_runtime_powerup_values() -> void:
+    max_heart_bonus = int(powerups_data.get("max_heart_bonus", 0))
+    magnet_duration_multiplier = float(powerups_data.get("magnet_duration_multiplier", 1.0))
+    shield_duration_multiplier = float(powerups_data.get("shield_duration_multiplier", 1.0))
+    pickup_range_bonus = float(powerups_data.get("pickup_range_bonus", 0.0))
+    double_coins_duration_multiplier = float(powerups_data.get("double_coins_duration_multiplier", 1.0))
+    double_coins_gain_multiplier = float(powerups_data.get("double_coins_gain_multiplier", 2.0))
+    speed_boost_duration_multiplier = float(powerups_data.get("speed_boost_duration_multiplier", 1.0))
+    speed_boost_multiplier_multiplier = float(powerups_data.get("speed_boost_multiplier_multiplier", 1.0))
+
+func get_powerups_snapshot() -> Dictionary:
+    return _normalize_powerups_data(powerups_data)
+
+func _base_powerup_duration_or_fallback(base_cached: float, fallback: float) -> float:
+    if base_cached > 0.0:
+        return base_cached
+    return maxf(fallback, 0.1)
+
+func _get_base_max_heart_value(powerups: Dictionary) -> int:
+    if _base_player_max_health > 0:
+        return _base_player_max_health
+    if player and player is Player:
+        var p := player as Player
+        var inferred := int(p.max_health) - int(powerups.get("max_heart_bonus", 0))
+        if inferred > 0:
+            return inferred
+    return 100
+
+func _compute_progress_level_data(current_raw: float, base_raw: float, step: float, cap_raw: float) -> Dictionary:
+    var safe_step := maxf(step, 0.0001)
+    var min_bound := minf(base_raw, cap_raw)
+    var max_bound := maxf(base_raw, cap_raw)
+    var current_clamped := clampf(current_raw, min_bound, max_bound)
+    var cap_clamped := clampf(cap_raw, min_bound, max_bound)
+    var max_steps := maxi(int(floor(((cap_clamped - base_raw) / safe_step) + 0.0001)), 0)
+    var current_steps := clampi(int(floor(((current_clamped - base_raw) / safe_step) + 0.0001)), 0, max_steps)
+    var is_max := current_steps >= max_steps
+    var next_steps := (max_steps if is_max else current_steps + 1)
+    var next_raw := base_raw + (float(next_steps) * safe_step)
+    next_raw = clampf(next_raw, min_bound, max_bound)
+    return {
+        "level_current": current_steps + 1,
+        "level_max": max_steps + 1,
+        "is_max": is_max,
+        "next_raw": next_raw
+    }
+
+func _compute_skill_effect_value(effect_mode: String, powerup_raw: float, base_max_heart: int) -> float:
+    match effect_mode:
+        "duration_magnet":
+            return _base_powerup_duration_or_fallback(_base_powerup_magnet_duration_sec, powerup_magnet_duration_sec) * maxf(powerup_raw, 0.1)
+        "duration_shield":
+            return _base_powerup_duration_or_fallback(_base_powerup_shield_duration_sec, powerup_shield_duration_sec) * maxf(powerup_raw, 0.1)
+        "duration_double_coins":
+            return _base_powerup_duration_or_fallback(_base_powerup_double_coins_duration_sec, powerup_double_coins_duration_sec) * maxf(powerup_raw, 0.1)
+        "gain_double_coins":
+            return maxf(powerup_raw, 1.0)
+        "duration_speed_boost":
+            return _base_powerup_duration_or_fallback(_base_powerup_speed_boost_duration_sec, powerup_speed_boost_duration_sec) * maxf(powerup_raw, 0.1)
+        "multiplier_speed_boost":
+            return _base_powerup_duration_or_fallback(_base_powerup_speed_boost_multiplier, powerup_speed_boost_multiplier) * maxf(powerup_raw, 0.1)
+        "max_heart":
+            return float(base_max_heart + int(round(powerup_raw)))
+        "pickup_range_bonus":
+            return maxf(powerup_raw, 0.0)
+        _:
+            return powerup_raw
+
+func _format_skill_snapshot_value(value: float, unit: String) -> Variant:
+    var sanitized := value
+    if absf(sanitized) < 0.000001:
+        sanitized = 0.0
+    match unit:
+        "heart":
+            return int(round(sanitized))
+        "s", "tile":
+            return snappedf(sanitized, 0.1)
+        "x":
+            return snappedf(sanitized, 0.01)
+        _:
+            return snappedf(sanitized, 0.01)
+
+func get_skill_progress_snapshot() -> Array[Dictionary]:
+    var powerups := _normalize_powerups_data(powerups_data)
+    var base_max_heart := _get_base_max_heart_value(powerups)
+    var snapshot: Array[Dictionary] = []
+    for item_any in _SKILL_PROGRESS_META:
+        if not (item_any is Dictionary):
+            continue
+        var item: Dictionary = item_any
+        var id := String(item.get("id", ""))
+        var name_key := String(item.get("name_key", ""))
+        var category := String(item.get("category", ""))
+        var powerup_key := String(item.get("powerup_key", ""))
+        var base_powerup := float(item.get("base_powerup", 0.0))
+        var step := float(item.get("step", 1.0))
+        var cap_key := String(item.get("cap_key", powerup_key))
+        var cap_powerup := float(_POWERUPS_CAP.get(cap_key, base_powerup))
+        var current_powerup := float(powerups.get(powerup_key, base_powerup))
+        var level_data := _compute_progress_level_data(current_powerup, base_powerup, step, cap_powerup)
+        var effect_mode := String(item.get("effect_mode", ""))
+        var unit := String(item.get("unit", ""))
+        var base_value := _compute_skill_effect_value(effect_mode, base_powerup, base_max_heart)
+        var current_value := _compute_skill_effect_value(effect_mode, current_powerup, base_max_heart)
+        var next_powerup := float(level_data.get("next_raw", current_powerup))
+        var next_value := _compute_skill_effect_value(effect_mode, next_powerup, base_max_heart)
+        var token_count := 0
+        var token_key := String(item.get("token_key", ""))
+        if not token_key.is_empty():
+            token_count = int(powerups.get(token_key, 0))
+        snapshot.append({
+            "id": id,
+            "name_key": name_key,
+            "category": category,
+            "level_current": int(level_data.get("level_current", 1)),
+            "level_max": int(level_data.get("level_max", 1)),
+            "is_max": bool(level_data.get("is_max", false)),
+            "base_value": _format_skill_snapshot_value(base_value, unit),
+            "current_value": _format_skill_snapshot_value(current_value, unit),
+            "next_value": _format_skill_snapshot_value(next_value, unit),
+            "unit": unit,
+            "token_count": token_count,
+            "icon_path": String(item.get("icon_path", ""))
+        })
+    return snapshot
+
+func get_currency_snapshot() -> Dictionary:
+    return {"coins": total_coins, "gems": total_gems}
+
+func adjust_currencies(coins_delta: int = 0, gems_delta: int = 0, save_after: bool = true) -> Dictionary:
+    total_coins = maxi(total_coins + coins_delta, 0)
+    total_gems = maxi(total_gems + gems_delta, 0)
+    if save_after:
+        _save_progress()
+    else:
+        currencies_changed.emit(total_coins, total_gems)
+    return {
+        "ok": true,
+        "error": "",
+        "currencies": get_currency_snapshot()
+    }
+
+func _powerup_token_key_from_skill_id(skill_id: String) -> String:
+    match skill_id:
+        "magnet", "magnet_30s":
+            return "magnet_30s_tokens"
+        "shield", "shield_1hit":
+            return "shield_1hit_charges"
+        "double_coins", "double_coins_run":
+            return "double_coins_run_tokens"
+        "speed_boost", "speed_boost_run":
+            return "speed_boost_tokens"
+        _:
+            return ""
+
+func consume_powerup_token(skill_id: String, save_after: bool = true) -> Dictionary:
+    var key := _powerup_token_key_from_skill_id(skill_id)
+    if key.is_empty():
+        return {"ok": false, "error": "unsupported_skill", "powerups": get_powerups_snapshot()}
+    powerups_data = _normalize_powerups_data(powerups_data)
+    var current := int(powerups_data.get(key, 0))
+    if current <= 0:
+        return {"ok": false, "error": "no_token", "powerups": get_powerups_snapshot()}
+    powerups_data[key] = current - 1
+    _apply_runtime_powerup_values()
+    if save_after:
+        _save_progress()
+    else:
+        powerups_changed.emit(get_powerups_snapshot())
+    return {"ok": true, "error": "", "powerups": get_powerups_snapshot()}
+
+func activate_skill(skill_id: String, source: String = "runtime", duration_override: float = 0.0, multiplier_override: float = 0.0) -> Dictionary:
+    var normalized := skill_id.strip_edges()
+    if normalized.is_empty():
+        return {"ok": false, "error": "invalid_skill_id", "skill_id": skill_id, "source": source}
+
+    match normalized:
+        "magnet", "magnet_30s":
+            activate_magnet(duration_override)
+        "shield", "shield_1hit":
+            activate_shield(duration_override)
+        "double_coins", "double_coins_run":
+            activate_double_coins_run(duration_override)
+        "speed_boost", "speed_boost_run":
+            activate_speed_boost(duration_override, multiplier_override)
+        _:
+            return {"ok": false, "error": "unsupported_skill", "skill_id": skill_id, "source": source}
+
+    return {
+        "ok": true,
+        "error": "",
+        "skill_id": normalized,
+        "source": source,
+        "state": {
+            "magnet": is_magnet_active(),
+            "shield": is_shield_active() or shield_hit_charges_run > 0,
+            "double_coins": is_double_coins_active(),
+            "speed_boost": is_speed_boost_active()
+        }
+    }
+
+func apply_shop_purchase(item_id: String) -> Dictionary:
+    var id := item_id.strip_edges()
+    if id.is_empty():
+        return {"ok": false, "error": "invalid_item_id", "item_id": item_id}
+
+    powerups_data = _normalize_powerups_data(powerups_data)
+    var changed := true
+    match id:
+        "magnet_30s":
+            powerups_data["magnet_30s_tokens"] = int(powerups_data.get("magnet_30s_tokens", 0)) + 1
+        "shield_1hit":
+            powerups_data["shield_1hit_charges"] = int(powerups_data.get("shield_1hit_charges", 0)) + 1
+        "double_coins_run":
+            powerups_data["double_coins_run_tokens"] = int(powerups_data.get("double_coins_run_tokens", 0)) + 1
+        "speed_boost_run":
+            powerups_data["speed_boost_tokens"] = int(powerups_data.get("speed_boost_tokens", 0)) + 1
+        "max_heart_plus1":
+            powerups_data["max_heart_bonus"] = int(powerups_data.get("max_heart_bonus", 0)) + 1
+        "magnet_duration_plus10":
+            powerups_data["magnet_duration_multiplier"] = float(powerups_data.get("magnet_duration_multiplier", 1.0)) + 0.1
+        "shield_duration_plus10":
+            powerups_data["shield_duration_multiplier"] = float(powerups_data.get("shield_duration_multiplier", 1.0)) + 0.1
+        "pickup_range_plus1":
+            powerups_data["pickup_range_bonus"] = float(powerups_data.get("pickup_range_bonus", 0.0)) + 1.0
+        "double_coins_duration_plus10":
+            powerups_data["double_coins_duration_multiplier"] = float(powerups_data.get("double_coins_duration_multiplier", 1.0)) + 0.1
+        "double_coins_multiplier_plus025":
+            powerups_data["double_coins_gain_multiplier"] = float(powerups_data.get("double_coins_gain_multiplier", 2.0)) + 0.25
+        "speed_boost_duration_plus10":
+            powerups_data["speed_boost_duration_multiplier"] = float(powerups_data.get("speed_boost_duration_multiplier", 1.0)) + 0.1
+        "speed_boost_multiplier_plus10":
+            powerups_data["speed_boost_multiplier_multiplier"] = float(powerups_data.get("speed_boost_multiplier_multiplier", 1.0)) + 0.1
+        _:
+            changed = false
+
+    if not changed:
+        return {"ok": false, "error": "unsupported_item", "item_id": id}
+
+    powerups_data = _normalize_powerups_data(powerups_data)
+    _apply_runtime_powerup_values()
+    if id == "max_heart_plus1" and player and player is Player:
+        var p := player as Player
+        var base_max: int = (_base_player_max_health if _base_player_max_health > 0 else int(p.max_health))
+        var effective_max: int = base_max + max_heart_bonus
+        p.max_health = effective_max
+        p.current_health = min(p.current_health + 1, p.max_health)
+        p.starting_health = effective_max
+        set_player_health(p.current_health, p.max_health)
+    _save_progress()
+    return {
+        "ok": true,
+        "error": "",
+        "item_id": id,
+        "powerups": get_powerups_snapshot(),
+        "currencies": get_currency_snapshot()
+    }
+
+func grant_powerups(powerup_delta: Dictionary, save_after: bool = true) -> Dictionary:
+    if powerup_delta.is_empty():
+        return {"ok": true, "error": "", "powerups": get_powerups_snapshot()}
+    powerups_data = _normalize_powerups_data(powerups_data)
+    for key_any in powerup_delta.keys():
+        var key := String(key_any)
+        var delta: Variant = powerup_delta[key_any]
+        if not powerups_data.has(key):
+            continue
+        match key:
+            "max_heart_bonus", "magnet_30s_tokens", "shield_1hit_charges", "double_coins_run_tokens", "speed_boost_tokens":
+                powerups_data[key] = maxi(int(powerups_data.get(key, 0)) + int(delta), 0)
+            _:
+                powerups_data[key] = float(powerups_data.get(key, 0.0)) + float(delta)
+    powerups_data = _normalize_powerups_data(powerups_data)
+    _apply_runtime_powerup_values()
+    if save_after:
+        _save_progress()
+    else:
+        powerups_changed.emit(get_powerups_snapshot())
+    return {"ok": true, "error": "", "powerups": get_powerups_snapshot()}
+
 func _load_progress() -> void:
     var cfg: ConfigFile = ConfigFile.new()
-    var err: Error = cfg.load("user://save.cfg")
+    var err: Error = cfg.load(SAVE_PATH)
+    var should_resave := false
     if err != OK:
         bgm_muted = false
         sfx_muted = false
         set_bgm_volume(0.8)
         set_sfx_volume(0.8)
+        powerups_data = _normalize_powerups_data({})
+        pending_level_rewards = []
+        _apply_runtime_powerup_values()
+        _save_progress()
         return
+
+    var schema_version := int(cfg.get_value("meta", "save_schema_version", 0))
+    if schema_version < SAVE_SCHEMA_VERSION:
+        should_resave = true
+
     best_score = int(cfg.get_value("progress", "best_score", 0))
     last_score = int(cfg.get_value("progress", "last_score", 0))
     last_coins = int(cfg.get_value("progress", "last_coins", 0))
@@ -2236,6 +2710,8 @@ func _load_progress() -> void:
     player_xp_required = int(cfg.get_value("progress", "player_xp_required", 100))
     if player_xp_required <= 0:
         player_xp_required = _calculate_xp_required(player_level)
+        should_resave = true
+
     bgm_muted = bool(cfg.get_value("settings", "bgm_muted", false))
     sfx_muted = bool(cfg.get_value("settings", "sfx_muted", false))
     var bgm_volume: float = float(cfg.get_value("settings", "bgm_volume", 0.8))
@@ -2250,42 +2726,42 @@ func _load_progress() -> void:
         var bgm := get_node_or_null("BGM") as AudioStreamPlayer
         if bgm:
             bgm.stop()
-    var pd: Variant = cfg.get_value("powerups", "data", {})
-    if pd is Dictionary:
-        powerups_data = pd
-    else:
-        powerups_data = {}
-    max_heart_bonus = int(powerups_data.get("max_heart_bonus", 0))
-    magnet_duration_multiplier = float(powerups_data.get("magnet_duration_multiplier", 1.0))
-    shield_duration_multiplier = float(powerups_data.get("shield_duration_multiplier", 1.0))
-    pickup_range_bonus = float(powerups_data.get("pickup_range_bonus", 0.0))
-    double_coins_duration_multiplier = float(powerups_data.get("double_coins_duration_multiplier", 1.0))
-    double_coins_gain_multiplier = float(powerups_data.get("double_coins_gain_multiplier", 2.0))
-    speed_boost_duration_multiplier = float(powerups_data.get("speed_boost_duration_multiplier", 1.0))
-    speed_boost_multiplier_multiplier = float(powerups_data.get("speed_boost_multiplier_multiplier", 1.0))
-    var plr_value: Variant = cfg.get_value("rewards", "pending_level_rewards", [])
-    if plr_value is Array:
-        pending_level_rewards.clear()
-        for item in plr_value:
-            if item is Dictionary:
-                pending_level_rewards.append(item)
-    else:
-        pending_level_rewards.clear()
 
-    # Load equipped cosmetics
+    var normalized_powerups := _normalize_powerups_data(cfg.get_value("powerups", "data", {}))
+    if normalized_powerups != cfg.get_value("powerups", "data", {}):
+        should_resave = true
+    powerups_data = normalized_powerups
+    _apply_runtime_powerup_values()
+
+    var normalized_rewards := _normalize_pending_level_rewards(cfg.get_value("rewards", "pending_level_rewards", []))
+    if normalized_rewards != cfg.get_value("rewards", "pending_level_rewards", []):
+        should_resave = true
+    pending_level_rewards = normalized_rewards
+
     var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
     var equipped_border = cosmetics.get("equipped_border", "")
     if player and player.has_method("set_border"):
         player.set_border(equipped_border)
     else:
-        # Fallback to UI update if player not ready
         update_ui_border(equipped_border)
 
+    if should_resave:
+        _save_progress()
+    else:
+        currencies_changed.emit(total_coins, total_gems)
+        powerups_changed.emit(get_powerups_snapshot())
+        season_rewards_changed.emit(pending_level_rewards.size())
+
 func _save_progress() -> void:
+    powerups_data = _normalize_powerups_data(powerups_data)
+    pending_level_rewards = _normalize_pending_level_rewards(pending_level_rewards)
+    _apply_runtime_powerup_values()
+
     var cfg: ConfigFile = ConfigFile.new()
-    var err: Error = cfg.load("user://save.cfg")
+    var err: Error = cfg.load(SAVE_PATH)
     if err != OK:
         cfg = ConfigFile.new()
+    cfg.set_value("meta", "save_schema_version", SAVE_SCHEMA_VERSION)
     cfg.set_value("progress", "best_score", best_score)
     cfg.set_value("progress", "last_score", last_score)
     cfg.set_value("progress", "last_coins", last_coins)
@@ -2302,7 +2778,10 @@ func _save_progress() -> void:
     var ver = ProjectSettings.get_setting("application/config/version")
     if ver != null:
         cfg.set_value("meta", "version", String(ver))
-    cfg.save("user://save.cfg")
+    cfg.save(SAVE_PATH)
+    currencies_changed.emit(total_coins, total_gems)
+    powerups_changed.emit(get_powerups_snapshot())
+    season_rewards_changed.emit(pending_level_rewards.size())
 
 
 func _calculate_xp_required(level: int) -> int:
@@ -2384,12 +2863,15 @@ func claim_season_reward(lvl: int) -> Dictionary:
             break
 
     if reward_found.is_empty():
-        return {}
+        return {
+            "ok": false,
+            "error": "reward_not_pending",
+            "reward_or_totals": {},
+            "currencies": get_currency_snapshot()
+        }
 
-    # Remove from pending
     pending_level_rewards.remove_at(found_idx)
 
-    # Apply reward
     var type = reward_found.get("type", "coins")
     var amount = reward_found.get("amount", 0)
 
@@ -2399,14 +2881,27 @@ func claim_season_reward(lvl: int) -> Dictionary:
         total_gems += amount
 
     _save_progress()
-    return reward_found
+    return {
+        "ok": true,
+        "error": "",
+        "reward_or_totals": reward_found,
+        "currencies": get_currency_snapshot()
+    }
 
 
 func claim_all_pending_rewards() -> Dictionary:
     var total_claimed := {"coins": 0, "gems": 0, "count": 0}
 
     if pending_level_rewards.is_empty():
-        return total_claimed
+        return {
+            "ok": false,
+            "error": "no_pending_rewards",
+            "reward_or_totals": total_claimed,
+            "currencies": get_currency_snapshot(),
+            "coins": 0,
+            "gems": 0,
+            "count": 0
+        }
 
     for r in pending_level_rewards:
         if not (r is Dictionary): continue
@@ -2429,7 +2924,15 @@ func claim_all_pending_rewards() -> Dictionary:
     if main_menu and main_menu.has_method("_update_reward_icon"):
         main_menu.call("_update_reward_icon")
 
-    return total_claimed
+    return {
+        "ok": true,
+        "error": "",
+        "reward_or_totals": total_claimed,
+        "currencies": get_currency_snapshot(),
+        "coins": int(total_claimed.get("coins", 0)),
+        "gems": int(total_claimed.get("gems", 0)),
+        "count": int(total_claimed.get("count", 0))
+    }
 
 
 
@@ -2492,14 +2995,8 @@ func activate_double_coins_run(d: float = 0.0) -> void:
     var dur: float = d
     if dur <= 0.0:
         dur = powerup_double_coins_duration_sec
-    double_coins_timer = max(dur, 0.0)
+    double_coins_timer = max(double_coins_timer, max(dur, 0.0))
     double_coins_run_active = double_coins_timer > 0.0
-    magnet_timer = 0.0
-    magnet_enabled = false
-    shield_timer = 0.0
-    shield_enabled = false
-    speed_boost_timer = 0.0
-    speed_boost_multiplier = 1.0
     if missions_manager and missions_manager.has_method("add_skill"):
         missions_manager.add_skill()
     if missions_manager and missions_manager.has_method("add_double_coins_skill"):
@@ -2665,46 +3162,8 @@ func _start_play_phase() -> void:
 
 
 func _apply_powerups_for_new_run() -> void:
-    if powerups_data.is_empty():
-        shield_hit_charges_run = 0
-    else:
-        shield_hit_charges_run = int(powerups_data.get("shield_1hit_charges", 0))
-
-    var changed := false
-    var double_tokens: int = int(powerups_data.get("double_coins_run_tokens", 0))
-    if double_tokens > 0:
-        activate_double_coins_run()
-        powerups_data["double_coins_run_tokens"] = max(double_tokens - 1, 0)
-        changed = true
-
-    # 4. Magnet Run (Pre-active)
-    var magnet_run_tokens: int = int(powerups_data.get("magnet_30s_tokens", 0))
-    if magnet_run_tokens > 0:
-        powerup_magnet_duration_sec = _base_powerup_magnet_duration_sec * max(magnet_duration_multiplier, 0.1)
-        magnet_timer = powerup_magnet_duration_sec
-        magnet_enabled = true
-        powerups_data["magnet_30s_tokens"] = max(magnet_run_tokens - 1, 0)
-        changed = true
-
-    # 5. Speed Boost Run (Pre-active)
-    var speed_boost_tokens: int = int(powerups_data.get("speed_boost_tokens", 0))
-    if speed_boost_tokens > 0:
-        var dur_mul: float = max(speed_boost_duration_multiplier, 0.1)
-        var mul_mul: float = max(speed_boost_multiplier_multiplier, 0.1)
-        speed_boost_timer = _SPEED_BOOST_PRE_RUN_DURATION_SEC * dur_mul
-        speed_boost_multiplier = max(_SPEED_BOOST_PRE_RUN_MULTIPLIER * mul_mul, 1.0)
-        powerups_data["speed_boost_tokens"] = max(speed_boost_tokens - 1, 0)
-        changed = true
-
-    if player and player is Player:
-        var p := player as Player
-        var base_max: int = (_base_player_max_health if _base_player_max_health > 0 else int(p.max_health))
-        var effective_max: int = base_max + max_heart_bonus
-        p.max_health = effective_max
-        p.starting_health = effective_max
-        p.current_health = effective_max
-
-        set_player_health(effective_max, effective_max)
+    powerups_data = _normalize_powerups_data(powerups_data)
+    shield_hit_charges_run = int(powerups_data.get("shield_1hit_charges", 0))
 
     powerup_magnet_duration_sec = _base_powerup_magnet_duration_sec * max(magnet_duration_multiplier, 0.1)
     powerup_shield_duration_sec = _base_powerup_shield_duration_sec * max(shield_duration_multiplier, 0.1)
@@ -2717,6 +3176,33 @@ func _apply_powerups_for_new_run() -> void:
     powerup_double_coins_duration_sec = _base_powerup_double_coins_duration_sec * max(double_coins_duration_multiplier, 0.1)
     powerup_speed_boost_duration_sec = _base_powerup_speed_boost_duration_sec * max(speed_boost_duration_multiplier, 0.1)
     powerup_speed_boost_multiplier = _base_powerup_speed_boost_multiplier * max(speed_boost_multiplier_multiplier, 0.1)
+
+    var changed := false
+    if int(powerups_data.get("double_coins_run_tokens", 0)) > 0:
+        activate_skill("double_coins_run", "pre_run_token")
+        powerups_data["double_coins_run_tokens"] = max(int(powerups_data.get("double_coins_run_tokens", 0)) - 1, 0)
+        changed = true
+
+    if int(powerups_data.get("magnet_30s_tokens", 0)) > 0:
+        activate_skill("magnet_30s", "pre_run_token")
+        powerups_data["magnet_30s_tokens"] = max(int(powerups_data.get("magnet_30s_tokens", 0)) - 1, 0)
+        changed = true
+
+    if int(powerups_data.get("speed_boost_tokens", 0)) > 0:
+        activate_skill("speed_boost_run", "pre_run_token", _SPEED_BOOST_PRE_RUN_DURATION_SEC, _SPEED_BOOST_PRE_RUN_MULTIPLIER)
+        powerups_data["speed_boost_tokens"] = max(int(powerups_data.get("speed_boost_tokens", 0)) - 1, 0)
+        changed = true
+
+    if player and player is Player:
+        var p := player as Player
+        var base_max: int = (_base_player_max_health if _base_player_max_health > 0 else int(p.max_health))
+        var effective_max: int = base_max + max_heart_bonus
+        p.max_health = effective_max
+        p.starting_health = effective_max
+        p.current_health = effective_max
+
+        set_player_health(effective_max, effective_max)
+
     if changed:
         _save_progress()
 

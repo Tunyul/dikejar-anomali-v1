@@ -122,12 +122,10 @@ func _refresh_list() -> void:
     var current_level = 1
     var current_xp = 0
     var xp_required = 100
-
-    var cfg = ConfigFile.new()
-    if cfg.load("user://save.cfg") == OK:
-        current_level = int(cfg.get_value("progress", "player_level", 1))
-        current_xp = int(cfg.get_value("progress", "player_xp", 0))
-        xp_required = int(cfg.get_value("progress", "player_xp_required", 100))
+    if GameManager:
+        current_level = int(GameManager.player_level)
+        current_xp = int(GameManager.player_xp)
+        xp_required = int(GameManager.player_xp_required)
 
     if _level_label:
         _level_label.text = "LVL %d" % current_level
@@ -139,11 +137,9 @@ func _refresh_list() -> void:
 
     if not GameManager: return
 
-    # Ambil pending rewards
     var pending_rewards = []
-    var save_cfg = ConfigFile.new()
-    if save_cfg.load("user://save.cfg") == OK:
-        pending_rewards = save_cfg.get_value("rewards", "pending_level_rewards", [])
+    if GameManager:
+        pending_rewards = GameManager.pending_level_rewards
 
     # Siapkan data untuk 1000 level
     for lvl in range(1, 1001):
@@ -256,8 +252,8 @@ func _update_visible_items() -> void:
 
 func _on_item_claim_requested(lvl: int) -> void:
     if GameManager and GameManager.has_method("claim_season_reward"):
-        var result = GameManager.claim_season_reward(lvl)
-        if not result.is_empty():
+        var result: Dictionary = GameManager.claim_season_reward(lvl)
+        if bool(result.get("ok", false)):
             _refresh_list()
             # Update MainMenu HUD
             var main_menu = get_tree().root.find_child("MainMenu", true, false)
@@ -268,24 +264,21 @@ func _on_item_claim_requested(lvl: int) -> void:
                     main_menu._update_reward_icon()
 
 func _is_reward_already_claimed(lvl: int) -> bool:
-    # Logic to check if reward level X is already claimed
-    # For now, if it's not in pending_level_rewards but lvl <= current_level, it's claimed
-    var cfg = ConfigFile.new()
-    if cfg.load("user://save.cfg") != OK: return false
-
-    var pending = cfg.get_value("rewards", "pending_level_rewards", [])
+    if GameManager == null:
+        return false
+    var pending = GameManager.pending_level_rewards
     for p in pending:
-        if p.get("level") == lvl:
-            return false # It's pending, not claimed yet
-
-    var current_level = int(cfg.get_value("progress", "player_level", 1))
-    return lvl < current_level # Simplified logic
+        if p is Dictionary and int(p.get("level", -1)) == lvl:
+            return false
+    var current_level = int(GameManager.player_level)
+    return lvl < current_level
 
 func _on_claim_all_pressed() -> void:
     TransitionManager.play_sfx(&"click")
     if GameManager and GameManager.has_method("claim_all_pending_rewards"):
-        var result = GameManager.claim_all_pending_rewards()
-        if result.get("count", 0) > 0:
+        var result: Dictionary = GameManager.claim_all_pending_rewards()
+        var totals: Dictionary = result.get("reward_or_totals", {})
+        if bool(result.get("ok", false)) and int(totals.get("count", 0)) > 0:
             _refresh_list()
             var main_menu = get_tree().root.find_child("MainMenu", true, false)
             if main_menu:

@@ -13,6 +13,9 @@ var players_client: PlayGamesPlayersClient
 var is_authenticated = false
 
 func _ready():
+    if not OS.has_feature("android"):
+        return
+
     # Initialize the plugin first
     # Note: Autoload 'GodotPlayGameServices' is available globally
     var init_status = GodotPlayGameServices.initialize()

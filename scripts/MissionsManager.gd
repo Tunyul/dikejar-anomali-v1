@@ -2,8 +2,11 @@ extends Node
 
 signal ready_to_claim_changed(can_claim: bool)
 signal mission_became_ready(mission_id: String, mission_name: String)
+signal missions_data_changed()
 
 const _SAVE_DEBOUNCE_SEC: float = 1.0
+const SAVE_PATH := "user://save.cfg"
+const DAILY_ALL_REWARD_GEMS := 1
 
 var coins_collected: int = 0
 var max_distance: int = 0
@@ -11,11 +14,11 @@ var current_run_distance: int = 0
 var enemies_killed: int = 0
 var jumps_total: int = 0
 var runs_played: int = 0
-var skills_collected: int = 0
-var shield_skills_collected: int = 0
-var double_coins_skills_collected: int = 0
+var skills_activated: int = 0
+var shield_skills_activated: int = 0
+var double_coins_skills_activated: int = 0
 var missions: Array = []
-var mission_reward_claimed: Dictionary = {}
+var reward_claimed: Dictionary = {}
 var daily_all_reward_claimed: bool = false
 
 var challenge_kill_level: int = 1
@@ -103,6 +106,21 @@ func _flush_save() -> void:
     _save_pending = false
     _save()
 
+func _merged_reward_claimed_from_cfg(cfg: ConfigFile) -> Dictionary:
+    var merged: Dictionary = {}
+    if cfg == null:
+        return merged
+    var primary = cfg.get_value("missions", "reward_claimed", {})
+    if primary is Dictionary:
+        for k_any in (primary as Dictionary).keys():
+            merged[String(k_any)] = bool((primary as Dictionary)[k_any])
+    var legacy = cfg.get_value("missions", "mission_reward_claimed", {})
+    if legacy is Dictionary:
+        for k_any in (legacy as Dictionary).keys():
+            var key := String(k_any)
+            merged[key] = bool((legacy as Dictionary)[k_any]) or bool(merged.get(key, false))
+    return merged
+
 
 func has_ready_to_claim_missions_in_save(save_path: String = "user://save.cfg") -> bool:
     var cfg := ConfigFile.new()
@@ -113,7 +131,7 @@ func has_ready_to_claim_missions_in_save(save_path: String = "user://save.cfg") 
     # Cek individual missions
     var missions_data = cfg.get_value("missions", "list", [])
     if missions_data is Array:
-        var claimed_data = cfg.get_value("missions", "mission_reward_claimed", {})
+        var claimed_data = _merged_reward_claimed_from_cfg(cfg)
         for m in missions_data:
             if m is Dictionary:
                 var id = str(m.get("id", ""))
@@ -166,7 +184,7 @@ func _has_ready_to_claim_missions_in_memory() -> bool:
             continue
         var mt: String = String(m.get("type", "daily"))
         if mt != "challenge":
-            if mission_reward_claimed.has(id_str) and bool(mission_reward_claimed[id_str]):
+            if reward_claimed.has(id_str) and bool(reward_claimed[id_str]):
                 continue
         var reward: int = int(m.get("reward", 0))
         if reward <= 0:
@@ -207,9 +225,9 @@ func _init_default() -> void:
     enemies_killed = 0
     jumps_total = 0
     runs_played = 0
-    skills_collected = 0
-    shield_skills_collected = 0
-    double_coins_skills_collected = 0
+    skills_activated = 0
+    shield_skills_activated = 0
+    double_coins_skills_activated = 0
     challenge_kill_level = 1
     challenge_base_enemies = 0
     challenge_coins_level = 1
@@ -220,7 +238,7 @@ func _init_default() -> void:
     challenge_base_shield = 0
     challenge_double_coins_level = 1
     challenge_base_double_coins = 0
-    mission_reward_claimed.clear()
+    reward_claimed.clear()
     _set_challenge_missions_in_memory()
     _refresh_all_mission_progress()
     _save()
@@ -256,8 +274,8 @@ func _ensure_missions_upgraded() -> void:
                 continue
             seen_ids[id_str] = true
         if id_str == "m6":
-            if mission_reward_claimed.has("m6"):
-                mission_reward_claimed.erase("m6")
+            if reward_claimed.has("m6"):
+                reward_claimed.erase("m6")
             continue
         if not m.has("type"):
             m["type"] = "daily"
@@ -265,8 +283,8 @@ func _ensure_missions_upgraded() -> void:
             m["reward"] = 0
         var mt: String = String(m.get("type", "daily"))
         if mt == "challenge":
-            if mission_reward_claimed.has(id_str):
-                mission_reward_claimed.erase(id_str)
+            if reward_claimed.has(id_str):
+                reward_claimed.erase(id_str)
             continue
         match id_str:
             "m1":
@@ -447,15 +465,15 @@ func _ensure_missions_upgraded() -> void:
         challenge_shield_level = 1
     if challenge_base_shield < 0:
         challenge_base_shield = 0
-    if challenge_base_shield > shield_skills_collected:
-        challenge_base_shield = shield_skills_collected
+    if challenge_base_shield > shield_skills_activated:
+        challenge_base_shield = shield_skills_activated
 
     if challenge_double_coins_level < 1:
         challenge_double_coins_level = 1
     if challenge_base_double_coins < 0:
         challenge_base_double_coins = 0
-    if challenge_base_double_coins > double_coins_skills_collected:
-        challenge_base_double_coins = double_coins_skills_collected
+    if challenge_base_double_coins > double_coins_skills_activated:
+        challenge_base_double_coins = double_coins_skills_activated
 
     _set_challenge_missions_in_memory()
     _refresh_all_mission_progress()
@@ -517,26 +535,26 @@ func _challenge_generic_reward_for_abs_level(abs_level: int) -> int:
 
 
 func _set_challenge_missions_in_memory() -> void:
-    if mission_reward_claimed.has("ck"):
-        mission_reward_claimed.erase("ck")
-    if mission_reward_claimed.has("cc"):
-        mission_reward_claimed.erase("cc")
-    if mission_reward_claimed.has("cd"):
-        mission_reward_claimed.erase("cd")
-    if mission_reward_claimed.has("csh"):
-        mission_reward_claimed.erase("csh")
-    if mission_reward_claimed.has("cdc"):
-        mission_reward_claimed.erase("cdc")
+    if reward_claimed.has("ck"):
+        reward_claimed.erase("ck")
+    if reward_claimed.has("cc"):
+        reward_claimed.erase("cc")
+    if reward_claimed.has("cd"):
+        reward_claimed.erase("cd")
+    if reward_claimed.has("csh"):
+        reward_claimed.erase("csh")
+    if reward_claimed.has("cdc"):
+        reward_claimed.erase("cdc")
     for k in range(1, 11):
         var key := "ck" + str(k)
-        if mission_reward_claimed.has(key):
-            mission_reward_claimed.erase(key)
-    if mission_reward_claimed.has("c1"):
-        mission_reward_claimed.erase("c1")
-    if mission_reward_claimed.has("c2"):
-        mission_reward_claimed.erase("c2")
-    if mission_reward_claimed.has("c3"):
-        mission_reward_claimed.erase("c3")
+        if reward_claimed.has(key):
+            reward_claimed.erase(key)
+    if reward_claimed.has("c1"):
+        reward_claimed.erase("c1")
+    if reward_claimed.has("c2"):
+        reward_claimed.erase("c2")
+    if reward_claimed.has("c3"):
+        reward_claimed.erase("c3")
     for i in range(missions.size() - 1, -1, -1):
         var m_any = missions[i]
         if not (m_any is Dictionary):
@@ -684,8 +702,8 @@ func _reset_missions_of_type(t: String, save_after: bool, now_override: int = -1
             if not mid.is_empty():
                 ids_to_clear.append(mid)
     for mid in ids_to_clear:
-        if mission_reward_claimed.has(mid):
-            mission_reward_claimed.erase(mid)
+        if reward_claimed.has(mid):
+            reward_claimed.erase(mid)
 
     if t == "daily":
         daily_all_reward_claimed = false
@@ -718,21 +736,21 @@ func _set_type_baselines_to_current(t: String) -> void:
             daily_base_enemies = enemies_killed
             daily_base_jumps = jumps_total
             daily_base_runs = runs_played
-            daily_base_skills = skills_collected
+            daily_base_skills = skills_activated
             daily_base_distance = current_run_distance
         "week":
             week_base_coins = coins_collected
             week_base_enemies = enemies_killed
             week_base_jumps = jumps_total
             week_base_runs = runs_played
-            week_base_skills = skills_collected
+            week_base_skills = skills_activated
             week_base_distance = current_run_distance
         "month":
             month_base_coins = coins_collected
             month_base_enemies = enemies_killed
             month_base_jumps = jumps_total
             month_base_runs = runs_played
-            month_base_skills = skills_collected
+            month_base_skills = skills_activated
             month_base_distance = current_run_distance
         _:
             push_warning("Unknown baseline reset type: " + t)
@@ -828,9 +846,9 @@ func _update_mission_progress_from_counters(m: Dictionary) -> void:
             "cd":
                 m["progress"] = max(max_distance - challenge_base_distance, 0)
             "csh":
-                m["progress"] = max(shield_skills_collected - challenge_base_shield, 0)
+                m["progress"] = max(shield_skills_activated - challenge_base_shield, 0)
             "cdc":
-                m["progress"] = max(double_coins_skills_collected - challenge_base_double_coins, 0)
+                m["progress"] = max(double_coins_skills_activated - challenge_base_double_coins, 0)
             _:
                 m["progress"] = 0
         return
@@ -852,7 +870,7 @@ func _update_mission_progress_from_counters(m: Dictionary) -> void:
             m["progress"] = max(runs_played - base4, 0)
         "skills":
             var base5 := _get_base_value_for_type(mt, "skills")
-            m["progress"] = max(skills_collected - base5, 0)
+            m["progress"] = max(skills_activated - base5, 0)
         _:
             var mname: String = String(m.get("name", ""))
             if mname.begins_with("Kumpulkan"):
@@ -871,7 +889,7 @@ func _update_mission_progress_from_counters(m: Dictionary) -> void:
                 m["progress"] = max(runs_played - base9, 0)
             elif mname.begins_with("Dapatkan"):
                 var base10 := _get_base_value_for_type(mt, "skills")
-                m["progress"] = max(skills_collected - base10, 0)
+                m["progress"] = max(skills_activated - base10, 0)
 
 
 func _refresh_all_mission_progress() -> void:
@@ -886,7 +904,7 @@ func _refresh_all_mission_progress() -> void:
         var prev_prog: float = float(m.get("progress", 0))
         var eligible := (reward > 0) and (target > 0.0) and (not id_str.is_empty())
         if eligible and mt != "challenge":
-            if mission_reward_claimed.has(id_str) and bool(mission_reward_claimed[id_str]):
+            if reward_claimed.has(id_str) and bool(reward_claimed[id_str]):
                 eligible = false
 
         _update_mission_progress_from_counters(m)
@@ -960,30 +978,183 @@ func add_run_played() -> void:
 
 
 func add_skill() -> void:
-    if skills_collected < 0:
-        skills_collected = 0
-    skills_collected += 1
+    if skills_activated < 0:
+        skills_activated = 0
+    skills_activated += 1
     _refresh_all_mission_progress()
     _request_save()
     refresh_ready_to_claim_state()
 
 
 func add_shield_skill() -> void:
-    if shield_skills_collected < 0:
-        shield_skills_collected = 0
-    shield_skills_collected += 1
+    if shield_skills_activated < 0:
+        shield_skills_activated = 0
+    shield_skills_activated += 1
     _refresh_all_mission_progress()
     _request_save()
     refresh_ready_to_claim_state()
 
 
 func add_double_coins_skill() -> void:
-    if double_coins_skills_collected < 0:
-        double_coins_skills_collected = 0
-    double_coins_skills_collected += 1
+    if double_coins_skills_activated < 0:
+        double_coins_skills_activated = 0
+    double_coins_skills_activated += 1
     _refresh_all_mission_progress()
     _request_save()
     refresh_ready_to_claim_state()
+
+func _grant_currency_via_game_manager(coins: int, gems: int) -> Dictionary:
+    var gm := get_tree().get_root().get_node_or_null("GameManager")
+    if gm and gm.has_method("adjust_currencies"):
+        return gm.call("adjust_currencies", coins, gems, true)
+    return {"ok": false, "error": "game_manager_unavailable", "currencies": {"coins": 0, "gems": 0}}
+
+func get_missions_snapshot(tab: String = "") -> Array:
+    var out: Array = []
+    var tab_norm := tab.strip_edges()
+    for m_any in missions:
+        if not (m_any is Dictionary):
+            continue
+        var m: Dictionary = m_any
+        var mt: String = String(m.get("type", "daily"))
+        if not tab_norm.is_empty():
+            if tab_norm == "daily" and mt != "daily":
+                continue
+            elif tab_norm == "mission" and mt != "mission":
+                continue
+            elif tab_norm == "week" and mt != "week":
+                continue
+            elif tab_norm == "month" and mt != "month":
+                continue
+            elif tab_norm == "challenge" and mt != "challenge":
+                continue
+        var id_str := String(m.get("id", ""))
+        var target: float = float(m.get("target", 0))
+        var prog: float = float(m.get("progress", 0))
+        var rw: int = int(m.get("reward", 0))
+        var is_challenge := mt == "challenge"
+        var is_claimed := false
+        if not is_challenge and not id_str.is_empty():
+            is_claimed = bool(reward_claimed.get(id_str, false))
+        var is_completed := target > 0.0 and prog >= target
+        var is_claimable := is_completed and rw > 0 and (is_challenge or not is_claimed)
+        var row := m.duplicate(true)
+        row["is_claimed"] = is_claimed
+        row["is_completed"] = is_completed
+        row["is_claimable"] = is_claimable
+        out.append(row)
+    return out
+
+func get_claimable_count(tab: String = "") -> int:
+    var count := 0
+    var rows := get_missions_snapshot(tab)
+    for row_any in rows:
+        if not (row_any is Dictionary):
+            continue
+        if bool((row_any as Dictionary).get("is_claimable", false)):
+            count += 1
+    var tab_norm := tab.strip_edges()
+    if (tab_norm.is_empty() or tab_norm == "daily") and (not daily_all_reward_claimed) and is_type_fully_completed("daily"):
+        count += 1
+    return count
+
+func claim_mission(mission_id: String) -> Dictionary:
+    var id_norm := mission_id.strip_edges()
+    if id_norm.is_empty():
+        return {"ok": false, "error": "invalid_mission_id"}
+    var found := -1
+    for i in range(missions.size()):
+        var m_any = missions[i]
+        if not (m_any is Dictionary):
+            continue
+        if String((m_any as Dictionary).get("id", "")) == id_norm:
+            found = i
+            break
+    if found < 0:
+        return {"ok": false, "error": "mission_not_found", "mission_id": id_norm}
+
+    var m: Dictionary = missions[found]
+    var mt: String = String(m.get("type", "daily"))
+    var target: float = float(m.get("target", 0))
+    var prog: float = float(m.get("progress", 0))
+    var rw: int = int(m.get("reward", 0))
+    if target <= 0.0 or rw <= 0:
+        return {"ok": false, "error": "mission_not_claimable", "mission_id": id_norm}
+    if prog < target:
+        return {"ok": false, "error": "mission_not_completed", "mission_id": id_norm}
+    if mt != "challenge" and bool(reward_claimed.get(id_norm, false)):
+        return {"ok": false, "error": "mission_already_claimed", "mission_id": id_norm}
+
+    if mt == "challenge":
+        match id_norm:
+            "ck":
+                challenge_kill_level = maxi(challenge_kill_level, 1) + 1
+                challenge_base_enemies = maxi(enemies_killed, 0)
+            "cc":
+                challenge_coins_level = maxi(challenge_coins_level, 1) + 1
+                challenge_base_coins = maxi(coins_collected, 0)
+            "cd":
+                challenge_distance_level = maxi(challenge_distance_level, 1) + 1
+                challenge_base_distance = maxi(max_distance, 0)
+            "csh":
+                challenge_shield_level = maxi(challenge_shield_level, 1) + 1
+                challenge_base_shield = maxi(shield_skills_activated, 0)
+            "cdc":
+                challenge_double_coins_level = maxi(challenge_double_coins_level, 1) + 1
+                challenge_base_double_coins = maxi(double_coins_skills_activated, 0)
+            _:
+                pass
+        _set_challenge_missions_in_memory()
+        _refresh_all_mission_progress()
+    else:
+        reward_claimed[id_norm] = true
+
+    var grant_res := _grant_currency_via_game_manager(rw, 0)
+    if not bool(grant_res.get("ok", false)):
+        return {"ok": false, "error": "currency_grant_failed", "mission_id": id_norm}
+
+    _save()
+    refresh_ready_to_claim_state()
+    return {
+        "ok": true,
+        "error": "",
+        "mission_id": id_norm,
+        "reward_or_totals": {"coins": rw, "gems": 0},
+        "currencies": grant_res.get("currencies", {})
+    }
+
+func claim_daily_all_reward() -> Dictionary:
+    if daily_all_reward_claimed:
+        return {"ok": false, "error": "daily_all_already_claimed"}
+    if not is_type_fully_completed("daily"):
+        return {"ok": false, "error": "daily_not_completed"}
+    var reward_gems: int = maxi(DAILY_ALL_REWARD_GEMS, 0)
+    if reward_gems <= 0:
+        return {"ok": false, "error": "daily_reward_disabled"}
+
+    var grant_res := _grant_currency_via_game_manager(0, reward_gems)
+    if not bool(grant_res.get("ok", false)):
+        return {"ok": false, "error": "currency_grant_failed"}
+
+    daily_all_reward_claimed = true
+    _save()
+    refresh_ready_to_claim_state()
+    return {
+        "ok": true,
+        "error": "",
+        "reward_or_totals": {"coins": 0, "gems": reward_gems},
+        "currencies": grant_res.get("currencies", {})
+    }
+
+func can_reset_daily_with_ad() -> bool:
+    return is_type_fully_completed("daily")
+
+func apply_daily_reset() -> Dictionary:
+    _reset_missions_of_type("daily", false)
+    _refresh_all_mission_progress()
+    _save()
+    refresh_ready_to_claim_state()
+    return {"ok": true, "error": ""}
 
 
 func get_missions_text() -> String:
@@ -1091,7 +1262,7 @@ func get_ingame_missions_text() -> String:
             var id_str: String = String(m2.get("id", ""))
             var claimed: bool = false
             if t4 != "challenge" and not id_str.is_empty():
-                if mission_reward_claimed.has(id_str) and bool(mission_reward_claimed[id_str]):
+                if reward_claimed.has(id_str) and bool(reward_claimed[id_str]):
                     claimed = true
             var ready_claim: bool = completed and rw > 0 and (t4 == "challenge" or not claimed)
             if ready_claim:
@@ -1114,7 +1285,7 @@ func get_ingame_missions_text() -> String:
             var id_str2: String = String(m3.get("id", ""))
             var claimed2: bool = false
             if t4 != "challenge" and not id_str2.is_empty():
-                if mission_reward_claimed.has(id_str2) and bool(mission_reward_claimed[id_str2]):
+                if reward_claimed.has(id_str2) and bool(reward_claimed[id_str2]):
                     claimed2 = true
             var ready_claim2: bool = completed2 and rw_i > 0 and (t4 == "challenge" or not claimed2)
             var prefix := ("✓" if completed2 else "•")
@@ -1132,7 +1303,8 @@ func get_ingame_missions_text() -> String:
 
 func _load() -> void:
     var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
+    var err := cfg.load(SAVE_PATH)
+    var should_resave := false
     if err == OK:
         coins_collected = int(cfg.get_value("missions", "coins_collected", 0))
         max_distance = int(cfg.get_value("missions", "max_distance", 0))
@@ -1140,9 +1312,11 @@ func _load() -> void:
         enemies_killed = int(cfg.get_value("missions", "enemies_killed", 0))
         jumps_total = int(cfg.get_value("missions", "jumps_total", 0))
         runs_played = int(cfg.get_value("missions", "runs_played", 0))
-        skills_collected = int(cfg.get_value("missions", "skills_collected", 0))
-        shield_skills_collected = int(cfg.get_value("missions", "shield_skills_collected", 0))
-        double_coins_skills_collected = int(cfg.get_value("missions", "double_coins_skills_collected", 0))
+        skills_activated = int(cfg.get_value("missions", "skills_activated", cfg.get_value("missions", "skills_collected", 0)))
+        shield_skills_activated = int(cfg.get_value("missions", "shield_skills_activated", cfg.get_value("missions", "shield_skills_collected", 0)))
+        double_coins_skills_activated = int(cfg.get_value("missions", "double_coins_skills_activated", cfg.get_value("missions", "double_coins_skills_collected", 0)))
+        if cfg.has_section_key("missions", "skills_collected") or cfg.has_section_key("missions", "shield_skills_collected") or cfg.has_section_key("missions", "double_coins_skills_collected"):
+            should_resave = true
 
         last_reset_daily = int(cfg.get_value("missions", "last_reset_daily", 0))
         last_reset_week = int(cfg.get_value("missions", "last_reset_week", 0))
@@ -1187,19 +1361,19 @@ func _load() -> void:
         var ms: Array = cfg.get_value("missions", "list", [])
         if ms is Array:
             missions = ms
-        var claimed_value = cfg.get_value("missions", "reward_claimed", {})
-        if claimed_value is Dictionary:
-            mission_reward_claimed = claimed_value
-        else:
-            mission_reward_claimed.clear()
+        reward_claimed = _merged_reward_claimed_from_cfg(cfg)
+        if cfg.has_section_key("missions", "mission_reward_claimed"):
+            should_resave = true
 
         daily_all_reward_claimed = bool(cfg.get_value("missions", "daily_all_reward_claimed", false))
 
     _refresh_all_mission_progress()
+    if should_resave:
+        _save()
 
 func _save() -> void:
     var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
+    var err := cfg.load(SAVE_PATH)
     if err != OK:
         cfg = ConfigFile.new()
     cfg.set_value("missions", "coins_collected", coins_collected)
@@ -1208,9 +1382,12 @@ func _save() -> void:
     cfg.set_value("missions", "enemies_killed", enemies_killed)
     cfg.set_value("missions", "jumps_total", jumps_total)
     cfg.set_value("missions", "runs_played", runs_played)
-    cfg.set_value("missions", "skills_collected", skills_collected)
-    cfg.set_value("missions", "shield_skills_collected", shield_skills_collected)
-    cfg.set_value("missions", "double_coins_skills_collected", double_coins_skills_collected)
+    cfg.set_value("missions", "skills_activated", skills_activated)
+    cfg.set_value("missions", "shield_skills_activated", shield_skills_activated)
+    cfg.set_value("missions", "double_coins_skills_activated", double_coins_skills_activated)
+    cfg.set_value("missions", "skills_collected", skills_activated)
+    cfg.set_value("missions", "shield_skills_collected", shield_skills_activated)
+    cfg.set_value("missions", "double_coins_skills_collected", double_coins_skills_activated)
 
     cfg.set_value("missions", "last_reset_daily", last_reset_daily)
     cfg.set_value("missions", "last_reset_week", last_reset_week)
@@ -1253,9 +1430,12 @@ func _save() -> void:
     cfg.set_value("missions", "challenge_base_double_coins", challenge_base_double_coins)
 
     cfg.set_value("missions", "list", missions)
-    cfg.set_value("missions", "reward_claimed", mission_reward_claimed)
+    cfg.set_value("missions", "reward_claimed", reward_claimed)
+    if cfg.has_section_key("missions", "mission_reward_claimed"):
+        cfg.erase_section_key("missions", "mission_reward_claimed")
     cfg.set_value("missions", "daily_all_reward_claimed", daily_all_reward_claimed)
-    cfg.save("user://save.cfg")
+    cfg.save(SAVE_PATH)
+    missions_data_changed.emit()
 
 
 func reload_from_save() -> void:

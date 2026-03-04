@@ -80,11 +80,7 @@ func _refresh_all_ui_texts() -> void:
 
     # Update Daily Summary
     if _daily_summary and _daily_summary.visible:
-        var cfg := ConfigFile.new()
-        cfg.load("user://save.cfg")
-        var missions_value = cfg.get_value("missions", "list", [])
-        if missions_value is Array:
-            _update_daily_summary(cfg, missions_value)
+        _update_daily_summary([])
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -171,6 +167,10 @@ func _ready() -> void:
         var cb := Callable(self, "_on_reward_granted")
         if not _ad_manager.is_connected("reward_granted", cb):
             _ad_manager.connect("reward_granted", cb)
+    if _missions_manager and _missions_manager.has_signal("missions_data_changed"):
+        var cb_missions := Callable(self, "_on_missions_data_changed")
+        if not _missions_manager.is_connected("missions_data_changed", cb_missions):
+            _missions_manager.connect("missions_data_changed", cb_missions)
 
     _update_reset_daily_button_state()
     _update_reset_header_layout()
@@ -193,6 +193,11 @@ func _on_language_changed(_locale: String) -> void:
     _update_reset_time_label()
     if _missions_panel_node:
         _refresh_missions_panel(_missions_panel_node)
+
+func _on_missions_data_changed() -> void:
+    if _missions_panel_node:
+        _refresh_missions_panel(_missions_panel_node)
+    _update_reset_daily_button_state()
 
 
 func _connect_viewport_resize() -> void:
@@ -458,13 +463,9 @@ func _are_all_daily_missions_completed(missions: Array) -> bool:
 
 
 func _are_all_daily_missions_completed_in_save() -> bool:
-    var cfg := ConfigFile.new()
-    if cfg.load("user://save.cfg") != OK:
-        return false
-    var missions_value = cfg.get_value("missions", "list", [])
-    if not (missions_value is Array):
-        return false
-    return _are_all_daily_missions_completed(missions_value)
+    if _missions_manager and _missions_manager.has_method("can_reset_daily_with_ad"):
+        return bool(_missions_manager.call("can_reset_daily_with_ad"))
+    return false
 
 
 func _update_reset_daily_button_state() -> void:
@@ -547,11 +548,12 @@ func _on_reward_granted(reason: String) -> void:
 
 func _apply_rewarded_daily_reset() -> void:
     var did_reset := false
-    if _missions_manager and _missions_manager.has_method("reset_daily_missions"):
+    if _missions_manager and _missions_manager.has_method("apply_daily_reset"):
+        var res = _missions_manager.call("apply_daily_reset")
+        did_reset = bool(res.get("ok", false))
+    elif _missions_manager and _missions_manager.has_method("reset_daily_missions"):
         _missions_manager.call("reset_daily_missions")
         did_reset = true
-    if not did_reset:
-        did_reset = _reset_daily_in_save_direct()
     if did_reset:
         if _missions_panel_node:
             _refresh_missions_panel(_missions_panel_node)
@@ -563,38 +565,23 @@ func _apply_rewarded_daily_reset() -> void:
 
 
 func _reset_daily_in_save_direct() -> bool:
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        return false
-    var missions_value = cfg.get_value("missions", "list", [])
-    if not (missions_value is Array):
-        return false
-    var missions: Array = missions_value
-    var claimed_value = cfg.get_value("missions", "reward_claimed", {})
-    var claimed: Dictionary = {}
-    if claimed_value is Dictionary:
-        claimed = claimed_value
-    _reset_missions_of_type("daily", missions, claimed)
-    _apply_reset_bases(cfg, "daily")
-    cfg.set_value("missions", "last_reset_daily", int(Time.get_unix_time_from_system()))
-    cfg.set_value("missions", "daily_all_reward_claimed", false)
-    cfg.set_value("missions", "list", missions)
-    cfg.set_value("missions", "reward_claimed", claimed)
-    cfg.save("user://save.cfg")
-    return true
+    return false
 
 
-func _update_daily_summary(cfg: ConfigFile, missions: Array) -> void:
+func _update_daily_summary(missions: Array) -> void:
     if _daily_summary == null:
         return
     _daily_summary.visible = _current_tab == "daily"
     if not _daily_summary.visible:
         return
 
+    var source_missions: Array = missions
+    if _missions_manager and _missions_manager.has_method("get_missions_snapshot"):
+        source_missions = _missions_manager.call("get_missions_snapshot", "daily")
+
     var total := 0
     var completed := 0
-    for m_any in missions:
+    for m_any in source_missions:
         if not (m_any is Dictionary):
             continue
         var m: Dictionary = m_any
@@ -621,8 +608,8 @@ func _update_daily_summary(cfg: ConfigFile, missions: Array) -> void:
 
     var all_done := total > 0 and completed >= total
     var reward_claimed := false
-    if cfg != null:
-        reward_claimed = bool(cfg.get_value("missions", "daily_all_reward_claimed", false))
+    if _missions_manager:
+        reward_claimed = bool(_missions_manager.get("daily_all_reward_claimed"))
 
     var reward_amt := maxi(daily_all_complete_reward_gems, 0)
     if all_done and reward_amt > 0:
@@ -649,62 +636,28 @@ func _update_daily_summary(cfg: ConfigFile, missions: Array) -> void:
 
 func _on_claim_daily_all_pressed() -> void:
     TransitionManager.play_sfx(&"mission_claim")
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
+    if _missions_manager == null or not _missions_manager.has_method("claim_daily_all_reward"):
         return
-    if bool(cfg.get_value("missions", "daily_all_reward_claimed", false)):
-        return
-
-    var missions_value = cfg.get_value("missions", "list", [])
-    if not (missions_value is Array):
-        return
-    var missions: Array = missions_value
-
-    var total := 0
-    var completed := 0
-    for m_any in missions:
-        if not (m_any is Dictionary):
-            continue
-        var m: Dictionary = m_any
-        var mt: String = String(m.get("type", ""))
-        if mt == "challenge":
-            continue
-        if not (mt.is_empty() or mt == "daily"):
-            continue
-        var target: float = float(m.get("target", 0))
-        if target <= 0.0:
-            continue
-        total += 1
-        var prog: float = float(m.get("progress", 0))
-        if prog >= target:
-            completed += 1
-
-    if total <= 0 or completed < total:
+    var result: Dictionary = _missions_manager.call("claim_daily_all_reward")
+    if not bool(result.get("ok", false)):
         return
 
-    var reward_amt := maxi(daily_all_complete_reward_gems, 0)
+    var claimed: Dictionary = result.get("reward_or_totals", {})
+    var reward_amt := int(claimed.get("gems", maxi(daily_all_complete_reward_gems, 0)))
     if reward_amt <= 0:
-        return
-
-    var total_gems: int = int(cfg.get_value("progress", "total_gems", 0))
-    total_gems += reward_amt
-    cfg.set_value("progress", "total_gems", total_gems)
-    cfg.set_value("missions", "daily_all_reward_claimed", true)
-    cfg.save("user://save.cfg")
+        reward_amt = maxi(daily_all_complete_reward_gems, 0)
 
     var root_scene := get_tree().current_scene
     var gem_target := root_scene.get_node_or_null("UI/GemHUD/GemIcon") as Control if root_scene else null
     var diamond_count := clampi(reward_amt * 3, 4, 10)
     _play_claim_diamond_fly(_daily_all_claim_button as Control, gem_target, diamond_count)
 
-    if _missions_manager and _missions_manager.has_method("reload_from_save"):
-        _missions_manager.call("reload_from_save")
-
     if _missions_panel_node:
         _refresh_missions_panel(_missions_panel_node)
     root_scene = get_tree().current_scene
-    if root_scene and root_scene.has_method("refresh_gems_from_save"):
+    if root_scene and root_scene.has_method("_refresh_currency_display"):
+        root_scene.call("_refresh_currency_display")
+    elif root_scene and root_scene.has_method("refresh_gems_from_save"):
         root_scene.call("refresh_gems_from_save")
 
 
@@ -784,81 +737,11 @@ func _refresh_missions_panel(panel: Node) -> void:
     if panel_vbox == null:
         panel.visible = false
         return
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        if _missions_manager and _missions_manager.has_method("reload_from_save"):
-            _missions_manager.call("reload_from_save")
-            err = cfg.load("user://save.cfg")
-        if err != OK:
-            cfg = ConfigFile.new()
-            cfg.save("user://save.cfg")
-            cfg.load("user://save.cfg")
-    var missions_value = cfg.get_value("missions", "list", [])
     var missions: Array = []
-    if missions_value is Array:
-        missions = missions_value
+    if _missions_manager and _missions_manager.has_method("get_missions_snapshot"):
+        missions = _missions_manager.call("get_missions_snapshot", "")
 
-    # Fix: Force update mission names for localization if they are still hardcoded Indonesian
-    var needs_save_fix := false
-    for m_idx in range(missions.size()):
-        var m_dict = missions[m_idx] as Dictionary
-        if m_dict:
-            var current_name: String = m_dict.get("name", "")
-            var new_name := current_name
-            var kind: String = String(m_dict.get("kind", ""))
-
-            # Mapping Indonesian hardcoded names to placeholders
-            if current_name.begins_with("Kumpulkan") and current_name.ends_with("koin"):
-                new_name = "Kumpulkan {n} koin"
-            elif current_name.begins_with("Dapatkan") and current_name.ends_with("skill"):
-                new_name = "Dapatkan {n} skill"
-            elif current_name.begins_with("Lompat") and current_name.ends_with("kali"):
-                new_name = "Lompat {n} kali"
-            elif current_name.begins_with("Kalahkan") and current_name.ends_with("musuh"):
-                new_name = "Kalahkan {n} musuh"
-            elif current_name.begins_with("Capai jarak") and current_name.ends_with("m"):
-                new_name = "Capai jarak {n}m"
-            elif current_name.begins_with("Mainkan") and current_name.ends_with("run"):
-                new_name = "Mainkan {n} run"
-            elif current_name.begins_with("Dapatkan Shield"):
-                new_name = "Dapatkan Shield {n} kali"
-            elif current_name.begins_with("Dapatkan DoubleCoins"):
-                new_name = "Dapatkan DoubleCoins {n} kali"
-
-            # Fallback based on kind if name is still Indonesian-like or empty
-            if new_name == current_name:
-                match kind:
-                    "coins": new_name = "Kumpulkan {n} koin"
-                    "skills": new_name = "Dapatkan {n} skill"
-                    "jumps": new_name = "Lompat {n} kali"
-                    "enemies": new_name = "Kalahkan {n} musuh"
-                    "distance": new_name = "Capai jarak {n}m"
-                    "runs": new_name = "Mainkan {n} run"
-                    "shield": new_name = "Dapatkan Shield {n} kali"
-                    "double_coins": new_name = "Dapatkan DoubleCoins {n} kali"
-
-            if new_name != current_name:
-                m_dict["name"] = new_name
-                needs_save_fix = true
-
-    if needs_save_fix:
-        cfg.set_value("missions", "list", missions)
-        cfg.save("user://save.cfg")
-    var claimed_value = cfg.get_value("missions", "reward_claimed", {})
-    var claimed: Dictionary = {}
-    if claimed_value is Dictionary:
-        claimed = claimed_value
-
-    var reset_changed := _apply_mission_resets_if_needed(cfg, missions, claimed)
-    var challenge_changed := _ensure_challenge_kill_missions(cfg, missions, claimed)
-    var updated := _ensure_missions_defaults(missions)
-    if reset_changed or updated or challenge_changed:
-        cfg.set_value("missions", "list", missions)
-        cfg.set_value("missions", "reward_claimed", claimed)
-        cfg.save("user://save.cfg")
-
-    _update_daily_summary(cfg, missions)
+    _update_daily_summary(missions)
     var kill_missions: Array = []
     var other_missions: Array = []
     for m in missions:
@@ -946,9 +829,7 @@ func _refresh_missions_panel(panel: Node) -> void:
         var reward: int = int(m.get("reward", 0))
         var id_str := String(m.get("id", ""))
         var is_completed := prog >= target
-        var is_claimed := false
-        if not id_str.is_empty() and claimed.has(id_str):
-            is_claimed = bool(claimed[id_str])
+        var is_claimed := bool(m.get("is_claimed", false))
 
         if name_label:
             name_label.visible = true
@@ -1059,150 +940,23 @@ func _get_reset_interval_sec(t: String) -> int:
             return 0
 
 
-func _apply_reset_bases(cfg: ConfigFile, t: String) -> void:
-    if cfg == null:
-        return
-    var coins_total: int = int(cfg.get_value("missions", "coins_collected", 0))
-    var enemies_total: int = int(cfg.get_value("missions", "enemies_killed", 0))
-    var jumps_total: int = int(cfg.get_value("missions", "jumps_total", 0))
-    var runs_total: int = int(cfg.get_value("missions", "runs_played", 0))
-    var skills_total: int = int(cfg.get_value("missions", "skills_collected", 0))
-    var dist_now: int = int(cfg.get_value("missions", "current_run_distance", 0))
-    match t:
-        "daily":
-            cfg.set_value("missions", "base_daily_coins", coins_total)
-            cfg.set_value("missions", "base_daily_enemies", enemies_total)
-            cfg.set_value("missions", "base_daily_jumps", jumps_total)
-            cfg.set_value("missions", "base_daily_runs", runs_total)
-            cfg.set_value("missions", "base_daily_skills", skills_total)
-            cfg.set_value("missions", "base_daily_distance", dist_now)
-            cfg.set_value("missions", "daily_max_distance", 0)
-        "week":
-            cfg.set_value("missions", "base_week_coins", coins_total)
-            cfg.set_value("missions", "base_week_enemies", enemies_total)
-            cfg.set_value("missions", "base_week_jumps", jumps_total)
-            cfg.set_value("missions", "base_week_runs", runs_total)
-            cfg.set_value("missions", "base_week_skills", skills_total)
-            cfg.set_value("missions", "base_week_distance", dist_now)
-            cfg.set_value("missions", "week_max_distance", 0)
-        "month":
-            cfg.set_value("missions", "base_month_coins", coins_total)
-            cfg.set_value("missions", "base_month_enemies", enemies_total)
-            cfg.set_value("missions", "base_month_jumps", jumps_total)
-            cfg.set_value("missions", "base_month_runs", runs_total)
-            cfg.set_value("missions", "base_month_skills", skills_total)
-            cfg.set_value("missions", "base_month_distance", dist_now)
-            cfg.set_value("missions", "month_max_distance", 0)
-        _:
-            pass
-
-
-func _reset_missions_of_type(t: String, missions: Array, claimed: Dictionary) -> void:
-    var ids_to_clear: Array = []
-    for m in missions:
-        if not (m is Dictionary):
-            continue
-        var mt: String = String(m.get("type", ("daily" if t == "daily" else "")))
-        if mt == t:
-            m["progress"] = 0
-            var mid: String = String(m.get("id", ""))
-            if not mid.is_empty():
-                ids_to_clear.append(mid)
-    for mid in ids_to_clear:
-        if claimed.has(mid):
-            claimed.erase(mid)
-
-
-func _apply_mission_resets_if_needed(cfg: ConfigFile, missions: Array, claimed: Dictionary) -> bool:
-    var now: int = int(Time.get_unix_time_from_system())
-    var changed := false
-    var last_daily: int = int(cfg.get_value("missions", "last_reset_daily", 0))
-    var last_week: int = int(cfg.get_value("missions", "last_reset_week", 0))
-    var last_month: int = int(cfg.get_value("missions", "last_reset_month", 0))
-    var daily_interval := _get_reset_interval_sec("daily")
-    var week_interval := _get_reset_interval_sec("week")
-    var month_interval := _get_reset_interval_sec("month")
-    if daily_interval > 0:
-        if last_daily <= 0:
-            last_daily = now
-            cfg.set_value("missions", "last_reset_daily", last_daily)
-            _reset_missions_of_type("daily", missions, claimed)
-            cfg.set_value("missions", "daily_all_reward_claimed", false)
-            _apply_reset_bases(cfg, "daily")
-            changed = true
-        elif now - last_daily >= daily_interval:
-            _reset_missions_of_type("daily", missions, claimed)
-            last_daily = now
-            cfg.set_value("missions", "last_reset_daily", last_daily)
-            cfg.set_value("missions", "daily_all_reward_claimed", false)
-            _apply_reset_bases(cfg, "daily")
-            changed = true
-    if week_interval > 0:
-        if last_week <= 0:
-            last_week = now
-            cfg.set_value("missions", "last_reset_week", last_week)
-            _reset_missions_of_type("week", missions, claimed)
-            _apply_reset_bases(cfg, "week")
-            changed = true
-        elif now - last_week >= week_interval:
-            _reset_missions_of_type("week", missions, claimed)
-            last_week = now
-            cfg.set_value("missions", "last_reset_week", last_week)
-            _apply_reset_bases(cfg, "week")
-            changed = true
-    if month_interval > 0:
-        if last_month <= 0:
-            last_month = now
-            cfg.set_value("missions", "last_reset_month", last_month)
-            _reset_missions_of_type("month", missions, claimed)
-            _apply_reset_bases(cfg, "month")
-            changed = true
-        elif now - last_month >= month_interval:
-            _reset_missions_of_type("month", missions, claimed)
-            last_month = now
-            cfg.set_value("missions", "last_reset_month", last_month)
-            _apply_reset_bases(cfg, "month")
-            changed = true
-    return changed
-
-
 func _get_remaining_reset_seconds(t: String) -> int:
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        return 0
     var interval := _get_reset_interval_sec(t)
     if interval <= 0:
         return 0
-    var key := ""
-    match t:
-        "daily":
-            key = "last_reset_daily"
-        "week":
-            key = "last_reset_week"
-        "month":
-            key = "last_reset_month"
-        _:
-            return 0
-    var last: int = int(cfg.get_value("missions", key, 0))
+    var last: int = 0
+    if _missions_manager:
+        match t:
+            "daily":
+                last = int(_missions_manager.get("last_reset_daily"))
+            "week":
+                last = int(_missions_manager.get("last_reset_week"))
+            "month":
+                last = int(_missions_manager.get("last_reset_month"))
+            _:
+                return 0
     var now: int = int(Time.get_unix_time_from_system())
     if last <= 0:
-        last = now
-        cfg.set_value("missions", key, last)
-        var missions_value = cfg.get_value("missions", "list", [])
-        if missions_value is Array:
-            var missions: Array = missions_value
-            var claimed_value = cfg.get_value("missions", "reward_claimed", {})
-            var claimed: Dictionary = {}
-            if claimed_value is Dictionary:
-                claimed = claimed_value
-            _reset_missions_of_type(t, missions, claimed)
-            cfg.set_value("missions", "list", missions)
-            cfg.set_value("missions", "reward_claimed", claimed)
-        if t == "daily":
-            cfg.set_value("missions", "daily_all_reward_claimed", false)
-        _apply_reset_bases(cfg, t)
-        cfg.save("user://save.cfg")
         return interval
     var elapsed: int = now - last
     if elapsed < 0:
@@ -1246,302 +1000,6 @@ func _update_reset_time_label() -> void:
     _update_reset_header_layout()
 
 
-func _ensure_missions_defaults(missions: Array) -> bool:
-    var ids := {}
-    var changed := false
-    for m in missions:
-        if not (m is Dictionary):
-            continue
-        var id_str := String(m.get("id", ""))
-        if not id_str.is_empty():
-            ids[id_str] = true
-        if not m.has("type"):
-            m["type"] = "daily"
-            changed = true
-        if not m.has("reward"):
-            m["reward"] = 0
-            changed = true
-        var mt: String = String(m.get("type", "daily"))
-        if mt != "challenge":
-            var kind: String = String(m.get("kind", ""))
-            if kind.is_empty():
-                var mname: String = String(m.get("name", ""))
-                if mname.begins_with("Kumpulkan"):
-                    m["kind"] = "coins"
-                    changed = true
-                elif mname.begins_with("Capai jarak"):
-                    m["kind"] = "distance"
-                    changed = true
-                elif mname.begins_with("Kalahkan"):
-                    m["kind"] = "enemies"
-                    changed = true
-                elif mname.begins_with("Lompat"):
-                    m["kind"] = "jumps"
-                    changed = true
-                elif mname.begins_with("Mainkan"):
-                    m["kind"] = "runs"
-                    changed = true
-                elif mname.begins_with("Dapatkan"):
-                    m["kind"] = "skills"
-                    changed = true
-    if not ids.has("m4"):
-        missions.append({"id": "m4", "name": "Kalahkan {n} musuh", "target": 5, "progress": 0, "type": "daily", "reward": 40, "kind": "enemies"})
-        changed = true
-    if not ids.has("m5"):
-        missions.append({"id": "m5", "name": "Capai jarak {n}m", "target": 1000, "progress": 0, "type": "daily", "reward": 45, "kind": "distance"})
-        changed = true
-    if not ids.has("m1"):
-        missions.append({"id": "m1", "name": "Kumpulkan {n} koin", "target": 50, "progress": 0, "type": "daily", "reward": 25, "kind": "coins"})
-        changed = true
-    if not ids.has("m2"):
-        missions.append({"id": "m2", "name": "Dapatkan {n} skill", "target": 1, "progress": 0, "type": "daily", "reward": 30, "kind": "skills"})
-        changed = true
-    if not ids.has("m3"):
-        missions.append({"id": "m3", "name": "Lompat {n} kali", "target": 50, "progress": 0, "type": "daily", "reward": 35, "kind": "jumps"})
-        changed = true
-    if not ids.has("ms1"):
-        missions.append({"id": "ms1", "name": "Kumpulkan {n} koin", "target": 200, "progress": 0, "type": "mission", "reward": 70, "kind": "coins"})
-        changed = true
-    if not ids.has("ms2"):
-        missions.append({"id": "ms2", "name": "Dapatkan {n} skill", "target": 3, "progress": 0, "type": "mission", "reward": 90, "kind": "skills"})
-        changed = true
-    if not ids.has("ms3"):
-        missions.append({"id": "ms3", "name": "Lompat {n} kali", "target": 200, "progress": 0, "type": "mission", "reward": 120, "kind": "jumps"})
-        changed = true
-    if not ids.has("ms4"):
-        missions.append({"id": "ms4", "name": "Kalahkan {n} musuh", "target": 20, "progress": 0, "type": "mission", "reward": 140, "kind": "enemies"})
-        changed = true
-    if not ids.has("w1"):
-        missions.append({"id": "w1", "name": "Kumpulkan {n} koin", "target": 1000, "progress": 0, "type": "week", "reward": 150, "kind": "coins"})
-        changed = true
-    if not ids.has("w2"):
-        missions.append({"id": "w2", "name": "Dapatkan {n} skill", "target": 10, "progress": 0, "type": "week", "reward": 200, "kind": "skills"})
-        changed = true
-    if not ids.has("w3"):
-        missions.append({"id": "w3", "name": "Mainkan {n} run", "target": 20, "progress": 0, "type": "week", "reward": 260, "kind": "runs"})
-        changed = true
-    if not ids.has("w4"):
-        missions.append({"id": "w4", "name": "Kalahkan {n} musuh", "target": 60, "progress": 0, "type": "week", "reward": 300, "kind": "enemies"})
-        changed = true
-    if not ids.has("mo1"):
-        missions.append({"id": "mo1", "name": "Kumpulkan {n} koin", "target": 5000, "progress": 0, "type": "month", "reward": 350, "kind": "coins"})
-        changed = true
-    if not ids.has("mo2"):
-        missions.append({"id": "mo2", "name": "Capai jarak {n}m", "target": 20000, "progress": 0, "type": "month", "reward": 450, "kind": "distance"})
-        changed = true
-    if not ids.has("mo3"):
-        missions.append({"id": "mo3", "name": "Kalahkan {n} musuh", "target": 150, "progress": 0, "type": "month", "reward": 550, "kind": "enemies"})
-        changed = true
-    return changed
-
-
-func _challenge_kill_target_for_abs_level(abs_level: int) -> int:
-    var tiers: Array[int] = [1, 5, 10, 20, 30, 50, 75, 100, 150, 200]
-    if abs_level < 1:
-        abs_level = 1
-    if abs_level <= tiers.size():
-        return tiers[abs_level - 1]
-    return tiers[tiers.size() - 1] + (abs_level - tiers.size()) * 50
-
-
-func _challenge_kill_reward_for_abs_level(abs_level: int) -> int:
-    var tiers: Array[int] = [200, 250, 300, 400, 500, 650, 800, 950, 1100, 1300]
-    if abs_level < 1:
-        abs_level = 1
-    if abs_level <= tiers.size():
-        return tiers[abs_level - 1]
-    return tiers[tiers.size() - 1] + (abs_level - tiers.size()) * 150
-
-
-func _challenge_coins_target_for_abs_level(abs_level: int) -> int:
-    var tiers: Array[int] = [100, 250, 500, 1000, 2000, 3000, 5000, 7500, 10000, 15000]
-    if abs_level < 1:
-        abs_level = 1
-    if abs_level <= tiers.size():
-        return tiers[abs_level - 1]
-    return tiers[tiers.size() - 1] + (abs_level - tiers.size()) * 2500
-
-
-func _challenge_distance_target_for_abs_level(abs_level: int) -> int:
-    var tiers: Array[int] = [500, 1000, 2000, 3000, 5000, 7500, 10000, 15000, 20000, 30000]
-    if abs_level < 1:
-        abs_level = 1
-    if abs_level <= tiers.size():
-        return tiers[abs_level - 1]
-    return tiers[tiers.size() - 1] + (abs_level - tiers.size()) * 5000
-
-
-func _challenge_powerup_target_for_abs_level(abs_level: int) -> int:
-    var tiers: Array[int] = [1, 2, 3, 5, 7, 10, 15, 20, 25, 30]
-    if abs_level < 1:
-        abs_level = 1
-    if abs_level <= tiers.size():
-        return tiers[abs_level - 1]
-    return tiers[tiers.size() - 1] + (abs_level - tiers.size()) * 5
-
-
-func _challenge_generic_reward_for_abs_level(abs_level: int) -> int:
-    var tiers: Array[int] = [200, 250, 300, 400, 500, 650, 800, 950, 1100, 1300]
-    if abs_level < 1:
-        abs_level = 1
-    if abs_level <= tiers.size():
-        return tiers[abs_level - 1]
-    return tiers[tiers.size() - 1] + (abs_level - tiers.size()) * 150
-
-
-func _ensure_challenge_kill_missions(cfg: ConfigFile, missions: Array, claimed: Dictionary) -> bool:
-    var old_size := missions.size()
-    var removed_any := false
-    for i in range(missions.size() - 1, -1, -1):
-        var m_any = missions[i]
-        if not (m_any is Dictionary):
-            continue
-        var m: Dictionary = m_any
-        if String(m.get("type", "")) == "challenge":
-            missions.remove_at(i)
-            removed_any = true
-
-    var level := int(cfg.get_value("missions", "challenge_kill_level", 1))
-    if level < 1:
-        level = 1
-    var base_enemies := int(cfg.get_value("missions", "challenge_base_enemies", 0))
-    if base_enemies < 0:
-        base_enemies = 0
-    var enemies_killed := int(cfg.get_value("missions", "enemies_killed", 0))
-    if base_enemies > enemies_killed:
-        base_enemies = enemies_killed
-
-    var coins_level := int(cfg.get_value("missions", "challenge_coins_level", 1))
-    if coins_level < 1:
-        coins_level = 1
-    var base_coins := int(cfg.get_value("missions", "challenge_base_coins", 0))
-    if base_coins < 0:
-        base_coins = 0
-    var coins_collected := int(cfg.get_value("missions", "coins_collected", 0))
-    if base_coins > coins_collected:
-        base_coins = coins_collected
-
-    var dist_level := int(cfg.get_value("missions", "challenge_distance_level", 1))
-    if dist_level < 1:
-        dist_level = 1
-    var base_dist := int(cfg.get_value("missions", "challenge_base_distance", 0))
-    if base_dist < 0:
-        base_dist = 0
-    var max_distance := int(cfg.get_value("missions", "max_distance", 0))
-    if base_dist > max_distance:
-        base_dist = max_distance
-
-    var shield_level := int(cfg.get_value("missions", "challenge_shield_level", 1))
-    if shield_level < 1:
-        shield_level = 1
-    var base_shield := int(cfg.get_value("missions", "challenge_base_shield", 0))
-    if base_shield < 0:
-        base_shield = 0
-    var shield_skills_collected := int(cfg.get_value("missions", "shield_skills_collected", 0))
-    if base_shield > shield_skills_collected:
-        base_shield = shield_skills_collected
-
-    var dc_level := int(cfg.get_value("missions", "challenge_double_coins_level", 1))
-    if dc_level < 1:
-        dc_level = 1
-    var base_dc := int(cfg.get_value("missions", "challenge_base_double_coins", 0))
-    if base_dc < 0:
-        base_dc = 0
-    var double_coins_skills_collected := int(cfg.get_value("missions", "double_coins_skills_collected", 0))
-    if base_dc > double_coins_skills_collected:
-        base_dc = double_coins_skills_collected
-
-    if claimed.has("ck"):
-        claimed.erase("ck")
-    if claimed.has("cc"):
-        claimed.erase("cc")
-    if claimed.has("cd"):
-        claimed.erase("cd")
-    if claimed.has("csh"):
-        claimed.erase("csh")
-    if claimed.has("cdc"):
-        claimed.erase("cdc")
-    for k in range(1, 11):
-        var key := "ck" + str(k)
-        if claimed.has(key):
-            claimed.erase(key)
-    if claimed.has("c1"):
-        claimed.erase("c1")
-    if claimed.has("c2"):
-        claimed.erase("c2")
-    if claimed.has("c3"):
-        claimed.erase("c3")
-
-    var target := _challenge_kill_target_for_abs_level(level)
-    var reward := _challenge_kill_reward_for_abs_level(level)
-    var progress := maxi(enemies_killed - base_enemies, 0)
-    missions.append({
-        "id": "ck",
-        "name": "Kalahkan {n} musuh",
-        "target": target,
-        "progress": progress,
-        "type": "challenge",
-        "reward": reward,
-        "kind": "enemies"
-    })
-
-    var shield_target := _challenge_powerup_target_for_abs_level(shield_level)
-    missions.append({
-        "id": "csh",
-        "name": "Dapatkan Shield {n} kali",
-        "target": shield_target,
-        "progress": maxi(shield_skills_collected - base_shield, 0),
-        "type": "challenge",
-        "reward": _challenge_generic_reward_for_abs_level(shield_level),
-        "kind": "shield"
-    })
-
-    var dc_target := _challenge_powerup_target_for_abs_level(dc_level)
-    missions.append({
-        "id": "cdc",
-        "name": "Dapatkan DoubleCoins {n} kali",
-        "target": dc_target,
-        "progress": maxi(double_coins_skills_collected - base_dc, 0),
-        "type": "challenge",
-        "reward": _challenge_generic_reward_for_abs_level(dc_level),
-        "kind": "double_coins"
-    })
-
-    var coins_target := _challenge_coins_target_for_abs_level(coins_level)
-    missions.append({
-        "id": "cc",
-        "name": "Kumpulkan {n} koin",
-        "target": coins_target,
-        "progress": maxi(coins_collected - base_coins, 0),
-        "type": "challenge",
-        "reward": _challenge_generic_reward_for_abs_level(coins_level),
-        "kind": "coins"
-    })
-
-    var dist_target := _challenge_distance_target_for_abs_level(dist_level)
-    missions.append({
-        "id": "cd",
-        "name": "Capai jarak {n}m",
-        "target": dist_target,
-        "progress": maxi(max_distance - base_dist, 0),
-        "type": "challenge",
-        "reward": _challenge_generic_reward_for_abs_level(dist_level),
-        "kind": "distance"
-    })
-
-    cfg.set_value("missions", "challenge_kill_level", level)
-    cfg.set_value("missions", "challenge_base_enemies", base_enemies)
-    cfg.set_value("missions", "challenge_coins_level", coins_level)
-    cfg.set_value("missions", "challenge_base_coins", base_coins)
-    cfg.set_value("missions", "challenge_distance_level", dist_level)
-    cfg.set_value("missions", "challenge_base_distance", base_dist)
-    cfg.set_value("missions", "challenge_shield_level", shield_level)
-    cfg.set_value("missions", "challenge_base_shield", base_shield)
-    cfg.set_value("missions", "challenge_double_coins_level", dc_level)
-    cfg.set_value("missions", "challenge_base_double_coins", base_dc)
-    return removed_any or missions.size() != old_size
-
-
 func _connect_claim_buttons(panel: Node) -> void:
     var rows := _get_mission_rows(panel)
     for slot in rows:
@@ -1561,106 +1019,16 @@ func _on_claim_button_pressed(button: BaseButton) -> void:
         mission_id = String(button.get_meta("mission_id"))
     if mission_id.is_empty():
         return
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
+    if _missions_manager == null or not _missions_manager.has_method("claim_mission"):
         return
-    var missions_value = cfg.get_value("missions", "list", [])
-    if not (missions_value is Array):
-        return
-    var missions: Array = missions_value
-    var target_mission: Dictionary = {}
-    var found_index := -1
-    for i in range(missions.size()):
-        var m = missions[i]
-        if not (m is Dictionary):
-            continue
-        var id_str := String(m.get("id", ""))
-        if id_str == mission_id:
-            target_mission = m
-            found_index = i
-            break
-    if found_index == -1:
-        return
-    var target: int = int(target_mission.get("target", 0))
-    if target <= 0:
-        return
-    var prog: int = int(target_mission.get("progress", 0))
-    if prog < target:
-        return
-    var reward: int = int(target_mission.get("reward", 0))
-    if reward <= 0:
-        return
-    var claimed_value = cfg.get_value("missions", "reward_claimed", {})
-    var claimed: Dictionary = {}
-    if claimed_value is Dictionary:
-        claimed = claimed_value
-    var mt: String = String(target_mission.get("type", ""))
-    if mt != "challenge":
-        if claimed.has(mission_id) and bool(claimed[mission_id]):
-            return
-
     button.disabled = true
     _apply_claim_button_style(button)
-    var total_coins: int = int(cfg.get_value("progress", "total_coins", 0))
-    total_coins += reward
+    var result: Dictionary = _missions_manager.call("claim_mission", mission_id)
+    if not bool(result.get("ok", false)):
+        button.disabled = false
+        _apply_claim_button_style(button)
+        return
     TransitionManager.play_sfx(&"mission_claim")
-
-    if mt == "challenge":
-        match mission_id:
-            "ck":
-                var enemies_killed := int(cfg.get_value("missions", "enemies_killed", 0))
-                var level := int(cfg.get_value("missions", "challenge_kill_level", 1))
-                if level < 1:
-                    level = 1
-                level += 1
-                cfg.set_value("missions", "challenge_kill_level", level)
-                cfg.set_value("missions", "challenge_base_enemies", enemies_killed)
-            "cc":
-                var coins_collected := int(cfg.get_value("missions", "coins_collected", 0))
-                var level2 := int(cfg.get_value("missions", "challenge_coins_level", 1))
-                if level2 < 1:
-                    level2 = 1
-                level2 += 1
-                cfg.set_value("missions", "challenge_coins_level", level2)
-                cfg.set_value("missions", "challenge_base_coins", coins_collected)
-            "cd":
-                var max_distance := int(cfg.get_value("missions", "max_distance", 0))
-                var level3 := int(cfg.get_value("missions", "challenge_distance_level", 1))
-                if level3 < 1:
-                    level3 = 1
-                level3 += 1
-                cfg.set_value("missions", "challenge_distance_level", level3)
-                cfg.set_value("missions", "challenge_base_distance", max_distance)
-            "csh":
-                var shield_skills_collected := int(cfg.get_value("missions", "shield_skills_collected", 0))
-                var level4 := int(cfg.get_value("missions", "challenge_shield_level", 1))
-                if level4 < 1:
-                    level4 = 1
-                level4 += 1
-                cfg.set_value("missions", "challenge_shield_level", level4)
-                cfg.set_value("missions", "challenge_base_shield", shield_skills_collected)
-            "cdc":
-                var double_coins_skills_collected := int(cfg.get_value("missions", "double_coins_skills_collected", 0))
-                var level5 := int(cfg.get_value("missions", "challenge_double_coins_level", 1))
-                if level5 < 1:
-                    level5 = 1
-                level5 += 1
-                cfg.set_value("missions", "challenge_double_coins_level", level5)
-                cfg.set_value("missions", "challenge_base_double_coins", double_coins_skills_collected)
-            _:
-                pass
-        _ensure_challenge_kill_missions(cfg, missions, claimed)
-    else:
-        claimed[mission_id] = true
-
-    cfg.set_value("missions", "list", missions)
-    cfg.set_value("missions", "reward_claimed", claimed)
-    cfg.set_value("progress", "total_coins", total_coins)
-    cfg.save("user://save.cfg")
-
-    if _missions_manager and _missions_manager.has_method("reload_from_save"):
-        _missions_manager.call("reload_from_save")
 
     var root_scene := get_tree().current_scene
     var coin_target := root_scene.get_node_or_null("UI/CoinHUD/CoinIcon") as Control if root_scene else null
@@ -1669,7 +1037,9 @@ func _on_claim_button_pressed(button: BaseButton) -> void:
 
     if _missions_panel_node:
         _refresh_missions_panel(_missions_panel_node)
-    if root_scene and root_scene.has_method("refresh_coin_from_save"):
+    if root_scene and root_scene.has_method("_refresh_currency_display"):
+        root_scene.call("_refresh_currency_display")
+    elif root_scene and root_scene.has_method("refresh_coin_from_save"):
         root_scene.call("refresh_coin_from_save")
     if root_scene and root_scene.has_method("refresh_missions_badge_from_save"):
         root_scene.call("refresh_missions_badge_from_save")

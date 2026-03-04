@@ -16,7 +16,7 @@ func _ready() -> void:
 func _on_body_entered(body: Node) -> void:
     if body is Node:
         var gm := get_tree().get_root().get_node_or_null("GameManager")
-        if gm != null and gm.has_method("activate_shield"):
-            gm.activate_shield(duration_sec)
+        if gm != null and gm.has_method("activate_skill"):
+            gm.activate_skill("shield_1hit", "pickup", duration_sec, 0.0)
             TransitionManager.play_sfx(&"shield_pickup")
     queue_free()

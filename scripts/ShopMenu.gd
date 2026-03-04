@@ -8,6 +8,7 @@ extends Control
 @export var groups_scroll_height: float = 0.0
 
 const SAVE_PATH := "user://save.cfg"
+const _SKILL_PROGRESS_PANEL_SCENE := preload("res://scenes/SkillProgressPanel.tscn")
 
 const DEFAULT_CARD_MIN_SIZE := Vector2(240.0, 280.0)
 
@@ -32,6 +33,7 @@ var _edge_padding_nodes: Array = []
 var _items_margin_nodes: Array = []
 var _fx_rng := RandomNumberGenerator.new()
 var _ad_manager: Node = null
+var _skill_progress_panel: Control = null
 
 @onready var _ui: CanvasLayer = %UI
 @onready var _title_label: Label = %TitleLabel
@@ -44,6 +46,7 @@ var _status_timer: Timer
 @onready var _groups_hbox: HBoxContainer = %GroupsHBox
 @onready var _close_button: BaseButton = %CloseButton
 @onready var _back_button: BaseButton = %BackButton
+@onready var _skill_progress_button: Button = %SkillProgressButton
 
 var _awaiting_rewarded_reason: String = ""
 var _daily_claim_day_bucket: int = -1
@@ -146,6 +149,11 @@ func _ready() -> void:
             _back_button.pressed.connect(_on_back_pressed)
         if _close_button and not _close_button.pressed.is_connected(_on_back_pressed):
             _close_button.pressed.connect(_on_back_pressed)
+        if _skill_progress_button:
+            _skill_progress_button.text = tr("Skill Progress")
+            if not _skill_progress_button.pressed.is_connected(_on_skill_progress_pressed):
+                _skill_progress_button.pressed.connect(_on_skill_progress_pressed)
+        _ensure_skill_progress_panel()
 
         if _ad_manager and _ad_manager.has_signal("reward_granted"):
             var cb_reward := Callable(self, "_on_reward_granted")
@@ -186,6 +194,8 @@ func _enable_processing() -> void:
 
 func _input(event: InputEvent) -> void:
     if not is_inside_tree():
+        return
+    if _is_skill_progress_open():
         return
     if _closing:
         return
@@ -267,6 +277,39 @@ func _on_status_timer_timeout() -> void:
         return
     if _status_label:
         _status_label.text = ""
+
+func _ensure_skill_progress_panel() -> void:
+    if Engine.is_editor_hint():
+        return
+    if _skill_progress_panel and is_instance_valid(_skill_progress_panel):
+        return
+    if _SKILL_PROGRESS_PANEL_SCENE == null:
+        return
+    var panel := _SKILL_PROGRESS_PANEL_SCENE.instantiate()
+    if panel == null:
+        return
+    if _ui:
+        _ui.add_child(panel)
+    else:
+        add_child(panel)
+    if panel is Control:
+        _skill_progress_panel = panel as Control
+
+func _on_skill_progress_pressed() -> void:
+    if Engine.is_editor_hint():
+        return
+    if is_instance_valid(TransitionManager) and TransitionManager.has_method("play_sfx"):
+        TransitionManager.play_sfx(&"click")
+    _ensure_skill_progress_panel()
+    if _skill_progress_panel and _skill_progress_panel.has_method("open_panel"):
+        _skill_progress_panel.call("open_panel")
+
+func _is_skill_progress_open() -> bool:
+    if _skill_progress_panel == null:
+        return false
+    if not is_instance_valid(_skill_progress_panel):
+        return false
+    return bool(_skill_progress_panel.visible)
 
 func _set_status_text(text: String) -> void:
     if _status_label:
@@ -416,6 +459,8 @@ func _setup_currency_display(coins_label: Label, gems_label: Label) -> void:
         _apply_shop_number_font(gems_label)
 
 func _load_coins() -> int:
+    if GameManager:
+        return int(GameManager.total_coins)
     var cfg := ConfigFile.new()
     var err := cfg.load(SAVE_PATH)
     if err != OK:
@@ -423,6 +468,8 @@ func _load_coins() -> int:
     return int(cfg.get_value("progress", "total_coins", 0))
 
 func _load_gems() -> int:
+    if GameManager:
+        return int(GameManager.total_gems)
     var cfg := ConfigFile.new()
     var err := cfg.load(SAVE_PATH)
     if err != OK:
@@ -430,16 +477,16 @@ func _load_gems() -> int:
     return int(cfg.get_value("progress", "total_gems", 0))
 
 func _save_coins(value: int) -> void:
-    var cfg := ConfigFile.new()
-    cfg.load(SAVE_PATH)
-    cfg.set_value("progress", "total_coins", value)
-    cfg.save(SAVE_PATH)
+    if GameManager and GameManager.has_method("adjust_currencies"):
+        var delta := value - int(GameManager.total_coins)
+        GameManager.adjust_currencies(delta, 0, true)
+    current_coins = value
 
 func _save_gems(value: int) -> void:
-    var cfg := ConfigFile.new()
-    cfg.load(SAVE_PATH)
-    cfg.set_value("progress", "total_gems", value)
-    cfg.save(SAVE_PATH)
+    if GameManager and GameManager.has_method("adjust_currencies"):
+        var delta := value - int(GameManager.total_gems)
+        GameManager.adjust_currencies(0, delta, true)
+    current_gems = value
 
 
 func _get_today_claim_bucket() -> int:
@@ -682,6 +729,8 @@ func _apply_products_padding(pad: int) -> void:
 
 
 func _load_powerups_data() -> Dictionary:
+    if GameManager and GameManager.has_method("get_powerups_snapshot"):
+        return GameManager.get_powerups_snapshot()
     var cfg := ConfigFile.new()
     var err := cfg.load(SAVE_PATH)
     if err != OK:
@@ -693,12 +742,19 @@ func _load_powerups_data() -> Dictionary:
 
 
 func _save_powerups_data(data: Dictionary) -> void:
-    var cfg := ConfigFile.new()
-    var err := cfg.load(SAVE_PATH)
-    if err != OK:
-        cfg = ConfigFile.new()
-    cfg.set_value("powerups", "data", data)
-    cfg.save(SAVE_PATH)
+    if GameManager and GameManager.has_method("grant_powerups"):
+        var current: Dictionary = _load_powerups_data()
+        var delta: Dictionary = {}
+        for k_any in data.keys():
+            var key := String(k_any)
+            var before: Variant = current.get(key, 0)
+            var after: Variant = data.get(key, before)
+            if typeof(before) == TYPE_FLOAT or typeof(after) == TYPE_FLOAT:
+                delta[key] = float(after) - float(before)
+            else:
+                delta[key] = int(after) - int(before)
+        GameManager.grant_powerups(delta, true)
+    return
 
 
 func _load_cosmetics_data() -> Dictionary:
@@ -1634,8 +1690,9 @@ func _create_item_card(item: Dictionary) -> Control:
     card_min_size.x = clampf(card_min_size.x, 160.0, 600.0)
     card_min_size.y = clampf(card_min_size.y, 180.0, 800.0)
     panel.custom_minimum_size = card_min_size
-    panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
     panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+    panel.clip_contents = true
     panel.mouse_filter = Control.MOUSE_FILTER_PASS
 
     var style := StyleBoxFlat.new()
@@ -1660,7 +1717,7 @@ func _create_item_card(item: Dictionary) -> Control:
 
     var vbox := VBoxContainer.new()
     vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+    vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
     vbox.add_theme_constant_override("separation", 8)
     vbox.mouse_filter = Control.MOUSE_FILTER_PASS
     panel.add_child(vbox)
@@ -1686,6 +1743,7 @@ func _create_item_card(item: Dictionary) -> Control:
     # Name
     var name_lbl := Label.new()
     name_lbl.text = tr(String(item.get("name", "Item")))
+    name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     name_lbl.max_lines_visible = 2
@@ -1733,6 +1791,12 @@ func _create_item_card(item: Dictionary) -> Control:
 
         var price_lbl := Label.new()
         price_lbl.text = price_text
+        price_lbl.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+        price_lbl.custom_minimum_size.x = 56.0
+        price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+        price_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+        price_lbl.clip_text = false
+        price_lbl.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
         price_lbl.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
         price_lbl.add_theme_font_size_override("font_size", 20)
         price_lbl.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -1749,7 +1813,11 @@ func _create_item_card(item: Dictionary) -> Control:
             elif currency == "gems":
                 currency_suffix = " " + tr("Gems")
         price_lbl.text = price_text + currency_suffix
+        price_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        price_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+        price_lbl.clip_text = true
+        price_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
         price_lbl.add_theme_color_override("font_color", Color(1, 0.8, 0.2))
         price_lbl.add_theme_font_size_override("font_size", 20)
         price_lbl.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -1770,7 +1838,11 @@ func _create_item_card(item: Dictionary) -> Control:
     if is_coming_soon:
         var coming_soon_lbl := Label.new()
         coming_soon_lbl.text = tr("Coming Soon")
+        coming_soon_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         coming_soon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        coming_soon_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+        coming_soon_lbl.clip_text = true
+        coming_soon_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
         coming_soon_lbl.add_theme_font_size_override("font_size", 14)
         coming_soon_lbl.add_theme_color_override("font_color", Color(1.0, 0.6, 0.0))
         coming_soon_lbl.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -1780,6 +1852,8 @@ func _create_item_card(item: Dictionary) -> Control:
     button.text = tr("Claim") if id == _DAILY_CLAIM_ITEM_ID else tr("Buy")
     button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     button.custom_minimum_size = Vector2(0, 40)
+    button.clip_text = true
+    button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
     button.mouse_filter = Control.MOUSE_FILTER_PASS
     vbox.add_child(button)
 
@@ -2000,6 +2074,8 @@ func _on_language_changed(_locale: String) -> void:
         return
     if _title_label:
         _title_label.text = tr("Shop")
+    if _skill_progress_button:
+        _skill_progress_button.text = tr("Skill Progress")
     _build_groups_ui()
     _update_buy_buttons_state()
 
@@ -2060,10 +2136,10 @@ func _apply_real_purchase(item: Dictionary) -> bool:
             gems_label.text = str(current_gems)
 
     if not powerups_gain.is_empty():
-        var data := _load_powerups_data()
-        for k in powerups_gain.keys():
-            data[String(k)] = int(data.get(String(k), 0)) + int(powerups_gain[k])
-        _save_powerups_data(data)
+        if GameManager and GameManager.has_method("grant_powerups"):
+            GameManager.grant_powerups(powerups_gain, true)
+        else:
+            return false
     return true
 
 
@@ -2071,62 +2147,22 @@ func _apply_item_to_powerups(item: Dictionary) -> void:
     var id := String(item.get("id", ""))
     if id == "":
         return
-    var data := _load_powerups_data()
-    var _main_node = get_tree().get_root().get_node_or_null("Main")
+    if GameManager == null or not GameManager.has_method("apply_shop_purchase"):
+        return
+    var result: Dictionary = GameManager.apply_shop_purchase(id)
+    if not bool(result.get("ok", false)):
+        return
 
-    match id:
-        "magnet_30s":
-            data["magnet_30s_tokens"] = int(data.get("magnet_30s_tokens", 0)) + 1
-            if _main_node and _main_node.has_method("activate_magnet") and _main_node.game_active:
-                _main_node.activate_magnet(30.0)
-                data["magnet_30s_tokens"] = max(int(data["magnet_30s_tokens"]) - 1, 0)
-        "shield_1hit":
-            data["shield_1hit_charges"] = int(data.get("shield_1hit_charges", 0)) + 1
-            if _main_node and _main_node.game_active:
-                # Perisai 1 hit biasanya pasif charge, tapi kita bisa trigger visual jika ada
-                pass
-        "double_coins_run":
-            data["double_coins_run_tokens"] = int(data.get("double_coins_run_tokens", 0)) + 1
-            if _main_node and _main_node.has_method("activate_double_coins_run") and _main_node.game_active:
-                _main_node.activate_double_coins_run()
-                data["double_coins_run_tokens"] = max(int(data["double_coins_run_tokens"]) - 1, 0)
-        "speed_boost_run":
-            data["speed_boost_tokens"] = int(data.get("speed_boost_tokens", 0)) + 1
-            if _main_node and _main_node.has_method("activate_speed_boost") and _main_node.game_active:
-                _main_node.activate_speed_boost()
-                data["speed_boost_tokens"] = max(int(data["speed_boost_tokens"]) - 1, 0)
-        "max_heart_plus1":
-            data["max_heart_bonus"] = int(data.get("max_heart_bonus", 0)) + 1
-            if _main_node and _main_node.game_active and _main_node.player:
-                _main_node.max_heart_bonus = data["max_heart_bonus"]
-                var p = _main_node.player
-                p.max_health += 1
-                p.current_health = min(p.current_health + 1, p.max_health)
-                _main_node.set_player_health(p.current_health, p.max_health)
-        "magnet_duration_plus10":
-            data["magnet_duration_multiplier"] = float(data.get("magnet_duration_multiplier", 1.0)) + 0.1
-            if _main_node: _main_node.magnet_duration_multiplier = data["magnet_duration_multiplier"]
-        "shield_duration_plus10":
-            data["shield_duration_multiplier"] = float(data.get("shield_duration_multiplier", 1.0)) + 0.1
-            if _main_node: _main_node.shield_duration_multiplier = data["shield_duration_multiplier"]
-        "pickup_range_plus1":
-            data["pickup_range_bonus"] = float(data.get("pickup_range_bonus", 0.0)) + 1.0
-            if _main_node: _main_node.pickup_range_bonus = data["pickup_range_bonus"]
-        "double_coins_duration_plus10":
-            data["double_coins_duration_multiplier"] = float(data.get("double_coins_duration_multiplier", 1.0)) + 0.1
-            if _main_node: _main_node.double_coins_duration_multiplier = data["double_coins_duration_multiplier"]
-        "double_coins_multiplier_plus025":
-            data["double_coins_gain_multiplier"] = float(data.get("double_coins_gain_multiplier", 2.0)) + 0.25
-            if _main_node: _main_node.double_coins_gain_multiplier = data["double_coins_gain_multiplier"]
-        "speed_boost_duration_plus10":
-            data["speed_boost_duration_multiplier"] = float(data.get("speed_boost_duration_multiplier", 1.0)) + 0.1
-            if _main_node: _main_node.speed_boost_duration_multiplier = data["speed_boost_duration_multiplier"]
-        "speed_boost_multiplier_plus10":
-            data["speed_boost_multiplier_multiplier"] = float(data.get("speed_boost_multiplier_multiplier", 1.0)) + 0.1
-            if _main_node: _main_node.speed_boost_multiplier_multiplier = data["speed_boost_multiplier_multiplier"]
-        _:
-            pass
-    _save_powerups_data(data)
+    var instant_skill_ids := {
+        "magnet_30s": true,
+        "double_coins_run": true,
+        "speed_boost_run": true
+    }
+    if instant_skill_ids.has(id) and bool(GameManager.game_active):
+        if GameManager.has_method("activate_skill"):
+            var activate_result: Dictionary = GameManager.activate_skill(id, "shop_instant")
+            if bool(activate_result.get("ok", false)) and GameManager.has_method("consume_powerup_token"):
+                GameManager.consume_powerup_token(id, true)
 
 
 func _is_skin_id(id: String) -> bool:

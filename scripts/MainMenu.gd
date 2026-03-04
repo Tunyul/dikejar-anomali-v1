@@ -215,6 +215,19 @@ func _ready() -> void:
     if _daily_button:
         _refresh_daily_button_style(_daily_button)
 
+    if GameManager and GameManager.has_signal("currencies_changed"):
+        var cb_curr := Callable(self, "_on_game_currencies_changed")
+        if not GameManager.currencies_changed.is_connected(cb_curr):
+            GameManager.currencies_changed.connect(cb_curr)
+    if GameManager and GameManager.has_signal("season_rewards_changed"):
+        var cb_rewards := Callable(self, "_on_season_rewards_changed")
+        if not GameManager.season_rewards_changed.is_connected(cb_rewards):
+            GameManager.season_rewards_changed.connect(cb_rewards)
+    if MissionsManager and MissionsManager.has_signal("ready_to_claim_changed"):
+        var cb_ready := Callable(self, "_on_missions_ready_changed")
+        if not MissionsManager.ready_to_claim_changed.is_connected(cb_ready):
+            MissionsManager.ready_to_claim_changed.connect(cb_ready)
+
     refresh_missions_badge_from_save()
 
     if _version_label:
@@ -936,59 +949,45 @@ func _refresh_reward_panel() -> void:
 
 func _on_reward_claim_pressed() -> void:
     TransitionManager.play_sfx(&"click")
-    if _pending_level_rewards.is_empty():
+    var did_claim := false
+    if GameManager and GameManager.has_method("claim_all_pending_rewards"):
+        var result: Dictionary = GameManager.claim_all_pending_rewards()
+        if bool(result.get("ok", false)):
+            var currencies: Dictionary = result.get("currencies", {})
+            _total_coins = int(currencies.get("coins", _total_coins))
+            _total_gems = int(currencies.get("gems", _total_gems))
+            did_claim = true
+            if _coin_label:
+                _coin_label.text = str(_total_coins)
+            if _gem_label:
+                _gem_label.text = str(_total_gems)
+            _refresh_currency_display()
+    if did_claim:
+        _refresh_currency_display()
         _hide_reward_panel()
-        return
-    var bonus_coins := 0
-    var bonus_gems := 0
-    for r in _pending_level_rewards:
-        if not (r is Dictionary):
-            continue
-        var t := String(r.get("type", ""))
-        var amt := int(r.get("amount", 0))
-
-        if amt > 0:
-            if t == "coins":
-                bonus_coins += amt
-            elif t == "gems":
-                bonus_gems += amt
-        else:
-            # Fallback
-            bonus_coins += _coins_for_reward_type(t)
-            bonus_gems += _gems_for_reward_type(t)
-    if bonus_coins > 0:
-        _total_coins += bonus_coins
-        if _coin_label:
-            _coin_label.text = str(_total_coins)
-    if bonus_gems > 0:
-        _total_gems += bonus_gems
-        if _gem_label:
-            _gem_label.text = str(_total_gems)
-    _pending_level_rewards.clear()
-    _save_rewards_and_coins()
-    _update_reward_icon()
-    _hide_reward_panel()
 
 
 func _refresh_currency_display() -> void:
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err == OK:
-        if _coin_label:
+    if GameManager:
+        _total_coins = int(GameManager.total_coins)
+        _total_gems = int(GameManager.total_gems)
+        _pending_level_rewards = GameManager.pending_level_rewards
+    else:
+        var cfg := ConfigFile.new()
+        var err := cfg.load("user://save.cfg")
+        if err == OK:
             _total_coins = int(cfg.get_value("progress", "total_coins", 0))
-            _coin_label.text = str(_total_coins)
-        if _gem_label:
             _total_gems = int(cfg.get_value("progress", "total_gems", 0))
-            _gem_label.text = str(_total_gems)
-
-        # Juga update pending rewards array
-        var plr_value = cfg.get_value("rewards", "pending_level_rewards", [])
-        if plr_value is Array:
-            _pending_level_rewards = plr_value
-        else:
-            _pending_level_rewards = []
-
-        _update_reward_icon()
+            var plr_value = cfg.get_value("rewards", "pending_level_rewards", [])
+            if plr_value is Array:
+                _pending_level_rewards = plr_value
+            else:
+                _pending_level_rewards = []
+    if _coin_label:
+        _coin_label.text = str(_total_coins)
+    if _gem_label:
+        _gem_label.text = str(_total_gems)
+    _update_reward_icon()
 
 
 func _on_reward_close_pressed() -> void:
@@ -1061,27 +1060,23 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String, inner_icon
             border_tex_path = "res://assets/border/border_cyber.png"
             padding = 14 # Slightly increased
         "border_gold":
-            border_tex_path = "res://assets/border/border_gold.png"
-            padding = 4
+            border_tex_path = "res://assets/border/border_gold_premium.png"
+            padding = 18
         "border_silver":
-            border_tex_path = "res://assets/border/border_silver.png"
-            padding = 4
+            border_tex_path = "res://assets/border/border_silver_premium.png"
+            padding = 18
         "border_bronze":
-            border_tex_path = "res://assets/border/border_bronze.png"
-            padding = 4
+            border_tex_path = "res://assets/border/border_fire.png"
+            padding = 24
         "border_white":
-            border_tex_path = "res://assets/border/border_white.png"
-            padding = 4
+            border_tex_path = "res://assets/border/border_shadow_v2.png"
+            padding = 18
         _:
             border_tex_path = "" # Tidak ada border (default)
 
     # Avoid noisy load errors on missing legacy border files.
     if border_tex_path != "" and not ResourceLoader.exists(border_tex_path):
-        if border_id == "border_gold":
-            var gold_fallback := "res://assets/icon/icon_border_avatar_gold_128x128.png"
-            border_tex_path = gold_fallback if ResourceLoader.exists(gold_fallback) else ""
-        else:
-            border_tex_path = ""
+        border_tex_path = ""
 
     if border_tex_path == "":
         icon_node.texture = null
@@ -1202,33 +1197,30 @@ func _refresh_daily_button_style(btn: Button) -> void:
 func refresh_missions_badge_from_save() -> void:
     if _daily_badge == null: return
 
-    var cfg := ConfigFile.new()
-    var err := cfg.load("user://save.cfg")
-    if err != OK:
-        _daily_badge.visible = false
-        return
-
-    var missions = cfg.get_value("missions", "list", [])
-    var claimed = cfg.get_value("missions", "reward_claimed", {})
-
     var count := 0
-    for m in missions:
-        if m is Dictionary:
-            var id_str = m.get("id", "")
-            var prog = m.get("progress", 0)
-            var target = m.get("target", 1)
-            var is_claimed = claimed.get(id_str, false)
-            if prog >= target and not is_claimed:
-                count += 1
-
-    var _daily_all_claimed = cfg.get_value("missions", "daily_all_reward_claimed", false)
-    # Check if daily summary total can be claimed
-    # (Implementation details simplified for now)
+    if MissionsManager and MissionsManager.has_method("get_claimable_count"):
+        count = int(MissionsManager.call("get_claimable_count", ""))
+    elif MissionsManager and MissionsManager.has_method("has_ready_to_claim_missions_in_save"):
+        count = 1 if bool(MissionsManager.call("has_ready_to_claim_missions_in_save")) else 0
 
     _daily_badge.visible = (count > 0)
     var lbl := _daily_badge.get_node_or_null("Label") as Label
     if lbl:
         lbl.text = str(count) if count > 0 else ""
+
+func _on_game_currencies_changed(coins: int, gems: int) -> void:
+    _total_coins = coins
+    _total_gems = gems
+    if _coin_label:
+        _coin_label.text = str(_total_coins)
+    if _gem_label:
+        _gem_label.text = str(_total_gems)
+
+func _on_season_rewards_changed(_pending_count: int) -> void:
+    _refresh_currency_display()
+
+func _on_missions_ready_changed(_can_claim: bool) -> void:
+    refresh_missions_badge_from_save()
 
 
 func _coins_for_reward_type(type: String) -> int:
@@ -1247,9 +1239,9 @@ func _gems_for_reward_type(type: String) -> int:
 
 
 func _save_rewards_and_coins() -> void:
-    var cfg := ConfigFile.new()
-    cfg.load("user://save.cfg")
-    cfg.set_value("progress", "total_coins", _total_coins)
-    cfg.set_value("progress", "total_gems", _total_gems)
-    cfg.set_value("rewards", "pending_level_rewards", _pending_level_rewards)
-    cfg.save("user://save.cfg")
+    if GameManager:
+        GameManager.total_coins = _total_coins
+        GameManager.total_gems = _total_gems
+        GameManager.pending_level_rewards = _pending_level_rewards
+        if GameManager.has_method("_save_progress"):
+            GameManager.call("_save_progress")

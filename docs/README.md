@@ -64,3 +64,15 @@ Lihat dokumen gabungan konsep & implementasi pemain: `GAME_CONCEPT_AND_PLAYER_IM
 
 ## Penyimpanan Progres
 - File pengguna: `user://save.cfg` menyimpan progres utama (best/last score, total coins/gems, level/xp, missions, powerups, cosmetics, settings).
+
+## Kontrak Runtime v2
+- `meta.save_schema_version = 2`.
+- Ownership domain:
+  - `GameManager`: `progress`, `powerups`, `rewards`.
+  - `MissionsManager`: `missions`.
+- Kunci claim misi standar: `missions.reward_claimed` (legacy `missions.mission_reward_claimed` dimigrasikan saat load).
+- API claim/purchase utama:
+  - `GameManager.claim_season_reward`, `GameManager.claim_all_pending_rewards`.
+  - `MissionsManager.claim_mission`, `MissionsManager.claim_daily_all_reward`, `MissionsManager.apply_daily_reset`.
+  - `GameManager.apply_shop_purchase`, `GameManager.activate_skill`.
+- Semua API claim/purchase memakai kontrak deterministik: sukses `ok=true`, gagal `ok=false` dengan `error` string.
