@@ -38,6 +38,8 @@ const SKIN_MAP: Dictionary = {
     "skin_pirate_v2": "res://assets/profile/profile_pirate_v2.png",
     "skin_orc": "res://assets/profile/profile_orc.png"
 }
+const _BANNER_LOCK_PROFILE := "mainmenu_profile_overlay"
+const _BANNER_LOCK_REWARD := "mainmenu_reward_overlay"
 
 @export var debug_dummy_stats: bool = false
 
@@ -94,11 +96,15 @@ var _season_rewards_menu: Node = null
 @onready var _close_profile_button: Button = %CloseProfileButton
 @onready var _change_avatar_button: Button = %ChangeAvatarButton
 @onready var _change_border_button: Button = %ChangeBorderButton
+var _profile_banner_lock_active: bool = false
+var _reward_banner_lock_active: bool = false
 
 func _ready() -> void:
     AdManager.load_banner()
     AdManager.show_banner()
     AdManager.move_banner(false) # Banner di bawah untuk menu
+    if Preloader and Preloader.has_method("start_deferred_preloading"):
+        Preloader.start_deferred_preloading()
 
     if _gem_icon:
         var icon_tex := _get_diamond_icon_texture()
@@ -289,6 +295,10 @@ func _ready() -> void:
 
     _connect_viewport_resize()
     _init_menu_bgm()
+
+func _exit_tree() -> void:
+    _release_profile_banner_lock()
+    _release_reward_banner_lock()
 
 
 func _init_language_icons() -> void:
@@ -662,9 +672,12 @@ func _on_avatar_icon_gui_input(event: InputEvent) -> void:
 func _show_profile_panel() -> void:
     if _profile_panel == null:
         return
+    _acquire_profile_banner_lock()
 
     var inner_panel := _profile_panel_inner
-    if inner_panel == null: return
+    if inner_panel == null:
+        _release_profile_banner_lock()
+        return
 
     var close_btn := _close_profile_button
     if close_btn and not close_btn.pressed.is_connected(_hide_profile_panel):
@@ -772,7 +785,12 @@ func _hide_profile_panel() -> void:
         if inner_panel:
             tw.tween_property(inner_panel, "modulate:a", 0.0, 0.2)
             tw.tween_property(inner_panel, "scale", Vector2(0.8, 0.8), 0.2)
-        tw.chain().tween_callback(func(): _profile_panel.visible = false)
+        tw.chain().tween_callback(func():
+            _profile_panel.visible = false
+            _release_profile_banner_lock()
+        )
+    else:
+        _release_profile_banner_lock()
 
 func _refresh_profile_panel() -> void:
     if _profile_panel == null: return
@@ -923,6 +941,7 @@ func _on_daily_pressed() -> void:
 func _show_reward_panel() -> void:
     if _reward_panel == null:
         return
+    _acquire_reward_banner_lock()
 
     var claim_btn := %RewardClaimButton
     var close_btn := %RewardCloseButton
@@ -938,6 +957,35 @@ func _show_reward_panel() -> void:
 func _hide_reward_panel() -> void:
     if _reward_panel:
         _reward_panel.visible = false
+    _release_reward_banner_lock()
+
+func _acquire_profile_banner_lock() -> void:
+    if _profile_banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("acquire_banner_lock"):
+        AdManager.acquire_banner_lock(_BANNER_LOCK_PROFILE)
+    _profile_banner_lock_active = true
+
+func _release_profile_banner_lock() -> void:
+    if not _profile_banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("release_banner_lock"):
+        AdManager.release_banner_lock(_BANNER_LOCK_PROFILE)
+    _profile_banner_lock_active = false
+
+func _acquire_reward_banner_lock() -> void:
+    if _reward_banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("acquire_banner_lock"):
+        AdManager.acquire_banner_lock(_BANNER_LOCK_REWARD)
+    _reward_banner_lock_active = true
+
+func _release_reward_banner_lock() -> void:
+    if not _reward_banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("release_banner_lock"):
+        AdManager.release_banner_lock(_BANNER_LOCK_REWARD)
+    _reward_banner_lock_active = false
 
 
 func _refresh_reward_panel() -> void:

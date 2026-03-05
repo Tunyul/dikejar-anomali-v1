@@ -1,6 +1,7 @@
 extends Control
 
 signal overlay_closed
+const _BANNER_LOCK_ID := "daily_missions_overlay"
 
 
 @onready var _ui: CanvasLayer = %UI
@@ -49,6 +50,7 @@ var _ad_manager: Node = null
 var _missions_manager: Node = null
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
 var _mission_panel_target_scale: float = 1.0
+var _banner_lock_active: bool = false
 
 const _MISSION_PANEL_BASE_SIZE := Vector2(685.0, 385.0)
 const _MISSION_PANEL_SCALE_MIN := 0.35
@@ -186,6 +188,9 @@ func _ready() -> void:
         var cb_lang := Callable(self, "_on_language_changed")
         if not TransitionManager.language_changed.is_connected(cb_lang):
             TransitionManager.language_changed.connect(cb_lang)
+
+func _exit_tree() -> void:
+    _release_banner_lock()
 
 
 func _on_language_changed(_locale: String) -> void:
@@ -357,6 +362,7 @@ func _clear_mission_row(row: Control) -> void:
         claim_button.set_meta("mission_id", "")
 
 func show_overlay() -> void:
+    _acquire_banner_lock()
     if _ui:
         _ui.visible = true
     visible = true
@@ -408,6 +414,7 @@ func _close_overlay_only() -> void:
     if _ui:
         _ui.visible = false
     visible = false
+    _release_banner_lock()
     overlay_closed.emit()
 
 
@@ -426,6 +433,20 @@ func _on_back_pressed() -> void:
         await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
         return
     _close_overlay_only()
+
+func _acquire_banner_lock() -> void:
+    if _banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("acquire_banner_lock"):
+        AdManager.acquire_banner_lock(_BANNER_LOCK_ID)
+    _banner_lock_active = true
+
+func _release_banner_lock() -> void:
+    if not _banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("release_banner_lock"):
+        AdManager.release_banner_lock(_BANNER_LOCK_ID)
+    _banner_lock_active = false
 
 
 func _on_tab_pressed(tab: String) -> void:

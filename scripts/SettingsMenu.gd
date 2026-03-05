@@ -8,6 +8,7 @@ signal overlay_closed
 signal resume_pressed
 signal restart_pressed
 signal menu_pressed
+const _BANNER_LOCK_ID := "settings_overlay"
 
 @onready var _ui: CanvasLayer = %UI
 @onready var _panel: TextureRect = %Panel
@@ -33,6 +34,7 @@ var _scroll_drag_last_pos: Vector2 = Vector2.ZERO
 var _panel_target_scale: Vector2 = Vector2.ONE
 var _overlay_tween: Tween = null
 var _overlay_animating: bool = false
+var _banner_lock_active: bool = false
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -107,6 +109,9 @@ func _ready() -> void:
             _title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
             _title_label.add_theme_font_size_override("font_size", 36)
     _connect_viewport_resize()
+
+func _exit_tree() -> void:
+    _release_banner_lock()
 
 
 func _connect_viewport_resize() -> void:
@@ -428,6 +433,7 @@ func _on_sfx_mute_toggled(pressed: bool) -> void:
         TransitionManager.set_sfx_muted(pressed)
 
 func show_overlay(is_ingame: bool = false) -> void:
+    _acquire_banner_lock()
     _sync_controls_from_save()
     if _resume_btn:
         _resume_btn.visible = is_ingame
@@ -509,12 +515,27 @@ func _close_overlay_only() -> void:
     if _panel:
         _panel.modulate.a = 1.0
         _panel.scale = _panel_target_scale
+    _release_banner_lock()
     emit_signal("overlay_closed")
 
 
 func _on_overlay_anim_finished() -> void:
     _overlay_tween = null
     _overlay_animating = false
+
+func _acquire_banner_lock() -> void:
+    if _banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("acquire_banner_lock"):
+        AdManager.acquire_banner_lock(_BANNER_LOCK_ID)
+    _banner_lock_active = true
+
+func _release_banner_lock() -> void:
+    if not _banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("release_banner_lock"):
+        AdManager.release_banner_lock(_BANNER_LOCK_ID)
+    _banner_lock_active = false
 
 func _apply_ui_font(node: Node, font: Font) -> void:
     if node is Label:

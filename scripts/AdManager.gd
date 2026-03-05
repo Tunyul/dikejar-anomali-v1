@@ -18,6 +18,7 @@ var _ad_view : AdView
 var _interstitial_ad : InterstitialAd
 var _rewarded_ad : RewardedAd
 var _pending_reward_reason: String = ""
+var _banner_locks: Dictionary = {}
 
 # Ad Unit IDs (Test IDs)
 # Ganti dengan ID asli saat rilis
@@ -50,7 +51,8 @@ func load_banner() -> void:
     _ad_view.ad_listener.on_ad_loaded = func() -> void:
         print("Banner loaded")
         banner_loaded.emit()
-        _ad_view.show() # Show immediately when loaded
+        if not _is_banner_locked():
+            _ad_view.show() # Show immediately when loaded
 
     _ad_view.ad_listener.on_ad_failed_to_load = func(load_ad_error : LoadAdError) -> void:
         print("Banner failed to load: " + load_ad_error.message)
@@ -59,6 +61,8 @@ func load_banner() -> void:
     _ad_view.load_ad(AdRequest.new())
 
 func show_banner() -> void:
+    if _is_banner_locked():
+        return
     if _ad_view:
         _ad_view.show()
 
@@ -82,7 +86,8 @@ func move_banner(to_top: bool) -> void:
     _ad_view.ad_listener.on_ad_loaded = func() -> void:
         print("Banner reloaded at ", "TOP" if to_top else "BOTTOM")
         banner_loaded.emit()
-        _ad_view.show()
+        if not _is_banner_locked():
+            _ad_view.show()
 
     _ad_view.ad_listener.on_ad_failed_to_load = func(load_ad_error : LoadAdError) -> void:
         print("Banner failed to reload: " + load_ad_error.message)
@@ -181,3 +186,27 @@ func is_rewarded_available() -> bool:
     if OS.get_name() != "Android" and OS.get_name() != "iOS":
         return true
     return _rewarded_ad != null
+
+
+func _is_banner_locked() -> bool:
+    return _banner_locks.size() > 0
+
+
+func acquire_banner_lock(lock_id: String) -> void:
+    var id := lock_id.strip_edges()
+    if id.is_empty():
+        return
+    _banner_locks[id] = true
+    hide_banner()
+
+
+func release_banner_lock(lock_id: String) -> void:
+    var id := lock_id.strip_edges()
+    if id.is_empty():
+        return
+    var had_lock := false
+    if _banner_locks.has(id):
+        _banner_locks.erase(id)
+        had_lock = true
+    if had_lock and not _is_banner_locked():
+        show_banner()

@@ -1,4 +1,5 @@
 extends CanvasLayer
+const _BANNER_LOCK_ID := "season_rewards_overlay"
 
 @onready var _overlay: ColorRect = %Overlay
 @onready var _inner_panel: PanelContainer = %Panel
@@ -19,6 +20,7 @@ var _spawned_items: Dictionary = {} # {lvl: node}
 var _item_width: float = 170.0 # Diperkecil dari 200
 var _visible_range_buffer: int = 4 # Ditambah buffer agar scrolling lebih halus dengan item lebih kecil
 var _opening_frame: bool = false # Flag untuk mencegah penutupan di frame yang sama saat dibuka
+var _banner_lock_active: bool = false
 
 # Drag scrolling variables
 var _is_dragging: bool = false
@@ -56,7 +58,11 @@ func _ready() -> void:
         _reward_list.gui_input.connect(_on_scroll_gui_input)
     _refresh_list()
 
+func _exit_tree() -> void:
+    _release_banner_lock()
+
 func show_menu() -> void:
+    _acquire_banner_lock()
     _refresh_list()
     _opening_frame = true
 
@@ -98,12 +104,30 @@ func _on_close_pressed() -> void:
     _hide_menu()
 
 func _hide_menu() -> void:
+    if not visible:
+        _release_banner_lock()
+        return
     var tw = create_tween().set_parallel(true)
     tw.tween_property(_overlay, "modulate:a", 0.0, 0.2)
     tw.tween_property(_inner_panel, "modulate:a", 0.0, 0.2)
     tw.tween_property(_inner_panel, "scale", Vector2(0.9, 0.9), 0.2)
     await tw.finished
     visible = false
+    _release_banner_lock()
+
+func _acquire_banner_lock() -> void:
+    if _banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("acquire_banner_lock"):
+        AdManager.acquire_banner_lock(_BANNER_LOCK_ID)
+    _banner_lock_active = true
+
+func _release_banner_lock() -> void:
+    if not _banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("release_banner_lock"):
+        AdManager.release_banner_lock(_BANNER_LOCK_ID)
+    _banner_lock_active = false
 
 func _on_overlay_gui_input(event: InputEvent) -> void:
     if _opening_frame: return

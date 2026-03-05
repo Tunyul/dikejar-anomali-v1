@@ -6,6 +6,7 @@ const _TOKEN_ORDER := [
     "double_coins_duration",
     "speed_boost_duration"
 ]
+const _BANNER_LOCK_ID := "shop_skill_progress_panel"
 
 const _TOKEN_LABEL_MAP := {
     "magnet_duration": "Magnet Tokens",
@@ -52,6 +53,7 @@ var _drag_start_scroll: int = 0
 var _layout_busy: bool = false
 var _last_layout_size: Vector2 = Vector2.ZERO
 var _last_layout_child_count: int = -1
+var _banner_lock_active: bool = false
 
 func _ready() -> void:
     visible = false
@@ -79,6 +81,7 @@ func _ready() -> void:
     call_deferred("_apply_content_layout")
 
 func _exit_tree() -> void:
+    _release_banner_lock()
     if GameManager and GameManager.has_signal("powerups_changed"):
         var cb_powerups := Callable(self, "_on_powerups_changed")
         if GameManager.powerups_changed.is_connected(cb_powerups):
@@ -89,6 +92,7 @@ func _exit_tree() -> void:
             TransitionManager.language_changed.disconnect(cb_lang)
 
 func open_panel() -> void:
+    _acquire_banner_lock()
     _refresh_texts()
     if visible:
         _refresh_content()
@@ -116,7 +120,10 @@ func open_panel() -> void:
     _opening_frame = false
 
 func close_panel() -> void:
-    if not visible or _closing:
+    if not visible:
+        _release_banner_lock()
+        return
+    if _closing:
         return
     _closing = true
     _dragging = false
@@ -129,6 +136,7 @@ func close_panel() -> void:
     await tw.finished
     visible = false
     _closing = false
+    _release_banner_lock()
 
 func _on_close_pressed() -> void:
     if TransitionManager and TransitionManager.has_method("play_sfx"):
@@ -159,6 +167,20 @@ func _on_language_changed(_locale: String) -> void:
 
 func _on_layout_changed() -> void:
     call_deferred("_apply_content_layout")
+
+func _acquire_banner_lock() -> void:
+    if _banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("acquire_banner_lock"):
+        AdManager.acquire_banner_lock(_BANNER_LOCK_ID)
+    _banner_lock_active = true
+
+func _release_banner_lock() -> void:
+    if not _banner_lock_active:
+        return
+    if AdManager and AdManager.has_method("release_banner_lock"):
+        AdManager.release_banner_lock(_BANNER_LOCK_ID)
+    _banner_lock_active = false
 
 func _input(event: InputEvent) -> void:
     if _scroll == null or not visible:
