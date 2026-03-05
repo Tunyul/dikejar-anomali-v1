@@ -49,6 +49,12 @@ window/size/window_height_override=576
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[debug]
+
+gdscript/warnings/enable=true
+gdscript/warnings/shadowed_variable=2
+gdscript/warnings/shadowed_variable_base_class=2
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/admob/plugin.cfg", "res://addons/GodotGooglePlayBilling/plugin.cfg", "res://addons/GodotPlayGameServices/plugin.cfg")

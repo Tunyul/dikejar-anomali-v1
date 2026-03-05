@@ -331,7 +331,8 @@ func _touch_warmup_node(node: Node) -> void:
                 if names.size() > 0:
                     anim.animation = names[0]
             anim.play()
-            anim.advance(1.0 / 60.0)
+            # Keep this compatible with Godot 4: AnimatedSprite2D has no advance().
+            # A short play/stop pass is enough to initialize frame resources.
             anim.stop()
     for child in node.get_children():
         if child is Node:

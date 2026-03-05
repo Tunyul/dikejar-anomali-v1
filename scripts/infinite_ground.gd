@@ -225,15 +225,38 @@ func _get_from_pool(pool: Array[Node2D], scene: PackedScene) -> Node2D:
 
     return inst
 
-func _return_to_pool(node: Node, pool: Array[Node2D]) -> void:
-    if node == null:
+const _POOL_RETURN_META := "_pool_return_queued"
+
+func _append_node_to_pool(node: Node, pool: Array[Node2D]) -> void:
+    if node == null or not is_instance_valid(node):
         return
-    if node.get_parent():
-        node.get_parent().remove_child(node)
+    if node.has_meta(_POOL_RETURN_META):
+        node.remove_meta(_POOL_RETURN_META)
     if node is Node2D:
         pool.append(node as Node2D)
     else:
         node.free()
+
+func _return_to_pool_deferred(node: Node, pool: Array[Node2D]) -> void:
+    if node == null or not is_instance_valid(node):
+        return
+    if node.get_parent():
+        node.get_parent().remove_child(node)
+    _append_node_to_pool(node, pool)
+
+func _return_to_pool(node: Node, pool: Array[Node2D]) -> void:
+    if node == null or not is_instance_valid(node):
+        return
+    if node.has_meta(_POOL_RETURN_META):
+        return
+    var defer_return := Engine.is_in_physics_frame() and node is CollisionObject2D
+    if defer_return:
+        node.set_meta(_POOL_RETURN_META, true)
+        call_deferred("_return_to_pool_deferred", node, pool)
+        return
+    if node.get_parent():
+        node.get_parent().remove_child(node)
+    _append_node_to_pool(node, pool)
 
 func _clear_root_to_pool(root: Node2D, pool: Array[Node2D]) -> void:
     if root == null:

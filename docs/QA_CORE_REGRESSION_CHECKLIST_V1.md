@@ -9,6 +9,15 @@ Build target: Android internal QA build
 - Jika `FAIL`, lampirkan video + timestamp + device + langkah repro.
 - Jalankan checklist ini minimal 1x per build harian.
 
+## Automated Preflight (Wajib Sebelum Test Manual)
+Jalankan dari root project:
+- `godot --headless --path . --script res://scripts/tools/sanity_check.gd`
+- `godot --headless --path . --script res://scripts/smoke_check_runner.gd`
+
+Expected:
+- `sanity_check`: `--- Check Passed: No errors found ---`
+- `smoke_check_runner`: `SMOKE_CHECK_OK`
+
 ## Device and Build Info
 - Device:
 - OS Version:

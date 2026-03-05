@@ -19,17 +19,26 @@ func _ready() -> void:
     if enable_pickup:
         collision_layer = 8
         collision_mask = 2
+        monitoring = true
         body_entered.connect(_on_body_entered)
     else:
         collision_layer = 0
         collision_mask = 0
+        monitoring = false
 
 func reset() -> void:
     _base_y = position.y
     _t = 0.0
     _collected = false
     visible = true
-    set_deferred("monitoring", true)
+    if enable_pickup:
+        collision_layer = 8
+        collision_mask = 2
+        monitoring = true
+    else:
+        collision_layer = 0
+        collision_mask = 0
+        monitoring = false
 
 func _find_ground_pool_owner() -> Node:
     var tree := get_tree()
@@ -60,18 +69,22 @@ func _physics_process(delta: float) -> void:
     position.y = _base_y + sin(_t * TAU * bob_frequency) * bob_amplitude
 
 func _on_body_entered(body: Node) -> void:
+    if body == null:
+        return
+    if not body.is_in_group("player") and not (body is Player):
+        return
     if _collected:
         return
     _collected = true
-    if body.is_in_group("player") or body is Player:
-        if body.has_method("heal"):
-            var amount: int = heal_amount
-            if heal_percent > 0.0 and body.has_method("get"):
-                var max_h: int = int(body.get("max_health"))
-                if max_h > 0:
-                    amount = int(round(float(max_h) * heal_percent))
-                    if amount <= 0: amount = 1
-            body.heal(amount)
-            if has_node("/root/TransitionManager"):
-                get_node("/root/TransitionManager").play_sfx("heart_pickup")
+    if body.has_method("heal"):
+        var amount: int = heal_amount
+        if heal_percent > 0.0 and body.has_method("get"):
+            var max_h: int = int(body.get("max_health"))
+            if max_h > 0:
+                amount = int(round(float(max_h) * heal_percent))
+                if amount <= 0:
+                    amount = 1
+        body.heal(amount)
+        if has_node("/root/TransitionManager"):
+            get_node("/root/TransitionManager").play_sfx("heart_pickup")
     _despawn_self()

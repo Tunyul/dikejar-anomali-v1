@@ -2,6 +2,10 @@ extends Area2D
 
 signal collected(segment: String, currency: String, amount: int)
 
+const _DEFAULT_MAGNET_SPEED: float = 160.0
+const _DEFAULT_MAGNET_RADIUS: float = 180.0
+const _DEFAULT_TINT: Color = Color(1, 1, 1, 1)
+
 @export var source_segment: String = ""
 @export var currency: String = "coins"
 @export var amount: int = 1
@@ -48,6 +52,12 @@ func _get_game_manager() -> Node:
 func _ready() -> void:
     collision_layer = 8
     collision_mask = 2
+    _apply_runtime_visual_state()
+    _apply_pickup_range_bonus_once()
+    call_deferred("_capture_base_y")
+    body_entered.connect(_on_body_entered)
+
+func _apply_runtime_visual_state() -> void:
     var anim: AnimatedSprite2D = get_node_or_null("AnimatedSprite2D")
     if anim:
         if currency == "gems":
@@ -66,7 +76,10 @@ func _ready() -> void:
         anim.play()
         anim.speed_scale = anim_fps / 12.0
         anim.modulate = tint
+
+func _apply_pickup_range_bonus_once() -> void:
     var cs: CollisionShape2D = get_node_or_null("CollisionShape2D")
+    var anim: AnimatedSprite2D = get_node_or_null("AnimatedSprite2D")
     var pickup_bonus: float = 0.0
     var gm := _get_game_manager()
     if gm and gm.has_method("get"):
@@ -96,8 +109,12 @@ func _ready() -> void:
             if tex:
                 r = min(float(tex.get_width()), float(tex.get_height())) * texture_radius_factor
         (cs.shape as CircleShape2D).radius = r
-    call_deferred("_capture_base_y")
-    body_entered.connect(_on_body_entered)
+
+func _default_currency_for_scene() -> String:
+    var path := String(scene_file_path).to_lower()
+    if path.ends_with("/diamond.tscn"):
+        return "gems"
+    return "coins"
 
 func _find_ground_pool_owner() -> Node:
     var tree := get_tree()
@@ -122,13 +139,22 @@ func _despawn_self() -> void:
     queue_free()
 
 func reset() -> void:
+    source_segment = ""
+    currency = _default_currency_for_scene()
+    amount = 1
+    tint = _DEFAULT_TINT
+    magnet_speed = _DEFAULT_MAGNET_SPEED
+    magnet_radius = _DEFAULT_MAGNET_RADIUS
+    always_magnet = false
     _base_y = position.y
     _t = 0.0
     _collected = false
+    collision_layer = 8
+    collision_mask = 2
     monitoring = true
     var anim: AnimatedSprite2D = get_node_or_null("AnimatedSprite2D")
     if anim:
-        anim.play()
+        _apply_runtime_visual_state()
     visible = true
     # Force immediate base_y capture instead of deferred
     _capture_base_y()
@@ -189,8 +215,12 @@ func _physics_process(delta: float) -> void:
         global_position.x += dirx * step
         global_position.y += diry * step
 
-func _on_body_entered(_body: Node) -> void:
+func _on_body_entered(body: Node) -> void:
     if _collected:
+        return
+    if body == null:
+        return
+    if not body.is_in_group("player") and not (body is Player):
         return
     _collected = true
     set_deferred("monitoring", false)

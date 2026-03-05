@@ -2164,8 +2164,12 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
 
         var msg := popup.get_node_or_null("%Message") as Label
         if msg:
-            var currency_name := tr("Coins") if currency == "coins" else (tr("Gems") if currency == "gems" else tr("Money"))
-            msg.text = tr("Buy %s\nfor %d %s?") % [tr(String(runtime_item.get("name", "Item"))), price, currency_name]
+            var display_price := String(runtime_item.get("display_price", ""))
+            msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+            msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+            msg.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+            msg.add_theme_font_size_override("font_size", 21)
+            msg.text = _build_confirm_purchase_text(runtime_item, currency, price, display_price)
 
         var yes := popup.get_node_or_null("%YesButton") as TextureButton
         var no := popup.get_node_or_null("%NoButton") as TextureButton
@@ -2182,6 +2186,44 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
     else:
         # Fallback to direct purchase if popup scene missing
         _execute_purchase(runtime_item)
+
+func _get_confirm_purchase_item_name(item: Dictionary) -> String:
+    var localized_name := tr(String(item.get("name", "Item"))).strip_edges()
+    if localized_name.is_empty():
+        localized_name = tr("Item")
+
+    if bool(item.get("is_upgrade", false)):
+        var prefixes := ["Upgrade ", tr("Upgrade") + " "]
+        for prefix in prefixes:
+            if localized_name.begins_with(prefix):
+                localized_name = localized_name.substr(prefix.length()).strip_edges()
+                break
+
+    return localized_name
+
+func _build_confirm_purchase_text(item: Dictionary, currency: String, price: int, display_price: String) -> String:
+    var confirm_name := _get_confirm_purchase_item_name(item)
+    var price_line := _build_confirm_purchase_price_line(currency, price, display_price)
+    return "%s\n%s" % [confirm_name, price_line]
+
+func _build_confirm_purchase_price_line(currency: String, price: int, display_price: String) -> String:
+    var shown_price := display_price.strip_edges()
+    if not shown_price.is_empty():
+        return shown_price
+
+    var currency_name := tr("Coins") if currency == "coins" else (tr("Gems") if currency == "gems" else tr("Money"))
+    return "%s %s" % [_format_grouped_number(maxi(price, 0)), currency_name]
+
+func _format_grouped_number(value: int) -> String:
+    var text := str(maxi(value, 0))
+    var out := ""
+    var digit_count := 0
+    for i in range(text.length() - 1, -1, -1):
+        if digit_count > 0 and digit_count % 3 == 0:
+            out = "." + out
+        out = text.substr(i, 1) + out
+        digit_count += 1
+    return out
 
 func _execute_purchase(item: Dictionary) -> void:
     if Engine.is_editor_hint():

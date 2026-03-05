@@ -112,10 +112,10 @@ func _refresh_character_layout() -> void:
     var vp := get_viewport()
     if vp == null:
         return
-    var visible := vp.get_visible_rect().size
-    _viewport_width = maxf(visible.x, 320.0)
+    var visible_size := vp.get_visible_rect().size
+    _viewport_width = maxf(visible_size.x, 320.0)
     # Keep sprites near the lower part but always visible on short displays.
-    _run_line_y = clampf(visible.y * 0.78, 120.0, visible.y - 72.0)
+    _run_line_y = clampf(visible_size.y * 0.78, 120.0, visible_size.y - 72.0)
 
     if player_sprite:
         player_sprite.position = Vector2(player_start_x + player_offset_from_left, _run_line_y)
