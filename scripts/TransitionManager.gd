@@ -18,6 +18,7 @@ var _sfx_muted: bool = false
 var _sfx_base_db: float = 0.0
 var _sfx_pool: Array[AudioStreamPlayer] = []
 var _sfx_pool_cursor: int = 0
+var _runtime_warmup_done: bool = false
 var _bgm_player: AudioStreamPlayer = null
 var _bgm_volume: float = 0.8
 var _bgm_muted: bool = false
@@ -935,6 +936,29 @@ func is_bgm_playing() -> bool:
 func get_bgm_player() -> AudioStreamPlayer:
     ensure_bgm_player()
     return _bgm_player
+
+func warmup_runtime_assets() -> void:
+    if _runtime_warmup_done:
+        return
+    _runtime_warmup_done = true
+    _init_sfx()
+    ensure_bgm_player()
+    var ids: Array[StringName] = [
+        &"click",
+        &"coin",
+        &"jump",
+        &"enemy_kill",
+        &"player_hit",
+        &"heart_pickup",
+        &"magnet_pickup",
+        &"shield_pickup",
+        &"double_coins_pickup",
+        &"speed_boost_pickup",
+        &"speed_boost_start",
+        &"game_over",
+    ]
+    for id in ids:
+        _get_sfx_stream(id)
 
 func _load_sfx_settings_from_save() -> void:
     var cfg := ConfigFile.new()
