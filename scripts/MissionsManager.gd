@@ -7,6 +7,60 @@ signal missions_data_changed()
 const _SAVE_DEBOUNCE_SEC: float = 1.0
 const SAVE_PATH := "user://save.cfg"
 const DAILY_ALL_REWARD_GEMS := 1
+const _MISSION_KIND_BY_ID := {
+    "m1": "coins",
+    "m2": "skills",
+    "m3": "jumps",
+    "m4": "enemies",
+    "m5": "distance",
+    "ms1": "coins",
+    "ms2": "skills",
+    "ms3": "jumps",
+    "ms4": "enemies",
+    "w1": "coins",
+    "w2": "skills",
+    "w3": "runs",
+    "w4": "enemies",
+    "mo1": "coins",
+    "mo2": "distance",
+    "mo3": "enemies",
+    "ck": "enemies",
+    "cc": "coins",
+    "cd": "distance",
+    "csh": "skills",
+    "cdc": "skills"
+}
+const _MISSION_TEMPLATE_BY_KIND := {
+    "coins": "Kumpulkan {n} koin",
+    "distance": "Capai jarak {n}m",
+    "enemies": "Kalahkan {n} musuh",
+    "jumps": "Lompat {n} kali",
+    "runs": "Mainkan {n} run",
+    "skills": "Dapatkan {n} skill"
+}
+const _MISSION_TEMPLATE_BY_ID := {
+    "m1": "Kumpulkan {n} koin",
+    "m2": "Dapatkan {n} skill",
+    "m3": "Lompat {n} kali",
+    "m4": "Kalahkan {n} musuh",
+    "m5": "Capai jarak {n}m",
+    "ms1": "Kumpulkan {n} koin",
+    "ms2": "Dapatkan {n} skill",
+    "ms3": "Lompat {n} kali",
+    "ms4": "Kalahkan {n} musuh",
+    "w1": "Kumpulkan {n} koin",
+    "w2": "Dapatkan {n} skill",
+    "w3": "Mainkan {n} run",
+    "w4": "Kalahkan {n} musuh",
+    "mo1": "Kumpulkan {n} koin",
+    "mo2": "Capai jarak {n}m",
+    "mo3": "Kalahkan {n} musuh",
+    "ck": "Kalahkan {n} musuh",
+    "cc": "Kumpulkan {n} koin",
+    "cd": "Capai jarak {n}m",
+    "csh": "Dapatkan Shield {n} kali",
+    "cdc": "Dapatkan DoubleCoins {n} kali"
+}
 
 var coins_collected: int = 0
 var max_distance: int = 0
@@ -245,19 +299,66 @@ func _init_default() -> void:
 
 
 func _infer_kind_from_name(mname: String) -> String:
-    if mname.begins_with("Kumpulkan"):
+    var raw := mname.strip_edges()
+    if raw.is_empty():
+        return ""
+    var n := raw.to_lower()
+    if n.begins_with("kumpulkan") or n.begins_with("collect") or raw.begins_with("收集"):
         return "coins"
-    if mname.begins_with("Capai jarak"):
+    if n.begins_with("capai jarak") or n.begins_with("reach") or raw.begins_with("达到"):
         return "distance"
-    if mname.begins_with("Kalahkan"):
+    if n.begins_with("kalahkan") or n.begins_with("defeat") or raw.begins_with("击败"):
         return "enemies"
-    if mname.begins_with("Lompat"):
+    if n.begins_with("lompat") or n.begins_with("jump") or raw.begins_with("跳跃"):
         return "jumps"
-    if mname.begins_with("Mainkan"):
+    if n.begins_with("mainkan") or n.begins_with("play") or raw.begins_with("进行"):
         return "runs"
-    if mname.begins_with("Dapatkan"):
+    if n.begins_with("dapatkan") or n.begins_with("get") or raw.begins_with("获得"):
         return "skills"
     return ""
+
+
+func _template_for_kind(kind: String) -> String:
+    var k := kind.strip_edges().to_lower()
+    if _MISSION_TEMPLATE_BY_KIND.has(k):
+        return String(_MISSION_TEMPLATE_BY_KIND[k])
+    return ""
+
+
+func _template_for_mission_id(mission_id: String) -> String:
+    var id_norm := mission_id.strip_edges()
+    if _MISSION_TEMPLATE_BY_ID.has(id_norm):
+        return String(_MISSION_TEMPLATE_BY_ID[id_norm])
+    return ""
+
+
+func _canonical_mission_template(m: Dictionary) -> String:
+    var id_str := String(m.get("id", ""))
+    var by_id := _template_for_mission_id(id_str)
+    if not by_id.is_empty():
+        return by_id
+    var kind := String(m.get("kind", ""))
+    if kind.is_empty():
+        kind = _infer_kind_from_name(String(m.get("name", "")))
+    return _template_for_kind(kind)
+
+
+func _normalize_mission_name_template(m: Dictionary) -> void:
+    var canonical := _canonical_mission_template(m)
+    if canonical.is_empty():
+        return
+    m["name"] = canonical
+    if not m.has("kind") or String(m.get("kind", "")).is_empty():
+        var inferred := _infer_kind_from_name(canonical)
+        if not inferred.is_empty():
+            m["kind"] = inferred
+
+
+func _normalize_all_mission_name_templates() -> void:
+    for m_any in missions:
+        if not (m_any is Dictionary):
+            continue
+        _normalize_mission_name_template(m_any)
 
 
 func _ensure_missions_upgraded() -> void:
@@ -436,11 +537,16 @@ func _ensure_missions_upgraded() -> void:
             m["reward"] = 0
         var mt2: String = String(m.get("type", "daily"))
         if mt2 != "challenge":
+            var id2: String = String(m.get("id", ""))
             var kind2: String = String(m.get("kind", ""))
             if kind2.is_empty():
-                var inferred2 := _infer_kind_from_name(String(m.get("name", "")))
-                if not inferred2.is_empty():
-                    m["kind"] = inferred2
+                if _MISSION_KIND_BY_ID.has(id2):
+                    m["kind"] = String(_MISSION_KIND_BY_ID[id2])
+                else:
+                    var inferred2 := _infer_kind_from_name(String(m.get("name", "")))
+                    if not inferred2.is_empty():
+                        m["kind"] = inferred2
+        _normalize_mission_name_template(m)
     if challenge_kill_level < 1:
         challenge_kill_level = 1
     if challenge_base_enemies < 0:
@@ -476,6 +582,7 @@ func _ensure_missions_upgraded() -> void:
         challenge_base_double_coins = double_coins_skills_activated
 
     _set_challenge_missions_in_memory()
+    _normalize_all_mission_name_templates()
     _refresh_all_mission_progress()
     _save()
 
@@ -834,6 +941,43 @@ func _get_distance_progress_for_type(t: String) -> int:
             return max_distance
 
 
+func _apply_progress_from_kind(m: Dictionary, mission_type: String, kind: String) -> bool:
+    var kind_norm := kind.strip_edges().to_lower()
+    match kind_norm:
+        "coins":
+            var base := _get_base_value_for_type(mission_type, "coins")
+            m["progress"] = max(coins_collected - base, 0)
+            return true
+        "distance":
+            m["progress"] = max(_get_distance_progress_for_type(mission_type), 0)
+            return true
+        "enemies":
+            var base2 := _get_base_value_for_type(mission_type, "enemies")
+            m["progress"] = max(enemies_killed - base2, 0)
+            return true
+        "jumps":
+            var base3 := _get_base_value_for_type(mission_type, "jumps")
+            m["progress"] = max(jumps_total - base3, 0)
+            return true
+        "runs":
+            var base4 := _get_base_value_for_type(mission_type, "runs")
+            m["progress"] = max(runs_played - base4, 0)
+            return true
+        "skills":
+            var base5 := _get_base_value_for_type(mission_type, "skills")
+            m["progress"] = max(skills_activated - base5, 0)
+            return true
+        _:
+            return false
+
+
+func _format_mission_name_for_display(m: Dictionary) -> String:
+    var out := String(m.get("name", ""))
+    if out.contains("{n}"):
+        out = out.replace("{n}", str(int(float(m.get("target", 0)))))
+    return out
+
+
 func _update_mission_progress_from_counters(m: Dictionary) -> void:
     var mt: String = String(m.get("type", "daily"))
     if mt == "challenge":
@@ -853,43 +997,12 @@ func _update_mission_progress_from_counters(m: Dictionary) -> void:
                 m["progress"] = 0
         return
     var kind: String = String(m.get("kind", ""))
-    match kind:
-        "coins":
-            var base := _get_base_value_for_type(mt, "coins")
-            m["progress"] = max(coins_collected - base, 0)
-        "distance":
-            m["progress"] = max(_get_distance_progress_for_type(mt), 0)
-        "enemies":
-            var base2 := _get_base_value_for_type(mt, "enemies")
-            m["progress"] = max(enemies_killed - base2, 0)
-        "jumps":
-            var base3 := _get_base_value_for_type(mt, "jumps")
-            m["progress"] = max(jumps_total - base3, 0)
-        "runs":
-            var base4 := _get_base_value_for_type(mt, "runs")
-            m["progress"] = max(runs_played - base4, 0)
-        "skills":
-            var base5 := _get_base_value_for_type(mt, "skills")
-            m["progress"] = max(skills_activated - base5, 0)
-        _:
-            var mname: String = String(m.get("name", ""))
-            if mname.begins_with("Kumpulkan"):
-                var base6 := _get_base_value_for_type(mt, "coins")
-                m["progress"] = max(coins_collected - base6, 0)
-            elif mname.begins_with("Capai jarak"):
-                m["progress"] = max(_get_distance_progress_for_type(mt), 0)
-            elif mname.begins_with("Kalahkan"):
-                var base7 := _get_base_value_for_type(mt, "enemies")
-                m["progress"] = max(enemies_killed - base7, 0)
-            elif mname.begins_with("Lompat"):
-                var base8 := _get_base_value_for_type(mt, "jumps")
-                m["progress"] = max(jumps_total - base8, 0)
-            elif mname.begins_with("Mainkan"):
-                var base9 := _get_base_value_for_type(mt, "runs")
-                m["progress"] = max(runs_played - base9, 0)
-            elif mname.begins_with("Dapatkan"):
-                var base10 := _get_base_value_for_type(mt, "skills")
-                m["progress"] = max(skills_activated - base10, 0)
+    if _apply_progress_from_kind(m, mt, kind):
+        return
+    var inferred_kind := _infer_kind_from_name(String(m.get("name", "")))
+    if _apply_progress_from_kind(m, mt, inferred_kind):
+        if kind.is_empty():
+            m["kind"] = inferred_kind
 
 
 func _refresh_all_mission_progress() -> void:
@@ -912,7 +1025,7 @@ func _refresh_all_mission_progress() -> void:
         if eligible:
             var new_prog: float = float(m.get("progress", 0))
             if prev_prog < target and new_prog >= target:
-                mission_became_ready.emit(id_str, String(m.get("name", "")))
+                mission_became_ready.emit(id_str, _format_mission_name_for_display(m))
 
 func add_coins(n: int) -> void:
     coins_collected += n
@@ -1003,10 +1116,12 @@ func add_double_coins_skill() -> void:
     _request_save()
     refresh_ready_to_claim_state()
 
-func _grant_currency_via_game_manager(coins: int, gems: int) -> Dictionary:
+func _grant_currency_via_game_manager(coins: int, gems: int, grant_id: String = "", source: String = "missions") -> Dictionary:
     var gm := get_tree().get_root().get_node_or_null("GameManager")
+    if gm and gm.has_method("try_apply_grant_once") and not grant_id.strip_edges().is_empty():
+        return gm.call("try_apply_grant_once", grant_id, source, coins, gems, {}, true)
     if gm and gm.has_method("adjust_currencies"):
-        return gm.call("adjust_currencies", coins, gems, true)
+        return gm.call("adjust_currencies", coins, gems, true, source)
     return {"ok": false, "error": "game_manager_unavailable", "currencies": {"coins": 0, "gems": 0}}
 
 func get_missions_snapshot(tab: String = "") -> Array:
@@ -1085,6 +1200,28 @@ func claim_mission(mission_id: String) -> Dictionary:
     if mt != "challenge" and bool(reward_claimed.get(id_norm, false)):
         return {"ok": false, "error": "mission_already_claimed", "mission_id": id_norm}
 
+    var grant_id := ""
+    if mt == "challenge":
+        match id_norm:
+            "ck":
+                grant_id = "challenge_ck_%d" % [maxi(challenge_kill_level, 1)]
+            "cc":
+                grant_id = "challenge_cc_%d" % [maxi(challenge_coins_level, 1)]
+            "cd":
+                grant_id = "challenge_cd_%d" % [maxi(challenge_distance_level, 1)]
+            "csh":
+                grant_id = "challenge_csh_%d" % [maxi(challenge_shield_level, 1)]
+            "cdc":
+                grant_id = "challenge_cdc_%d" % [maxi(challenge_double_coins_level, 1)]
+            _:
+                grant_id = "challenge_%s_%d" % [id_norm, int(Time.get_unix_time_from_system())]
+    else:
+        grant_id = "mission_%s" % [id_norm]
+
+    var grant_res := _grant_currency_via_game_manager(rw, 0, grant_id, "mission_claim")
+    if not bool(grant_res.get("ok", false)):
+        return {"ok": false, "error": "currency_grant_failed", "mission_id": id_norm}
+
     if mt == "challenge":
         match id_norm:
             "ck":
@@ -1109,10 +1246,6 @@ func claim_mission(mission_id: String) -> Dictionary:
     else:
         reward_claimed[id_norm] = true
 
-    var grant_res := _grant_currency_via_game_manager(rw, 0)
-    if not bool(grant_res.get("ok", false)):
-        return {"ok": false, "error": "currency_grant_failed", "mission_id": id_norm}
-
     _save()
     refresh_ready_to_claim_state()
     return {
@@ -1132,7 +1265,9 @@ func claim_daily_all_reward() -> Dictionary:
     if reward_gems <= 0:
         return {"ok": false, "error": "daily_reward_disabled"}
 
-    var grant_res := _grant_currency_via_game_manager(0, reward_gems)
+    var day_bucket := int(Time.get_unix_time_from_system() / 86400)
+    var grant_id := "daily_all_%d" % [maxi(last_reset_daily, day_bucket)]
+    var grant_res := _grant_currency_via_game_manager(0, reward_gems, grant_id, "daily_all_claim")
     if not bool(grant_res.get("ok", false)):
         return {"ok": false, "error": "currency_grant_failed"}
 
@@ -1159,13 +1294,16 @@ func apply_daily_reset() -> Dictionary:
 
 func get_missions_text() -> String:
     var lines := []
-    for m in missions:
-        var prog := int(m.progress)
-        var tgt := int(m.target)
-        var mname: String = String(m.name)
+    for m_any in missions:
+        if not (m_any is Dictionary):
+            continue
+        var m: Dictionary = m_any
+        var prog := int(float(m.get("progress", 0)))
+        var tgt := int(float(m.get("target", 0)))
+        var mname := _format_mission_name_for_display(m)
         var rw := 0
-        if m is Dictionary and m.has("reward"):
-            rw = int(m.reward)
+        if m.has("reward"):
+            rw = int(m.get("reward", 0))
         lines.append(mname + " (" + str(min(prog, tgt)) + "/" + str(tgt) + ") +" + str(rw) + "c")
     return "\n".join(lines)
 
@@ -1277,7 +1415,7 @@ func get_ingame_missions_text() -> String:
             if not (m_any3 is Dictionary):
                 continue
             var m3: Dictionary = m_any3
-            var mission_name: String = String(m3.get("name", ""))
+            var mission_name := _format_mission_name_for_display(m3)
             var target_i: int = int(float(m3.get("target", 0)))
             var prog_i: int = int(float(m3.get("progress", 0)))
             var rw_i: int = int(m3.get("reward", 0))
@@ -1376,6 +1514,7 @@ func _save() -> void:
     var err := cfg.load(SAVE_PATH)
     if err != OK:
         cfg = ConfigFile.new()
+    _normalize_all_mission_name_templates()
     cfg.set_value("missions", "coins_collected", coins_collected)
     cfg.set_value("missions", "max_distance", max_distance)
     cfg.set_value("missions", "current_run_distance", current_run_distance)

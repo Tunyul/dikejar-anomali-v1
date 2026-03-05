@@ -9,7 +9,14 @@ signal cosmetics_changed(cosmetics_data: Dictionary)
 signal settings_changed(settings_data: Dictionary)
 
 const SAVE_PATH := "user://save.cfg"
-const SAVE_SCHEMA_VERSION := 2
+const SAVE_SCHEMA_VERSION := 3
+const _REWARD_LEDGER_MAX_ENTRIES := 512
+const _MONETIZATION_DEFAULT := {
+    "rewarded_request_count": 0,
+    "purchase_success_count": 0,
+    "last_rewarded_unix": 0
+}
+const _DIFFICULTY_VERSION_DEFAULT := 1
 const _SHOP_DEFAULT := {
     "daily_coins_claim_day": -1,
     "daily_coins_claim_count": 0
@@ -27,6 +34,37 @@ const _SETTINGS_DEFAULT := {
     "sfx_muted": false,
     "language": "id"
 }
+const _DIFFICULTY_PROFILE_SCRIPT := preload("res://scripts/resources/DifficultyProfile.gd")
+const _DAILY_CHALLENGE_ROTATION: Array[Dictionary] = [
+    {
+        "id": "standard",
+        "name": "Standard",
+        "speed_multiplier": 1.0,
+        "xp_multiplier": 1.0,
+        "coin_bonus_pct": 0
+    },
+    {
+        "id": "swift_chase",
+        "name": "Swift Chase",
+        "speed_multiplier": 1.08,
+        "xp_multiplier": 1.10,
+        "coin_bonus_pct": 0
+    },
+    {
+        "id": "treasure_wave",
+        "name": "Treasure Wave",
+        "speed_multiplier": 1.0,
+        "xp_multiplier": 1.0,
+        "coin_bonus_pct": 20
+    },
+    {
+        "id": "survival_drill",
+        "name": "Survival Drill",
+        "speed_multiplier": 1.05,
+        "xp_multiplier": 1.12,
+        "coin_bonus_pct": 10
+    }
+]
 const _POWERUPS_DEFAULT := {
     "magnet_30s_tokens": 0,
     "shield_1hit_charges": 0,
@@ -169,6 +207,8 @@ var gem_collected_b: int = 0
 var last_score: int = 0
 var last_coins: int = 0
 var last_gems: int = 0
+var _last_granted_run_coins: int = 0
+var _last_granted_run_gems: int = 0
 var total_coins: int = 0
 var total_gems: int = 0
 var player_level: int = 1
@@ -181,6 +221,9 @@ var _debug_time_accum: float = 0.0
 var _score_offset: int = 0
 var powerups_data: Dictionary = {}
 var pending_level_rewards: Array[Dictionary] = []
+var reward_grant_ledger: Dictionary = {}
+var monetization_data: Dictionary = _MONETIZATION_DEFAULT.duplicate(true)
+var difficulty_version: int = _DIFFICULTY_VERSION_DEFAULT
 
 # Season 1 Reward System
 const SEASON_REWARDS: Dictionary = {
@@ -294,6 +337,10 @@ var _last_health_max: int = -1
 @export var rewarded_continue_grace_sec: float = 5.0
 var ads_shown_count: int = 0
 var continue_grace_timer: float = 0.0
+var _continue_request_in_flight: bool = false
+var _continue_offer_serial: int = 0
+var _continue_offer_granted_serial: int = -1
+var _continue_offer_request_serial: int = -1
 var _carry_over_stats: Dictionary = {}
 var coin_hud_label: Label = null
 var gem_hud_label: Label = null
@@ -322,6 +369,13 @@ var speed_boost_icon: TextureRect = null
 var speed_boost_timer_label: Label = null
 @export var enemy_ramp_start_distance: float = 400.0
 @export var enemy_ramp_enabled: bool = true
+@export var difficulty_profiles: Array[Resource] = []
+@export var anomaly_events_enabled: bool = true
+@export var anomaly_event_interval_sec: float = 22.0
+@export var anomaly_event_duration_sec: float = 6.0
+@export var anomaly_distortion_offset_px: float = 40.0
+@export var anomaly_speed_shift_multiplier: float = 1.15
+@export var anomaly_gravity_shift_multiplier: float = 1.2
 @export var countdown_duration_sec: float = 3.0
 
 var countdown_active: bool = false
@@ -338,6 +392,23 @@ var _missions_menu_opened_from_playing: bool = false
 var _missions_menu_was_paused: bool = false
 var _settings_menu_opened_from_playing: bool = false
 var _settings_menu_was_paused: bool = false
+var _anomaly_event_timer: float = 0.0
+var _anomaly_event_active: bool = false
+var _anomaly_event_type: String = ""
+var _anomaly_event_remaining: float = 0.0
+var _anomaly_original_entry_stop_x: float = 0.0
+var _anomaly_original_base_speed: float = 0.0
+var _anomaly_original_gravity: float = 0.0
+var _pause_from_app_focus: bool = false
+var _ramp_base_enemy_spawn_chance: float = -1.0
+var _ramp_base_enemy_block_weight: float = -1.0
+var _ramp_base_enemy_cone_weight: float = -1.0
+var _difficulty_speed_multiplier: float = 1.0
+var _anomaly_speed_multiplier_runtime: float = 1.0
+var _daily_challenge_current: Dictionary = {}
+var _daily_speed_multiplier_runtime: float = 1.0
+var _daily_xp_multiplier_runtime: float = 1.0
+var _daily_coin_bonus_pct_runtime: int = 0
 
 func _ready() -> void:
     AdManager.move_banner(true) # Banner di atas untuk ingame
@@ -367,6 +438,8 @@ func _ready() -> void:
             ev3.physical_keycode = KEY_F3
             InputMap.action_add_event("toggle_debug", ev3)
     _load_progress()
+    _ensure_default_difficulty_profiles()
+    _connect_monetization_signals()
 
     var ui_font := load("res://assets/font/Fredoka Nunito/Nunito/static/Nunito-Regular.ttf") as Font
     if ui_font and canvas:
@@ -1310,6 +1383,55 @@ func _wire_settings_menu_signals(settings_menu: Node) -> void:
     if settings_menu.has_signal("menu_pressed") and not settings_menu.is_connected("menu_pressed", c_menu):
         settings_menu.connect("menu_pressed", c_menu)
 
+
+func _connect_monetization_signals() -> void:
+    if MonetizationService == null:
+        return
+    if MonetizationService.has_signal("rewarded_result"):
+        var cb_rewarded := Callable(self, "_on_monetization_rewarded_result")
+        if not MonetizationService.is_connected("rewarded_result", cb_rewarded):
+            MonetizationService.connect("rewarded_result", cb_rewarded)
+
+
+func _on_monetization_rewarded_result(result: Dictionary) -> void:
+    var placement := String(result.get("placement", ""))
+    if placement != "continue":
+        return
+    var status := String(result.get("status", "unknown"))
+    match status:
+        "granted":
+            _on_reward_granted("continue")
+        "cancelled", "failed", "not_available", "cooldown", "load_failed":
+            _continue_request_in_flight = false
+            if status == "not_available":
+                _enqueue_missions_toast(tr("Iklan belum siap. Coba lagi sebentar."))
+
+
+func _ensure_default_difficulty_profiles() -> void:
+    if not difficulty_profiles.is_empty():
+        return
+    var p1 = _DIFFICULTY_PROFILE_SCRIPT.new()
+    p1.time_window = 20.0
+    p1.enemy_weight = 1.0
+    p1.speed_multiplier = 1.0
+    p1.spawn_interval = 1.0
+    var p2 = _DIFFICULTY_PROFILE_SCRIPT.new()
+    p2.time_window = 45.0
+    p2.enemy_weight = 1.2
+    p2.speed_multiplier = 1.05
+    p2.spawn_interval = 0.95
+    var p3 = _DIFFICULTY_PROFILE_SCRIPT.new()
+    p3.time_window = 75.0
+    p3.enemy_weight = 1.35
+    p3.speed_multiplier = 1.1
+    p3.spawn_interval = 0.88
+    var p4 = _DIFFICULTY_PROFILE_SCRIPT.new()
+    p4.time_window = 105.0
+    p4.enemy_weight = 1.5
+    p4.speed_multiplier = 1.15
+    p4.spawn_interval = 0.8
+    difficulty_profiles = [p1, p2, p3, p4]
+
 func _process(delta: float) -> void:
     if not is_inside_tree():
         return
@@ -1362,7 +1484,12 @@ func _process(delta: float) -> void:
             score_hud_label.text = str(score)
         if is_instance_valid(missions_manager) and missions_manager.has_method("update_distance"):
             missions_manager.update_distance(distance)
-        var target_speed: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
+        var base_target_speed: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
+        var target_speed: float = base_target_speed
+        target_speed *= maxf(_difficulty_speed_multiplier, 0.7)
+        target_speed *= maxf(_anomaly_speed_multiplier_runtime, 0.7)
+        target_speed *= clampf(_daily_speed_multiplier_runtime, 0.85, 1.35)
+        target_speed = clampf(target_speed, base_speed * 0.7, max_speed * 2.0)
         var boost_active: bool = speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
         if boost_active:
             target_speed *= speed_boost_multiplier
@@ -1406,6 +1533,7 @@ func _process(delta: float) -> void:
                 if speed_was_active and not is_speed_boost_active():
                     _ensure_skill_after_power_end("speed_boost")
         _apply_enemy_ramp_if_needed()
+        _update_anomaly_events(delta)
     if canvas:
         if magnet_icon:
             magnet_icon.visible = magnet_enabled
@@ -1623,6 +1751,16 @@ func _update_spawn_status_label() -> void:
             dist_text += "\nHeartTile: " + str(int(round(heart_tiles)))
     spawn_status_label.text = t + dist_text
 
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+        if phase == Phase.PLAYING and not get_tree().paused:
+            _pause_from_app_focus = true
+            pause_game()
+    elif what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
+        if _pause_from_app_focus and phase != Phase.GAME_OVER:
+            _pause_from_app_focus = false
+            resume_game()
+
 func on_quit_game() -> void:
     get_tree().quit()
 
@@ -1644,6 +1782,10 @@ func resume_game() -> void:
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(true)
     var tgt: float = clamp(base_speed + distance * speed_gain_per_meter, base_speed, max_speed)
+    tgt *= maxf(_difficulty_speed_multiplier, 0.7)
+    tgt *= maxf(_anomaly_speed_multiplier_runtime, 0.7)
+    tgt *= clampf(_daily_speed_multiplier_runtime, 0.85, 1.35)
+    tgt = clampf(tgt, base_speed * 0.7, max_speed * 2.0)
     if ground_a and ground_a.has_method("set_speed"):
         ground_a.set_speed(tgt)
 
@@ -1731,13 +1873,31 @@ func _on_settings_overlay_closed() -> void:
             resume_game()
 
 func try_rewarded_continue() -> void:
+    if phase != Phase.GAME_OVER:
+        return
+    if _continue_offer_granted_serial == _continue_offer_serial:
+        return
+    if _continue_request_in_flight:
+        return
     if ads_shown_count >= ads_max_per_session:
         print("[GameManager] Max ads reached, cannot continue.")
         _enqueue_missions_toast(tr("Jatah lanjut via iklan sudah habis."))
         return
+    _continue_request_in_flight = true
+    _continue_offer_request_serial = _continue_offer_serial
+    _bump_monetization_counter("rewarded_request_count", false)
+
+    if MonetizationService and MonetizationService.has_method("show_rewarded"):
+        var res_any: Variant = MonetizationService.call("show_rewarded", "continue")
+        if res_any is Dictionary and not bool((res_any as Dictionary).get("ok", false)):
+            _continue_request_in_flight = false
+            _enqueue_missions_toast(tr("Iklan belum siap. Coba lagi sebentar."))
+        return
+
     var adm = AdManager
     if adm and adm.has_method("show_rewarded"):
         if adm.has_method("is_rewarded_available") and not adm.is_rewarded_available():
+            _continue_request_in_flight = false
             print("[GameManager] Rewarded ad not available.")
             if adm.has_method("load_rewarded"):
                 adm.call("load_rewarded")
@@ -1747,22 +1907,36 @@ func try_rewarded_continue() -> void:
             var cb := Callable(self, "_on_reward_granted")
             if not adm.reward_granted.is_connected(cb):
                 adm.reward_granted.connect(cb)
-                print("[GameManager] Connected to reward_granted signal.")
         print("[GameManager] Requesting rewarded ad...")
         adm.show_rewarded("continue")
-    else:
-        print("[GameManager] AdManager not found or missing method.")
-        _enqueue_missions_toast(tr("AdManager tidak tersedia."))
+        return
+
+    _continue_request_in_flight = false
+    print("[GameManager] AdManager not found or missing method.")
+    _enqueue_missions_toast(tr("AdManager tidak tersedia."))
 
 func _on_reward_granted(reason: String) -> void:
     print("[GameManager] _on_reward_granted called with reason: ", reason)
-    if reason == "continue":
-        ads_shown_count += 1
-        # Call deferred to ensure we are on main thread and UI is ready
-        call_deferred("grant_continue")
+    if reason != "continue":
+        return
+    if phase != Phase.GAME_OVER:
+        return
+    if _continue_offer_request_serial != _continue_offer_serial:
+        return
+    if _continue_offer_granted_serial == _continue_offer_serial:
+        return
+    _continue_request_in_flight = false
+    _continue_offer_granted_serial = _continue_offer_serial
+    ads_shown_count += 1
+    call_deferred("grant_continue")
 
 func grant_continue() -> void:
+    if phase != Phase.GAME_OVER:
+        return
+    if _continue_offer_granted_serial != _continue_offer_serial:
+        return
     print("[GameManager] grant_continue execution started.")
+    _continue_request_in_flight = false
     # Force hide Game Over menu immediately
     if canvas:
         var gom := canvas.get_node_or_null("GameOverMenu")
@@ -1771,10 +1945,9 @@ func grant_continue() -> void:
             print("[GameManager] GameOverMenu hidden forcibly.")
 
     # Rollback total stats from previous game over (undo finalization)
-    total_coins -= last_coins
-    total_gems -= last_gems
-    if total_coins < 0: total_coins = 0
-    if total_gems < 0: total_gems = 0
+    adjust_currencies(-_last_granted_run_coins, -_last_granted_run_gems, false, "rewarded_continue_rollback")
+    _last_granted_run_coins = 0
+    _last_granted_run_gems = 0
 
     # Capture stats for new run (Carry Over)
     _carry_over_stats = {
@@ -2182,13 +2355,142 @@ func _on_player_health_decreased(_current: int, _maximum: int) -> void:
     call_deferred("_ensure_hearts_for_low_health")
 
 func _apply_enemy_ramp_if_needed() -> void:
-    return
+    if not enemy_ramp_enabled:
+        _difficulty_speed_multiplier = 1.0
+        return
+    if phase != Phase.PLAYING:
+        return
+    if ground_a == null:
+        return
+    if distance < maxf(enemy_ramp_start_distance, 0.0):
+        _difficulty_speed_multiplier = 1.0
+        return
+    if difficulty_profiles.is_empty():
+        _ensure_default_difficulty_profiles()
+    if difficulty_profiles.is_empty():
+        return
+
+    if _ramp_base_enemy_spawn_chance < 0.0:
+        var spawn_any: Variant = ground_a.get("enemy_spawn_chance")
+        var spawn_val: float = 0.3
+        if spawn_any != null:
+            spawn_val = float(spawn_any)
+        _ramp_base_enemy_spawn_chance = maxf(spawn_val, 0.05)
+    if _ramp_base_enemy_block_weight < 0.0:
+        var block_any: Variant = ground_a.get("enemy_block_weight")
+        var block_val: float = 1.0
+        if block_any != null:
+            block_val = float(block_any)
+        _ramp_base_enemy_block_weight = maxf(block_val, 0.1)
+    if _ramp_base_enemy_cone_weight < 0.0:
+        var cone_any: Variant = ground_a.get("enemy_cone_weight")
+        var cone_val: float = 1.0
+        if cone_any != null:
+            cone_val = float(cone_any)
+        _ramp_base_enemy_cone_weight = maxf(cone_val, 0.1)
+
+    var elapsed := game_time_sec
+    var selected: Resource = null
+    for p in difficulty_profiles:
+        if p == null:
+            continue
+        var window_raw: Variant = p.get("time_window")
+        var window := 0.0 if window_raw == null else float(window_raw)
+        if elapsed >= window:
+            selected = p
+
+    if selected == null:
+        return
+
+    var spawn_interval_raw: Variant = selected.get("spawn_interval")
+    var spawn_interval_base := 1.0 if spawn_interval_raw == null else float(spawn_interval_raw)
+    var spawn_interval := maxf(spawn_interval_base, 0.2)
+    var spawn_multiplier := 1.0 / spawn_interval
+    var enemy_spawn_chance := clampf(_ramp_base_enemy_spawn_chance * spawn_multiplier, 0.05, 0.95)
+    var enemy_weight_raw: Variant = selected.get("enemy_weight")
+    var enemy_weight_base := 1.0 if enemy_weight_raw == null else float(enemy_weight_raw)
+    var enemy_weight := maxf(enemy_weight_base, 0.1)
+    var block_weight := clampf(_ramp_base_enemy_block_weight * enemy_weight, 0.1, 6.0)
+    var cone_weight := clampf(_ramp_base_enemy_cone_weight * enemy_weight, 0.1, 6.0)
+
+    ground_a.set("enemy_spawn_chance", enemy_spawn_chance)
+    ground_a.set("enemy_block_weight", block_weight)
+    ground_a.set("enemy_cone_weight", cone_weight)
+
+    var speed_multiplier_raw: Variant = selected.get("speed_multiplier")
+    var speed_multiplier_base := 1.0 if speed_multiplier_raw == null else float(speed_multiplier_raw)
+    _difficulty_speed_multiplier = clampf(speed_multiplier_base, 0.7, 2.0)
+
+
+func _update_anomaly_events(delta: float) -> void:
+    if not anomaly_events_enabled:
+        return
+    if phase != Phase.PLAYING:
+        return
+
+    if _anomaly_event_active:
+        _anomaly_event_remaining = maxf(_anomaly_event_remaining - delta, 0.0)
+        if _anomaly_event_remaining <= 0.0:
+            _end_anomaly_event()
+        return
+
+    _anomaly_event_timer += delta
+    var interval := maxf(anomaly_event_interval_sec, 6.0)
+    if _anomaly_event_timer < interval:
+        return
+
+    _anomaly_event_timer = 0.0
+    var rng := RandomNumberGenerator.new()
+    rng.randomize()
+    var roll: int = rng.randi_range(0, 1)
+    if roll == 0:
+        _start_anomaly_event("lane_distortion")
+    else:
+        _start_anomaly_event("gravity_speed_shift")
+
+
+func _start_anomaly_event(event_type: String) -> void:
+    _anomaly_event_active = true
+    _anomaly_event_type = event_type
+    _anomaly_event_remaining = maxf(anomaly_event_duration_sec, 2.0)
+
+    if event_type == "lane_distortion":
+        if player != null:
+            _anomaly_original_entry_stop_x = player.entry_stop_x
+            var rng := RandomNumberGenerator.new()
+            rng.randomize()
+            var sign_dir := (-1.0 if rng.randf() < 0.5 else 1.0)
+            player.entry_stop_x = _anomaly_original_entry_stop_x + sign_dir * anomaly_distortion_offset_px
+        _enqueue_missions_toast(tr("Anomali: Distorsi jalur!"))
+    elif event_type == "gravity_speed_shift":
+        _anomaly_original_base_speed = base_speed
+        _anomaly_speed_multiplier_runtime = clampf(anomaly_speed_shift_multiplier, 0.8, 1.6)
+        if player != null:
+            _anomaly_original_gravity = player.gravity
+            player.gravity = player.gravity * clampf(anomaly_gravity_shift_multiplier, 0.6, 1.8)
+        _enqueue_missions_toast(tr("Anomali: Zona gravitasi berubah!"))
+
+
+func _end_anomaly_event() -> void:
+    if not _anomaly_event_active:
+        return
+    if _anomaly_event_type == "lane_distortion":
+        if player != null and _anomaly_original_entry_stop_x > 0.0:
+            player.entry_stop_x = _anomaly_original_entry_stop_x
+    elif _anomaly_event_type == "gravity_speed_shift":
+        _anomaly_speed_multiplier_runtime = 1.0
+        if player != null and _anomaly_original_gravity > 0.0:
+            player.gravity = _anomaly_original_gravity
+    _anomaly_event_active = false
+    _anomaly_event_type = ""
+    _anomaly_event_remaining = 0.0
 
 
 func set_playing_phase() -> void:
     print("[GameManager] Switching to PLAYING phase")
     phase = Phase.PLAYING
     game_active = true
+    _continue_request_in_flight = false
     _bgm_mode = BgmMode.RUN
     _bgm_duck_db = 0.0
     _apply_spawn_safety_limits()
@@ -2268,8 +2570,59 @@ func get_game_state() -> Dictionary:
         "game_active": game_active,
         "score": score,
         "distance": distance,
-        "best_score": best_score
+        "best_score": best_score,
+        "daily_challenge": get_daily_challenge_snapshot()
     }
+
+func get_daily_challenge_snapshot() -> Dictionary:
+    if _daily_challenge_current.is_empty():
+        return _resolve_daily_challenge_for_today()
+    return _daily_challenge_current.duplicate(true)
+
+func _get_day_bucket() -> int:
+    return int(Time.get_unix_time_from_system() / 86400)
+
+func _resolve_daily_challenge_for_today() -> Dictionary:
+    var fallback := {
+        "id": "standard",
+        "name": "Standard",
+        "speed_multiplier": 1.0,
+        "xp_multiplier": 1.0,
+        "coin_bonus_pct": 0,
+        "day_bucket": _get_day_bucket()
+    }
+    if _DAILY_CHALLENGE_ROTATION.is_empty():
+        return fallback
+    var day_bucket := _get_day_bucket()
+    var idx := int(posmod(day_bucket, _DAILY_CHALLENGE_ROTATION.size()))
+    var row_any: Variant = _DAILY_CHALLENGE_ROTATION[idx]
+    if not (row_any is Dictionary):
+        return fallback
+    var row: Dictionary = row_any
+    return {
+        "id": String(row.get("id", "standard")),
+        "name": String(row.get("name", "Standard")),
+        "speed_multiplier": clampf(float(row.get("speed_multiplier", 1.0)), 0.85, 1.35),
+        "xp_multiplier": clampf(float(row.get("xp_multiplier", 1.0)), 1.0, 1.5),
+        "coin_bonus_pct": clampi(int(row.get("coin_bonus_pct", 0)), 0, 40),
+        "day_bucket": day_bucket
+    }
+
+func _apply_daily_challenge_for_run() -> void:
+    _daily_challenge_current = _resolve_daily_challenge_for_today()
+    _daily_speed_multiplier_runtime = float(_daily_challenge_current.get("speed_multiplier", 1.0))
+    _daily_xp_multiplier_runtime = float(_daily_challenge_current.get("xp_multiplier", 1.0))
+    _daily_coin_bonus_pct_runtime = int(_daily_challenge_current.get("coin_bonus_pct", 0))
+
+    var challenge_id := String(_daily_challenge_current.get("id", "standard"))
+    if challenge_id == "standard":
+        return
+
+    var challenge_name := String(_daily_challenge_current.get("name", "Daily Challenge"))
+    var toast := tr("Daily Challenge: %s") % [challenge_name]
+    if _daily_coin_bonus_pct_runtime > 0:
+        toast += tr(" (+%d%% coins)") % [_daily_coin_bonus_pct_runtime]
+    _enqueue_missions_toast(toast)
 
 func _verify_player_scenes() -> void:
     if _scene_verify_running:
@@ -2419,6 +2772,121 @@ func _normalize_pending_level_rewards(value: Variant) -> Array[Dictionary]:
         return int(a.get("level", 0)) < int(b.get("level", 0))
     )
     return out
+
+
+func _normalize_reward_grant_ledger(value: Variant) -> Dictionary:
+    var out: Dictionary = {}
+    if not (value is Dictionary):
+        return out
+    var src: Dictionary = value
+    for key_any in src.keys():
+        var grant_id := String(key_any).strip_edges()
+        if grant_id.is_empty():
+            continue
+        var row_any: Variant = src[key_any]
+        if not (row_any is Dictionary):
+            continue
+        var row: Dictionary = row_any
+        out[grant_id] = {
+            "source": String(row.get("source", "")),
+            "timestamp": int(row.get("timestamp", 0)),
+            "status": String(row.get("status", "granted"))
+        }
+    if out.size() <= _REWARD_LEDGER_MAX_ENTRIES:
+        return out
+    var pairs: Array[Dictionary] = []
+    for id_any in out.keys():
+        var id := String(id_any)
+        var row2: Dictionary = out[id]
+        pairs.append({
+            "id": id,
+            "timestamp": int(row2.get("timestamp", 0))
+        })
+    pairs.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+        return int(a.get("timestamp", 0)) < int(b.get("timestamp", 0))
+    )
+    var remove_count := pairs.size() - _REWARD_LEDGER_MAX_ENTRIES
+    for i in range(remove_count):
+        var id_rm := String(pairs[i].get("id", ""))
+        if not id_rm.is_empty():
+            out.erase(id_rm)
+    return out
+
+
+func _normalize_monetization_data(value: Variant) -> Dictionary:
+    var merged := _MONETIZATION_DEFAULT.duplicate(true)
+    if not (value is Dictionary):
+        return merged
+    var src: Dictionary = value
+    merged["rewarded_request_count"] = maxi(int(src.get("rewarded_request_count", merged["rewarded_request_count"])), 0)
+    merged["purchase_success_count"] = maxi(int(src.get("purchase_success_count", merged["purchase_success_count"])), 0)
+    merged["last_rewarded_unix"] = maxi(int(src.get("last_rewarded_unix", merged["last_rewarded_unix"])), 0)
+    return merged
+
+
+func is_reward_granted(grant_id: String) -> bool:
+    var gid := grant_id.strip_edges()
+    if gid.is_empty():
+        return false
+    return reward_grant_ledger.has(gid)
+
+
+func _record_reward_grant(grant_id: String, source: String, save_after: bool = false) -> Dictionary:
+    var gid := grant_id.strip_edges()
+    if gid.is_empty():
+        return {"ok": false, "error": "invalid_grant_id"}
+    reward_grant_ledger[gid] = {
+        "source": source,
+        "timestamp": int(Time.get_unix_time_from_system()),
+        "status": "granted"
+    }
+    reward_grant_ledger = _normalize_reward_grant_ledger(reward_grant_ledger)
+    if save_after:
+        _save_progress()
+    return {"ok": true, "error": ""}
+
+
+func _bump_monetization_counter(key: String, save_after: bool = false) -> void:
+    if not monetization_data.has(key):
+        return
+    monetization_data[key] = maxi(int(monetization_data.get(key, 0)) + 1, 0)
+    if key == "rewarded_request_count":
+        monetization_data["last_rewarded_unix"] = int(Time.get_unix_time_from_system())
+    if save_after:
+        _save_progress()
+
+
+func try_apply_grant_once(grant_id: String, source: String, coins: int = 0, gems: int = 0, powerup_delta: Dictionary = {}, save_after: bool = true) -> Dictionary:
+    var gid := grant_id.strip_edges()
+    if gid.is_empty():
+        return {"ok": false, "error": "invalid_grant_id"}
+    if is_reward_granted(gid):
+        return {
+            "ok": false,
+            "error": "already_granted",
+            "grant_id": gid,
+            "currencies": get_currency_snapshot(),
+            "powerups": get_powerups_snapshot()
+        }
+
+    if coins != 0 or gems != 0:
+        adjust_currencies(coins, gems, false, source)
+    if not powerup_delta.is_empty():
+        grant_powerups(powerup_delta, false)
+
+    _record_reward_grant(gid, source, false)
+    if save_after:
+        _save_progress()
+    else:
+        currencies_changed.emit(total_coins, total_gems)
+        powerups_changed.emit(get_powerups_snapshot())
+    return {
+        "ok": true,
+        "error": "",
+        "grant_id": gid,
+        "currencies": get_currency_snapshot(),
+        "powerups": get_powerups_snapshot()
+    }
 
 func _apply_runtime_powerup_values() -> void:
     max_heart_bonus = int(powerups_data.get("max_heart_bonus", 0))
@@ -2720,17 +3188,20 @@ func update_settings(changes: Dictionary, save_after: bool = true) -> Dictionary
 func get_currency_snapshot() -> Dictionary:
     return {"coins": total_coins, "gems": total_gems}
 
-func adjust_currencies(coins_delta: int = 0, gems_delta: int = 0, save_after: bool = true) -> Dictionary:
+func adjust_currencies(coins_delta: int = 0, gems_delta: int = 0, save_after: bool = true, source: String = "runtime") -> Dictionary:
     total_coins = maxi(total_coins + coins_delta, 0)
     total_gems = maxi(total_gems + gems_delta, 0)
     if save_after:
         _save_progress()
     else:
         currencies_changed.emit(total_coins, total_gems)
+    if OS.is_debug_build() and (coins_delta != 0 or gems_delta != 0):
+        print("[GameManager] Currency delta source=%s coins=%d gems=%d" % [source, coins_delta, gems_delta])
     return {
         "ok": true,
         "error": "",
-        "currencies": get_currency_snapshot()
+        "currencies": get_currency_snapshot(),
+        "source": source
     }
 
 func _powerup_token_key_from_skill_id(skill_id: String) -> String:
@@ -2882,6 +3353,9 @@ func _load_progress() -> void:
         set_sfx_volume(0.8)
         powerups_data = _normalize_powerups_data({})
         pending_level_rewards = []
+        reward_grant_ledger = {}
+        monetization_data = _normalize_monetization_data({})
+        difficulty_version = _DIFFICULTY_VERSION_DEFAULT
         _apply_runtime_powerup_values()
         _save_progress()
         return
@@ -2937,6 +3411,21 @@ func _load_progress() -> void:
         should_resave = true
     pending_level_rewards = normalized_rewards
 
+    var normalized_ledger := _normalize_reward_grant_ledger(cfg.get_value("ledger", "data", {}))
+    if normalized_ledger != cfg.get_value("ledger", "data", {}):
+        should_resave = true
+    reward_grant_ledger = normalized_ledger
+
+    var normalized_monetization := _normalize_monetization_data(cfg.get_value("monetization", "data", {}))
+    if normalized_monetization != cfg.get_value("monetization", "data", {}):
+        should_resave = true
+    monetization_data = normalized_monetization
+
+    difficulty_version = int(cfg.get_value("difficulty", "version", _DIFFICULTY_VERSION_DEFAULT))
+    if difficulty_version <= 0:
+        difficulty_version = _DIFFICULTY_VERSION_DEFAULT
+        should_resave = true
+
     var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
     var equipped_border = cosmetics.get("equipped_border", "")
     if player and player.has_method("set_border"):
@@ -2957,6 +3446,9 @@ func _load_progress() -> void:
 func _save_progress() -> void:
     powerups_data = _normalize_powerups_data(powerups_data)
     pending_level_rewards = _normalize_pending_level_rewards(pending_level_rewards)
+    reward_grant_ledger = _normalize_reward_grant_ledger(reward_grant_ledger)
+    monetization_data = _normalize_monetization_data(monetization_data)
+    difficulty_version = maxi(difficulty_version, _DIFFICULTY_VERSION_DEFAULT)
     _apply_runtime_powerup_values()
 
     var cfg: ConfigFile = ConfigFile.new()
@@ -2981,6 +3473,9 @@ func _save_progress() -> void:
     cfg.set_value("settings", "language", language)
     cfg.set_value("powerups", "data", powerups_data)
     cfg.set_value("rewards", "pending_level_rewards", pending_level_rewards)
+    cfg.set_value("ledger", "data", reward_grant_ledger)
+    cfg.set_value("monetization", "data", monetization_data)
+    cfg.set_value("difficulty", "version", difficulty_version)
     var ver = ProjectSettings.get_setting("application/config/version")
     if ver != null:
         cfg.set_value("meta", "version", String(ver))
@@ -2995,10 +3490,12 @@ func _save_progress() -> void:
 
 func _calculate_xp_required(level: int) -> int:
     var base_xp: int = 100
-    var step: int = 25
     if level <= 1:
         return base_xp
-    return base_xp + (level - 1) * step
+    var lv := level - 1
+    var linear := lv * 30
+    var curve := int(round(pow(float(lv), 1.35) * 9.0))
+    return base_xp + linear + curve
 
 
 func _apply_xp_gain(amount: int) -> void:
@@ -3079,15 +3576,35 @@ func claim_season_reward(lvl: int) -> Dictionary:
             "currencies": get_currency_snapshot()
         }
 
+    var type := String(reward_found.get("type", "coins"))
+    var amount := int(reward_found.get("amount", 0))
+    var grant_id := "season_reward_%d_%s" % [lvl, type]
+    if is_reward_granted(grant_id):
+        pending_level_rewards.remove_at(found_idx)
+        _save_progress()
+        return {
+            "ok": false,
+            "error": "reward_already_granted",
+            "reward_or_totals": reward_found,
+            "currencies": get_currency_snapshot()
+        }
+
     pending_level_rewards.remove_at(found_idx)
-
-    var type = reward_found.get("type", "coins")
-    var amount = reward_found.get("amount", 0)
-
+    var coins_gain := 0
+    var gems_gain := 0
     if type == "coins":
-        total_coins += amount
+        coins_gain = amount
     elif type == "gems":
-        total_gems += amount
+        gems_gain = amount
+
+    var grant_res := try_apply_grant_once(grant_id, "season_reward", coins_gain, gems_gain, {}, false)
+    if not bool(grant_res.get("ok", false)):
+        return {
+            "ok": false,
+            "error": String(grant_res.get("error", "grant_failed")),
+            "reward_or_totals": reward_found,
+            "currencies": get_currency_snapshot()
+        }
 
     _save_progress()
     return {
@@ -3113,19 +3630,27 @@ func claim_all_pending_rewards() -> Dictionary:
         }
 
     for r in pending_level_rewards:
-        if not (r is Dictionary): continue
-        var type = r.get("type", "coins")
-        var amount = r.get("amount", 0)
-
+        if not (r is Dictionary):
+            continue
+        var row: Dictionary = r
+        var lvl := int(row.get("level", 0))
+        var type := String(row.get("type", "coins"))
+        var amount := int(row.get("amount", 0))
+        if lvl <= 0 or amount <= 0:
+            continue
+        var grant_id := "season_reward_%d_%s" % [lvl, type]
+        if is_reward_granted(grant_id):
+            continue
+        _record_reward_grant(grant_id, "season_reward_batch", false)
         if type == "coins":
-            total_claimed["coins"] += amount
-            total_coins += amount
+            total_claimed["coins"] = int(total_claimed.get("coins", 0)) + amount
         elif type == "gems":
-            total_claimed["gems"] += amount
-            total_gems += amount
-        total_claimed["count"] += 1
+            total_claimed["gems"] = int(total_claimed.get("gems", 0)) + amount
+        total_claimed["count"] = int(total_claimed.get("count", 0)) + 1
 
     pending_level_rewards.clear()
+    if int(total_claimed.get("coins", 0)) != 0 or int(total_claimed.get("gems", 0)) != 0:
+        adjust_currencies(int(total_claimed.get("coins", 0)), int(total_claimed.get("gems", 0)), false, "season_reward_batch")
     _save_progress()
 
     return {
@@ -3268,10 +3793,16 @@ func _start_play_phase() -> void:
 
     score = 0
     _score_offset = 0
+    _continue_request_in_flight = false
+    _continue_offer_request_serial = -1
+    _continue_offer_granted_serial = -1
     coin_collected_a = 0
     coin_collected_b = 0
     gem_collected_a = 0
     gem_collected_b = 0
+    _last_granted_run_coins = 0
+    _last_granted_run_gems = 0
+    _apply_daily_challenge_for_run()
 
     # Apply carry-over stats if available (Continue feature)
     if not _carry_over_stats.is_empty():
@@ -3290,6 +3821,9 @@ func _start_play_phase() -> void:
     if score_hud_label != null:
         score_hud_label.text = str(score)
     game_time_sec = 0.0
+    _anomaly_event_timer = 0.0
+    _end_anomaly_event()
+    _anomaly_speed_multiplier_runtime = 1.0
     _tiles_passed_accum = 0.0
     total_tiles_passed = 0
     magnet_enabled = false
@@ -3428,6 +3962,12 @@ func on_player_game_over(_cause: String) -> void:
         return
     phase = Phase.GAME_OVER
     game_active = false
+    _continue_offer_serial += 1
+    _continue_offer_request_serial = -1
+    _continue_offer_granted_serial = -1
+    _continue_request_in_flight = false
+    _end_anomaly_event()
+    _anomaly_speed_multiplier_runtime = 1.0
     if _jump_button: _jump_button.visible = false
     if _attack_button: _attack_button.visible = false
     TransitionManager.play_sfx(&"game_over")
@@ -3441,11 +3981,18 @@ func on_player_game_over(_cause: String) -> void:
     last_score = score
     last_coins = coin_collected_a + coin_collected_b
     last_gems = gem_collected_a + gem_collected_b
-    total_coins += last_coins
-    total_gems += last_gems
+    var daily_coin_bonus: int = 0
+    if _daily_coin_bonus_pct_runtime > 0 and last_coins > 0:
+        daily_coin_bonus = int(round(float(last_coins) * float(_daily_coin_bonus_pct_runtime) / 100.0))
+    _last_granted_run_coins = last_coins + daily_coin_bonus
+    _last_granted_run_gems = last_gems
+    adjust_currencies(_last_granted_run_coins, _last_granted_run_gems, false, "run_end")
+    if daily_coin_bonus > 0:
+        _enqueue_missions_toast(tr("Daily challenge bonus: +%d coins") % [daily_coin_bonus])
     var xp_gain_from_distance: int = int(distance * xp_per_meter)
     var xp_gain_from_coins: int = int(float(last_coins) * xp_per_coin)
-    var xp_gain: int = xp_gain_from_distance + xp_gain_from_coins
+    var xp_gain_base: int = xp_gain_from_distance + xp_gain_from_coins
+    var xp_gain: int = int(round(float(xp_gain_base) * _daily_xp_multiplier_runtime))
     if xp_gain > 0:
         _apply_xp_gain(xp_gain)
     if missions_manager and missions_manager.has_method("update_distance"):

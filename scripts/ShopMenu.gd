@@ -8,6 +8,7 @@ extends Control
 
 const SAVE_PATH := "user://save.cfg"
 const _SKILL_PROGRESS_PANEL_SCENE := preload("res://scenes/SkillProgressPanel.tscn")
+const _SHOP_CATALOG_SCRIPT := preload("res://scripts/data/ShopCatalog.gd")
 
 const DEFAULT_CARD_MIN_SIZE := Vector2(240.0, 280.0)
 
@@ -50,6 +51,8 @@ var _status_timer: Timer
 var _awaiting_rewarded_reason: String = ""
 var _daily_claim_day_bucket: int = -1
 var _daily_claim_count: int = 0
+var _real_purchase_busy: bool = false
+var _pending_real_purchase_context: Dictionary = {}
 
 const _DAILY_CLAIM_ITEM_ID := "daily_coins_claim"
 const _DAILY_CLAIM_MIN_COINS := 100
@@ -170,6 +173,11 @@ func _ready() -> void:
             var cb_reward := Callable(self, "_on_reward_granted")
             if not _ad_manager.is_connected("reward_granted", cb_reward):
                 _ad_manager.connect("reward_granted", cb_reward)
+
+        if MonetizationService and MonetizationService.has_signal("purchase_result"):
+            var cb_purchase := Callable(self, "_on_monetization_purchase_result")
+            if not MonetizationService.is_connected("purchase_result", cb_purchase):
+                MonetizationService.connect("purchase_result", cb_purchase)
 
         current_coins = _load_coins()
         current_gems = _load_gems()
@@ -492,13 +500,13 @@ func _load_gems() -> int:
 func _save_coins(value: int) -> void:
     if GameManager and GameManager.has_method("adjust_currencies"):
         var delta := value - int(GameManager.total_coins)
-        GameManager.adjust_currencies(delta, 0, true)
+        GameManager.adjust_currencies(delta, 0, true, "shop_manual_sync")
     current_coins = value
 
 func _save_gems(value: int) -> void:
     if GameManager and GameManager.has_method("adjust_currencies"):
         var delta := value - int(GameManager.total_gems)
-        GameManager.adjust_currencies(0, delta, true)
+        GameManager.adjust_currencies(0, delta, true, "shop_manual_sync")
     current_gems = value
 
 
@@ -604,9 +612,26 @@ func _grant_daily_claim_coins(via_ad: bool) -> void:
     if not via_ad and _daily_claim_count > 0:
         return
 
+    var claim_index := _daily_claim_count
+    var grant_id := "shop_daily_%d_%d" % [_daily_claim_day_bucket, claim_index]
     var gain := _fx_rng.randi_range(_DAILY_CLAIM_MIN_COINS, _DAILY_CLAIM_MAX_COINS)
-    current_coins += gain
-    _save_coins(current_coins)
+    var grant_ok := true
+    var grant_duplicate := false
+    if GameManager and GameManager.has_method("try_apply_grant_once"):
+        var grant_res: Dictionary = GameManager.try_apply_grant_once(grant_id, "shop_daily_claim", gain, 0, {}, true)
+        grant_duplicate = String(grant_res.get("error", "")) == "already_granted"
+        grant_ok = bool(grant_res.get("ok", false)) or grant_duplicate
+        if grant_ok:
+            current_coins = int(GameManager.total_coins)
+    else:
+        current_coins += gain
+        _save_coins(current_coins)
+    if not grant_ok:
+        _set_status_text(tr("Daily claim failed."))
+        return
+    if grant_duplicate:
+        _set_status_text(tr("Already claimed."))
+        return
 
     _daily_claim_count += 1
     _save_daily_claim_progress()
@@ -617,6 +642,8 @@ func _grant_daily_claim_coins(via_ad: bool) -> void:
 
     if is_instance_valid(TransitionManager) and TransitionManager.has_method("play_sfx"):
         TransitionManager.play_sfx(&"mission_claim")
+    if via_ad and GameManager and GameManager.has_method("_bump_monetization_counter"):
+        GameManager.call("_bump_monetization_counter", "rewarded_request_count", false)
 
     var from_btn := _find_buy_button_for_item_id(_DAILY_CLAIM_ITEM_ID) as Control
     var to_icon := _coins_icon
@@ -1372,6 +1399,7 @@ func _init_shop_data() -> void:
         "title": "Bundles (Real)",
         "items": bundle_real_items
     })
+    _inject_real_item_metadata()
 
 func _init_editor_dummy_data() -> void:
     var powerup_items = [
@@ -1589,6 +1617,44 @@ func _init_editor_dummy_data() -> void:
         "title": "Bundles (Real)",
         "items": bundle_items
     })
+    _inject_real_item_metadata()
+
+func _inject_real_item_metadata() -> void:
+    for gi in range(shop_groups.size()):
+        var group_any: Variant = shop_groups[gi]
+        if not (group_any is Dictionary):
+            continue
+        var group: Dictionary = group_any
+        var items_any: Variant = group.get("items", [])
+        if not (items_any is Array):
+            continue
+        var items: Array = items_any
+        for ii in range(items.size()):
+            var item_any: Variant = items[ii]
+            if not (item_any is Dictionary):
+                continue
+            var item: Dictionary = item_any
+            if String(item.get("currency", "")) != "real":
+                continue
+            var id := String(item.get("id", "")).strip_edges()
+            if id.is_empty():
+                continue
+            var def_any: Variant = _SHOP_CATALOG_SCRIPT.get_shop_item_definition(id)
+            if not (def_any is Dictionary):
+                continue
+            var def: Dictionary = def_any
+            var product_id := String(def.get("real_product_id", id)).strip_edges()
+            if not product_id.is_empty():
+                item["real_product_id"] = product_id
+            var display_price := String(def.get("display_price", ""))
+            if not display_price.is_empty():
+                item["display_price"] = display_price
+            var flags_any: Variant = def.get("flags", {})
+            if flags_any is Dictionary:
+                item["flags"] = flags_any
+            items[ii] = item
+        group["items"] = items
+        shop_groups[gi] = group
 
 func _is_upgrade_item_id(item_id: String) -> bool:
     return _UPGRADE_SKILL_ID_BY_ITEM.has(item_id)
@@ -1914,15 +1980,11 @@ func _create_item_card(item: Dictionary) -> Control:
         vbox.add_child(price_lbl)
 
     var is_coming_soon := false
+    var flags_any: Variant = item.get("flags", {})
+    if flags_any is Dictionary:
+        is_coming_soon = bool((flags_any as Dictionary).get("coming_soon", false))
     if id == _DAILY_CLAIM_ITEM_ID:
         is_coming_soon = false
-    elif _is_skin_id(id):
-        is_coming_soon = true
-    else:
-        var item_currency := String(item.get("currency", "coins"))
-        if item_currency == "real":
-            if id.begins_with("gems_") or id.ends_with("_bundle"):
-                is_coming_soon = true
 
     if is_coming_soon:
         var coming_soon_lbl := Label.new()
@@ -2051,7 +2113,11 @@ func _update_buy_buttons_state() -> void:
             "gems":
                 (b as BaseButton).disabled = current_gems < price
             "real":
-                (b as BaseButton).disabled = false
+                var flags_any: Variant = it.get("flags", {})
+                var coming_soon := false
+                if flags_any is Dictionary:
+                    coming_soon = bool((flags_any as Dictionary).get("coming_soon", false))
+                (b as BaseButton).disabled = _real_purchase_busy or coming_soon
             _:
                 (b as BaseButton).disabled = true
 
@@ -2170,11 +2236,7 @@ func _execute_purchase(item: Dictionary) -> void:
             _update_buy_buttons_state()
             _set_status_text(tr("Purchase successful: %s") % tr(String(effective_item.get("name", "Item"))))
         "real":
-            var ok := _apply_real_purchase(effective_item)
-            _build_groups_ui()
-            _update_buy_buttons_state()
-            _update_buy_buttons_state()
-            _set_status_text(tr("Purchase processed.") if ok else tr("Not supported."))
+            _start_real_purchase(effective_item)
         _:
             _set_status_text(tr("Not supported."))
             return
@@ -2193,67 +2255,128 @@ func _on_language_changed(_locale: String) -> void:
     _update_buy_buttons_state()
 
 
-func _apply_real_purchase(item: Dictionary) -> bool:
-    var id := String(item.get("id", ""))
-    if id.is_empty():
+func _start_real_purchase(item: Dictionary) -> void:
+    if _real_purchase_busy:
+        _set_status_text(tr("Purchase in progress..."))
+        return
+    var item_id := String(item.get("id", "")).strip_edges()
+    if item_id.is_empty():
+        _set_status_text(tr("Not supported."))
+        return
+    var flags_any: Variant = item.get("flags", {})
+    if flags_any is Dictionary and bool((flags_any as Dictionary).get("coming_soon", false)):
+        _set_status_text(tr("Coming Soon"))
+        return
+
+    var product_id := String(item.get("real_product_id", item_id)).strip_edges()
+    if product_id.is_empty():
+        product_id = item_id
+
+    if MonetizationService == null or not MonetizationService.has_method("buy"):
+        _set_status_text(tr("Billing service unavailable."))
+        return
+
+    _real_purchase_busy = true
+    _pending_real_purchase_context = {
+        "shop_item_id": item_id,
+        "product_id": product_id
+    }
+    _update_buy_buttons_state()
+
+    var result_any: Variant = MonetizationService.call("buy", product_id, _pending_real_purchase_context)
+    if result_any is Dictionary and not bool((result_any as Dictionary).get("ok", false)):
+        _real_purchase_busy = false
+        _pending_real_purchase_context.clear()
+        _update_buy_buttons_state()
+        _set_status_text(tr("Purchase request failed."))
+        return
+
+    _set_status_text(tr("Waiting for purchase confirmation..."))
+
+
+func _on_monetization_purchase_result(result: Dictionary) -> void:
+    var status := String(result.get("status", "unknown"))
+    var product_id := String(result.get("product_id", "")).strip_edges()
+    var context: Dictionary = {}
+    var context_any: Variant = result.get("context", {})
+    if context_any is Dictionary:
+        context = context_any
+
+    var shop_item_id := String(context.get("shop_item_id", "")).strip_edges()
+    if shop_item_id.is_empty():
+        var mapped_any: Variant = _SHOP_CATALOG_SCRIPT.get_shop_item_id_by_product_id(product_id)
+        shop_item_id = String(mapped_any).strip_edges()
+
+    if status == "pending":
+        _real_purchase_busy = true
+        _set_status_text(tr("Purchase pending approval..."))
+        _update_buy_buttons_state()
+        return
+
+    if status == "success" or status == "restored":
+        var token := String(result.get("purchase_token", "")).strip_edges()
+        if token.is_empty():
+            token = str(Time.get_unix_time_from_system())
+        if shop_item_id.is_empty():
+            _real_purchase_busy = false
+            _pending_real_purchase_context.clear()
+            _update_buy_buttons_state()
+            _set_status_text(tr("Purchase confirmed, but item mapping missing."))
+            return
+        var grant_id := "iap_%s_%s" % [shop_item_id, token]
+        var ok := _apply_real_purchase(shop_item_id, grant_id)
+        _real_purchase_busy = false
+        _pending_real_purchase_context.clear()
+        _build_groups_ui()
+        _update_buy_buttons_state()
+        _set_status_text(tr("Purchase successful.") if ok else tr("Purchase already applied."))
+        return
+
+    if status == "cancelled":
+        _real_purchase_busy = false
+        _pending_real_purchase_context.clear()
+        _update_buy_buttons_state()
+        _set_status_text(tr("Purchase cancelled."))
+        return
+
+    if status == "failed":
+        _real_purchase_busy = false
+        _pending_real_purchase_context.clear()
+        _update_buy_buttons_state()
+        _set_status_text(tr("Purchase failed."))
+        return
+
+
+func _apply_real_purchase(shop_item_id: String, grant_id: String) -> bool:
+    if shop_item_id.is_empty():
         return false
-    var gems_gain := 0
-    var coins_gain := 0
+    var grants_any: Variant = _SHOP_CATALOG_SCRIPT.get_iap_grants_by_shop_item_id(shop_item_id)
+    if not (grants_any is Dictionary):
+        return false
+    var grants: Dictionary = grants_any
+    var coins_gain := int(grants.get("coins", 0))
+    var gems_gain := int(grants.get("gems", 0))
     var powerups_gain: Dictionary = {}
-    match id:
-        "gems_small":
-            gems_gain = 100
-        "gems_standard":
-            gems_gain = 330
-        "gems_big":
-            gems_gain = 950
-        "gems_mega":
-            gems_gain = 2500
-        "starter_bundle":
-            gems_gain = 100
-            coins_gain = 1000
-            powerups_gain = {
-                "magnet_30s_tokens": 2,
-                "shield_1hit_charges": 1,
-                "double_coins_run_tokens": 1
-            }
-        "progress_bundle":
-            gems_gain = 250
-            coins_gain = 2500
-            powerups_gain = {
-                "magnet_30s_tokens": 3,
-                "shield_1hit_charges": 2,
-                "double_coins_run_tokens": 2
-            }
-        "cosmetic_bundle":
-            gems_gain = 200
-            coins_gain = 1500
-            powerups_gain = {
-                "shield_1hit_charges": 2
-            }
-        _:
+    var p_any: Variant = grants.get("powerups", {})
+    if p_any is Dictionary:
+        powerups_gain = p_any
+
+    if GameManager and GameManager.has_method("try_apply_grant_once"):
+        var grant_res: Dictionary = GameManager.try_apply_grant_once(grant_id, "shop_iap", coins_gain, gems_gain, powerups_gain, true)
+        var ok := bool(grant_res.get("ok", false))
+        if not ok and String(grant_res.get("error", "")) != "already_granted":
             return false
+        if GameManager.has_method("_bump_monetization_counter"):
+            GameManager.call("_bump_monetization_counter", "purchase_success_count", false)
+        current_coins = int(GameManager.total_coins)
+        current_gems = int(GameManager.total_gems)
+        if _coins_label:
+            _coins_label.text = str(current_coins)
+        if _gems_label:
+            _gems_label.text = str(current_gems)
+        return true
 
-    if coins_gain > 0:
-        current_coins += coins_gain
-        _save_coins(current_coins)
-        var coins_label := _coins_label
-        if coins_label:
-            coins_label.text = str(current_coins)
-
-    if gems_gain > 0:
-        current_gems += gems_gain
-        _save_gems(current_gems)
-        var gems_label := _gems_label
-        if gems_label:
-            gems_label.text = str(current_gems)
-
-    if not powerups_gain.is_empty():
-        if GameManager and GameManager.has_method("grant_powerups"):
-            GameManager.grant_powerups(powerups_gain, true)
-        else:
-            return false
-    return true
+    return false
 
 
 func _apply_item_to_powerups(item: Dictionary) -> void:

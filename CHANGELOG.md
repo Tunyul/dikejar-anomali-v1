@@ -5,6 +5,19 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+## [1.3.52-beta] - 2026-03-05
+
+- Core Stabilization: hardening state transisi run (`entry -> countdown -> playing -> game over`), pause/resume lifecycle, dan flow continue agar tidak mudah race-condition.
+- Reward Integrity: integrasi `reward_grant_ledger`, penyelarasan save schema v3, serta guard anti-duplicate untuk grant misi/claim harian/season/IAP.
+- Monetization Service: tambah autoload `MonetizationService` sebagai kontrak unified untuk `buy()`, rewarded flow, status callback, dan telemetry dasar monetisasi.
+- Billing Flow: refactor `BillingManager` untuk status `success/pending/cancelled/failed/restored`, context purchase, serta katalog produk sinkron dengan source-of-truth shop.
+- Shop IAP Integration: `ShopMenu` kini memproses pembelian real-money melalui callback billing resmi + mapping grant terpusat, bukan grant lokal langsung.
+- Difficulty & Gameplay: tambah baseline `DifficultyProfile`, daily challenge rotation, ramp difficulty runtime, serta event anomali ringan (distorsi jalur dan shift gravitasi/kecepatan).
+- Missions Robustness: normalisasi template nama misi lintas bahasa, infer kind yang lebih aman (ID/EN/CN), dan formatting teks misi konsisten saat render/toast.
+- UX Polish: animasi buka/tutup `SettingsMenu` diselaraskan (fade + scale) agar konsisten dengan panel overlay utama.
+- Localization: pembaruan besar `translations.csv` + resource `.translation`, perbaikan label bahasa (`Chinese`) dan fix kasus teks CN yang tertinggal setelah kembali ke bahasa Indonesia.
+- QA Artifacts: tambah dokumen `BASELINE_TUNING_V1`, `BUG_PRIORITY_MATRIX_V1`, dan `QA_CORE_REGRESSION_CHECKLIST_V1` untuk baseline harian tim QA.
+
 ## [1.3.51-beta] - 2026-03-04
 
 - Skill Progress Panel: perombakan rendering card dan layout horizontal agar stabil saat buka-tutup panel, posisi awal konsisten, serta drag-scroll horizontal kembali responsif.

@@ -30,6 +30,9 @@ var _flag_zh: Texture2D = null
 var _last_viewport_size: Vector2i = Vector2i(-1, -1)
 var _scroll_drag_active: bool = false
 var _scroll_drag_last_pos: Vector2 = Vector2.ZERO
+var _panel_target_scale: Vector2 = Vector2.ONE
+var _overlay_tween: Tween = null
+var _overlay_animating: bool = false
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -138,7 +141,9 @@ func _apply_responsive_layout(vp: Vector2) -> void:
     var base_panel_size := Vector2(704.0, 448.0)
     var fit: float = minf(safe_size.x / base_panel_size.x, safe_size.y / base_panel_size.y)
     fit = clampf(fit, 0.4, 0.9)
-    _panel.scale = Vector2(fit, fit)
+    _panel_target_scale = Vector2(fit, fit)
+    if not _overlay_animating:
+        _panel.scale = _panel_target_scale
     _panel.position = (vp - _panel.size * fit) * 0.5
 
 
@@ -434,6 +439,8 @@ func show_overlay(is_ingame: bool = false) -> void:
     if _ui:
         _ui.visible = true
     visible = true
+    _apply_responsive_layout(get_viewport().get_visible_rect().size)
+    _play_open_overlay_anim()
 
 func _unhandled_input(event: InputEvent) -> void:
     if get_tree().current_scene == self:
@@ -459,10 +466,55 @@ func _on_back_pressed() -> void:
             Preloader.set_next_scene("res://scenes/MainMenu.tscn")
         await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
         return
+    _close_overlay_only()
+
+func _play_open_overlay_anim() -> void:
+    if _overlay_tween != null:
+        _overlay_tween.kill()
+        _overlay_tween = null
+    _overlay_animating = true
+    if _panel:
+        var target_scale := _panel_target_scale
+        _panel.modulate.a = 0.0
+        _panel.scale = target_scale * 0.8
+        _panel.pivot_offset = _panel.size * 0.5
+
+    var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    _overlay_tween = tw
+    if _panel:
+        tw.tween_property(_panel, "modulate:a", 1.0, 0.3)
+        tw.tween_property(_panel, "scale", _panel_target_scale, 0.3)
+    tw.finished.connect(_on_overlay_anim_finished)
+
+
+func _close_overlay_only() -> void:
+    if _overlay_tween != null:
+        _overlay_tween.kill()
+        _overlay_tween = null
+    _overlay_animating = true
+
+    if _panel:
+        var close_scale := _panel_target_scale * 0.8
+        var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+        _overlay_tween = tw
+        tw.tween_property(_panel, "modulate:a", 0.0, 0.2)
+        tw.tween_property(_panel, "scale", close_scale, 0.2)
+        await tw.finished
+
+    _overlay_tween = null
+    _overlay_animating = false
     if _ui:
         _ui.visible = false
     visible = false
+    if _panel:
+        _panel.modulate.a = 1.0
+        _panel.scale = _panel_target_scale
     emit_signal("overlay_closed")
+
+
+func _on_overlay_anim_finished() -> void:
+    _overlay_tween = null
+    _overlay_animating = false
 
 func _apply_ui_font(node: Node, font: Font) -> void:
     if node is Label:

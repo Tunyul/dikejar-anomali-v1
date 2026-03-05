@@ -346,6 +346,7 @@ func _refresh_language_button(_locale: String = "") -> void:
 func _on_language_changed(locale: String) -> void:
     _refresh_language_button(locale)
     _refresh_language_popup_items(locale)
+    _refresh_player_hud_locale_texts()
     _refresh_profile_panel() # Update teks Profile Panel jika sedang terbuka
 
 
@@ -582,6 +583,34 @@ func _apply_dummy_stats() -> void:
 
     if _xp_label:
         _xp_label.text = "123456/1234567 XP"
+
+
+func _refresh_player_hud_locale_texts() -> void:
+    var level: int = 1
+    var xp: int = 0
+    var xp_required: int = 100
+
+    if GameManager:
+        level = int(GameManager.player_level)
+        xp = int(GameManager.player_xp)
+        xp_required = int(GameManager.player_xp_required)
+    else:
+        var cfg := ConfigFile.new()
+        if cfg.load("user://save.cfg") == OK:
+            level = int(cfg.get_value("progress", "player_level", 1))
+            xp = int(cfg.get_value("progress", "player_xp", 0))
+            xp_required = int(cfg.get_value("progress", "player_xp_required", 100))
+
+    if xp_required <= 0:
+        xp_required = 1
+
+    if _level_label:
+        _level_label.text = tr("Lv. %d") % level
+    if _xp_bar:
+        _xp_bar.max_value = float(xp_required)
+        _xp_bar.value = clampf(float(xp), 0.0, float(xp_required))
+    if _xp_label:
+        _xp_label.text = tr("%d/%d XP") % [xp, xp_required]
 
 
 func _on_season_menu_pressed() -> void:
