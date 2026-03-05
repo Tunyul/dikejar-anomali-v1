@@ -10,9 +10,11 @@ class_name HeartPickup
 
 var _base_y: float = 0.0
 var _t: float = 0.0
+var _collected: bool = false
 
 func _ready() -> void:
     _base_y = position.y
+    _collected = false
     add_to_group("heart_pickup")
     if enable_pickup:
         collision_layer = 8
@@ -25,8 +27,31 @@ func _ready() -> void:
 func reset() -> void:
     _base_y = position.y
     _t = 0.0
+    _collected = false
     visible = true
     set_deferred("monitoring", true)
+
+func _find_ground_pool_owner() -> Node:
+    var tree := get_tree()
+    if tree == null:
+        return null
+    var cs := tree.current_scene
+    if cs:
+        var direct := cs.get_node_or_null("Ground")
+        if direct and direct.has_method("return_spawned_node_to_pool"):
+            return direct
+        var found := cs.find_child("Ground", true, false)
+        if found and found.has_method("return_spawned_node_to_pool"):
+            return found
+    return null
+
+func _despawn_self() -> void:
+    visible = false
+    set_deferred("monitoring", false)
+    var ground := _find_ground_pool_owner()
+    if ground and bool(ground.call("return_spawned_node_to_pool", self)):
+        return
+    queue_free()
 
 func _physics_process(delta: float) -> void:
     if not enable_bobbing:
@@ -35,6 +60,9 @@ func _physics_process(delta: float) -> void:
     position.y = _base_y + sin(_t * TAU * bob_frequency) * bob_amplitude
 
 func _on_body_entered(body: Node) -> void:
+    if _collected:
+        return
+    _collected = true
     if body.is_in_group("player") or body is Player:
         if body.has_method("heal"):
             var amount: int = heal_amount
@@ -46,4 +74,4 @@ func _on_body_entered(body: Node) -> void:
             body.heal(amount)
             if has_node("/root/TransitionManager"):
                 get_node("/root/TransitionManager").play_sfx("heart_pickup")
-    queue_free()
+    _despawn_self()

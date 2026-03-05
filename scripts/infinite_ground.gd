@@ -242,6 +242,50 @@ func _clear_root_to_pool(root: Node2D, pool: Array[Node2D]) -> void:
     for c: Node in children:
         _return_to_pool(c, pool)
 
+func return_spawned_node_to_pool(node: Node) -> bool:
+    if node == null:
+        return false
+    if node is HeartPickup or node.is_in_group("heart_pickup"):
+        _return_to_pool(node, _heart_pool)
+        return true
+    if node is MagnetPowerup or node.is_in_group("magnet_powerup"):
+        _return_to_pool(node, _magnet_pool)
+        return true
+    if node is ShieldPowerup or node.is_in_group("shield_powerup"):
+        _return_to_pool(node, _shield_pool)
+        return true
+    if node is DoubleCoinsPowerup or node.is_in_group("double_coins_powerup"):
+        _return_to_pool(node, _double_pool)
+        return true
+    if node is SpeedBoostPowerup or node.is_in_group("speed_boost_powerup"):
+        _return_to_pool(node, _speed_pool)
+        return true
+
+    if not (node is Node2D):
+        return false
+
+    var node2d := node as Node2D
+    var nname := String(node2d.name)
+    if nname.begins_with("EnemyBlock"):
+        _return_to_pool(node2d, _enemy_block_pool)
+        return true
+    if nname.begins_with("EnemyCone"):
+        _return_to_pool(node2d, _enemy_cone_pool)
+        return true
+
+    var sc := node2d.get_script() as Script
+    if sc != null:
+        var script_path := String(sc.resource_path)
+        if script_path.ends_with("/coin.gd"):
+            var currency := String(node2d.get("currency")).to_lower()
+            if currency == "gems":
+                _return_to_pool(node2d, _diamond_pool)
+            else:
+                _return_to_pool(node2d, _coin_pool)
+            return true
+
+    return false
+
 func _scale_max_children(base: int) -> int:
     if base <= 0:
         return base

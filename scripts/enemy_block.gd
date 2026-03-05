@@ -56,13 +56,47 @@ func _ready() -> void:
             rs.size = hitbox_size
         cs.position = hitbox_offset
 
+func reset() -> void:
+    _alive = true
+    _velocity = Vector2.ZERO
+    visible = true
+    var spr := get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+    if spr:
+        spr.play("idle")
+    var hitbox := get_node_or_null("Hitbox") as Area2D
+    if hitbox:
+        hitbox.collision_layer = 4
+        hitbox.collision_mask = 2
+        hitbox.set_deferred("monitoring", true)
+
+func _find_ground_pool_owner() -> Node:
+    var tree := get_tree()
+    if tree == null:
+        return null
+    var cs := tree.current_scene
+    if cs:
+        var direct := cs.get_node_or_null("Ground")
+        if direct and direct.has_method("return_spawned_node_to_pool"):
+            return direct
+        var found := cs.find_child("Ground", true, false)
+        if found and found.has_method("return_spawned_node_to_pool"):
+            return found
+    return null
+
+func _despawn_self() -> void:
+    visible = false
+    var ground := _find_ground_pool_owner()
+    if ground and bool(ground.call("return_spawned_node_to_pool", self)):
+        return
+    queue_free()
+
 func _physics_process(delta: float) -> void:
     if not _alive:
         _velocity.y += gravity * delta
         global_position += _velocity * delta
         var viewport := get_viewport().get_visible_rect()
         if global_position.y - 64.0 > float(viewport.size.y) + 200.0:
-            queue_free()
+            _despawn_self()
 
 func on_player_attack_hit(player: Player) -> void:
     if not _alive:

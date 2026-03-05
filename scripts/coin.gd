@@ -99,6 +99,28 @@ func _ready() -> void:
     call_deferred("_capture_base_y")
     body_entered.connect(_on_body_entered)
 
+func _find_ground_pool_owner() -> Node:
+    var tree := get_tree()
+    if tree == null:
+        return null
+    var cs := tree.current_scene
+    if cs:
+        var direct := cs.get_node_or_null("Ground")
+        if direct and direct.has_method("return_spawned_node_to_pool"):
+            return direct
+        var found := cs.find_child("Ground", true, false)
+        if found and found.has_method("return_spawned_node_to_pool"):
+            return found
+    return null
+
+func _despawn_self() -> void:
+    visible = false
+    set_deferred("monitoring", false)
+    var ground := _find_ground_pool_owner()
+    if ground and bool(ground.call("return_spawned_node_to_pool", self)):
+        return
+    queue_free()
+
 func reset() -> void:
     _base_y = position.y
     _t = 0.0
@@ -180,4 +202,4 @@ func _on_body_entered(_body: Node) -> void:
     if c.is_empty():
         c = "coins"
     collected.emit(source_segment, c, a)
-    queue_free()
+    _despawn_self()
