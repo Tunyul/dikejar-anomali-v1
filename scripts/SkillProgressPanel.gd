@@ -54,6 +54,7 @@ var _layout_busy: bool = false
 var _last_layout_size: Vector2 = Vector2.ZERO
 var _last_layout_child_count: int = -1
 var _banner_lock_active: bool = false
+var _last_panel_viewport_size: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
     visible = false
@@ -65,8 +66,13 @@ func _ready() -> void:
     if _scroll:
         _scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
         _scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+        _scroll.size_flags_vertical = Control.SIZE_FILL
+        var scroll_margin := _scroll.get_parent() as Control
+        if scroll_margin:
+            scroll_margin.size_flags_vertical = Control.SIZE_FILL
         if not _scroll.resized.is_connected(_on_layout_changed):
             _scroll.resized.connect(_on_layout_changed)
+    _connect_viewport_resize()
     if GameManager and GameManager.has_signal("powerups_changed"):
         var cb_powerups := Callable(self, "_on_powerups_changed")
         if not GameManager.powerups_changed.is_connected(cb_powerups):
@@ -77,6 +83,7 @@ func _ready() -> void:
             TransitionManager.language_changed.connect(cb_lang)
     _load_fonts()
     _apply_visual_theme()
+    _apply_panel_layout_for_viewport()
     _refresh_texts()
     call_deferred("_apply_content_layout")
 
@@ -166,7 +173,46 @@ func _on_language_changed(_locale: String) -> void:
         _refresh_content()
 
 func _on_layout_changed() -> void:
+    _apply_panel_layout_for_viewport()
     call_deferred("_apply_content_layout")
+
+func _connect_viewport_resize() -> void:
+    var vp := get_viewport()
+    if vp == null:
+        return
+    var cb := Callable(self, "_on_viewport_size_changed")
+    if not vp.size_changed.is_connected(cb):
+        vp.size_changed.connect(cb)
+
+func _on_viewport_size_changed() -> void:
+    _apply_panel_layout_for_viewport()
+    call_deferred("_apply_content_layout")
+
+func _apply_panel_layout_for_viewport() -> void:
+    if _panel == null:
+        return
+    var vp := get_viewport()
+    if vp == null:
+        return
+    var vp_size: Vector2 = vp.get_visible_rect().size
+    if vp_size.x <= 0.0 or vp_size.y <= 0.0:
+        return
+    if absf(vp_size.x - _last_panel_viewport_size.x) < 1.0 and absf(vp_size.y - _last_panel_viewport_size.y) < 1.0:
+        return
+    _last_panel_viewport_size = vp_size
+
+    # Keep the panel compact and responsive across small/medium/large screens.
+    var landscape: bool = vp_size.x >= vp_size.y
+    var ratio: float = 0.58 if landscape else 0.8
+    var min_h: float = 210.0 if landscape else 320.0
+    var max_h: float = maxf(vp_size.y - 20.0, min_h)
+    var target_h: float = clampf(vp_size.y * ratio, min_h, max_h)
+    var top: float = floor((vp_size.y - target_h) * 0.5)
+    var bottom: float = top + target_h
+    _panel.anchor_top = 0.0
+    _panel.anchor_bottom = 0.0
+    _panel.offset_top = top
+    _panel.offset_bottom = bottom
 
 func _acquire_banner_lock() -> void:
     if _banner_lock_active:
@@ -283,8 +329,8 @@ func _apply_visual_theme() -> void:
 
     if _token_panel:
         var token_style := StyleBoxFlat.new()
-        token_style.bg_color = Color(0.02, 0.07, 0.13, 0.9)
-        token_style.border_color = Color(0.98, 0.83, 0.2, 0.6)
+        token_style.bg_color = Color(0.02, 0.07, 0.13, 0.95)
+        token_style.border_color = Color(0.98, 0.83, 0.2, 0.75)
         token_style.set_border_width_all(1)
         token_style.set_corner_radius_all(12)
         _token_panel.add_theme_stylebox_override("panel", token_style)
@@ -367,8 +413,17 @@ func _apply_content_layout() -> void:
     _layout_busy = true
     _last_layout_size = size_key
     _last_layout_child_count = child_count
-    var card_height := clampf(_scroll.size.y * 0.84, 160.0, 210.0)
-    var card_width := clampf(_scroll.size.x * 0.86, 320.0, 520.0)
+    var basis_h: float = _last_panel_viewport_size.y if _last_panel_viewport_size.y > 0.0 else _scroll.size.y
+    var basis_w: float = _last_panel_viewport_size.x if _last_panel_viewport_size.x > 0.0 else _scroll.size.x
+    var landscape: bool = basis_w >= basis_h
+    var card_height_ratio: float = 0.25 if landscape else 0.2
+    var card_height := clampf(basis_h * card_height_ratio, 102.0, 138.0)
+    var card_width := clampf(_scroll.size.x * 0.78, 300.0, 500.0)
+    var target_scroll_height := card_height + 12.0
+    _scroll.custom_minimum_size.y = target_scroll_height
+    var scroll_margin := _scroll.get_parent() as Control
+    if scroll_margin:
+        scroll_margin.custom_minimum_size.y = target_scroll_height
     for child in _skill_list.get_children():
         if child is Control:
             var ctl := child as Control
@@ -390,46 +445,46 @@ func _build_skill_card(item: Dictionary) -> Control:
 
     var card := PanelContainer.new()
     card.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-    card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    card.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
     card.clip_contents = true
     card.mouse_filter = Control.MOUSE_FILTER_IGNORE
     var card_style := StyleBoxFlat.new()
     card_style.bg_color = Color(0.05, 0.12, 0.2, 0.94)
     card_style.border_color = accent
-    card_style.set_border_width_all(2)
-    card_style.set_corner_radius_all(14)
-    card_style.content_margin_left = 10
-    card_style.content_margin_right = 10
-    card_style.content_margin_top = 10
-    card_style.content_margin_bottom = 10
+    card_style.set_border_width_all(1)
+    card_style.set_corner_radius_all(12)
+    card_style.content_margin_left = 7
+    card_style.content_margin_right = 7
+    card_style.content_margin_top = 6
+    card_style.content_margin_bottom = 6
     card.add_theme_stylebox_override("panel", card_style)
 
     var root := VBoxContainer.new()
     root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    root.add_theme_constant_override("separation", 8)
+    root.add_theme_constant_override("separation", 5)
     root.mouse_filter = Control.MOUSE_FILTER_IGNORE
     card.add_child(root)
 
     var top := HBoxContainer.new()
     top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    top.add_theme_constant_override("separation", 8)
+    top.add_theme_constant_override("separation", 6)
     top.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(top)
 
     var icon_wrap := PanelContainer.new()
-    icon_wrap.custom_minimum_size = Vector2(56, 56)
+    icon_wrap.custom_minimum_size = Vector2(40, 40)
     icon_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
     var icon_style := StyleBoxFlat.new()
     icon_style.bg_color = accent.darkened(0.67)
     icon_style.border_color = accent
-    icon_style.set_border_width_all(2)
+    icon_style.set_border_width_all(1)
     icon_style.set_corner_radius_all(30)
     icon_wrap.add_theme_stylebox_override("panel", icon_style)
     top.add_child(icon_wrap)
 
     var icon := TextureRect.new()
-    icon.custom_minimum_size = Vector2(36, 36)
+    icon.custom_minimum_size = Vector2(24, 24)
     icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
     icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -441,16 +496,10 @@ func _build_skill_card(item: Dictionary) -> Control:
         icon.modulate = Color(1, 1, 1, 0.0)
     icon_wrap.add_child(icon)
 
-    var title_box := VBoxContainer.new()
-    title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    title_box.add_theme_constant_override("separation", 2)
-    title_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    top.add_child(title_box)
-
     var title_row := HBoxContainer.new()
     title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    title_box.add_child(title_row)
+    top.add_child(title_row)
 
     var title := Label.new()
     title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -463,18 +512,18 @@ func _build_skill_card(item: Dictionary) -> Control:
         title.add_theme_font_override("font", _title_font)
     elif _value_font:
         title.add_theme_font_override("font", _value_font)
-    title.add_theme_font_size_override("font_size", 20)
+    title.add_theme_font_size_override("font_size", 17)
     title.add_theme_color_override("font_color", Color(0.96, 0.97, 1.0, 1.0))
     title_row.add_child(title)
 
     var lv := Label.new()
-    lv.custom_minimum_size = Vector2(84, 24)
+    lv.custom_minimum_size = Vector2(72, 20)
     lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
     lv.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     lv.text = "%s %d/%d" % [tr("Lv"), int(item.get("level_current", 1)), int(item.get("level_max", 1))]
     if _value_font:
         lv.add_theme_font_override("font", _value_font)
-    lv.add_theme_font_size_override("font_size", 16)
+    lv.add_theme_font_size_override("font_size", 13)
     lv.add_theme_color_override("font_color", Color(0.99, 0.86, 0.2, 1.0))
     lv.autowrap_mode = TextServer.AUTOWRAP_OFF
     lv.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -483,7 +532,7 @@ func _build_skill_card(item: Dictionary) -> Control:
     title_row.add_child(lv)
 
     var progress := ProgressBar.new()
-    progress.custom_minimum_size = Vector2(0, 10)
+    progress.custom_minimum_size = Vector2(0, 8)
     progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     progress.max_value = float(maxi(int(item.get("level_max", 1)), 1))
     progress.value = float(clampi(int(item.get("level_current", 1)), 1, int(progress.max_value)))
@@ -499,9 +548,10 @@ func _build_skill_card(item: Dictionary) -> Control:
     progress.add_theme_stylebox_override("fill", p_fill)
     root.add_child(progress)
 
-    var stats := VBoxContainer.new()
+    var stats := HFlowContainer.new()
     stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    stats.add_theme_constant_override("separation", 6)
+    stats.add_theme_constant_override("h_separation", 6)
+    stats.add_theme_constant_override("v_separation", 6)
     stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(stats)
 
@@ -509,36 +559,36 @@ func _build_skill_card(item: Dictionary) -> Control:
     var current_value := _format_value(item.get("current_value"), unit)
     var next_value := (tr("MAX") if bool(item.get("is_max", false)) else _format_value(item.get("next_value"), unit))
     var base_value := _format_value(item.get("base_value"), unit)
-    stats.add_child(_make_stat_pill(tr("Current"), current_value, accent))
-    stats.add_child(_make_stat_pill(tr("Next"), next_value, accent))
-    stats.add_child(_make_stat_pill(tr("Base"), base_value, accent))
+    stats.add_child(_make_stat_chip(tr("Current"), current_value, accent))
+    stats.add_child(_make_stat_chip(tr("Next"), next_value, accent, true))
+    stats.add_child(_make_stat_chip(tr("Base"), base_value, accent))
 
     return card
 
-func _make_stat_pill(label_text: String, value_text: String, accent: Color) -> Control:
-    var pill := PanelContainer.new()
-    pill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    pill.custom_minimum_size.y = 30.0
-    pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    var pill_style := StyleBoxFlat.new()
-    pill_style.bg_color = Color(0.04, 0.09, 0.15, 0.9)
-    pill_style.border_color = accent.darkened(0.35)
-    pill_style.set_border_width_all(1)
-    pill_style.set_corner_radius_all(7)
-    pill_style.content_margin_left = 8
-    pill_style.content_margin_right = 8
-    pill_style.content_margin_top = 3
-    pill_style.content_margin_bottom = 3
-    pill.add_theme_stylebox_override("panel", pill_style)
+func _make_stat_chip(label_text: String, value_text: String, accent: Color, emphasize: bool = false) -> Control:
+    var chip := PanelContainer.new()
+    chip.size_flags_horizontal = Control.SIZE_FILL
+    chip.custom_minimum_size = Vector2(96.0, 36.0)
+    chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var chip_style := StyleBoxFlat.new()
+    chip_style.bg_color = (accent.darkened(0.8) if emphasize else Color(0.04, 0.09, 0.15, 0.9))
+    chip_style.border_color = (accent if emphasize else accent.darkened(0.4))
+    chip_style.set_border_width_all(1)
+    chip_style.set_corner_radius_all(6)
+    chip_style.content_margin_left = 7
+    chip_style.content_margin_right = 7
+    chip_style.content_margin_top = 4
+    chip_style.content_margin_bottom = 4
+    chip.add_theme_stylebox_override("panel", chip_style)
 
-    var row := HBoxContainer.new()
+    var row := VBoxContainer.new()
     row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    row.add_theme_constant_override("separation", 8)
+    row.add_theme_constant_override("separation", 1)
     row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    pill.add_child(row)
+    chip.add_child(row)
 
     var label := Label.new()
-    label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    label.size_flags_horizontal = Control.SIZE_FILL
     label.text = label_text
     label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
     label.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -547,13 +597,13 @@ func _make_stat_pill(label_text: String, value_text: String, accent: Color) -> C
     label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     if _body_font:
         label.add_theme_font_override("font", _body_font)
-    label.add_theme_font_size_override("font_size", 13)
-    label.add_theme_color_override("font_color", Color(0.75, 0.9, 1.0, 0.95))
+    label.add_theme_font_size_override("font_size", 9)
+    label.add_theme_color_override("font_color", (Color(0.86, 0.95, 1.0, 1.0) if emphasize else Color(0.74, 0.88, 1.0, 0.95)))
     row.add_child(label)
 
     var value := Label.new()
-    value.custom_minimum_size = Vector2(100, 0)
-    value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    value.custom_minimum_size = Vector2(0, 0)
+    value.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
     value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     value.text = value_text
     value.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -562,11 +612,11 @@ func _make_stat_pill(label_text: String, value_text: String, accent: Color) -> C
     value.mouse_filter = Control.MOUSE_FILTER_IGNORE
     if _value_font:
         value.add_theme_font_override("font", _value_font)
-    value.add_theme_font_size_override("font_size", 13)
-    value.add_theme_color_override("font_color", Color(0.97, 0.98, 1.0, 1.0))
+    value.add_theme_font_size_override("font_size", (14 if emphasize else 13))
+    value.add_theme_color_override("font_color", (accent.lightened(0.35) if emphasize else Color(0.97, 0.98, 1.0, 1.0)))
     row.add_child(value)
 
-    return pill
+    return chip
 
 func _refresh_token_inventory(snapshot: Array) -> void:
     if _token_grid == null:
@@ -587,32 +637,32 @@ func _refresh_token_inventory(snapshot: Array) -> void:
 
     for child in _token_grid.get_children():
         child.queue_free()
-    _token_grid.add_theme_constant_override("h_separation", 10)
-    _token_grid.add_theme_constant_override("v_separation", 10)
+    _token_grid.add_theme_constant_override("h_separation", 8)
+    _token_grid.add_theme_constant_override("v_separation", 8)
 
     for token_id in _TOKEN_ORDER:
         var accent := Color(_TOKEN_ACCENT_MAP.get(token_id, Color(0.67, 0.79, 0.89, 1.0)))
         var card := PanelContainer.new()
         card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        card.custom_minimum_size.y = 74.0
+        card.custom_minimum_size.y = 64.0
         var card_style := StyleBoxFlat.new()
         card_style.bg_color = Color(0.05, 0.1, 0.17, 0.92)
         card_style.border_color = accent
         card_style.set_border_width_all(1)
         card_style.set_corner_radius_all(10)
-        card_style.content_margin_left = 8
-        card_style.content_margin_right = 8
-        card_style.content_margin_top = 6
-        card_style.content_margin_bottom = 6
+        card_style.content_margin_left = 7
+        card_style.content_margin_right = 7
+        card_style.content_margin_top = 5
+        card_style.content_margin_bottom = 5
         card.add_theme_stylebox_override("panel", card_style)
 
         var row := HBoxContainer.new()
         row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.add_theme_constant_override("separation", 8)
+        row.add_theme_constant_override("separation", 6)
         card.add_child(row)
 
         var icon := TextureRect.new()
-        icon.custom_minimum_size = Vector2(30, 30)
+        icon.custom_minimum_size = Vector2(24, 24)
         icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
         var icon_tex := _get_icon(String(_TOKEN_ICON_MAP.get(token_id, "")))
@@ -632,7 +682,7 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         name_lbl.clip_text = true
         if _body_font:
             name_lbl.add_theme_font_override("font", _body_font)
-        name_lbl.add_theme_font_size_override("font_size", 13)
+        name_lbl.add_theme_font_size_override("font_size", 12)
         name_lbl.add_theme_color_override("font_color", Color(0.78, 0.9, 1.0, 0.95))
         right.add_child(name_lbl)
 
@@ -641,7 +691,7 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
         if _title_font:
             value_lbl.add_theme_font_override("font", _title_font)
-        value_lbl.add_theme_font_size_override("font_size", 24)
+        value_lbl.add_theme_font_size_override("font_size", 20)
         value_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2, 1.0))
         right.add_child(value_lbl)
 

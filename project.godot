@@ -39,6 +39,11 @@ MonetizationService="*res://scripts/MonetizationService.gd"
 PlayGamesManager="*res://scripts/PlayGamesManager.gd"
 GodotPlayGameServices="*uid://cr6qqx4sy0lsj"
 
+[debug]
+
+gdscript/warnings/shadowed_variable=2
+gdscript/warnings/shadowed_variable_base_class=2
+
 [display]
 
 window/size/viewport_width=1024
@@ -48,12 +53,6 @@ window/size/window_width_override=1024
 window/size/window_height_override=576
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-
-[debug]
-
-gdscript/warnings/enable=true
-gdscript/warnings/shadowed_variable=2
-gdscript/warnings/shadowed_variable_base_class=2
 
 [editor_plugins]
 
