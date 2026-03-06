@@ -19,6 +19,7 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Coin Pickup Safety: Koleksi coin sekarang hanya valid untuk body player, mencegah trigger pickup oleh node non-player.
 - Pooling Safety: Return `CollisionObject2D` ke pool kini otomatis deferred saat physics callback untuk menghindari error `Removing a CollisionObject node during a physics callback`.
 - Heart Pickup Fix: `CollectibleHeart.tscn` kini memiliki collision shape aktif, serta hardening script heart agar monitoring/layer-masks konsisten setelah reset dan pickup hanya oleh player.
+- Heart Spawn Guard: Perbaikan logika clear heart di `GameManager` (cek `HeartsA/HeartsB/CoinsA/CoinsB`) dan auto-clear heart tersisa saat HP kembali penuh agar tidak ada heart spawn berlebih ketika player sudah full heal.
 - QA Automation: `smoke_check_runner.gd` diperluas untuk cek pipeline preloader (boot/deferred/warmup), format teks konfirmasi shop, reset-state coin pool, dan integritas pickup heart.
 - QA Process: Tambah langkah Automated Preflight pada `QA_CORE_REGRESSION_CHECKLIST_V1` (`sanity_check` + `smoke_check_runner`) sebelum test manual.
 - Naik versi proyek ke `1.3.53-beta`.

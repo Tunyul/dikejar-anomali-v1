@@ -2169,8 +2169,8 @@ func _clear_existing_hearts() -> void:
     for g in grounds:
         if g == null:
             continue
-        for coins_root_name in ["CoinsA"]:
-            var root: Node = g.get_node_or_null(coins_root_name)
+        for root_name in ["HeartsA", "HeartsB", "CoinsA", "CoinsB"]:
+            var root: Node = g.get_node_or_null(root_name)
             if root == null:
                 continue
             for c in root.get_children():
@@ -3751,6 +3751,7 @@ func _clear_existing_double_coins() -> void:
 
 func set_player_health(current: int, maximum: int) -> void:
     var prev_current: int = _last_health_current
+    var prev_max: int = _last_health_max
     if health_bar == null:
         return
     health_bar.max_value = float(maximum)
@@ -3763,6 +3764,10 @@ func set_player_health(current: int, maximum: int) -> void:
         print("[GameManager] set_player_health: %d/%d (Clamped: %.1f)" % [new_current, maximum, clamped])
     if prev_current >= 0 and new_current != prev_current:
         _on_player_health_decreased(new_current, maximum)
+    var prev_full := prev_max > 0 and prev_current >= prev_max
+    var now_full := maximum > 0 and new_current >= maximum
+    if now_full and not prev_full:
+        call_deferred("_clear_existing_hearts")
 func _start_play_phase() -> void:
     if not is_inside_tree():
         return
