@@ -179,6 +179,11 @@ func _ready() -> void:
             if not MonetizationService.is_connected("purchase_result", cb_purchase):
                 MonetizationService.connect("purchase_result", cb_purchase)
 
+        if GameManager and GameManager.has_signal("currencies_changed"):
+            var cb_curr := Callable(self, "_on_game_currencies_changed")
+            if not GameManager.is_connected("currencies_changed", cb_curr):
+                GameManager.connect("currencies_changed", cb_curr)
+
         current_coins = _load_coins()
         current_gems = _load_gems()
         _setup_currency_display(_coins_label, _gems_label)
@@ -337,6 +342,10 @@ func _set_status_text(text: String) -> void:
             _status_timer.start()
 
 func _exit_tree() -> void:
+    if GameManager and GameManager.has_signal("currencies_changed"):
+        var cb_curr := Callable(self, "_on_game_currencies_changed")
+        if GameManager.is_connected("currencies_changed", cb_curr):
+            GameManager.disconnect("currencies_changed", cb_curr)
     set_process(false)
 
 func _process(delta: float) -> void:
@@ -481,7 +490,7 @@ func _setup_currency_display(coins_label: Label, gems_label: Label) -> void:
 
 func _load_coins() -> int:
     if GameManager:
-        return int(GameManager.total_coins)
+        return _get_authoritative_coins()
     var cfg := ConfigFile.new()
     var err := cfg.load(SAVE_PATH)
     if err != OK:
@@ -490,24 +499,74 @@ func _load_coins() -> int:
 
 func _load_gems() -> int:
     if GameManager:
-        return int(GameManager.total_gems)
+        return _get_authoritative_gems()
     var cfg := ConfigFile.new()
     var err := cfg.load(SAVE_PATH)
     if err != OK:
         return 0
     return int(cfg.get_value("progress", "total_gems", 0))
 
+func _get_authoritative_coins() -> int:
+    if GameManager == null:
+        return maxi(current_coins, 0)
+    if GameManager.has_method("get_currency_snapshot"):
+        var snapshot_any: Variant = GameManager.get_currency_snapshot()
+        if snapshot_any is Dictionary:
+            return maxi(int((snapshot_any as Dictionary).get("coins", 0)), 0)
+    return maxi(int(GameManager.total_coins), 0)
+
+func _get_authoritative_gems() -> int:
+    if GameManager == null:
+        return maxi(current_gems, 0)
+    if GameManager.has_method("get_currency_snapshot"):
+        var snapshot_any: Variant = GameManager.get_currency_snapshot()
+        if snapshot_any is Dictionary:
+            return maxi(int((snapshot_any as Dictionary).get("gems", 0)), 0)
+    return maxi(int(GameManager.total_gems), 0)
+
 func _save_coins(value: int) -> void:
+    var target := maxi(value, 0)
     if GameManager and GameManager.has_method("adjust_currencies"):
-        var delta := value - int(GameManager.total_coins)
-        GameManager.adjust_currencies(delta, 0, true, "shop_manual_sync")
-    current_coins = value
+        var current_authoritative := _get_authoritative_coins()
+        var delta := target - current_authoritative
+        if delta != 0:
+            GameManager.adjust_currencies(delta, 0, true, "shop_manual_sync")
+        current_coins = _get_authoritative_coins()
+        return
+    var cfg := ConfigFile.new()
+    var err := cfg.load(SAVE_PATH)
+    if err != OK:
+        cfg = ConfigFile.new()
+    cfg.set_value("progress", "total_coins", target)
+    cfg.save(SAVE_PATH)
+    current_coins = target
 
 func _save_gems(value: int) -> void:
+    var target := maxi(value, 0)
     if GameManager and GameManager.has_method("adjust_currencies"):
-        var delta := value - int(GameManager.total_gems)
-        GameManager.adjust_currencies(0, delta, true, "shop_manual_sync")
-    current_gems = value
+        var current_authoritative := _get_authoritative_gems()
+        var delta := target - current_authoritative
+        if delta != 0:
+            GameManager.adjust_currencies(0, delta, true, "shop_manual_sync")
+        current_gems = _get_authoritative_gems()
+        return
+    var cfg := ConfigFile.new()
+    var err := cfg.load(SAVE_PATH)
+    if err != OK:
+        cfg = ConfigFile.new()
+    cfg.set_value("progress", "total_gems", target)
+    cfg.save(SAVE_PATH)
+    current_gems = target
+
+func _on_game_currencies_changed(coins: int, gems: int) -> void:
+    current_coins = maxi(coins, 0)
+    current_gems = maxi(gems, 0)
+    if _coins_label:
+        _coins_label.text = str(current_coins)
+    if _gems_label:
+        _gems_label.text = str(current_gems)
+    if is_inside_tree() and not Engine.is_editor_hint():
+        _update_buy_buttons_state()
 
 
 func _get_today_claim_bucket() -> int:
@@ -1680,8 +1739,11 @@ func _get_skill_progress_map() -> Dictionary:
 
 func _resolve_runtime_item(item: Dictionary, progress_map: Dictionary) -> Dictionary:
     var runtime := item.duplicate(true)
+    if bool(runtime.get("_runtime_item_resolved", false)):
+        return runtime
     var id := String(runtime.get("id", "")).strip_edges()
     if not _is_upgrade_item_id(id):
+        runtime["_runtime_item_resolved"] = true
         return runtime
 
     runtime["is_upgrade"] = true
@@ -1698,6 +1760,7 @@ func _resolve_runtime_item(item: Dictionary, progress_map: Dictionary) -> Dictio
 
     if is_max:
         runtime["display_price"] = tr("MAX")
+        runtime["_runtime_item_resolved"] = true
         return runtime
 
     var base_price := maxi(int(runtime.get("price", 0)), 1)
@@ -1706,7 +1769,13 @@ func _resolve_runtime_item(item: Dictionary, progress_map: Dictionary) -> Dictio
     var step_index := maxi(level_current - 1, 0)
     var scaled := int(ceil(float(base_price) * pow(growth, float(step_index))))
     runtime["price"] = maxi(scaled, base_price)
+    runtime["_runtime_item_resolved"] = true
     return runtime
+
+func _ensure_runtime_item(item: Dictionary) -> Dictionary:
+    if bool(item.get("_runtime_item_resolved", false)):
+        return item.duplicate(true)
+    return _resolve_runtime_item(item, _get_skill_progress_map())
 
 
 func _build_groups_ui() -> void:
@@ -2130,7 +2199,7 @@ func _on_item_buy_pressed(item: Dictionary) -> void:
     if not Engine.is_editor_hint():
         if is_instance_valid(TransitionManager) and TransitionManager.has_method("play_sfx"):
             TransitionManager.play_sfx(&"click")
-    var runtime_item := _resolve_runtime_item(item, _get_skill_progress_map())
+    var runtime_item := _ensure_runtime_item(item)
     var price := int(runtime_item.get("price", 0))
     var currency := String(runtime_item.get("currency", "coins"))
     var id := String(runtime_item.get("id", ""))
@@ -2228,7 +2297,7 @@ func _format_grouped_number(value: int) -> String:
 func _execute_purchase(item: Dictionary) -> void:
     if Engine.is_editor_hint():
         return
-    var effective_item := _resolve_runtime_item(item, _get_skill_progress_map())
+    var effective_item := _ensure_runtime_item(item)
     var price := int(effective_item.get("price", 0))
     var currency := String(effective_item.get("currency", "coins"))
     var id := String(effective_item.get("id", ""))
@@ -2240,11 +2309,12 @@ func _execute_purchase(item: Dictionary) -> void:
 
     match currency:
         "coins":
+            if GameManager:
+                current_coins = _get_authoritative_coins()
             if current_coins < price:
                 _set_status_text(tr("Not enough coins."))
                 return
-            current_coins -= price
-            _save_coins(current_coins)
+            _save_coins(current_coins - price)
             if _is_skin_id(id):
                 _unlock_skin(id)
             elif _is_border_id(id):
@@ -2259,11 +2329,12 @@ func _execute_purchase(item: Dictionary) -> void:
             _update_buy_buttons_state()
             _set_status_text(tr("Purchase successful: %s") % tr(String(effective_item.get("name", "Item"))))
         "gems":
+            if GameManager:
+                current_gems = _get_authoritative_gems()
             if current_gems < price:
                 _set_status_text(tr("Not enough gems."))
                 return
-            current_gems -= price
-            _save_gems(current_gems)
+            _save_gems(current_gems - price)
             if _is_skin_id(id):
                 _unlock_skin(id)
             elif _is_border_id(id):

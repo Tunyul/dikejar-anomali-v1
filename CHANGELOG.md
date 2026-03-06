@@ -8,6 +8,8 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Stability Guard: Aktifkan warning kritis GDScript sebagai error (`shadowed_variable`, `shadowed_variable_base_class`) di `project.godot` untuk mencegah warning lolos ke build QA.
 - Loading/Preloader: Perbaikan kompatibilitas runtime Godot 4 pada warmup asset (`AnimatedSprite2D` tanpa `advance()`), serta perbaikan warning variabel shadowed pada layout `LoadingScreen`.
 - Shop UX: Popup konfirmasi pembelian dibuat lebih ringkas dan ramah anak (nama item + harga), termasuk normalisasi nama upgrade agar tidak redundan.
+- Shop Economy Integrity: Perbaikan sinkronisasi saldo coin/gems di ShopMenu agar pembelian selalu memakai nilai otoritatif GameManager (snapshot + signal currencies_changed), mencegah kasus coin tidak berkurang setelah buy.
+- Shop Upgrade Pricing: Perbaikan bug harga upgrade yang melonjak di popup konfirmasi karena kalkulasi runtime berulang; harga card, popup, dan eksekusi beli kini konsisten.
 - Coin Integrity: Perbaikan state reset object pool pada `coin.gd` (reset `always_magnet`, `magnet_speed`, segment/currency defaults) agar coin normal tidak ikut “ketarik magnet” dari state lama.
 - Coin Pickup Safety: Koleksi coin sekarang hanya valid untuk body player, mencegah trigger pickup oleh node non-player.
 - Pooling Safety: Return `CollisionObject2D` ke pool kini otomatis deferred saat physics callback untuk menghindari error `Removing a CollisionObject node during a physics callback`.
@@ -531,3 +533,4 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 ## [1.2.5] - 2025-12-05
 
 ## [1.2.4] - 2025-12-05
+
