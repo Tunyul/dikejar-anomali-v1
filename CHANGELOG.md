@@ -15,6 +15,8 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Shop Economy Integrity: Perbaikan sinkronisasi saldo coin/gems di `ShopMenu` agar pembelian selalu memakai nilai otoritatif `GameManager` (snapshot + signal `currencies_changed`), mencegah kasus coin tidak berkurang setelah buy.
 - Shop Upgrade Pricing: Perbaikan bug harga upgrade yang melonjak di popup konfirmasi karena kalkulasi runtime berulang; harga card, popup, dan eksekusi beli kini konsisten.
 - Skill Progress Panel: Perbaikan layout responsif dan tinggi panel agar konten pas (tanpa area kosong berlebih), plus dukungan preview editor untuk validasi visual scene.
+- Skill Tokens UI: Perapian proporsi card agar konsisten, pembesaran ikon/teks agar lebih terbaca, dan penyusunan ulang layout token supaya lebih mirip pola card skill di bagian atas.
+- Skill Tokens Readability: Penghapusan label yang terlalu panjang (`Token ...`) menjadi nama ringkas (`Magnet`, `Shield`, `Double Coins`, `Speed Boost`) serta penghilangan pemotongan teks `...` pada card token.
 - Coin Integrity: Perbaikan state reset object pool pada `coin.gd` (reset `always_magnet`, `magnet_speed`, segment/currency defaults) agar coin normal tidak ikut "ketarik magnet" dari state lama.
 - Coin Pickup Safety: Koleksi coin sekarang hanya valid untuk body player, mencegah trigger pickup oleh node non-player.
 - Pooling Safety: Return `CollisionObject2D` ke pool kini otomatis deferred saat physics callback untuk menghindari error `Removing a CollisionObject node during a physics callback`.

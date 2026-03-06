@@ -70,10 +70,10 @@ const _PREVIEW_SNAPSHOT: Array[Dictionary] = [
 ]
 
 const _TOKEN_LABEL_MAP := {
-    "magnet_duration": "Magnet Tokens",
-    "shield_duration": "Shield Charges",
-    "double_coins_duration": "Double Coins Tokens",
-    "speed_boost_duration": "Speed Boost Tokens"
+    "magnet_duration": "Magnet",
+    "shield_duration": "Shield",
+    "double_coins_duration": "Double Coins",
+    "speed_boost_duration": "Speed Boost"
 }
 
 const _TOKEN_ICON_MAP := {
@@ -332,11 +332,11 @@ func _apply_responsive_chrome(width: float) -> void:
     var top_pad: int = 10 if compact else (14 if large else 12)
     var section_sep: int = 8 if compact else (12 if large else 10)
     var row_gap: int = 6 if compact else (10 if large else 8)
-    var close_w: float = 104.0 if compact else (132.0 if large else 120.0)
-    var close_h: float = 38.0 if compact else (46.0 if large else 42.0)
-    var title_font_size: int = 24 if compact else (30 if large else 28)
-    var token_title_font_size: int = 16 if compact else (19 if large else 18)
-    var close_font_size: int = 16 if compact else (19 if large else 18)
+    var close_w: float = 112.0 if compact else (140.0 if large else 126.0)
+    var close_h: float = 42.0 if compact else (50.0 if large else 46.0)
+    var title_font_size: int = 27 if compact else (34 if large else 31)
+    var token_title_font_size: int = 20 if compact else (24 if large else 22)
+    var close_font_size: int = 17 if compact else (21 if large else 19)
     var token_inner_lr: int = 8 if compact else (11 if large else 10)
     var token_inner_tb: int = 4 if compact else (7 if large else 6)
 
@@ -656,18 +656,18 @@ func _apply_content_layout() -> void:
     var card_width_ratio: float
     if basis_w >= 1100.0:
         card_height_ratio = (0.35 if landscape else 0.29)
-        card_min_h = 152.0
-        card_max_h = 206.0
+        card_min_h = 170.0
+        card_max_h = 226.0
         card_width_ratio = 0.62
     elif basis_w >= 820.0:
         card_height_ratio = (0.32 if landscape else 0.27)
-        card_min_h = 138.0
-        card_max_h = 194.0
+        card_min_h = 152.0
+        card_max_h = 208.0
         card_width_ratio = 0.74
     else:
         card_height_ratio = 0.29
-        card_min_h = 126.0
-        card_max_h = 178.0
+        card_min_h = 138.0
+        card_max_h = 188.0
         card_width_ratio = 0.9
 
     var card_height: float = clampf(basis_h * card_height_ratio, card_min_h, card_max_h)
@@ -676,7 +676,7 @@ func _apply_content_layout() -> void:
     if child_count >= 2 and basis_w >= 820.0:
         var two_card_width: float = floor((_scroll.size.x - gap - 2.0) * 0.5)
         card_width = clampf(two_card_width, 260.0, 520.0)
-    var target_scroll_height: float = card_height + (20.0 if basis_w >= 1100.0 else 16.0)
+    var target_scroll_height: float = card_height + (24.0 if basis_w >= 1100.0 else 20.0)
     _scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
     _scroll.custom_minimum_size.y = target_scroll_height
     var scroll_margin := _scroll.get_parent() as Control
@@ -700,6 +700,17 @@ func _apply_content_layout() -> void:
     _layout_busy = false
 
 func _build_skill_card(item: Dictionary) -> Control:
+    var width_ref := _last_panel_viewport_size.x
+    if width_ref <= 0.0:
+        width_ref = size.x
+    var compact := width_ref > 0.0 and width_ref < _RESP_SMALL_W
+    var large := width_ref >= _RESP_LARGE_W
+    var icon_wrap_size: float = 46.0 if compact else (56.0 if large else 50.0)
+    var icon_size: float = 26.0 if compact else (34.0 if large else 30.0)
+    var title_font_size: int = 19 if compact else (24 if large else 22)
+    var level_font_size: int = 14 if compact else (18 if large else 16)
+    var progress_height: float = 10.0 if compact else (13.0 if large else 12.0)
+    var stats_h_gap: int = 6 if compact else (8 if large else 7)
     var category := String(item.get("category", ""))
     var accent := _category_color(category)
 
@@ -733,7 +744,7 @@ func _build_skill_card(item: Dictionary) -> Control:
     root.add_child(top)
 
     var icon_wrap := PanelContainer.new()
-    icon_wrap.custom_minimum_size = Vector2(42, 42)
+    icon_wrap.custom_minimum_size = Vector2(icon_wrap_size, icon_wrap_size)
     icon_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
     var icon_style := StyleBoxFlat.new()
     icon_style.bg_color = accent.darkened(0.67)
@@ -750,7 +761,7 @@ func _build_skill_card(item: Dictionary) -> Control:
     icon_wrap.add_child(icon_center)
 
     var icon := TextureRect.new()
-    icon.custom_minimum_size = Vector2(24, 24)
+    icon.custom_minimum_size = Vector2(icon_size, icon_size)
     icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
     icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -779,18 +790,18 @@ func _build_skill_card(item: Dictionary) -> Control:
         title.add_theme_font_override("font", _title_font)
     elif _value_font:
         title.add_theme_font_override("font", _value_font)
-    title.add_theme_font_size_override("font_size", 18)
+    title.add_theme_font_size_override("font_size", title_font_size)
     title.add_theme_color_override("font_color", Color(0.96, 0.97, 1.0, 1.0))
     title_row.add_child(title)
 
     var lv := Label.new()
-    lv.custom_minimum_size = Vector2(78, 20)
+    lv.custom_minimum_size = Vector2(90, 24)
     lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
     lv.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     lv.text = "%s %d/%d" % [tr("Lv"), int(item.get("level_current", 1)), int(item.get("level_max", 1))]
     if _value_font:
         lv.add_theme_font_override("font", _value_font)
-    lv.add_theme_font_size_override("font_size", 14)
+    lv.add_theme_font_size_override("font_size", level_font_size)
     lv.add_theme_color_override("font_color", Color(0.99, 0.86, 0.2, 1.0))
     lv.autowrap_mode = TextServer.AUTOWRAP_OFF
     lv.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -799,7 +810,7 @@ func _build_skill_card(item: Dictionary) -> Control:
     title_row.add_child(lv)
 
     var progress := ProgressBar.new()
-    progress.custom_minimum_size = Vector2(0, 9)
+    progress.custom_minimum_size = Vector2(0, progress_height)
     progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     progress.max_value = float(maxi(int(item.get("level_max", 1)), 1))
     progress.value = float(clampi(int(item.get("level_current", 1)), 1, int(progress.max_value)))
@@ -819,7 +830,7 @@ func _build_skill_card(item: Dictionary) -> Control:
     stats.columns = 3
     stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     stats.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-    stats.add_theme_constant_override("h_separation", 5)
+    stats.add_theme_constant_override("h_separation", stats_h_gap)
     stats.add_theme_constant_override("v_separation", 0)
     stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(stats)
@@ -835,20 +846,31 @@ func _build_skill_card(item: Dictionary) -> Control:
     return card
 
 func _make_stat_chip(label_text: String, value_text: String, accent: Color, emphasize: bool = false) -> Control:
+    var width_ref := _last_panel_viewport_size.x
+    if width_ref <= 0.0:
+        width_ref = size.x
+    var compact := width_ref > 0.0 and width_ref < _RESP_SMALL_W
+    var large := width_ref >= _RESP_LARGE_W
+    var chip_h: float = 46.0 if compact else (56.0 if large else 52.0)
+    var label_font_size: int = 12 if compact else (15 if large else 14)
+    var value_font_size: int = 18 if compact else (24 if large else 22)
+    var chip_pad_lr: int = 6 if compact else (8 if large else 7)
+    var chip_pad_tb: int = 3 if compact else (5 if large else 4)
+
     var chip := PanelContainer.new()
     chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     chip.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-    chip.custom_minimum_size = Vector2(0.0, 34.0)
+    chip.custom_minimum_size = Vector2(0.0, chip_h)
     chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
     var chip_style := StyleBoxFlat.new()
     chip_style.bg_color = (accent.darkened(0.8) if emphasize else Color(0.04, 0.09, 0.15, 0.9))
     chip_style.border_color = (accent if emphasize else accent.darkened(0.4))
     chip_style.set_border_width_all(1)
     chip_style.set_corner_radius_all(7)
-    chip_style.content_margin_left = 5
-    chip_style.content_margin_right = 5
-    chip_style.content_margin_top = 3
-    chip_style.content_margin_bottom = 3
+    chip_style.content_margin_left = chip_pad_lr
+    chip_style.content_margin_right = chip_pad_lr
+    chip_style.content_margin_top = chip_pad_tb
+    chip_style.content_margin_bottom = chip_pad_tb
     chip.add_theme_stylebox_override("panel", chip_style)
 
     var row := VBoxContainer.new()
@@ -868,7 +890,7 @@ func _make_stat_chip(label_text: String, value_text: String, accent: Color, emph
     label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     if _body_font:
         label.add_theme_font_override("font", _body_font)
-    label.add_theme_font_size_override("font_size", 9)
+    label.add_theme_font_size_override("font_size", label_font_size)
     label.add_theme_color_override("font_color", (Color(0.86, 0.95, 1.0, 1.0) if emphasize else Color(0.74, 0.88, 1.0, 0.95)))
     row.add_child(label)
 
@@ -883,7 +905,7 @@ func _make_stat_chip(label_text: String, value_text: String, accent: Color, emph
     value.mouse_filter = Control.MOUSE_FILTER_IGNORE
     if _value_font:
         value.add_theme_font_override("font", _value_font)
-    value.add_theme_font_size_override("font_size", (14 if emphasize else 13))
+    value.add_theme_font_size_override("font_size", (value_font_size + 1 if emphasize else value_font_size))
     value.add_theme_color_override("font_color", (accent.lightened(0.35) if emphasize else Color(0.97, 0.98, 1.0, 1.0)))
     row.add_child(value)
 
@@ -906,51 +928,89 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         if counts.has(id):
             counts[id] = int(item.get("token_count", 0))
 
-    var width_ref: float = _last_panel_viewport_size.x
+    var width_ref: float = _token_grid.size.x
     if width_ref <= 0.0 and _token_panel:
         width_ref = _token_panel.size.x
     if width_ref <= 0.0:
-        width_ref = _token_grid.size.x
+        width_ref = _last_panel_viewport_size.x
 
     for child in _token_grid.get_children():
         child.queue_free()
 
-    var grid_h_gap: int = 6
-    var grid_v_gap: int = 6
-    if width_ref > 0.0 and width_ref < 720.0:
-        grid_h_gap = 5
-        grid_v_gap = 4
-    elif width_ref >= _RESP_LARGE_W:
+    var columns := _compute_token_grid_columns(width_ref)
+    var grid_h_gap: int = 8
+    var grid_v_gap: int = 8
+    if columns == 1:
         grid_h_gap = 8
-        grid_v_gap = 6
+        grid_v_gap = 8
+    elif columns == 2:
+        grid_h_gap = 10
+        grid_v_gap = 10
+    elif width_ref >= _RESP_LARGE_W:
+        grid_h_gap = 10
+        grid_v_gap = 10
     _token_grid.add_theme_constant_override("h_separation", grid_h_gap)
     _token_grid.add_theme_constant_override("v_separation", grid_v_gap)
 
-    var token_card_h: float = 60.0
-    var token_icon_size: float = 24.0
-    var token_name_font: int = 12
-    var token_value_font: int = 20
-    var token_pad_lr: float = 9.0
-    var token_pad_tb: float = 4.0
-    if width_ref > 0.0 and width_ref < 720.0:
-        token_card_h = 56.0
-        token_icon_size = 20.0
-        token_name_font = 10
-        token_value_font = 16
-        token_pad_lr = 7.0
-        token_pad_tb = 3.0
-    elif width_ref > 0.0 and width_ref < 980.0:
-        token_card_h = 58.0
-        token_icon_size = 24.0
-        token_name_font = 11
-        token_value_font = 18
-        token_pad_lr = 8.0
-        token_pad_tb = 4.0
+    var token_card_h: float
+    var token_icon_size: float
+    var token_icon_wrap_size: float
+    var token_name_font: int
+    var token_value_font: int
+    var token_pad_lr: float
+    var token_pad_tb: float
+    var token_header_gap: int
+    var token_content_gap: int
+    var token_name_wrap: bool = true
+    var token_name_min_h: float = 30.0
+    var token_value_min_h: float = 28.0
+
+    match columns:
+        4:
+            token_card_h = 110.0
+            token_icon_wrap_size = 40.0
+            token_icon_size = 26.0
+            token_name_font = 15
+            token_value_font = 34
+            token_pad_lr = 10.0
+            token_pad_tb = 8.0
+            token_header_gap = 8
+            token_content_gap = 5
+            token_name_wrap = true
+            token_name_min_h = 36.0
+            token_value_min_h = 36.0
+        2:
+            token_card_h = 116.0
+            token_icon_wrap_size = 42.0
+            token_icon_size = 28.0
+            token_name_font = 16
+            token_value_font = 36
+            token_pad_lr = 12.0
+            token_pad_tb = 9.0
+            token_header_gap = 9
+            token_content_gap = 6
+            token_name_wrap = true
+            token_name_min_h = 38.0
+            token_value_min_h = 38.0
+        _:
+            token_card_h = 120.0
+            token_icon_wrap_size = 44.0
+            token_icon_size = 30.0
+            token_name_font = 17
+            token_value_font = 38
+            token_pad_lr = 12.0
+            token_pad_tb = 9.0
+            token_header_gap = 10
+            token_content_gap = 7
+            token_name_wrap = true
+            token_name_min_h = 40.0
+            token_value_min_h = 40.0
 
     for token_id in _TOKEN_ORDER:
         var accent := Color(_TOKEN_ACCENT_MAP.get(token_id, Color(0.67, 0.79, 0.89, 1.0)))
         var card := PanelContainer.new()
         card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        card.size_flags_vertical = Control.SIZE_EXPAND_FILL
         card.custom_minimum_size.y = token_card_h
         var card_style := StyleBoxFlat.new()
         card_style.bg_color = Color(0.05, 0.1, 0.17, 0.92)
@@ -963,10 +1023,31 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         card_style.content_margin_bottom = token_pad_tb
         card.add_theme_stylebox_override("panel", card_style)
 
-        var row := HBoxContainer.new()
-        row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.add_theme_constant_override("separation", 4)
-        card.add_child(row)
+        var content := VBoxContainer.new()
+        content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        content.add_theme_constant_override("separation", token_content_gap)
+        card.add_child(content)
+
+        var header := HBoxContainer.new()
+        header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        header.add_theme_constant_override("separation", token_header_gap)
+        content.add_child(header)
+
+        var icon_wrap := PanelContainer.new()
+        icon_wrap.custom_minimum_size = Vector2(token_icon_wrap_size, token_icon_wrap_size)
+        var icon_style := StyleBoxFlat.new()
+        icon_style.bg_color = accent.darkened(0.7)
+        icon_style.border_color = accent
+        icon_style.set_border_width_all(1)
+        icon_style.set_corner_radius_all(int(token_icon_wrap_size * 0.5))
+        icon_wrap.add_theme_stylebox_override("panel", icon_style)
+        header.add_child(icon_wrap)
+
+        var icon_center := CenterContainer.new()
+        icon_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        icon_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        icon_wrap.add_child(icon_center)
 
         var icon := TextureRect.new()
         icon.custom_minimum_size = Vector2(token_icon_size, token_icon_size)
@@ -975,36 +1056,45 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         var icon_tex := _get_icon(String(_TOKEN_ICON_MAP.get(token_id, "")))
         if icon_tex:
             icon.texture = icon_tex
-        row.add_child(icon)
-
-        var right := VBoxContainer.new()
-        right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        right.add_theme_constant_override("separation", 0)
-        row.add_child(right)
+        icon_center.add_child(icon)
 
         var name_lbl := Label.new()
         name_lbl.text = tr(String(_TOKEN_LABEL_MAP.get(token_id, token_id)))
-        name_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
-        name_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-        name_lbl.clip_text = true
-        if _body_font:
+        name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        name_lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+        name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+        name_lbl.max_lines_visible = (2 if token_name_wrap else 1)
+        name_lbl.autowrap_mode = (TextServer.AUTOWRAP_WORD_SMART if token_name_wrap else TextServer.AUTOWRAP_OFF)
+        name_lbl.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+        name_lbl.clip_text = false
+        name_lbl.custom_minimum_size.y = token_name_min_h
+        if _value_font:
+            name_lbl.add_theme_font_override("font", _value_font)
+        elif _body_font:
             name_lbl.add_theme_font_override("font", _body_font)
         name_lbl.add_theme_font_size_override("font_size", token_name_font)
-        name_lbl.add_theme_color_override("font_color", Color(0.78, 0.9, 1.0, 0.95))
-        right.add_child(name_lbl)
+        name_lbl.add_theme_color_override("font_color", Color(0.9, 0.96, 1.0, 0.98))
+        header.add_child(name_lbl)
 
         var value_lbl := Label.new()
         value_lbl.text = str(int(counts.get(token_id, 0)))
         value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-        if _title_font:
+        value_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+        value_lbl.custom_minimum_size.y = token_value_min_h
+        if _value_font:
+            value_lbl.add_theme_font_override("font", _value_font)
+        elif _title_font:
             value_lbl.add_theme_font_override("font", _title_font)
         value_lbl.add_theme_font_size_override("font_size", token_value_font)
         value_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2, 1.0))
-        right.add_child(value_lbl)
+        content.add_child(value_lbl)
 
         _token_grid.add_child(card)
 
-    _update_token_grid_columns()
+    _token_grid.columns = columns
+    _fit_panel_height_to_content()
+    call_deferred("_fit_panel_height_to_content")
 
 func _update_token_grid_columns() -> void:
     if _token_grid == null:
@@ -1012,12 +1102,12 @@ func _update_token_grid_columns() -> void:
     var width_ref := _token_grid.size.x
     if width_ref <= 0.0 and _token_panel:
         width_ref = _token_panel.size.x - 20.0
-    var columns := 4
-    if width_ref > 0.0 and width_ref < 560.0:
-        columns = 1
-    elif width_ref > 0.0 and width_ref < 980.0:
-        columns = 2
-    _token_grid.columns = columns
+    _token_grid.columns = _compute_token_grid_columns(width_ref)
+
+func _compute_token_grid_columns(width_ref: float) -> int:
+    if width_ref > 0.0 and width_ref < 520.0:
+        return 2
+    return 4
 
 func _category_color(category: String) -> Color:
     match category:
