@@ -4,6 +4,9 @@
 [ext_resource type="Texture2D" uid="uid://ccs65yudrkhjh" path="res://assets/generated/svg/heart.svg" id="2"]
 [ext_resource type="Texture2D" uid="uid://e1jqmt8jc6fu" path="res://assets/generated/svg/heart_glow.svg" id="3"]
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_heart"]
+radius = 28.0
+
 [sub_resource type="SpriteFrames" id="SpriteFrames_heart"]
 animations = [{
 "frames": [{
@@ -17,9 +20,6 @@ animations = [{
 "name": &"pulse",
 "speed": 5.0
 }]
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_heart"]
-radius = 28.0
 
 [node name="CollectibleHeart" type="Area2D" unique_id=2102118836]
 script = ExtResource("1")

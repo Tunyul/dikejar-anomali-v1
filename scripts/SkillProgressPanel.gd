@@ -1,3 +1,4 @@
+@tool
 extends Control
 
 const _TOKEN_ORDER := [
@@ -7,6 +8,66 @@ const _TOKEN_ORDER := [
     "speed_boost_duration"
 ]
 const _BANNER_LOCK_ID := "shop_skill_progress_panel"
+const _RESP_SMALL_W := 820.0
+const _RESP_LARGE_W := 1100.0
+const _PREVIEW_SNAPSHOT: Array[Dictionary] = [
+    {
+        "id": "magnet_duration",
+        "name_key": "Magnet Duration",
+        "category": "duration",
+        "level_current": 3,
+        "level_max": 21,
+        "is_max": false,
+        "base_value": 30.0,
+        "current_value": 36.0,
+        "next_value": 39.0,
+        "unit": "s",
+        "token_count": 7,
+        "icon_path": "res://assets/icon/icon_magnet_timer_96x96.png"
+    },
+    {
+        "id": "shield_duration",
+        "name_key": "Shield Duration",
+        "category": "duration",
+        "level_current": 5,
+        "level_max": 21,
+        "is_max": false,
+        "base_value": 12.0,
+        "current_value": 16.8,
+        "next_value": 18.0,
+        "unit": "s",
+        "token_count": 4,
+        "icon_path": "res://assets/icon/icon_shield.png"
+    },
+    {
+        "id": "double_coins_duration",
+        "name_key": "Double Coins Duration",
+        "category": "duration",
+        "level_current": 2,
+        "level_max": 21,
+        "is_max": false,
+        "base_value": 15.0,
+        "current_value": 16.5,
+        "next_value": 18.0,
+        "unit": "s",
+        "token_count": 3,
+        "icon_path": "res://assets/icon/icon_coinduble_96x96.png"
+    },
+    {
+        "id": "speed_boost_duration",
+        "name_key": "Speed Boost Duration",
+        "category": "boost",
+        "level_current": 4,
+        "level_max": 21,
+        "is_max": false,
+        "base_value": 8.0,
+        "current_value": 10.4,
+        "next_value": 11.2,
+        "unit": "s",
+        "token_count": 2,
+        "icon_path": "res://assets/icon/icon_boost_96x96.png"
+    }
+]
 
 const _TOKEN_LABEL_MAP := {
     "magnet_duration": "Magnet Tokens",
@@ -55,48 +116,46 @@ var _last_layout_size: Vector2 = Vector2.ZERO
 var _last_layout_child_count: int = -1
 var _banner_lock_active: bool = false
 var _last_panel_viewport_size: Vector2 = Vector2.ZERO
+var _debug_snapshot: Array = []
 
 func _ready() -> void:
+    if Engine.is_editor_hint():
+        _setup_editor_preview()
+        return
     visible = false
     mouse_filter = Control.MOUSE_FILTER_STOP
     if _close_button and not _close_button.pressed.is_connected(_on_close_pressed):
         _close_button.pressed.connect(_on_close_pressed)
     if _overlay and not _overlay.gui_input.is_connected(_on_overlay_gui_input):
         _overlay.gui_input.connect(_on_overlay_gui_input)
-    if _scroll:
-        _scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-        _scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-        _scroll.size_flags_vertical = Control.SIZE_FILL
-        var scroll_margin := _scroll.get_parent() as Control
-        if scroll_margin:
-            scroll_margin.size_flags_vertical = Control.SIZE_FILL
-        if not _scroll.resized.is_connected(_on_layout_changed):
-            _scroll.resized.connect(_on_layout_changed)
+    _configure_scroll_container()
     _connect_viewport_resize()
     if GameManager and GameManager.has_signal("powerups_changed"):
         var cb_powerups := Callable(self, "_on_powerups_changed")
-        if not GameManager.powerups_changed.is_connected(cb_powerups):
-            GameManager.powerups_changed.connect(cb_powerups)
+        if not GameManager.is_connected("powerups_changed", cb_powerups):
+            GameManager.connect("powerups_changed", cb_powerups)
     if TransitionManager and TransitionManager.has_signal("language_changed"):
         var cb_lang := Callable(self, "_on_language_changed")
-        if not TransitionManager.language_changed.is_connected(cb_lang):
-            TransitionManager.language_changed.connect(cb_lang)
+        if not TransitionManager.is_connected("language_changed", cb_lang):
+            TransitionManager.connect("language_changed", cb_lang)
     _load_fonts()
     _apply_visual_theme()
     _apply_panel_layout_for_viewport()
     _refresh_texts()
     call_deferred("_apply_content_layout")
+    if _is_standalone_preview_context():
+        call_deferred("_open_preview_mode")
 
 func _exit_tree() -> void:
     _release_banner_lock()
     if GameManager and GameManager.has_signal("powerups_changed"):
         var cb_powerups := Callable(self, "_on_powerups_changed")
-        if GameManager.powerups_changed.is_connected(cb_powerups):
-            GameManager.powerups_changed.disconnect(cb_powerups)
+        if GameManager.is_connected("powerups_changed", cb_powerups):
+            GameManager.disconnect("powerups_changed", cb_powerups)
     if TransitionManager and TransitionManager.has_signal("language_changed"):
         var cb_lang := Callable(self, "_on_language_changed")
-        if TransitionManager.language_changed.is_connected(cb_lang):
-            TransitionManager.language_changed.disconnect(cb_lang)
+        if TransitionManager.is_connected("language_changed", cb_lang):
+            TransitionManager.disconnect("language_changed", cb_lang)
 
 func open_panel() -> void:
     _acquire_banner_lock()
@@ -191,10 +250,9 @@ func _on_viewport_size_changed() -> void:
 func _apply_panel_layout_for_viewport() -> void:
     if _panel == null:
         return
-    var vp := get_viewport()
-    if vp == null:
-        return
-    var vp_size: Vector2 = vp.get_visible_rect().size
+    var layout_rect := _get_layout_reference_rect()
+    var vp_size := layout_rect.size
+    _apply_responsive_chrome(vp_size.x)
     if vp_size.x <= 0.0 or vp_size.y <= 0.0:
         return
     if absf(vp_size.x - _last_panel_viewport_size.x) < 1.0 and absf(vp_size.y - _last_panel_viewport_size.y) < 1.0:
@@ -207,12 +265,139 @@ func _apply_panel_layout_for_viewport() -> void:
     var min_h: float = 210.0 if landscape else 320.0
     var max_h: float = maxf(vp_size.y - 20.0, min_h)
     var target_h: float = clampf(vp_size.y * ratio, min_h, max_h)
-    var top: float = floor((vp_size.y - target_h) * 0.5)
+    var top: float = layout_rect.position.y + floor((vp_size.y - target_h) * 0.5)
     var bottom: float = top + target_h
     _panel.anchor_top = 0.0
     _panel.anchor_bottom = 0.0
     _panel.offset_top = top
     _panel.offset_bottom = bottom
+
+func _fit_panel_height_to_content() -> void:
+    if _panel == null:
+        return
+    var layout_rect := _get_layout_reference_rect()
+    var vp_size := layout_rect.size
+    if vp_size.x <= 0.0 or vp_size.y <= 0.0:
+        return
+    var vbox := _panel.get_node_or_null("VBox") as VBoxContainer
+    if vbox == null:
+        return
+    var content_h := _measure_vbox_content_height(vbox)
+    if content_h <= 0.0:
+        content_h = vbox.get_combined_minimum_size().y
+    if content_h <= 0.0:
+        content_h = vbox.size.y
+    if content_h <= 0.0:
+        return
+
+    var landscape: bool = vp_size.x >= vp_size.y
+    var base_min_h: float = 150.0 if landscape else 200.0
+    var max_h: float = maxf(vp_size.y - 20.0, base_min_h)
+    var desired_h: float = content_h + 8.0
+    var target_h: float = clampf(maxf(desired_h, base_min_h), base_min_h, max_h)
+    var top: float = layout_rect.position.y + floor((vp_size.y - target_h) * 0.5)
+    var bottom: float = top + target_h
+    _panel.anchor_top = 0.0
+    _panel.anchor_bottom = 0.0
+    _panel.offset_top = top
+    _panel.offset_bottom = bottom
+
+func _measure_vbox_content_height(vbox: VBoxContainer) -> float:
+    var total := 0.0
+    var visible_count := 0
+    for child in vbox.get_children():
+        if not (child is Control):
+            continue
+        var ctl := child as Control
+        if not ctl.visible:
+            continue
+        visible_count += 1
+        var h := ctl.get_combined_minimum_size().y
+        if h <= 0.0:
+            h = ctl.custom_minimum_size.y
+        if h <= 0.0:
+            h = ctl.size.y
+        total += maxf(h, 0.0)
+    if visible_count > 1:
+        total += float(vbox.get_theme_constant("separation")) * float(visible_count - 1)
+    return total
+
+func _apply_responsive_chrome(width: float) -> void:
+    if width <= 0.0:
+        return
+
+    var compact: bool = width < _RESP_SMALL_W
+    var large: bool = width >= _RESP_LARGE_W
+    var side_pad: int = 12 if compact else (20 if large else 16)
+    var top_pad: int = 10 if compact else (14 if large else 12)
+    var section_sep: int = 8 if compact else (12 if large else 10)
+    var row_gap: int = 6 if compact else (10 if large else 8)
+    var close_w: float = 104.0 if compact else (132.0 if large else 120.0)
+    var close_h: float = 38.0 if compact else (46.0 if large else 42.0)
+    var title_font_size: int = 24 if compact else (30 if large else 28)
+    var token_title_font_size: int = 16 if compact else (19 if large else 18)
+    var close_font_size: int = 16 if compact else (19 if large else 18)
+    var token_inner_lr: int = 8 if compact else (11 if large else 10)
+    var token_inner_tb: int = 4 if compact else (7 if large else 6)
+
+    var vbox := _panel.get_node_or_null("VBox") as VBoxContainer
+    if vbox:
+        vbox.add_theme_constant_override("separation", section_sep)
+
+    var header_margin := _panel.get_node_or_null("VBox/HeaderMargin") as MarginContainer
+    if header_margin:
+        header_margin.add_theme_constant_override("margin_left", side_pad)
+        header_margin.add_theme_constant_override("margin_right", side_pad)
+        header_margin.add_theme_constant_override("margin_top", top_pad)
+
+    var header_row := _panel.get_node_or_null("VBox/HeaderMargin/HeaderRow") as HBoxContainer
+    if header_row:
+        header_row.add_theme_constant_override("separation", row_gap)
+
+    var scroll_margin := _panel.get_node_or_null("VBox/ScrollMargin") as MarginContainer
+    if scroll_margin:
+        scroll_margin.add_theme_constant_override("margin_left", side_pad)
+        scroll_margin.add_theme_constant_override("margin_right", side_pad)
+
+    var token_panel_margin := _panel.get_node_or_null("VBox/TokenPanelMargin") as MarginContainer
+    if token_panel_margin:
+        token_panel_margin.add_theme_constant_override("margin_left", side_pad)
+        token_panel_margin.add_theme_constant_override("margin_right", side_pad)
+        token_panel_margin.add_theme_constant_override("margin_bottom", (8 if compact else (10 if large else 9)))
+
+    var token_margin := _panel.get_node_or_null("VBox/TokenPanelMargin/TokenPanel/TokenMargin") as MarginContainer
+    if token_margin:
+        token_margin.add_theme_constant_override("margin_left", token_inner_lr)
+        token_margin.add_theme_constant_override("margin_right", token_inner_lr)
+        token_margin.add_theme_constant_override("margin_top", token_inner_tb)
+        token_margin.add_theme_constant_override("margin_bottom", token_inner_tb)
+
+    if _title_label:
+        _title_label.add_theme_font_size_override("font_size", title_font_size)
+    if _token_title:
+        _token_title.add_theme_font_size_override("font_size", token_title_font_size)
+    if _close_button:
+        _close_button.custom_minimum_size = Vector2(close_w, close_h)
+        _close_button.add_theme_font_size_override("font_size", close_font_size)
+    if _skill_list:
+        _skill_list.add_theme_constant_override("separation", (8 if compact else (12 if large else 10)))
+
+func _get_layout_reference_rect() -> Rect2:
+    if Engine.is_editor_hint():
+        if _overlay:
+            var overlay_rect := _overlay.get_rect()
+            if overlay_rect.size.x > 0.0 and overlay_rect.size.y > 0.0:
+                return overlay_rect
+        var vw := float(ProjectSettings.get_setting("display/window/size/viewport_width", 1024))
+        var vh := float(ProjectSettings.get_setting("display/window/size/viewport_height", 576))
+        if vw > 0.0 and vh > 0.0:
+            return Rect2(Vector2.ZERO, Vector2(vw, vh))
+        if size.x > 0.0 and size.y > 0.0:
+            return Rect2(Vector2.ZERO, size)
+    var vp := get_viewport()
+    if vp == null:
+        return Rect2()
+    return vp.get_visible_rect()
 
 func _acquire_banner_lock() -> void:
     if _banner_lock_active:
@@ -306,6 +491,51 @@ func _reset_scroll_position() -> void:
         _scroll.scroll_horizontal = 0
         _scroll.scroll_vertical = 0
 
+func _setup_editor_preview() -> void:
+    visible = true
+    mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _configure_scroll_container()
+    _load_fonts()
+    _apply_visual_theme()
+    _apply_panel_layout_for_viewport()
+    _refresh_texts()
+    set_debug_snapshot(_PREVIEW_SNAPSHOT)
+    _refresh_content()
+    call_deferred("_apply_content_layout")
+    call_deferred("_fit_panel_height_to_content")
+    _reset_scroll_position()
+
+func _open_preview_mode() -> void:
+    if not _debug_snapshot.is_empty():
+        open_panel()
+        return
+    set_debug_snapshot(_PREVIEW_SNAPSHOT)
+    open_panel()
+
+func set_debug_snapshot(snapshot: Array) -> void:
+    _debug_snapshot = snapshot.duplicate(true)
+    if visible:
+        _refresh_content()
+        _apply_content_layout()
+
+func _is_standalone_preview_context() -> bool:
+    if Engine.is_editor_hint():
+        return false
+    var tree := get_tree()
+    return tree != null and tree.current_scene == self
+
+func _configure_scroll_container() -> void:
+    if _scroll == null:
+        return
+    _scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+    _scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+    _scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+    var scroll_margin := _scroll.get_parent() as Control
+    if scroll_margin:
+        scroll_margin.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+    if not _scroll.resized.is_connected(_on_layout_changed):
+        _scroll.resized.connect(_on_layout_changed)
+
 func _apply_visual_theme() -> void:
     if _overlay:
         _overlay.color = Color(0.01, 0.05, 0.11, 0.62)
@@ -375,9 +605,11 @@ func _refresh_content() -> void:
         _skill_list.remove_child(child)
         child.queue_free()
 
-    var snapshot: Array = []
-    if GameManager and GameManager.has_method("get_skill_progress_snapshot"):
+    var snapshot: Array = _debug_snapshot.duplicate(true)
+    if snapshot.is_empty() and GameManager and GameManager.has_method("get_skill_progress_snapshot"):
         snapshot = GameManager.get_skill_progress_snapshot()
+    if snapshot.is_empty() and _is_standalone_preview_context():
+        snapshot = _PREVIEW_SNAPSHOT.duplicate(true)
     _last_snapshot = snapshot.duplicate(true)
 
     for item_any in snapshot:
@@ -408,6 +640,8 @@ func _apply_content_layout() -> void:
         var max_scroll_unchanged := int(_scroll.get_h_scroll_bar().max_value)
         _scroll.scroll_horizontal = clampi(_scroll.scroll_horizontal, 0, max_scroll_unchanged)
         _update_token_grid_columns()
+        _fit_panel_height_to_content()
+        call_deferred("_fit_panel_height_to_content")
         return
 
     _layout_busy = true
@@ -416,20 +650,44 @@ func _apply_content_layout() -> void:
     var basis_h: float = _last_panel_viewport_size.y if _last_panel_viewport_size.y > 0.0 else _scroll.size.y
     var basis_w: float = _last_panel_viewport_size.x if _last_panel_viewport_size.x > 0.0 else _scroll.size.x
     var landscape: bool = basis_w >= basis_h
-    var card_height_ratio: float = 0.25 if landscape else 0.2
-    var card_height := clampf(basis_h * card_height_ratio, 102.0, 138.0)
-    var card_width := clampf(_scroll.size.x * 0.78, 300.0, 500.0)
-    var target_scroll_height := card_height + 12.0
+    var card_height_ratio: float
+    var card_min_h: float
+    var card_max_h: float
+    var card_width_ratio: float
+    if basis_w >= 1100.0:
+        card_height_ratio = (0.35 if landscape else 0.29)
+        card_min_h = 152.0
+        card_max_h = 206.0
+        card_width_ratio = 0.62
+    elif basis_w >= 820.0:
+        card_height_ratio = (0.32 if landscape else 0.27)
+        card_min_h = 138.0
+        card_max_h = 194.0
+        card_width_ratio = 0.74
+    else:
+        card_height_ratio = 0.29
+        card_min_h = 126.0
+        card_max_h = 178.0
+        card_width_ratio = 0.9
+
+    var card_height: float = clampf(basis_h * card_height_ratio, card_min_h, card_max_h)
+    var gap: float = float(_skill_list.get_theme_constant("separation"))
+    var card_width: float = clampf(_scroll.size.x * card_width_ratio, 260.0, 520.0)
+    if child_count >= 2 and basis_w >= 820.0:
+        var two_card_width: float = floor((_scroll.size.x - gap - 2.0) * 0.5)
+        card_width = clampf(two_card_width, 260.0, 520.0)
+    var target_scroll_height: float = card_height + (20.0 if basis_w >= 1100.0 else 16.0)
+    _scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
     _scroll.custom_minimum_size.y = target_scroll_height
     var scroll_margin := _scroll.get_parent() as Control
     if scroll_margin:
+        scroll_margin.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
         scroll_margin.custom_minimum_size.y = target_scroll_height
     for child in _skill_list.get_children():
         if child is Control:
             var ctl := child as Control
             ctl.custom_minimum_size = Vector2(card_width, card_height)
-    var gap := float(_skill_list.get_theme_constant("separation"))
-    var total_width := 24.0
+    var total_width := 0.0
     if child_count > 0:
         total_width += float(child_count) * card_width
         total_width += float(maxi(child_count - 1, 0)) * gap
@@ -437,6 +695,8 @@ func _apply_content_layout() -> void:
     var max_scroll := _get_max_horizontal_scroll()
     _scroll.scroll_horizontal = clampi(_scroll.scroll_horizontal, 0, max_scroll)
     _update_token_grid_columns()
+    _fit_panel_height_to_content()
+    call_deferred("_fit_panel_height_to_content")
     _layout_busy = false
 
 func _build_skill_card(item: Dictionary) -> Control:
@@ -451,29 +711,29 @@ func _build_skill_card(item: Dictionary) -> Control:
     var card_style := StyleBoxFlat.new()
     card_style.bg_color = Color(0.05, 0.12, 0.2, 0.94)
     card_style.border_color = accent
-    card_style.set_border_width_all(1)
-    card_style.set_corner_radius_all(12)
-    card_style.content_margin_left = 7
-    card_style.content_margin_right = 7
-    card_style.content_margin_top = 6
-    card_style.content_margin_bottom = 6
+    card_style.set_border_width_all(2)
+    card_style.set_corner_radius_all(14)
+    card_style.content_margin_left = 10
+    card_style.content_margin_right = 10
+    card_style.content_margin_top = 8
+    card_style.content_margin_bottom = 8
     card.add_theme_stylebox_override("panel", card_style)
 
     var root := VBoxContainer.new()
     root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    root.add_theme_constant_override("separation", 5)
+    root.add_theme_constant_override("separation", 7)
     root.mouse_filter = Control.MOUSE_FILTER_IGNORE
     card.add_child(root)
 
     var top := HBoxContainer.new()
     top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    top.add_theme_constant_override("separation", 6)
+    top.add_theme_constant_override("separation", 8)
     top.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(top)
 
     var icon_wrap := PanelContainer.new()
-    icon_wrap.custom_minimum_size = Vector2(40, 40)
+    icon_wrap.custom_minimum_size = Vector2(42, 42)
     icon_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
     var icon_style := StyleBoxFlat.new()
     icon_style.bg_color = accent.darkened(0.67)
@@ -482,6 +742,12 @@ func _build_skill_card(item: Dictionary) -> Control:
     icon_style.set_corner_radius_all(30)
     icon_wrap.add_theme_stylebox_override("panel", icon_style)
     top.add_child(icon_wrap)
+
+    var icon_center := CenterContainer.new()
+    icon_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    icon_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    icon_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    icon_wrap.add_child(icon_center)
 
     var icon := TextureRect.new()
     icon.custom_minimum_size = Vector2(24, 24)
@@ -494,10 +760,11 @@ func _build_skill_card(item: Dictionary) -> Control:
         icon.texture = tex
     else:
         icon.modulate = Color(1, 1, 1, 0.0)
-    icon_wrap.add_child(icon)
+    icon_center.add_child(icon)
 
     var title_row := HBoxContainer.new()
     title_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    title_row.add_theme_constant_override("separation", 8)
     title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
     top.add_child(title_row)
 
@@ -512,18 +779,18 @@ func _build_skill_card(item: Dictionary) -> Control:
         title.add_theme_font_override("font", _title_font)
     elif _value_font:
         title.add_theme_font_override("font", _value_font)
-    title.add_theme_font_size_override("font_size", 17)
+    title.add_theme_font_size_override("font_size", 18)
     title.add_theme_color_override("font_color", Color(0.96, 0.97, 1.0, 1.0))
     title_row.add_child(title)
 
     var lv := Label.new()
-    lv.custom_minimum_size = Vector2(72, 20)
+    lv.custom_minimum_size = Vector2(78, 20)
     lv.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
     lv.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     lv.text = "%s %d/%d" % [tr("Lv"), int(item.get("level_current", 1)), int(item.get("level_max", 1))]
     if _value_font:
         lv.add_theme_font_override("font", _value_font)
-    lv.add_theme_font_size_override("font_size", 13)
+    lv.add_theme_font_size_override("font_size", 14)
     lv.add_theme_color_override("font_color", Color(0.99, 0.86, 0.2, 1.0))
     lv.autowrap_mode = TextServer.AUTOWRAP_OFF
     lv.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -532,7 +799,7 @@ func _build_skill_card(item: Dictionary) -> Control:
     title_row.add_child(lv)
 
     var progress := ProgressBar.new()
-    progress.custom_minimum_size = Vector2(0, 8)
+    progress.custom_minimum_size = Vector2(0, 9)
     progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     progress.max_value = float(maxi(int(item.get("level_max", 1)), 1))
     progress.value = float(clampi(int(item.get("level_current", 1)), 1, int(progress.max_value)))
@@ -548,10 +815,12 @@ func _build_skill_card(item: Dictionary) -> Control:
     progress.add_theme_stylebox_override("fill", p_fill)
     root.add_child(progress)
 
-    var stats := HFlowContainer.new()
+    var stats := GridContainer.new()
+    stats.columns = 3
     stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    stats.add_theme_constant_override("h_separation", 6)
-    stats.add_theme_constant_override("v_separation", 6)
+    stats.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+    stats.add_theme_constant_override("h_separation", 5)
+    stats.add_theme_constant_override("v_separation", 0)
     stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(stats)
 
@@ -567,30 +836,32 @@ func _build_skill_card(item: Dictionary) -> Control:
 
 func _make_stat_chip(label_text: String, value_text: String, accent: Color, emphasize: bool = false) -> Control:
     var chip := PanelContainer.new()
-    chip.size_flags_horizontal = Control.SIZE_FILL
-    chip.custom_minimum_size = Vector2(96.0, 36.0)
+    chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    chip.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+    chip.custom_minimum_size = Vector2(0.0, 34.0)
     chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
     var chip_style := StyleBoxFlat.new()
     chip_style.bg_color = (accent.darkened(0.8) if emphasize else Color(0.04, 0.09, 0.15, 0.9))
     chip_style.border_color = (accent if emphasize else accent.darkened(0.4))
     chip_style.set_border_width_all(1)
-    chip_style.set_corner_radius_all(6)
-    chip_style.content_margin_left = 7
-    chip_style.content_margin_right = 7
-    chip_style.content_margin_top = 4
-    chip_style.content_margin_bottom = 4
+    chip_style.set_corner_radius_all(7)
+    chip_style.content_margin_left = 5
+    chip_style.content_margin_right = 5
+    chip_style.content_margin_top = 3
+    chip_style.content_margin_bottom = 3
     chip.add_theme_stylebox_override("panel", chip_style)
 
     var row := VBoxContainer.new()
     row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    row.add_theme_constant_override("separation", 1)
+    row.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+    row.add_theme_constant_override("separation", 0)
     row.mouse_filter = Control.MOUSE_FILTER_IGNORE
     chip.add_child(row)
 
     var label := Label.new()
     label.size_flags_horizontal = Control.SIZE_FILL
     label.text = label_text
-    label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+    label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     label.autowrap_mode = TextServer.AUTOWRAP_OFF
     label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
     label.clip_text = true
@@ -603,7 +874,7 @@ func _make_stat_chip(label_text: String, value_text: String, accent: Color, emph
 
     var value := Label.new()
     value.custom_minimum_size = Vector2(0, 0)
-    value.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+    value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     value.text = value_text
     value.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -635,34 +906,70 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         if counts.has(id):
             counts[id] = int(item.get("token_count", 0))
 
+    var width_ref: float = _last_panel_viewport_size.x
+    if width_ref <= 0.0 and _token_panel:
+        width_ref = _token_panel.size.x
+    if width_ref <= 0.0:
+        width_ref = _token_grid.size.x
+
     for child in _token_grid.get_children():
         child.queue_free()
-    _token_grid.add_theme_constant_override("h_separation", 8)
-    _token_grid.add_theme_constant_override("v_separation", 8)
+
+    var grid_h_gap: int = 6
+    var grid_v_gap: int = 6
+    if width_ref > 0.0 and width_ref < 720.0:
+        grid_h_gap = 5
+        grid_v_gap = 4
+    elif width_ref >= _RESP_LARGE_W:
+        grid_h_gap = 8
+        grid_v_gap = 6
+    _token_grid.add_theme_constant_override("h_separation", grid_h_gap)
+    _token_grid.add_theme_constant_override("v_separation", grid_v_gap)
+
+    var token_card_h: float = 60.0
+    var token_icon_size: float = 24.0
+    var token_name_font: int = 12
+    var token_value_font: int = 20
+    var token_pad_lr: float = 9.0
+    var token_pad_tb: float = 4.0
+    if width_ref > 0.0 and width_ref < 720.0:
+        token_card_h = 56.0
+        token_icon_size = 20.0
+        token_name_font = 10
+        token_value_font = 16
+        token_pad_lr = 7.0
+        token_pad_tb = 3.0
+    elif width_ref > 0.0 and width_ref < 980.0:
+        token_card_h = 58.0
+        token_icon_size = 24.0
+        token_name_font = 11
+        token_value_font = 18
+        token_pad_lr = 8.0
+        token_pad_tb = 4.0
 
     for token_id in _TOKEN_ORDER:
         var accent := Color(_TOKEN_ACCENT_MAP.get(token_id, Color(0.67, 0.79, 0.89, 1.0)))
         var card := PanelContainer.new()
         card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        card.custom_minimum_size.y = 64.0
+        card.custom_minimum_size.y = token_card_h
         var card_style := StyleBoxFlat.new()
         card_style.bg_color = Color(0.05, 0.1, 0.17, 0.92)
         card_style.border_color = accent
         card_style.set_border_width_all(1)
         card_style.set_corner_radius_all(10)
-        card_style.content_margin_left = 7
-        card_style.content_margin_right = 7
-        card_style.content_margin_top = 5
-        card_style.content_margin_bottom = 5
+        card_style.content_margin_left = token_pad_lr
+        card_style.content_margin_right = token_pad_lr
+        card_style.content_margin_top = token_pad_tb
+        card_style.content_margin_bottom = token_pad_tb
         card.add_theme_stylebox_override("panel", card_style)
 
         var row := HBoxContainer.new()
         row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.add_theme_constant_override("separation", 6)
+        row.add_theme_constant_override("separation", 4)
         card.add_child(row)
 
         var icon := TextureRect.new()
-        icon.custom_minimum_size = Vector2(24, 24)
+        icon.custom_minimum_size = Vector2(token_icon_size, token_icon_size)
         icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
         icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
         var icon_tex := _get_icon(String(_TOKEN_ICON_MAP.get(token_id, "")))
@@ -672,7 +979,7 @@ func _refresh_token_inventory(snapshot: Array) -> void:
 
         var right := VBoxContainer.new()
         right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        right.add_theme_constant_override("separation", 2)
+        right.add_theme_constant_override("separation", 0)
         row.add_child(right)
 
         var name_lbl := Label.new()
@@ -682,7 +989,7 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         name_lbl.clip_text = true
         if _body_font:
             name_lbl.add_theme_font_override("font", _body_font)
-        name_lbl.add_theme_font_size_override("font_size", 12)
+        name_lbl.add_theme_font_size_override("font_size", token_name_font)
         name_lbl.add_theme_color_override("font_color", Color(0.78, 0.9, 1.0, 0.95))
         right.add_child(name_lbl)
 
@@ -691,7 +998,7 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         value_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
         if _title_font:
             value_lbl.add_theme_font_override("font", _title_font)
-        value_lbl.add_theme_font_size_override("font_size", 20)
+        value_lbl.add_theme_font_size_override("font_size", token_value_font)
         value_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2, 1.0))
         right.add_child(value_lbl)
 
@@ -706,7 +1013,9 @@ func _update_token_grid_columns() -> void:
     if width_ref <= 0.0 and _token_panel:
         width_ref = _token_panel.size.x - 20.0
     var columns := 4
-    if width_ref > 0.0 and width_ref < 620.0:
+    if width_ref > 0.0 and width_ref < 560.0:
+        columns = 1
+    elif width_ref > 0.0 and width_ref < 980.0:
         columns = 2
     _token_grid.columns = columns
 

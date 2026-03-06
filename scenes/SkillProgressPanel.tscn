@@ -1,18 +1,89 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://b0luv8wbmy2it"]
 
-[ext_resource type="Script" path="res://scripts/SkillProgressPanel.gd" id="1_2s5ld"]
+[ext_resource type="Script" uid="uid://ccux1wa06guc" path="res://scripts/SkillProgressPanel.gd" id="1_2s5ld"]
+[ext_resource type="FontFile" uid="uid://o0jysom6laxf" path="res://assets/font/Fredoka Nunito/Fredoka/static/Fredoka-Bold.ttf" id="2_2k0qf"]
 
-[node name="SkillProgressPanel" type="Control"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2k0qf"]
+bg_color = Color(0.03, 0.09, 0.17, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.06, 0.72, 0.96, 0.86)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+shadow_color = Color(0, 0, 0, 0.34)
+shadow_size = 10
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j8yry"]
+bg_color = Color(0.08, 0.2, 0.34, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.1, 0.74, 0.95, 0.9)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bt2j4"]
+bg_color = Color(0.05, 0.12, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.1, 0.74, 0.95, 0.9)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1jcsg"]
+bg_color = Color(0.1, 0.27, 0.42, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.1, 0.74, 0.95, 0.9)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5frdw"]
+bg_color = Color(0.01, 0.06, 0.12, 0.46)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g83o4"]
+bg_color = Color(0.02, 0.07, 0.13, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.98, 0.83, 0.2, 0.75)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="SkillProgressPanel" type="Control" unique_id=173448352]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
+mouse_filter = 2
 script = ExtResource("1_2s5ld")
 
-[node name="Overlay" type="ColorRect" parent="."]
+[node name="Overlay" type="ColorRect" parent="." unique_id=18607557]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -20,101 +91,118 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.65)
+color = Color(0.01, 0.05, 0.11, 0.62)
 
-[node name="Panel" type="PanelContainer" parent="."]
+[node name="Panel" type="PanelContainer" parent="." unique_id=342885466]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = -1
 anchor_left = 0.08
-anchor_top = 0.08
 anchor_right = 0.92
-anchor_bottom = 0.92
+offset_top = 10.0
+offset_bottom = 566.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_2k0qf")
 
-[node name="VBox" type="VBoxContainer" parent="Panel"]
+[node name="VBox" type="VBoxContainer" parent="Panel" unique_id=958913146]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="HeaderMargin" type="MarginContainer" parent="Panel/VBox"]
+[node name="HeaderMargin" type="MarginContainer" parent="Panel/VBox" unique_id=1403934896]
 layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 0
 
-[node name="HeaderRow" type="HBoxContainer" parent="Panel/VBox/HeaderMargin"]
+[node name="HeaderRow" type="HBoxContainer" parent="Panel/VBox/HeaderMargin" unique_id=503234841]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="TitleLabel" type="Label" parent="Panel/VBox/HeaderMargin/HeaderRow"]
+[node name="TitleLabel" type="Label" parent="Panel/VBox/HeaderMargin/HeaderRow" unique_id=543495442]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.99, 0.87, 0.22, 1)
+theme_override_constants/outline_size = 0
+theme_override_fonts/font = ExtResource("2_2k0qf")
 theme_override_font_sizes/font_size = 28
 text = "Skill Progress"
 
-[node name="CloseButton" type="Button" parent="Panel/VBox/HeaderMargin/HeaderRow"]
+[node name="CloseButton" type="Button" parent="Panel/VBox/HeaderMargin/HeaderRow" unique_id=1599348247]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 42)
 layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.96, 1, 1)
+theme_override_fonts/font = ExtResource("2_2k0qf")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_j8yry")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_bt2j4")
+theme_override_styles/hover = SubResource("StyleBoxFlat_1jcsg")
+theme_override_styles/focus = SubResource("StyleBoxFlat_j8yry")
 text = "Tutup"
 
-[node name="ScrollMargin" type="MarginContainer" parent="Panel/VBox"]
+[node name="ScrollMargin" type="MarginContainer" parent="Panel/VBox" unique_id=1319245842]
+custom_minimum_size = Vector2(0, 200.32)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 0
 
-[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/ScrollMargin"]
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/ScrollMargin" unique_id=1685462149]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 200.32)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_5frdw")
 horizontal_scroll_mode = 3
-vertical_scroll_mode = 3
+vertical_scroll_mode = 0
 
-[node name="SkillList" type="HBoxContainer" parent="Panel/VBox/ScrollMargin/Scroll"]
+[node name="SkillList" type="HBoxContainer" parent="Panel/VBox/ScrollMargin/Scroll" unique_id=1614858002]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(1654, 184.32)
 layout_mode = 2
-size_flags_vertical = 1
 theme_override_constants/separation = 10
 
-[node name="TokenPanelMargin" type="MarginContainer" parent="Panel/VBox"]
+[node name="TokenPanelMargin" type="MarginContainer" parent="Panel/VBox" unique_id=910366959]
 layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 12
 
-[node name="TokenPanel" type="PanelContainer" parent="Panel/VBox/TokenPanelMargin"]
+[node name="TokenPanel" type="PanelContainer" parent="Panel/VBox/TokenPanelMargin" unique_id=1446100289]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_g83o4")
 
-[node name="TokenMargin" type="MarginContainer" parent="Panel/VBox/TokenPanelMargin/TokenPanel"]
+[node name="TokenMargin" type="MarginContainer" parent="Panel/VBox/TokenPanelMargin/TokenPanel" unique_id=670665264]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_bottom = 8
 
-[node name="TokenVBox" type="VBoxContainer" parent="Panel/VBox/TokenPanelMargin/TokenPanel/TokenMargin"]
+[node name="TokenVBox" type="VBoxContainer" parent="Panel/VBox/TokenPanelMargin/TokenPanel/TokenMargin" unique_id=1085440258]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="TokenTitle" type="Label" parent="Panel/VBox/TokenPanelMargin/TokenPanel/TokenMargin/TokenVBox"]
+[node name="TokenTitle" type="Label" parent="Panel/VBox/TokenPanelMargin/TokenPanel/TokenMargin/TokenVBox" unique_id=1636104830]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.99, 0.83, 0.17, 1)
+theme_override_fonts/font = ExtResource("2_2k0qf")
+theme_override_font_sizes/font_size = 19
 text = "Skill Tokens"
 
-[node name="TokenGrid" type="GridContainer" parent="Panel/VBox/TokenPanelMargin/TokenPanel/TokenMargin/TokenVBox"]
+[node name="TokenGrid" type="GridContainer" parent="Panel/VBox/TokenPanelMargin/TokenPanel/TokenMargin/TokenVBox" unique_id=821123274]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
 columns = 2
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 6
