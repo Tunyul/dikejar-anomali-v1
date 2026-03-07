@@ -7,6 +7,15 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 - Belum ada perubahan.
 
+## [1.3.54-beta] - 2026-03-07
+
+- Pooling Safety: hardening pool collectible di `InfiniteGround` dan `GameManager` agar node yang sudah `queue_free()`/invalid tidak bisa masuk atau dipakai lagi dari pool, menutup crash Android `Trying to assign invalid previously freed instance` pada heart/power-up.
+- Season Rewards Performance: optimasi render daftar hadiah dengan pooling card dan refresh visible-range yang didefer per frame, sehingga scroll horizontal tidak lagi membuang dan membuat ulang item terus-menerus saat drag.
+- Season Rewards UX: menu sekarang langsung fokus ke level player aktif saat dibuka, bukan selalu mulai dari reward level 1.
+- Season Rewards Feedback: tambah loading overlay ringan dengan spinner coin saat menu dibuka dan saat daftar hadiah sedang di-refresh ketika drag/scroll.
+- Android Export Metadata: sinkronisasi `project.godot`, `export_presets.cfg`, dan badge `README` ke versi `1.3.54-beta`.
+- Naik versi proyek ke `1.3.54-beta`.
+
 ## [1.3.53-beta] - 2026-03-06
 
 - Stability Guard: Aktifkan warning kritis GDScript sebagai error (`shadowed_variable`, `shadowed_variable_base_class`) di `project.godot` untuk mencegah warning lolos ke build QA.

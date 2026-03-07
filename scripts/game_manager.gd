@@ -2130,6 +2130,15 @@ func activate_speed_boost(d: float = 0.0, m: float = 0.0) -> void:
 func is_speed_boost_active() -> bool:
     return speed_boost_timer > 0.0 and speed_boost_multiplier > 1.0
 
+func _recycle_ground_collectible(node: Node, ground: Node) -> bool:
+    if node == null or not is_instance_valid(node):
+        return false
+    if node.is_queued_for_deletion():
+        return true
+    if ground != null and ground.has_method("return_spawned_node_to_pool"):
+        return bool(ground.call("return_spawned_node_to_pool", node))
+    return false
+
 func _clear_existing_magnets_and_shields() -> void:
     var grounds: Array = []
     if ground_a != null:
@@ -2144,7 +2153,8 @@ func _clear_existing_magnets_and_shields() -> void:
                 continue
             for c in root.get_children():
                 if (c is MagnetPowerup) or (c is ShieldPowerup) or c.is_in_group("shield_powerup"):
-                    c.queue_free()
+                    if not _recycle_ground_collectible(c, g):
+                        c.queue_free()
 
 func _clear_existing_speed_boosts() -> void:
     var grounds: Array = []
@@ -2160,7 +2170,8 @@ func _clear_existing_speed_boosts() -> void:
                 continue
             for c in root.get_children():
                 if c is SpeedBoostPowerup:
-                    c.queue_free()
+                    if not _recycle_ground_collectible(c, g):
+                        c.queue_free()
 
 func _clear_existing_hearts() -> void:
     var grounds: Array = []
@@ -2175,7 +2186,8 @@ func _clear_existing_hearts() -> void:
                 continue
             for c in root.get_children():
                 if c is HeartPickup:
-                    c.queue_free()
+                    if not _recycle_ground_collectible(c, g):
+                        c.queue_free()
 
 func _recycle_powerups_behind_player() -> void:
     if phase != Phase.PLAYING:
@@ -2223,7 +2235,8 @@ func _recycle_powerups_behind_player() -> void:
                 if not n2.is_inside_tree():
                     continue
                 if n2.global_position.x < left_limit:
-                    n2.queue_free()
+                    if not _recycle_ground_collectible(n2, g):
+                        n2.queue_free()
 
 func _ensure_skills_ahead_of_player() -> void:
     if phase != Phase.PLAYING:
@@ -3747,7 +3760,8 @@ func _clear_existing_double_coins() -> void:
                 continue
             for c in root.get_children():
                 if c is DoubleCoinsPowerup:
-                    c.queue_free()
+                    if not _recycle_ground_collectible(c, g):
+                        c.queue_free()
 
 func set_player_health(current: int, maximum: int) -> void:
     var prev_current: int = _last_health_current

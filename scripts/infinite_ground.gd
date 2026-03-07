@@ -210,10 +210,16 @@ const _BASE_SEGMENT_TILES: int = 64
 
 # ===== POOL MANAGEMENT =====
 func _get_from_pool(pool: Array[Node2D], scene: PackedScene) -> Node2D:
-    var inst: Node2D
-    if not pool.is_empty():
-        inst = pool.pop_back()
-    else:
+    var inst: Node2D = null
+    while not pool.is_empty():
+        var candidate: Node2D = pool.pop_back() as Node2D
+        if candidate == null or not is_instance_valid(candidate):
+            continue
+        if candidate.is_queued_for_deletion():
+            continue
+        inst = candidate
+        break
+    if inst == null:
         inst = scene.instantiate() as Node2D
 
     if inst and inst.has_method("reset"):
@@ -230,6 +236,8 @@ const _POOL_RETURN_META := "_pool_return_queued"
 func _append_node_to_pool(node: Node, pool: Array[Node2D]) -> void:
     if node == null or not is_instance_valid(node):
         return
+    if node.is_queued_for_deletion():
+        return
     if node.has_meta(_POOL_RETURN_META):
         node.remove_meta(_POOL_RETURN_META)
     if node is Node2D:
@@ -239,6 +247,8 @@ func _append_node_to_pool(node: Node, pool: Array[Node2D]) -> void:
 
 func _return_to_pool_deferred(node: Node, pool: Array[Node2D]) -> void:
     if node == null or not is_instance_valid(node):
+        return
+    if node.is_queued_for_deletion():
         return
     if node.get_parent():
         node.get_parent().remove_child(node)
