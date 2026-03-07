@@ -795,6 +795,9 @@ func _apply_responsive_layout(vp: Vector2) -> void:
     var inset_top := safe.position.y
     var inset_right := maxf(vp.x - (safe.position.x + safe.size.x), 0.0)
     var inset_bottom := maxf(vp.y - (safe.position.y + safe.size.y), 0.0)
+    var use_horizontal_safe_inset := not OS.has_feature("android")
+    var horizontal_left := inset_left if use_horizontal_safe_inset else 0.0
+    var horizontal_right := inset_right if use_horizontal_safe_inset else 0.0
 
     if _parallax_bg:
         var bg_sprite := %Sprite
@@ -815,9 +818,9 @@ func _apply_responsive_layout(vp: Vector2) -> void:
         _ui_vbox.anchor_right = 1.0
         _ui_vbox.anchor_bottom = 1.0
 
-        _ui_vbox.offset_left = inset_left
+        _ui_vbox.offset_left = horizontal_left
         _ui_vbox.offset_top = inset_top
-        _ui_vbox.offset_right = -inset_right
+        _ui_vbox.offset_right = -horizontal_right
         _ui_vbox.offset_bottom = -inset_bottom
 
     if _close_button:
@@ -825,9 +828,9 @@ func _apply_responsive_layout(vp: Vector2) -> void:
         _close_button.anchor_top = 0.0
         _close_button.anchor_right = 1.0
         _close_button.anchor_bottom = 0.0
-        _close_button.offset_left = -96.0 - inset_right
+        _close_button.offset_left = -96.0 - horizontal_right
         _close_button.offset_top = 16.0 + inset_top
-        _close_button.offset_right = -16.0 - inset_right
+        _close_button.offset_right = -16.0 - horizontal_right
         _close_button.offset_bottom = 96.0 + inset_top
 
     if _title_label:
@@ -1297,6 +1300,59 @@ func _init_shop_data() -> void:
         }
     ]
 
+    var coin_exchange_gem_items: Array = [
+        {
+            "id": "coins_from_gems_small",
+            "name": "180 Coins",
+            "description": "Tukar 5 gems menjadi 180 coins.",
+            "price": 5,
+            "currency": "gems",
+            "coin_grant": 180,
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
+            "rarity": "common"
+        },
+        {
+            "id": "coins_from_gems_medium",
+            "name": "360 Coins",
+            "description": "Tukar 10 gems menjadi 360 coins.",
+            "price": 10,
+            "currency": "gems",
+            "coin_grant": 360,
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
+            "rarity": "rare"
+        },
+        {
+            "id": "coins_from_gems_large",
+            "name": "950 Coins",
+            "description": "Tukar 25 gems menjadi 950 coins.",
+            "price": 25,
+            "currency": "gems",
+            "coin_grant": 950,
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
+            "rarity": "epic"
+        },
+        {
+            "id": "coins_from_gems_mega",
+            "name": "2.000 Coins",
+            "description": "Tukar 50 gems menjadi 2.000 coins.",
+            "price": 50,
+            "currency": "gems",
+            "coin_grant": 2000,
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
+            "rarity": "legendary"
+        },
+        {
+            "id": "coins_from_gems_ultra",
+            "name": "4.200 Coins",
+            "description": "Tukar 100 gems menjadi 4.200 coins.",
+            "price": 100,
+            "currency": "gems",
+            "coin_grant": 4200,
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
+            "rarity": "legendary"
+        }
+    ]
+
     var border_items: Array = [
         {
             "id": "border_gold_premium",
@@ -1468,6 +1524,12 @@ func _init_shop_data() -> void:
     })
 
     shop_groups.append({
+        "id": "coins_exchange_gems",
+        "title": "Coin Exchange (Gems)",
+        "items": coin_exchange_gem_items
+    })
+
+    shop_groups.append({
         "id": "cosmetics_coins",
         "title": "Cosmetics (Coins)",
         "items": cosmetic_coin_items
@@ -1634,6 +1696,34 @@ func _init_editor_dummy_data() -> void:
         "id": "upgrades_gems",
         "title": "Upgrades (Gems)",
         "items": upgrade_gem_items
+    })
+
+    var coin_exchange_gem_items: Array = [
+        {
+            "id": "coins_from_gems_small",
+            "name": "180 Coins",
+            "description": "Tukar 5 gems menjadi 180 coins.",
+            "price": 5,
+            "currency": "gems",
+            "coin_grant": 180,
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
+            "rarity": "common"
+        },
+        {
+            "id": "coins_from_gems_medium",
+            "name": "360 Coins",
+            "description": "Tukar 10 gems menjadi 360 coins.",
+            "price": 10,
+            "currency": "gems",
+            "coin_grant": 360,
+            "icon": "res://assets/coin_animation/png/2x/Coin.png",
+            "rarity": "rare"
+        }
+    ]
+    shop_groups.append({
+        "id": "coins_exchange_gems",
+        "title": "Coin Exchange (Gems)",
+        "items": coin_exchange_gem_items
     })
 
     # 3. Cosmetics (Coins) Dummy - 2 items
@@ -2103,6 +2193,39 @@ func _create_item_card(item: Dictionary) -> Control:
         _apply_shop_number_font(price_lbl)
         vbox.add_child(price_lbl)
 
+    if _is_coin_exchange_item(item):
+        var gain_row := HBoxContainer.new()
+        gain_row.alignment = BoxContainer.ALIGNMENT_CENTER
+        gain_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        gain_row.mouse_filter = Control.MOUSE_FILTER_PASS
+        gain_row.add_theme_constant_override("separation", 6)
+
+        if _coin_icon_tex:
+            var gain_icon := TextureRect.new()
+            gain_icon.texture = _coin_icon_tex
+            gain_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+            gain_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+            gain_icon.custom_minimum_size = Vector2(22, 22)
+            gain_icon.mouse_filter = Control.MOUSE_FILTER_PASS
+            gain_row.add_child(gain_icon)
+
+        var gain_lbl := Label.new()
+        gain_lbl.text = "+%s %s" % [
+            _format_grouped_number(int(item.get("coin_grant", 0))),
+            tr("Coins")
+        ]
+        gain_lbl.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+        gain_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        gain_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+        gain_lbl.clip_text = false
+        gain_lbl.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+        gain_lbl.add_theme_color_override("font_color", Color(1.0, 0.92, 0.45, 1.0))
+        gain_lbl.add_theme_font_size_override("font_size", 16)
+        gain_lbl.mouse_filter = Control.MOUSE_FILTER_PASS
+        _apply_shop_number_font(gain_lbl)
+        gain_row.add_child(gain_lbl)
+        vbox.add_child(gain_row)
+
     var is_coming_soon := false
     var flags_any: Variant = item.get("flags", {})
     if flags_any is Dictionary:
@@ -2184,6 +2307,10 @@ func _update_buy_buttons_state() -> void:
                 else:
                     (b as Button).text = tr("Claim") + " +Ad"
             continue
+
+        if _is_coin_exchange_item(it):
+            if b is Button:
+                (b as Button).text = tr("Exchange")
 
         if is_upgrade and is_upgrade_max:
             (b as BaseButton).disabled = true
@@ -2389,6 +2516,15 @@ func _execute_purchase(item: Dictionary) -> void:
             if current_gems < price:
                 _set_status_text(tr("Not enough gems."))
                 return
+            if _is_coin_exchange_item(effective_item):
+                var exchange_ok := _apply_coin_exchange_purchase(effective_item, price)
+                if not exchange_ok:
+                    _set_status_text(tr("Purchase failed."))
+                    return
+                _build_groups_ui()
+                _update_buy_buttons_state()
+                _set_status_text(tr("Exchange successful: +%s Coins") % _format_grouped_number(int(effective_item.get("coin_grant", 0))))
+                return
             _save_gems(current_gems - price)
             if _is_skin_id(id):
                 _unlock_skin(id)
@@ -2567,6 +2703,26 @@ func _apply_item_to_powerups(item: Dictionary) -> void:
             var activate_result: Dictionary = GameManager.activate_skill(id, "shop_instant")
             if bool(activate_result.get("ok", false)) and GameManager.has_method("consume_powerup_token"):
                 GameManager.consume_powerup_token(id, true)
+
+func _is_coin_exchange_item(item: Dictionary) -> bool:
+    return String(item.get("currency", "")) == "gems" and int(item.get("coin_grant", 0)) > 0
+
+func _apply_coin_exchange_purchase(item: Dictionary, gem_cost: int) -> bool:
+    var coins_gain := maxi(int(item.get("coin_grant", 0)), 0)
+    if coins_gain <= 0:
+        return false
+    if GameManager and GameManager.has_method("adjust_currencies"):
+        GameManager.adjust_currencies(coins_gain, -maxi(gem_cost, 0), true, "shop_coin_exchange")
+        current_coins = _get_authoritative_coins()
+        current_gems = _get_authoritative_gems()
+    else:
+        _save_gems(current_gems - maxi(gem_cost, 0))
+        _save_coins(current_coins + coins_gain)
+    if _coins_label:
+        _coins_label.text = str(current_coins)
+    if _gems_label:
+        _gems_label.text = str(current_gems)
+    return true
 
 
 func _is_skin_id(id: String) -> bool:

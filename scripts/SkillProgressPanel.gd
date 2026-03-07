@@ -420,6 +420,13 @@ func _get_safe_layout_rect() -> Rect2:
     var sa := DisplayServer.get_display_safe_area()
     if sa.size.x <= 0 or sa.size.y <= 0:
         return layout_rect
+    if OS.has_feature("android"):
+        var inset_top := maxf(float(sa.position.y), 0.0)
+        var inset_bottom := maxf(layout_rect.size.y - (float(sa.position.y) + float(sa.size.y)), 0.0)
+        return Rect2(
+            Vector2(layout_rect.position.x, layout_rect.position.y + inset_top),
+            Vector2(layout_rect.size.x, maxf(layout_rect.size.y - inset_top - inset_bottom, 1.0))
+        )
     var safe_rect := Rect2(Vector2(sa.position), Vector2(sa.size))
     var merged := layout_rect.intersection(safe_rect)
     if merged.size.x <= 0.0 or merged.size.y <= 0.0:

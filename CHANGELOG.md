@@ -18,6 +18,10 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Skill Progress Responsive: panel skill progress kini memakai safe layout rect, margin horizontal adaptif, dan tuning ukuran card/scroll agar tidak clipping pada resolusi kecil.
 - Daily Missions Responsive: tuning komponen panel misi (tab/header/list/row claim) agar font, spacing, dan ukuran kontrol adaptif serta tetap terbaca di resolusi landscape kecil.
 - Season Rewards Open Sync Fix: perbaikan race saat open panel season pertama kali yang kadang kembali ke level 1; kini sinkronisasi scroll awal ke level player dilakukan robust (immediate + deferred) dengan fallback progres dari `save.cfg`.
+- Android Horizontal Safe-Area Fix: perbaikan layout Main Menu, Shop Menu, dan Skill Progress agar inset kiri-kanan dari safe-area Android tidak mendorong UI dan menyisakan area kosong di sisi kiri.
+- Profile Avatar Size Polish: pembesaran avatar/border pada HUD profil Main Menu dan panel profil agar lebih terbaca di layar mobile tanpa mengubah struktur layout stabil yang sudah ada.
+- Shop Coin Exchange (Gems): menambahkan grup pertukaran gems ke coins di Shop lengkap dengan alur exchange khusus, sinkronisasi saldo otoritatif, tombol `Exchange`, serta indikator hasil `+X Coins` pada kartu.
+- Shop Economy Rebalance: tuning ulang paket Coin Exchange ke rasio balance (`5->180`, `10->360`, `25->950`, `50->2.000`, `100->4.200`) agar tidak overpowered dan tetap memberi bonus bertahap untuk paket lebih besar.
 - QA Matrix Landscape: validasi headless lintas scene UI utama pada 1024x576, 1280x720, 1560x720, dan 1920x1080; hasil lulus tanpa error.
 - QA: validasi ulang `sanity_check.gd` dan `smoke_check_runner.gd` dalam mode headless, hasil lulus.
 - Version Sync: sinkronisasi `project.godot`, `export_presets.cfg`, `VERSION`, dan badge `README` ke `1.3.55-beta`.

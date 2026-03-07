@@ -1291,6 +1291,9 @@ func _apply_mainmenu_responsive_layout(vp_size: Vector2) -> void:
     var inset_top := safe.position.y
     var inset_right := maxf(vp_size.x - (safe.position.x + safe.size.x), 0.0)
     var inset_bottom := maxf(vp_size.y - (safe.position.y + safe.size.y), 0.0)
+    var use_horizontal_safe_inset := not OS.has_feature("android")
+    var horizontal_left := inset_left if use_horizontal_safe_inset else 0.0
+    var horizontal_right := inset_right if use_horizontal_safe_inset else 0.0
 
     if _center_container:
         _center_container.offset_top = inset_top
@@ -1302,25 +1305,25 @@ func _apply_mainmenu_responsive_layout(vp_size: Vector2) -> void:
         _buttons_row.pivot_offset = _buttons_row.size * 0.5
 
     var hud_scale := clampf(vp_size.x / 1024.0, 0.86, 1.0)
-    _set_hud_row_layout(_coin_hud_bg, _coin_hud, inset_left + 20.0, inset_top + 74.0, hud_scale)
-    _set_hud_row_layout(_gem_hud_bg, _gem_hud, inset_left + 20.0, inset_top + 138.0, hud_scale)
-    _set_hud_row_layout(_score_hud_bg, _score_hud, inset_left + 20.0, inset_top + 202.0, hud_scale)
+    _set_hud_row_layout(_coin_hud_bg, _coin_hud, horizontal_left + 20.0, inset_top + 74.0, hud_scale)
+    _set_hud_row_layout(_gem_hud_bg, _gem_hud, horizontal_left + 20.0, inset_top + 138.0, hud_scale)
+    _set_hud_row_layout(_score_hud_bg, _score_hud, horizontal_left + 20.0, inset_top + 202.0, hud_scale)
 
     if _player_hud:
-        _player_hud.offset_left = inset_left + 10.0
+        _player_hud.offset_left = horizontal_left + 10.0
         _player_hud.offset_top = inset_top + 10.0
-        _player_hud.offset_right = inset_left + 400.0
-        _player_hud.offset_bottom = inset_top + 58.0
+        _player_hud.offset_right = horizontal_left + 400.0
+        _player_hud.offset_bottom = inset_top + 66.0
 
     if _daily_button:
-        _daily_button.offset_left = -95.0 - inset_right
-        _daily_button.offset_right = -20.0 - inset_right
+        _daily_button.offset_left = -95.0 - horizontal_right
+        _daily_button.offset_right = -20.0 - horizontal_right
         _daily_button.offset_top = 20.0 + inset_top
         _daily_button.offset_bottom = 75.0 + inset_top
 
     if _lang_button:
-        _lang_button.offset_left = -115.0 - inset_right
-        _lang_button.offset_right = -40.0 - inset_right
+        _lang_button.offset_left = -115.0 - horizontal_right
+        _lang_button.offset_right = -40.0 - horizontal_right
         _lang_button.offset_top = 85.0 + inset_top
         _lang_button.offset_bottom = 140.0 + inset_top
 
