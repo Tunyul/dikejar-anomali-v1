@@ -1117,7 +1117,7 @@ func add_double_coins_skill() -> void:
     refresh_ready_to_claim_state()
 
 func _grant_currency_via_game_manager(coins: int, gems: int, grant_id: String = "", source: String = "missions") -> Dictionary:
-    var gm := get_tree().get_root().get_node_or_null("GameManager")
+    var gm := GameManager
     if gm and gm.has_method("try_apply_grant_once") and not grant_id.strip_edges().is_empty():
         return gm.call("try_apply_grant_once", grant_id, source, coins, gems, {}, true)
     if gm and gm.has_method("adjust_currencies"):
@@ -1173,6 +1173,17 @@ func get_claimable_count(tab: String = "") -> int:
         count += 1
     return count
 
+func _mission_grant_period_token(mt: String) -> int:
+    match mt:
+        "daily":
+            return maxi(last_reset_daily, int(Time.get_unix_time_from_system() / 86400))
+        "week":
+            return maxi(last_reset_week, int(Time.get_unix_time_from_system() / 604800))
+        "month":
+            return maxi(last_reset_month, int(Time.get_unix_time_from_system() / 2592000))
+        _:
+            return 0
+
 func claim_mission(mission_id: String) -> Dictionary:
     var id_norm := mission_id.strip_edges()
     if id_norm.is_empty():
@@ -1215,6 +1226,9 @@ func claim_mission(mission_id: String) -> Dictionary:
                 grant_id = "challenge_cdc_%d" % [maxi(challenge_double_coins_level, 1)]
             _:
                 grant_id = "challenge_%s_%d" % [id_norm, int(Time.get_unix_time_from_system())]
+    elif mt == "daily" or mt == "week" or mt == "month":
+        var period_token: int = _mission_grant_period_token(mt)
+        grant_id = "mission_%s_%s_%d" % [mt, id_norm, period_token]
     else:
         grant_id = "mission_%s" % [id_norm]
 

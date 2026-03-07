@@ -7,6 +7,15 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 - Belum ada perubahan.
 
+## [1.3.55-beta] - 2026-03-07
+
+- Missions Claim Fix: memperbaiki claim misi yang macet setelah reset periodik dengan `grant_id` periodik untuk tipe `daily/week/month` di `MissionsManager`, sehingga tidak bentrok dengan `reward_grant_ledger` lama.
+- Rewards Integrity: menambahkan helper token periode reset agar grant misi mengikuti siklus reset dan tetap anti-duplikasi di periode yang sama.
+- UI Missions: panel misi kembali bisa claim untuk misi selesai pada siklus baru tanpa perubahan layout/tombol.
+- QA: validasi ulang `sanity_check.gd` dan `smoke_check_runner.gd` dalam mode headless, hasil lulus.
+- Version Sync: sinkronisasi `project.godot`, `export_presets.cfg`, `VERSION`, dan badge `README` ke `1.3.55-beta`.
+- Naik versi proyek ke `1.3.55-beta`.
+
 ## [1.3.54-beta] - 2026-03-07
 
 - Pooling Safety: hardening pool collectible di `InfiniteGround` dan `GameManager` agar node yang sudah `queue_free()`/invalid tidak bisa masuk atau dipakai lagi dari pool, menutup crash Android `Trying to assign invalid previously freed instance` pada heart/power-up.
