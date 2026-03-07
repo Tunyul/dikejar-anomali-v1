@@ -866,7 +866,7 @@ func _on_play_pressed() -> void:
     # Stop BGM before transition to prevent double BGM in LoadingScreen and Main gameplay
     if TransitionManager and TransitionManager.has_method("stop_bgm"):
         TransitionManager.stop_bgm()
-        
+
     if _ui_layer:
         _ui_layer.visible = false
     visible = false
@@ -1123,49 +1123,48 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String, inner_icon
         icon_node.add_child(inner_icon)
 
     var border_tex_path := ""
-    var padding := 8 # Default padding for premium borders
+    var padding := 5 # Default padding
 
     match border_id:
         "border_gold_premium":
             border_tex_path = "res://assets/border/border_gold_premium.png"
-            padding = 18 # Increased padding for Gold Premium
+            padding = 5
         "border_silver_premium":
             border_tex_path = "res://assets/border/border_silver_premium.png"
-            padding = 18 # Increased padding for Silver Premium
+            padding = 5
         "border_neon_v2":
             border_tex_path = "res://assets/border/border_neon_v2.png"
-            padding = 18
+            padding = 5
         "border_shadow_v2":
             border_tex_path = "res://assets/border/border_shadow_v2.png"
-            padding = 18
+            padding = 5
         "border_fire":
-                    border_tex_path = "res://assets/border/border_fire.png"
-                    padding = 24 # Reduced padding for fire
+            border_tex_path = "res://assets/border/border_fire.png"
+            padding = 5
         "border_kraken":
             border_tex_path = "res://assets/border/border_kraken.png"
-            padding = 14 # Slightly increased
+            padding = 5
         "border_nature":
             border_tex_path = "res://assets/border/border_nature.png"
-            padding = 14 # Slightly increased
+            padding = 5
         "border_cyber":
             border_tex_path = "res://assets/border/border_cyber.png"
-            padding = 14 # Slightly increased
+            padding = 5
         "border_gold":
             border_tex_path = "res://assets/border/border_gold_premium.png"
-            padding = 18
+            padding = 5
         "border_silver":
             border_tex_path = "res://assets/border/border_silver_premium.png"
-            padding = 18
+            padding = 5
         "border_bronze":
             border_tex_path = "res://assets/border/border_fire.png"
-            padding = 24
+            padding = 5
         "border_white":
             border_tex_path = "res://assets/border/border_shadow_v2.png"
-            padding = 18
+            padding = 5
         _:
-            border_tex_path = "" # Tidak ada border (default)
+            border_tex_path = ""
 
-    # Avoid noisy load errors on missing legacy border files.
     if border_tex_path != "" and not ResourceLoader.exists(border_tex_path):
         border_tex_path = ""
 
@@ -1174,14 +1173,12 @@ func _apply_border_to_icon(icon_node: TextureRect, border_id: String, inner_icon
         if inner_icon:
             inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 0)
     else:
-        # Load resource directly without FileAccess check (Android compatibility)
         var tex = load(border_tex_path) as Texture2D
         if tex:
             icon_node.texture = tex
             if inner_icon:
                 inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, padding)
         else:
-            # Fallback if load fails
             icon_node.texture = null
             if inner_icon:
                 inner_icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 0)

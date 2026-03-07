@@ -117,6 +117,7 @@ var _last_layout_child_count: int = -1
 var _banner_lock_active: bool = false
 var _last_panel_viewport_size: Vector2 = Vector2.ZERO
 var _debug_snapshot: Array = []
+var _last_token_columns: int = -1
 
 func _ready() -> void:
     if Engine.is_editor_hint():
@@ -1093,6 +1094,7 @@ func _refresh_token_inventory(snapshot: Array) -> void:
         _token_grid.add_child(card)
 
     _token_grid.columns = columns
+    _last_token_columns = columns
     _fit_panel_height_to_content()
     call_deferred("_fit_panel_height_to_content")
 
@@ -1102,7 +1104,13 @@ func _update_token_grid_columns() -> void:
     var width_ref := _token_grid.size.x
     if width_ref <= 0.0 and _token_panel:
         width_ref = _token_panel.size.x - 20.0
-    _token_grid.columns = _compute_token_grid_columns(width_ref)
+    var columns := _compute_token_grid_columns(width_ref)
+    if columns != _last_token_columns:
+        # Rebuild token cards when grid mode changes (2<->4 cols),
+        # so card internals stay proportional after viewport resize.
+        _refresh_token_inventory(_last_snapshot)
+        return
+    _token_grid.columns = columns
 
 func _compute_token_grid_columns(width_ref: float) -> int:
     if width_ref > 0.0 and width_ref < 520.0:

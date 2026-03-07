@@ -411,15 +411,15 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = -2.0
+offset_bottom = -2.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("27_profile_basic")
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="LevelLabel" type="Label" parent="UI/PlayerHUD" unique_id=517451708]
 unique_name_in_owner = true
@@ -525,6 +525,7 @@ text = "Tutup"
 unique_name_in_owner = true
 visible = false
 z_index = 250
+mouse_filter = 2
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -534,6 +535,7 @@ grow_vertical = 2
 
 [node name="Overlay" type="ColorRect" parent="UI/ProfilePanel"]
 unique_name_in_owner = true
+mouse_filter = 0
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -610,7 +612,7 @@ custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 texture = ExtResource("23_avatar_border")
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 0
 
 [node name="LargeInnerAvatarIcon" type="TextureRect" parent="UI/ProfilePanel/Panel/MainContent/LeftSection/AvatarContainer/LargeAvatarIcon"]
 unique_name_in_owner = true
@@ -619,15 +621,15 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("27_profile_basic")
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 0
 
 [node name="NameLabel" type="Label" parent="UI/ProfilePanel/Panel/MainContent/LeftSection" unique_id=1347035900]
 unique_name_in_owner = true
@@ -763,10 +765,10 @@ alignment = 1
 [node name="CoinHUDBackground" type="Panel" parent="UI" unique_id=930620297]
 z_index = 90
 custom_minimum_size = Vector2(48, 48)
-offset_left = 16.0
-offset_top = 70.0
-offset_right = 320.0
-offset_bottom = 126.0
+offset_left = 20.0
+offset_top = 74.0
+offset_right = 316.0
+offset_bottom = 122.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
 
 [node name="CoinHUD" type="HBoxContainer" parent="UI" unique_id=158204170]
@@ -803,9 +805,9 @@ clip_text = true
 [node name="GemHUDBackground" type="Panel" parent="UI" unique_id=495366996]
 z_index = 90
 custom_minimum_size = Vector2(48, 48)
-offset_left = 16.0
-offset_top = 130.0
-offset_right = 320.0
+offset_left = 20.0
+offset_top = 138.0
+offset_right = 316.0
 offset_bottom = 186.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
 
@@ -814,9 +816,9 @@ unique_name_in_owner = true
 z_index = 100
 custom_minimum_size = Vector2(48, 48)
 offset_left = 20.0
-offset_top = 134.0
+offset_top = 138.0
 offset_right = 316.0
-offset_bottom = 182.0
+offset_bottom = 186.0
 
 [node name="GemIcon" type="TextureRect" parent="UI/GemHUD" unique_id=1054817681]
 unique_name_in_owner = true
@@ -842,10 +844,10 @@ clip_text = true
 [node name="ScoreHUDBackground" type="Panel" parent="UI" unique_id=799380840]
 z_index = 90
 custom_minimum_size = Vector2(48, 48)
-offset_left = 16.0
-offset_top = 190.0
-offset_right = 320.0
-offset_bottom = 246.0
+offset_left = 20.0
+offset_top = 202.0
+offset_right = 316.0
+offset_bottom = 250.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud_bg")
 
 [node name="ScoreHUD" type="HBoxContainer" parent="UI" unique_id=152363142]
@@ -853,9 +855,9 @@ unique_name_in_owner = true
 z_index = 100
 custom_minimum_size = Vector2(48, 48)
 offset_left = 20.0
-offset_top = 194.0
+offset_top = 202.0
 offset_right = 316.0
-offset_bottom = 242.0
+offset_bottom = 250.0
 
 [node name="ScoreIcon" type="TextureRect" parent="UI/ScoreHUD" unique_id=1528370314]
 unique_name_in_owner = true

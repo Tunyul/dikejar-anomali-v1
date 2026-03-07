@@ -1027,9 +1027,15 @@ func _connect_claim_buttons(panel: Node) -> void:
         var claim_button := slot.get_node_or_null("ClaimButton") as BaseButton
         if claim_button == null:
             continue
+        
+        # Hapus koneksi lama untuk menghindari duplikat
+        for connection in claim_button.pressed.get_connections():
+            if connection.callable.get_object() == self and connection.callable.get_method() == "_on_claim_button_pressed":
+                claim_button.pressed.disconnect(connection.callable)
+
+        # Tambahkan koneksi baru
         var cb := Callable(self, "_on_claim_button_pressed").bind(claim_button)
-        if not claim_button.pressed.is_connected(cb):
-            claim_button.pressed.connect(cb)
+        claim_button.pressed.connect(cb)
 
 
 func _on_claim_button_pressed(button: BaseButton) -> void:
