@@ -71,6 +71,11 @@ var _settings_menu: Node = null
 @onready var _coin_hud: Control = %CoinHUD
 @onready var _gem_hud: Control = %GemHUD
 @onready var _score_hud: Control = %ScoreHUD
+@onready var _coin_hud_bg: Control = get_node_or_null("UI/CoinHUDBackground") as Control
+@onready var _gem_hud_bg: Control = get_node_or_null("UI/GemHUDBackground") as Control
+@onready var _score_hud_bg: Control = get_node_or_null("UI/ScoreHUDBackground") as Control
+@onready var _center_container: Control = get_node_or_null("UI/CenterContainer") as Control
+@onready var _buttons_row: Control = %ButtonsRow if has_node("%ButtonsRow") else null
 @onready var _daily_button: Button = %DailyButton
 @onready var _lang_button: TextureButton = %LanguageButton
 @onready var _version_label: Label = %VersionLabel
@@ -98,6 +103,7 @@ var _season_rewards_menu: Node = null
 @onready var _change_border_button: Button = %ChangeBorderButton
 var _profile_banner_lock_active: bool = false
 var _reward_banner_lock_active: bool = false
+var _profile_panel_target_scale: Vector2 = Vector2.ONE
 
 func _ready() -> void:
     AdManager.load_banner()
@@ -700,14 +706,14 @@ func _show_profile_panel() -> void:
         overlay.modulate.a = 0.0
 
     inner_panel.modulate.a = 0.0
-    inner_panel.scale = Vector2(0.8, 0.8)
+    inner_panel.scale = _profile_panel_target_scale * 0.8
     inner_panel.pivot_offset = inner_panel.size / 2
 
     var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
     if overlay:
         tw.tween_property(overlay, "modulate:a", 1.0, 0.3)
     tw.tween_property(inner_panel, "modulate:a", 1.0, 0.3)
-    tw.tween_property(inner_panel, "scale", Vector2.ONE, 0.3)
+    tw.tween_property(inner_panel, "scale", _profile_panel_target_scale, 0.3)
 
 func _on_change_avatar_pressed() -> void:
     TransitionManager.play_sfx(&"click")
@@ -784,7 +790,7 @@ func _hide_profile_panel() -> void:
             tw.tween_property(overlay, "modulate:a", 0.0, 0.2)
         if inner_panel:
             tw.tween_property(inner_panel, "modulate:a", 0.0, 0.2)
-            tw.tween_property(inner_panel, "scale", Vector2(0.8, 0.8), 0.2)
+            tw.tween_property(inner_panel, "scale", _profile_panel_target_scale * 0.8, 0.2)
         tw.chain().tween_callback(func():
             _profile_panel.visible = false
             _release_profile_banner_lock()
@@ -1267,8 +1273,100 @@ func _connect_viewport_resize() -> void:
 
 
 func _on_viewport_size_changed() -> void:
-    # Basic viewport handling for main menu if needed
-    pass
+    var vp := get_viewport()
+    if vp == null:
+        return
+    var vp_size := vp.get_visible_rect().size
+    _apply_mainmenu_responsive_layout(vp_size)
+
+
+func _apply_mainmenu_responsive_layout(vp_size: Vector2) -> void:
+    var safe := Rect2(Vector2.ZERO, vp_size)
+    if OS.has_feature("android") or OS.has_feature("ios"):
+        var sa := DisplayServer.get_display_safe_area()
+        if sa.size.x > 0 and sa.size.y > 0:
+            safe = Rect2(Vector2(sa.position), Vector2(sa.size))
+
+    var inset_left := safe.position.x
+    var inset_top := safe.position.y
+    var inset_right := maxf(vp_size.x - (safe.position.x + safe.size.x), 0.0)
+    var inset_bottom := maxf(vp_size.y - (safe.position.y + safe.size.y), 0.0)
+
+    if _center_container:
+        _center_container.offset_top = inset_top
+        _center_container.offset_bottom = -inset_bottom
+
+    if _buttons_row:
+        var btn_scale := clampf(vp_size.x / 1400.0, 0.84, 1.0)
+        _buttons_row.scale = Vector2.ONE * btn_scale
+        _buttons_row.pivot_offset = _buttons_row.size * 0.5
+
+    var hud_scale := clampf(vp_size.x / 1024.0, 0.86, 1.0)
+    _set_hud_row_layout(_coin_hud_bg, _coin_hud, inset_left + 20.0, inset_top + 74.0, hud_scale)
+    _set_hud_row_layout(_gem_hud_bg, _gem_hud, inset_left + 20.0, inset_top + 138.0, hud_scale)
+    _set_hud_row_layout(_score_hud_bg, _score_hud, inset_left + 20.0, inset_top + 202.0, hud_scale)
+
+    if _player_hud:
+        _player_hud.offset_left = inset_left + 10.0
+        _player_hud.offset_top = inset_top + 10.0
+        _player_hud.offset_right = inset_left + 400.0
+        _player_hud.offset_bottom = inset_top + 58.0
+
+    if _daily_button:
+        _daily_button.offset_left = -95.0 - inset_right
+        _daily_button.offset_right = -20.0 - inset_right
+        _daily_button.offset_top = 20.0 + inset_top
+        _daily_button.offset_bottom = 75.0 + inset_top
+
+    if _lang_button:
+        _lang_button.offset_left = -115.0 - inset_right
+        _lang_button.offset_right = -40.0 - inset_right
+        _lang_button.offset_top = 85.0 + inset_top
+        _lang_button.offset_bottom = 140.0 + inset_top
+
+    if _version_label:
+        _version_label.offset_top = -32.0 - inset_bottom
+        _version_label.offset_bottom = -8.0 - inset_bottom
+
+    _apply_reward_panel_layout(safe.size)
+    _apply_profile_panel_layout(safe.size)
+
+
+func _set_hud_row_layout(bg: Control, row: Control, left: float, top: float, scale_factor: float) -> void:
+    var width := 296.0 * scale_factor
+    var height := 48.0 * scale_factor
+    if bg:
+        bg.offset_left = left
+        bg.offset_top = top
+        bg.offset_right = left + width
+        bg.offset_bottom = top + height
+    if row:
+        row.offset_left = left
+        row.offset_top = top
+        row.offset_right = left + width
+        row.offset_bottom = top + height
+
+
+func _apply_reward_panel_layout(safe_size: Vector2) -> void:
+    if _reward_panel == null:
+        return
+    var base := Vector2(400.0, 260.0)
+    var fit := minf(safe_size.x / (base.x + 48.0), safe_size.y / (base.y + 48.0))
+    fit = clampf(fit, 0.75, 1.0)
+    _reward_panel.pivot_offset = base * 0.5
+    _reward_panel.scale = Vector2.ONE * fit
+
+
+func _apply_profile_panel_layout(safe_size: Vector2) -> void:
+    if _profile_panel_inner == null:
+        return
+    var base := Vector2(700.0, 460.0)
+    var fit := minf(safe_size.x / (base.x + 48.0), safe_size.y / (base.y + 48.0))
+    fit = clampf(fit, 0.62, 1.0)
+    _profile_panel_target_scale = Vector2.ONE * fit
+    _profile_panel_inner.pivot_offset = base * 0.5
+    if _profile_panel and _profile_panel.visible:
+        _profile_panel_inner.scale = _profile_panel_target_scale
 
 
 func _init_menu_bgm() -> void:

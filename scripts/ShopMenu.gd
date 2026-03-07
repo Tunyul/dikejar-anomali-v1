@@ -47,6 +47,7 @@ var _status_timer: Timer
 @onready var _close_button: BaseButton = %CloseButton
 @onready var _back_button: BaseButton = %BackButton
 @onready var _skill_progress_button: Button = %SkillProgressButton
+@onready var _currency_row: HBoxContainer = %CurrencyRow if has_node("%CurrencyRow") else null
 
 var _awaiting_rewarded_reason: String = ""
 var _daily_claim_day_bucket: int = -1
@@ -785,33 +786,70 @@ func _on_viewport_size_changed() -> void:
 
 
 func _apply_responsive_layout(vp: Vector2) -> void:
+    var safe := Rect2(Vector2.ZERO, vp)
+    if OS.has_feature("android") or OS.has_feature("ios"):
+        var sa := DisplayServer.get_display_safe_area()
+        if sa.size.x > 0 and sa.size.y > 0:
+            safe = Rect2(Vector2(sa.position), Vector2(sa.size))
+    var inset_left := safe.position.x
+    var inset_top := safe.position.y
+    var inset_right := maxf(vp.x - (safe.position.x + safe.size.x), 0.0)
+    var inset_bottom := maxf(vp.y - (safe.position.y + safe.size.y), 0.0)
+
     if _parallax_bg:
         var bg_sprite := %Sprite
         if bg_sprite and bg_sprite.texture:
             var ts: Vector2 = bg_sprite.texture.get_size()
             if ts.x > 0.0 and ts.y > 0.0:
-                # Scale to fill viewport while maintaining aspect ratio
                 var s: float = max(vp.x / ts.x, vp.y / ts.y)
                 bg_sprite.scale = Vector2(s, s)
                 bg_sprite.position = Vector2.ZERO
 
-                # Update mirroring to match new scaled size for seamless parallax
                 var bg_layer := %BG
                 if bg_layer:
-                    # Use floor to avoid sub-pixel seams
                     bg_layer.motion_mirroring = (ts * s).floor()
 
     if _ui_vbox:
-        # Kunci VBox Shop agar selalu memenuhi viewport dan tidak bergeser
         _ui_vbox.anchor_left = 0.0
         _ui_vbox.anchor_top = 0.0
         _ui_vbox.anchor_right = 1.0
         _ui_vbox.anchor_bottom = 1.0
 
-        _ui_vbox.offset_left = 0.0
-        _ui_vbox.offset_top = 0.0
-        _ui_vbox.offset_right = 0.0
-        _ui_vbox.offset_bottom = 0.0
+        _ui_vbox.offset_left = inset_left
+        _ui_vbox.offset_top = inset_top
+        _ui_vbox.offset_right = -inset_right
+        _ui_vbox.offset_bottom = -inset_bottom
+
+    if _close_button:
+        _close_button.anchor_left = 1.0
+        _close_button.anchor_top = 0.0
+        _close_button.anchor_right = 1.0
+        _close_button.anchor_bottom = 0.0
+        _close_button.offset_left = -96.0 - inset_right
+        _close_button.offset_top = 16.0 + inset_top
+        _close_button.offset_right = -16.0 - inset_right
+        _close_button.offset_bottom = 96.0 + inset_top
+
+    if _title_label:
+        var title_font_size := int(clampf(vp.x / 28.0, 24.0, 36.0))
+        _title_label.add_theme_font_size_override("font_size", title_font_size)
+
+    if _currency_row:
+        var sep := int(clampf(vp.x / 36.0, 16.0, 32.0))
+        _currency_row.add_theme_constant_override("separation", sep)
+
+    if _skill_progress_button:
+        var btn_w := clampf(vp.x * 0.2, 150.0, 210.0)
+        var btn_h := clampf(vp.y * 0.075, 36.0, 42.0)
+        _skill_progress_button.custom_minimum_size = Vector2(btn_w, btn_h)
+        _skill_progress_button.add_theme_font_size_override("font_size", int(clampf(vp.x / 55.0, 16.0, 20.0)))
+
+    if _groups_hbox:
+        var group_sep := int(clampf(vp.x / 20.0, 24.0, 64.0))
+        _groups_hbox.add_theme_constant_override("separation", group_sep)
+    if _groups_scroll and not Engine.is_editor_hint():
+        _groups_scroll.custom_minimum_size.x = 0.0
+
     _apply_products_padding(_get_products_padding(vp.x))
 
 func _get_products_padding(vp_width: float) -> int:
@@ -1896,8 +1934,18 @@ func _create_item_card(item: Dictionary) -> Control:
         if card_h_override is float or card_h_override is int:
             card_min_size.y = float(card_h_override)
 
-    card_min_size.x = clampf(card_min_size.x, 160.0, 600.0)
-    card_min_size.y = clampf(card_min_size.y, 180.0, 800.0)
+    var vp_width := float(_last_viewport_size.x)
+    if vp_width <= 0.0:
+        vp_width = get_viewport_rect().size.x
+    var card_scale := 1.0
+    if vp_width > 0.0 and vp_width < 760.0:
+        card_scale = 0.8
+    elif vp_width < 980.0:
+        card_scale = 0.9
+    card_min_size.x *= card_scale
+    card_min_size.y *= card_scale
+    card_min_size.x = clampf(card_min_size.x, 150.0, 600.0)
+    card_min_size.y = clampf(card_min_size.y, 170.0, 800.0)
     panel.custom_minimum_size = card_min_size
     panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
     panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
@@ -1934,7 +1982,14 @@ func _create_item_card(item: Dictionary) -> Control:
     var icon := TextureRect.new()
     icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-    icon.custom_minimum_size = card_icon_min_size
+    var icon_scale := 1.0
+    if vp_width > 0.0 and vp_width < 760.0:
+        icon_scale = 0.78
+    elif vp_width < 980.0:
+        icon_scale = 0.88
+    var icon_w := clampf(card_icon_min_size.x * icon_scale, 64.0, card_min_size.x * 0.52)
+    var icon_h := clampf(card_icon_min_size.y * icon_scale, 64.0, card_min_size.y * 0.45)
+    icon.custom_minimum_size = Vector2(icon_w, icon_h)
     icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
     icon.mouse_filter = Control.MOUSE_FILTER_PASS
     vbox.add_child(icon)

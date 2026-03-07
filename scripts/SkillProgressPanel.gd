@@ -251,7 +251,7 @@ func _on_viewport_size_changed() -> void:
 func _apply_panel_layout_for_viewport() -> void:
     if _panel == null:
         return
-    var layout_rect := _get_layout_reference_rect()
+    var layout_rect := _get_safe_layout_rect()
     var vp_size := layout_rect.size
     _apply_responsive_chrome(vp_size.x)
     if vp_size.x <= 0.0 or vp_size.y <= 0.0:
@@ -266,8 +266,21 @@ func _apply_panel_layout_for_viewport() -> void:
     var min_h: float = 210.0 if landscape else 320.0
     var max_h: float = maxf(vp_size.y - 20.0, min_h)
     var target_h: float = clampf(vp_size.y * ratio, min_h, max_h)
+    var side_margin: float
+    if vp_size.x < _RESP_SMALL_W:
+        side_margin = 12.0
+    elif vp_size.x >= _RESP_LARGE_W:
+        side_margin = 24.0
+    else:
+        side_margin = 18.0
+    var left: float = layout_rect.position.x + side_margin
+    var right: float = layout_rect.position.x + vp_size.x - side_margin
     var top: float = layout_rect.position.y + floor((vp_size.y - target_h) * 0.5)
     var bottom: float = top + target_h
+    _panel.anchor_left = 0.0
+    _panel.anchor_right = 0.0
+    _panel.offset_left = left
+    _panel.offset_right = right
     _panel.anchor_top = 0.0
     _panel.anchor_bottom = 0.0
     _panel.offset_top = top
@@ -276,7 +289,7 @@ func _apply_panel_layout_for_viewport() -> void:
 func _fit_panel_height_to_content() -> void:
     if _panel == null:
         return
-    var layout_rect := _get_layout_reference_rect()
+    var layout_rect := _get_safe_layout_rect()
     var vp_size := layout_rect.size
     if vp_size.x <= 0.0 or vp_size.y <= 0.0:
         return
@@ -399,6 +412,19 @@ func _get_layout_reference_rect() -> Rect2:
     if vp == null:
         return Rect2()
     return vp.get_visible_rect()
+
+func _get_safe_layout_rect() -> Rect2:
+    var layout_rect := _get_layout_reference_rect()
+    if not (OS.has_feature("android") or OS.has_feature("ios")):
+        return layout_rect
+    var sa := DisplayServer.get_display_safe_area()
+    if sa.size.x <= 0 or sa.size.y <= 0:
+        return layout_rect
+    var safe_rect := Rect2(Vector2(sa.position), Vector2(sa.size))
+    var merged := layout_rect.intersection(safe_rect)
+    if merged.size.x <= 0.0 or merged.size.y <= 0.0:
+        return safe_rect
+    return merged
 
 func _acquire_banner_lock() -> void:
     if _banner_lock_active:
@@ -673,11 +699,13 @@ func _apply_content_layout() -> void:
 
     var card_height: float = clampf(basis_h * card_height_ratio, card_min_h, card_max_h)
     var gap: float = float(_skill_list.get_theme_constant("separation"))
-    var card_width: float = clampf(_scroll.size.x * card_width_ratio, 260.0, 520.0)
-    if child_count >= 2 and basis_w >= 820.0:
+    var min_card_w := 220.0 if basis_w < 900.0 else 260.0
+    var card_width: float = clampf(_scroll.size.x * card_width_ratio, min_card_w, 520.0)
+    if child_count >= 2 and basis_w >= 900.0:
         var two_card_width: float = floor((_scroll.size.x - gap - 2.0) * 0.5)
-        card_width = clampf(two_card_width, 260.0, 520.0)
-    var target_scroll_height: float = card_height + (24.0 if basis_w >= 1100.0 else 20.0)
+        card_width = clampf(two_card_width, min_card_w, 520.0)
+    var scroll_extra := 18.0 if basis_w < _RESP_SMALL_W else (24.0 if basis_w >= _RESP_LARGE_W else 20.0)
+    var target_scroll_height: float = card_height + scroll_extra
     _scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
     _scroll.custom_minimum_size.y = target_scroll_height
     var scroll_margin := _scroll.get_parent() as Control

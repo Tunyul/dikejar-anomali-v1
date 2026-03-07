@@ -32,6 +32,8 @@ var _opening_frame: bool = false # Flag untuk mencegah penutupan di frame yang s
 var _banner_lock_active: bool = false
 var _visible_refresh_queued: bool = false
 var _loading_hold_until_msec: int = 0
+var _last_viewport_size: Vector2i = Vector2i.ZERO
+var _panel_target_scale: Vector2 = Vector2.ONE
 
 # Drag scrolling variables
 var _is_dragging: bool = false
@@ -75,7 +77,61 @@ func _ready() -> void:
     if _loading_overlay:
         _loading_overlay.visible = false
 
+    _connect_viewport_resize()
     _refresh_list(false)
+
+
+func _connect_viewport_resize() -> void:
+    var vp := get_viewport()
+    if vp == null:
+        return
+    var cb := Callable(self, "_on_viewport_size_changed")
+    if not vp.size_changed.is_connected(cb):
+        vp.size_changed.connect(cb)
+    call_deferred("_on_viewport_size_changed")
+
+
+func _on_viewport_size_changed() -> void:
+    var vp := get_viewport()
+    if vp == null:
+        return
+    var size := vp.get_visible_rect().size
+    var size_i := Vector2i(int(size.x), int(size.y))
+    if size_i == _last_viewport_size:
+        return
+    _last_viewport_size = size_i
+    _apply_responsive_layout(size)
+
+
+func _apply_responsive_layout(vp_size: Vector2) -> void:
+    if _inner_panel == null:
+        return
+    var safe := Rect2(Vector2.ZERO, vp_size)
+    if OS.has_feature("android") or OS.has_feature("ios"):
+        var sa := DisplayServer.get_display_safe_area()
+        if sa.size.x > 0 and sa.size.y > 0:
+            safe = Rect2(Vector2(sa.position), Vector2(sa.size))
+
+    var margin := 16.0
+    var safe_size := Vector2(
+        maxf(safe.size.x - margin * 2.0, 1.0),
+        maxf(safe.size.y - margin * 2.0, 1.0)
+    )
+    var base_size := Vector2(800.0, 460.0)
+    var fit := minf(safe_size.x / base_size.x, safe_size.y / base_size.y)
+    fit = clampf(fit, 0.58, 1.0)
+    _panel_target_scale = Vector2.ONE * fit
+
+    _inner_panel.anchor_left = 0.5
+    _inner_panel.anchor_top = 0.5
+    _inner_panel.anchor_right = 0.5
+    _inner_panel.anchor_bottom = 0.5
+    _inner_panel.offset_left = -base_size.x * 0.5
+    _inner_panel.offset_top = -base_size.y * 0.5
+    _inner_panel.offset_right = base_size.x * 0.5
+    _inner_panel.offset_bottom = base_size.y * 0.5
+    _inner_panel.pivot_offset = base_size * 0.5
+    _inner_panel.scale = _panel_target_scale
 
 func _process(delta: float) -> void:
     if _loading_overlay and _loading_overlay.visible and _loading_spinner:
@@ -103,27 +159,28 @@ func show_menu() -> void:
     _claim_all_button.text = tr("CLAIM_ALL")
     if _time_left_label:
         _time_left_label.text = tr("TIME_REMAINING_HINT")
+    _apply_responsive_layout(get_viewport().get_visible_rect().size)
     visible = true
     # Pastikan CanvasLayer muncul di depan
     process_mode = Node.PROCESS_MODE_ALWAYS
 
     # Simple animation
     _inner_panel.modulate.a = 0
-    _inner_panel.scale = Vector2(0.9, 0.9)
+    _inner_panel.scale = _panel_target_scale * 0.9
     _overlay.modulate.a = 0
 
     var tw = create_tween().set_parallel(true)
     tw.tween_property(_overlay, "modulate:a", 1.0, 0.2)
     tw.tween_property(_inner_panel, "modulate:a", 1.0, 0.2)
-    tw.tween_property(_inner_panel, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK)
+    tw.tween_property(_inner_panel, "scale", _panel_target_scale, 0.2).set_trans(Tween.TRANS_BACK)
 
     # Tunggu 1 frame agar layout selesai dan flag _opening_frame mati
     await get_tree().process_frame
     _opening_frame = false
 
-    _scroll_to_current_level()
-    _request_visible_items_refresh()
-    _hold_loading_indicator()
+    _sync_scroll_to_current_level()
+    call_deferred("_sync_scroll_to_current_level")
+    _hold_loading_indicator(220)
 
 func _on_close_pressed() -> void:
     TransitionManager.play_sfx(&"click")
@@ -136,7 +193,7 @@ func _hide_menu() -> void:
     var tw = create_tween().set_parallel(true)
     tw.tween_property(_overlay, "modulate:a", 0.0, 0.2)
     tw.tween_property(_inner_panel, "modulate:a", 0.0, 0.2)
-    tw.tween_property(_inner_panel, "scale", Vector2(0.9, 0.9), 0.2)
+    tw.tween_property(_inner_panel, "scale", _panel_target_scale * 0.9, 0.2)
     await tw.finished
     visible = false
     _release_banner_lock()
@@ -165,13 +222,10 @@ func _refresh_list(spawn_visible_items: bool = true) -> void:
     _all_items_data.clear()
     _recycle_all_spawned_items()
 
-    var current_level = 1
-    var current_xp = 0
-    var xp_required = 100
-    if GameManager:
-        current_level = int(GameManager.player_level)
-        current_xp = int(GameManager.player_xp)
-        xp_required = int(GameManager.player_xp_required)
+    var progress := _get_player_progress_snapshot()
+    var current_level := int(progress.get("level", 1))
+    var current_xp := int(progress.get("xp", 0))
+    var xp_required := int(progress.get("xp_required", 100))
 
     if _level_label:
         _level_label.text = "LVL %d" % current_level
@@ -181,11 +235,13 @@ func _refresh_list(spawn_visible_items: bool = true) -> void:
         _progress_bar.max_value = xp_required
         _progress_bar.value = current_xp
 
-    if not GameManager: return
+    if not GameManager:
+        return
 
-    var pending_rewards = []
-    if GameManager:
-        pending_rewards = GameManager.pending_level_rewards
+    var pending_rewards: Array = []
+    var pending_any = progress.get("pending_rewards", [])
+    if pending_any is Array:
+        pending_rewards = pending_any
     var pending_lookup: Dictionary = {}
     for pending_entry in pending_rewards:
         if pending_entry is Dictionary:
@@ -370,14 +426,47 @@ func _get_reward_index_for_level(level: int) -> int:
 func _scroll_to_current_level() -> void:
     if not _scroll_container or _all_items_data.is_empty():
         return
-    var current_level := 1
-    if GameManager:
-        current_level = maxi(1, int(GameManager.player_level))
+    var progress := _get_player_progress_snapshot()
+    var current_level := maxi(1, int(progress.get("level", 1)))
     var target_index := _get_reward_index_for_level(current_level)
     var viewport_width := maxf(_scroll_container.size.x, _item_width)
     var centered_scroll := int((target_index * _item_width) - ((viewport_width - _item_width) * 0.5))
     var max_scroll := maxi(0, int(_reward_list.custom_minimum_size.x - viewport_width))
     _scroll_container.scroll_horizontal = clampi(centered_scroll, 0, max_scroll)
+
+func _sync_scroll_to_current_level() -> void:
+    _refresh_list(false)
+    _scroll_to_current_level()
+    _request_visible_items_refresh()
+
+func _get_player_progress_snapshot() -> Dictionary:
+    var level := 1
+    var xp := 0
+    var xp_required := 100
+    var pending_rewards: Array = []
+    if GameManager:
+        level = int(GameManager.player_level)
+        xp = int(GameManager.player_xp)
+        xp_required = int(GameManager.player_xp_required)
+        pending_rewards = GameManager.pending_level_rewards
+    var need_fallback := level <= 1
+    if need_fallback:
+        var cfg := ConfigFile.new()
+        var err := cfg.load("user://save.cfg")
+        if err == OK:
+            level = maxi(level, int(cfg.get_value("progress", "player_level", level)))
+            xp = int(cfg.get_value("progress", "player_xp", xp))
+            xp_required = maxi(1, int(cfg.get_value("progress", "player_xp_required", xp_required)))
+            var pending_value = cfg.get_value("rewards", "pending_level_rewards", [])
+            if pending_value is Array:
+                pending_rewards = pending_value
+    xp_required = maxi(1, xp_required)
+    return {
+        "level": level,
+        "xp": xp,
+        "xp_required": xp_required,
+        "pending_rewards": pending_rewards
+    }
 
 func _show_loading_indicator(message: String) -> void:
     if _loading_overlay == null:

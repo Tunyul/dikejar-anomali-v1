@@ -12,6 +12,13 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 - Missions Claim Fix: memperbaiki claim misi yang macet setelah reset periodik dengan `grant_id` periodik untuk tipe `daily/week/month` di `MissionsManager`, sehingga tidak bentrok dengan `reward_grant_ledger` lama.
 - Rewards Integrity: menambahkan helper token periode reset agar grant misi mengikuti siklus reset dan tetap anti-duplikasi di periode yang sama.
 - UI Missions: panel misi kembali bisa claim untuk misi selesai pada siklus baru tanpa perubahan layout/tombol.
+- Main Menu Responsive: menambahkan layout responsif berbasis viewport + safe-area untuk HUD kiri/kanan, tombol utilitas kanan atas, panel reward, dan panel profil agar tetap proporsional di landscape sempit sampai lebar.
+- Season Rewards Responsive: panel season kini diskalakan responsif terhadap safe-area, dengan animasi open/close mengikuti skala target agar konsisten di berbagai resolusi.
+- Shop Responsive: perapian layout shop untuk landscape sempit (safe-area inset, ukuran/spacing elemen header adaptif, card dan icon item lebih proporsional, serta pembersihan lebar minimum scroll runtime).
+- Skill Progress Responsive: panel skill progress kini memakai safe layout rect, margin horizontal adaptif, dan tuning ukuran card/scroll agar tidak clipping pada resolusi kecil.
+- Daily Missions Responsive: tuning komponen panel misi (tab/header/list/row claim) agar font, spacing, dan ukuran kontrol adaptif serta tetap terbaca di resolusi landscape kecil.
+- Season Rewards Open Sync Fix: perbaikan race saat open panel season pertama kali yang kadang kembali ke level 1; kini sinkronisasi scroll awal ke level player dilakukan robust (immediate + deferred) dengan fallback progres dari `save.cfg`.
+- QA Matrix Landscape: validasi headless lintas scene UI utama pada 1024x576, 1280x720, 1560x720, dan 1920x1080; hasil lulus tanpa error.
 - QA: validasi ulang `sanity_check.gd` dan `smoke_check_runner.gd` dalam mode headless, hasil lulus.
 - Version Sync: sinkronisasi `project.godot`, `export_presets.cfg`, `VERSION`, dan badge `README` ke `1.3.55-beta`.
 - Naik versi proyek ke `1.3.55-beta`.

@@ -15,6 +15,7 @@ const _BANNER_LOCK_ID := "daily_missions_overlay"
 @onready var _close_button: TextureButton = %CloseButton
 @onready var _mission_panel: Control = %MissionPanel
 @onready var _panel_content: Control = %PanelContent
+@onready var _tabs_row: HBoxContainer = get_node_or_null("UI/MissionPanel/PanelContent/VBox/Tabs") as HBoxContainer
 @onready var _reset_header_row: HBoxContainer = %ResetHeaderRow
 @onready var _reset_label: Label = %ResetTimeLabel
 @onready var _reset_daily_button: Button = %ResetDailyButton
@@ -272,6 +273,59 @@ func _apply_responsive_layout(vp: Vector2) -> void:
         _panel_content.offset_right = -lm
         _panel_content.offset_top = tm
         _panel_content.offset_bottom = -bm
+    _apply_responsive_chrome(vp, safe_size)
+
+
+func _apply_responsive_chrome(vp: Vector2, safe_size: Vector2) -> void:
+    var compact := vp.x < 980.0 or vp.y < 560.0
+    var large := vp.x >= 1500.0
+    var tab_font_size: int = 15 if compact else (20 if large else 17)
+    var tab_min_h: float = 42.0 if compact else (54.0 if large else 48.0)
+    var tab_sep: int = 2 if compact else (8 if large else 4)
+    var header_sep: int = 4 if compact else (8 if large else 6)
+    var summary_font_size: int = 14 if compact else (20 if large else 18)
+    var reset_font_size: int = 12 if compact else (16 if large else 14)
+    var reset_btn_w: float = 76.0 if compact else (96.0 if large else 88.0)
+    var reset_btn_h: float = 40.0 if compact else (48.0 if large else 44.0)
+    var reward_claim_h: float = 40.0 if compact else (48.0 if large else 44.0)
+    var list_min_h: float = clampf(safe_size.y * (0.48 if compact else 0.52), 150.0, 260.0)
+    var scroll_min_h: float = clampf(list_min_h - (20.0 if compact else 28.0), 120.0, 230.0)
+
+    if _tabs_row:
+        _tabs_row.add_theme_constant_override("separation", tab_sep)
+
+    var tabs: Array[Button] = [_daily_button, _mission_button, _weekly_button, _monthly_button, _challenge_button]
+    for b in tabs:
+        if b == null:
+            continue
+        b.custom_minimum_size.y = tab_min_h
+        b.add_theme_font_size_override("font_size", tab_font_size)
+
+    if _reset_header_row:
+        _reset_header_row.add_theme_constant_override("separation", header_sep)
+    if _daily_summary and _daily_summary is HBoxContainer:
+        (_daily_summary as HBoxContainer).add_theme_constant_override("separation", header_sep)
+    if _daily_total_label:
+        _daily_total_label.add_theme_font_size_override("font_size", summary_font_size)
+    if _daily_all_reward_label:
+        _daily_all_reward_label.add_theme_font_size_override("font_size", maxi(summary_font_size - 2, 12))
+    if _daily_total_bar:
+        _daily_total_bar.custom_minimum_size = Vector2(_daily_total_bar.custom_minimum_size.x, 8.0 if compact else (10.0 if large else 9.0))
+    if _reset_label:
+        _reset_label.add_theme_font_size_override("font_size", reset_font_size)
+    if _reset_daily_button:
+        _reset_daily_button.custom_minimum_size = Vector2(reset_btn_w, reset_btn_h)
+        _reset_daily_button.add_theme_font_size_override("font_size", reset_font_size)
+    if _daily_all_claim_button:
+        _daily_all_claim_button.custom_minimum_size = Vector2(_daily_all_claim_button.custom_minimum_size.x, reward_claim_h)
+
+    if _missions_panel_node:
+        _missions_panel_node.add_theme_constant_override("separation", 12 if compact else (18 if large else 16))
+    if _missions_scroll:
+        _missions_scroll.custom_minimum_size.y = scroll_min_h
+    var list_container := _missions_scroll.get_parent() as Control if _missions_scroll else null
+    if list_container:
+        list_container.custom_minimum_size.y = list_min_h
 
 
 func _apply_mission_name_color() -> void:
@@ -818,6 +872,15 @@ func _refresh_missions_panel(panel: Node) -> void:
     panel.visible = true
 
     var rows := _ensure_mission_rows(panel_vbox, filtered.size())
+    var compact := _last_viewport_size.x > 0 and (_last_viewport_size.x < 980 or _last_viewport_size.y < 560)
+    var large := _last_viewport_size.x >= 1500
+    var row_h: float = 56.0 if compact else (72.0 if large else 64.0)
+    var name_min_x: float = 120.0 if compact else (210.0 if large else 180.0)
+    var bar_min_x: float = 96.0 if compact else (140.0 if large else 120.0)
+    var reward_min_x: float = 64.0 if compact else (92.0 if large else 80.0)
+    var claim_size := Vector2(64.0, 42.0) if compact else (Vector2(80.0, 52.0) if large else Vector2(72.0, 48.0))
+    var mission_name_font_size: int = 16 if compact else (22 if large else 20)
+    var reward_font_size: int = 14 if compact else (18 if large else 16)
     for i in range(rows.size()):
         var slot := rows[i] as Control
         if slot == null:
@@ -827,9 +890,9 @@ func _refresh_missions_panel(panel: Node) -> void:
             continue
 
         slot.visible = true
-        slot.custom_minimum_size.y = 64.0 # Tingkatkan tinggi standar agar tombol besar muat
-        slot.alignment = BoxContainer.ALIGNMENT_CENTER # Vertikal center semua elemen
-        slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL # Responsif lebar baris
+        slot.custom_minimum_size.y = row_h
+        slot.alignment = BoxContainer.ALIGNMENT_CENTER
+        slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
         var m_any = filtered[i]
         if not (m_any is Dictionary):
@@ -859,28 +922,27 @@ func _refresh_missions_panel(panel: Node) -> void:
             name_label.layout_direction = Control.LAYOUT_DIRECTION_LTR
             name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
             name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-            name_label.custom_minimum_size.x = 180 # Atur lebar minimum
-            name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL # Berbagi ruang dengan Bar
-            name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER # Pastikan label di tengah
-            name_label.clip_text = false # Matikan clipping agar teks yang turun tidak terpotong
+            name_label.custom_minimum_size.x = name_min_x
+            name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+            name_label.clip_text = false
             name_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+            name_label.add_theme_font_size_override("font_size", mission_name_font_size)
 
-            # Fix localization with target numbers
             var localized_text := tr(mname)
             if localized_text.contains("{n}"):
                 localized_text = localized_text.replace("{n}", str(int(target)))
             name_label.text = localized_text
 
-            # Re-apply styling in case translation changes things
             name_label.add_theme_color_override("font_color", Color(0, 0, 0))
         if bar:
             bar.visible = true
             bar.show_percentage = false
             bar.max_value = target
             bar.value = clampf(prog, 0.0, target)
-            bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER # Center ProgressBar
-            bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL # Responsif lebar baris
-            bar.custom_minimum_size.x = 120 # Pastikan bar tidak terlalu kecil
+            bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+            bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            bar.custom_minimum_size.x = bar_min_x
             var default_h: float
             if bar.has_meta("default_min_h"):
                 default_h = float(bar.get_meta("default_min_h"))
@@ -893,13 +955,15 @@ func _refresh_missions_panel(panel: Node) -> void:
             reward_label.visible = true
             reward_label.add_theme_color_override("font_color", Color(0, 0, 0))
             reward_label.text = "+" + str(reward) + "c"
+            reward_label.custom_minimum_size.x = reward_min_x
+            reward_label.add_theme_font_size_override("font_size", reward_font_size)
             reward_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
             reward_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         if claim_button:
             claim_button.visible = true
             claim_button.disabled = not is_completed or is_claimed or reward <= 0 or id_str.is_empty()
             claim_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-            claim_button.custom_minimum_size = Vector2(72, 48) # Perbesar tombol claim
+            claim_button.custom_minimum_size = claim_size
             _apply_claim_button_style(claim_button)
             claim_button.set_meta("mission_id", id_str)
 
