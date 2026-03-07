@@ -1027,7 +1027,7 @@ func _connect_claim_buttons(panel: Node) -> void:
         var claim_button := slot.get_node_or_null("ClaimButton") as BaseButton
         if claim_button == null:
             continue
-        
+
         # Hapus koneksi lama untuk menghindari duplikat
         for connection in claim_button.pressed.get_connections():
             if connection.callable.get_object() == self and connection.callable.get_method() == "_on_claim_button_pressed":
@@ -1052,6 +1052,14 @@ func _on_claim_button_pressed(button: BaseButton) -> void:
     _apply_claim_button_style(button)
     var result: Dictionary = _missions_manager.call("claim_mission", mission_id)
     if not bool(result.get("ok", false)):
+        var err := String(result.get("error", ""))
+        if err == "mission_already_claimed":
+            if _missions_panel_node:
+                _refresh_missions_panel(_missions_panel_node)
+            var root_scene_claimed := get_tree().current_scene
+            if root_scene_claimed and root_scene_claimed.has_method("refresh_missions_badge_from_save"):
+                root_scene_claimed.call("refresh_missions_badge_from_save")
+            return
         button.disabled = false
         _apply_claim_button_style(button)
         return

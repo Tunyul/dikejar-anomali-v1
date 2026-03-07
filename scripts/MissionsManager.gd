@@ -1234,7 +1234,13 @@ func claim_mission(mission_id: String) -> Dictionary:
 
     var grant_res := _grant_currency_via_game_manager(rw, 0, grant_id, "mission_claim")
     if not bool(grant_res.get("ok", false)):
-        return {"ok": false, "error": "currency_grant_failed", "mission_id": id_norm}
+        var grant_error := String(grant_res.get("error", "currency_grant_failed"))
+        if mt != "challenge" and grant_error == "already_granted":
+            reward_claimed[id_norm] = true
+            _save()
+            refresh_ready_to_claim_state()
+            return {"ok": false, "error": "mission_already_claimed", "mission_id": id_norm}
+        return {"ok": false, "error": grant_error, "mission_id": id_norm}
 
     if mt == "challenge":
         match id_norm:
@@ -1283,7 +1289,13 @@ func claim_daily_all_reward() -> Dictionary:
     var grant_id := "daily_all_%d" % [maxi(last_reset_daily, day_bucket)]
     var grant_res := _grant_currency_via_game_manager(0, reward_gems, grant_id, "daily_all_claim")
     if not bool(grant_res.get("ok", false)):
-        return {"ok": false, "error": "currency_grant_failed"}
+        var grant_error := String(grant_res.get("error", "currency_grant_failed"))
+        if grant_error == "already_granted":
+            daily_all_reward_claimed = true
+            _save()
+            refresh_ready_to_claim_state()
+            return {"ok": false, "error": "daily_all_already_claimed"}
+        return {"ok": false, "error": grant_error}
 
     daily_all_reward_claimed = true
     _save()

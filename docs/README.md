@@ -3,21 +3,25 @@
 Lihat dokumen gabungan konsep & implementasi pemain: `GAME_CONCEPT_AND_PLAYER_IMPLEMENTATION.md`.
 
 ## Ringkasan
+
 - Genre: endless runner 2D dengan latar parallax dan tanah tak berujung.
 - Loop: lingkungan bergerak, pemain terkunci horizontal; kumpulkan koin, hindari musuh/obstacle; dikejar "Anomaly" dari kiri layar.
 - Progres: skor bertambah dari jarak tempuh; kecepatan lingkungan meningkat seiring waktu; simpan `best_score` ke `user://save.cfg`.
 
 ## Tujuan & Game Over
+
 - Bertahan selama mungkin sambil mengumpulkan koin untuk menambah skor.
 - Game over saat menabrak obstacle/musuh, jatuh ke celah, atau tertangkap pengejar.
 
 ## Kontrol
+
 - `Jump`: `Space`, klik kiri, atau tap layar.
 - `Attack`: `K`, klik kanan, atau tap kedua (hitbox serangan aktif untuk musuh).
 - `Pause/Resume`: `Esc` (`ui_cancel`).
 - `Debug Toggle`: `F3`.
 
 ## Fitur Utama
+
 - ParallaxBackground auto-scroll (awan, gunung, langit) yang mulus dan wrap.
 - Ground tak berujung dua segmen (A/B) dengan wrapping dan regenerasi dinamis.
 - Generator tile/gap: platform, celah, dan opsi flat start untuk fase awal.
@@ -29,11 +33,13 @@ Lihat dokumen gabungan konsep & implementasi pemain: `GAME_CONCEPT_AND_PLAYER_IM
 - Audio: BGM gameplay + BGM Game Over + ducking otomatis untuk SFX penting.
 
 ## Mekanika Pemain
+
 - Pemain berhenti pada `entry_stop_x` (tetap di X), lingkungan yang bergerak mengikuti kecepatan target.
 - Loncat dengan coyote time dan jump buffer; gravitasi multipliers untuk rasa lompatan yang responsif.
 - Snap ke lantai via `RayCast2D`; deteksi celah dan permukaan padat.
 
 ## Struktur Proyek
+
 - Scenes:
   - `scenes/Main.tscn` — adegan utama (GameManager, HUD, parallax, ground, anomaly, mobile controls).
   - `scenes/MainMenu.tscn` — menu utama (Play, Shop, Settings, PlayerHUD, Missions).
@@ -52,10 +58,12 @@ Lihat dokumen gabungan konsep & implementasi pemain: `GAME_CONCEPT_AND_PLAYER_IM
   - `scripts/coin.gd`, `scripts/enemy_block.gd`, `scripts/obstacle.gd` — perilaku entitas.
 
 ## File & Pengaturan Penting
+
 - `project.godot` — Godot 4.5, viewport `1024x576`, stretch `canvas_items`, renderer `mobile`, snap 2D ke pixel.
 - Input Actions: `jump`, `attack`, `ui_cancel` telah terkonfigurasi.
 
 ## Menjalankan Proyek
+
 - Prasyarat: Godot 4.5.
 - Buka `project.godot` di editor Godot.
 - `F5` menjalankan startup flow dari `scenes/LoadingScreen.tscn`.
@@ -63,10 +71,12 @@ Lihat dokumen gabungan konsep & implementasi pemain: `GAME_CONCEPT_AND_PLAYER_IM
 - Optimasi: pengaturan rendering `mobile` cocok untuk perangkat bergerak, namun berjalan baik di desktop.
 
 ## Penyimpanan Progres
+
 - File pengguna: `user://save.cfg` menyimpan progres utama (best/last score, total coins/gems, level/xp, missions, powerups, cosmetics, settings).
 
 ## Kontrak Runtime v2
-- `meta.save_schema_version = 2`.
+
+- `meta.save_schema_version = 3`.
 - Ownership domain:
   - `GameManager`: `progress`, `powerups`, `rewards`.
   - `MissionsManager`: `missions`.

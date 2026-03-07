@@ -13,6 +13,7 @@ func _run() -> void:
     _check_shop_confirm_text(errors)
     await _check_collectible_heart_integrity(errors)
     await _check_coin_pool_state_reset(errors)
+    _check_mission_claim_periodic_grant(errors)
 
     if errors.is_empty():
         print("SMOKE_CHECK_OK")
@@ -206,6 +207,39 @@ func _check_preloader_pipeline(errors: Array[String]) -> void:
     if is_instance_valid(preloader):
         preloader.queue_free()
         await process_frame
+
+func _check_mission_claim_periodic_grant(errors: Array[String]) -> void:
+    var missions_script := load("res://scripts/MissionsManager.gd") as Script
+    if missions_script == null:
+        errors.append("Failed to load MissionsManager script.")
+        return
+    var missions_any: Variant = missions_script.new()
+    if not (missions_any is Node):
+        errors.append("MissionsManager script instance is invalid.")
+        return
+    var mm := missions_any as Node
+
+    if not mm.has_method("_mission_grant_period_token"):
+        errors.append("MissionsManager missing _mission_grant_period_token().")
+        mm.free()
+        return
+
+    mm.set("last_reset_daily", 424242)
+    var daily_token := int(mm.call("_mission_grant_period_token", "daily"))
+    if daily_token < 424242:
+        errors.append("MissionsManager daily period token should follow reset baseline.")
+
+    mm.set("last_reset_week", 131313)
+    var week_token := int(mm.call("_mission_grant_period_token", "week"))
+    if week_token < 131313:
+        errors.append("MissionsManager week period token should follow reset baseline.")
+
+    mm.set("last_reset_month", 77777)
+    var month_token := int(mm.call("_mission_grant_period_token", "month"))
+    if month_token < 77777:
+        errors.append("MissionsManager month period token should follow reset baseline.")
+
+    mm.free()
 
 func _wait_for_method_true(target: Object, method_name: String, timeout_ms: int) -> bool:
     if target == null:
