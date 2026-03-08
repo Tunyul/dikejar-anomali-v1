@@ -10,6 +10,8 @@ signal settings_changed(settings_data: Dictionary)
 
 const SAVE_PATH := "user://save.cfg"
 const SAVE_SCHEMA_VERSION := 3
+const _ONBOARDING_SAVE_SECTION := "onboarding"
+const _ONBOARDING_SAVE_KEY_COMPLETED := "first20_completed"
 const _REWARD_LEDGER_MAX_ENTRIES := 512
 const _MONETIZATION_DEFAULT := {
     "rewarded_request_count": 0,
@@ -409,6 +411,79 @@ var _daily_challenge_current: Dictionary = {}
 var _daily_speed_multiplier_runtime: float = 1.0
 var _daily_xp_multiplier_runtime: float = 1.0
 var _daily_coin_bonus_pct_runtime: int = 0
+@export_group("Onboarding First 20 Seconds")
+@export var onboarding_enabled: bool = true
+@export var onboarding_overlay_alpha: float = 0.28
+@export var onboarding_slowmo_scale: float = 0.65
+@export var onboarding_slowmo_duration_sec: float = 2.4
+@export var onboarding_duration_sec: float = 20.0
+var onboarding_completed: bool = false
+var onboarding_active: bool = false
+var onboarding_step: int = -1
+var onboarding_elapsed: float = 0.0
+var onboarding_slowmo_active: bool = false
+var onboarding_prev_time_scale: float = 1.0
+var onboarding_overlay: Control = null
+var onboarding_dim_layer: ColorRect = null
+var onboarding_spotlight: Panel = null
+var onboarding_indicator: Label = null
+var onboarding_hint_panel: Panel = null
+var onboarding_hint_label: Label = null
+var tutorial_mode_badge: Panel = null
+var tutorial_mode_badge_label: Label = null
+var onboarding_target_mode: String = "jump"
+@export var debug_force_first_install_tutorial: bool = true
+@export var tutorial_jump_prompt_distance: float = 120.0
+@export var tutorial_jump_prompt_gap_distance_tiles: int = 0
+@export var tutorial_jump_overlay_alpha: float = 0.22
+@export var tutorial_prompt_pulse_speed: float = 7.5
+@export var tutorial_indicator_pulse_min_scale: float = 0.92
+@export var tutorial_indicator_pulse_max_scale: float = 1.18
+@export var tutorial_spotlight_pulse_min_scale: float = 0.96
+@export var tutorial_spotlight_pulse_max_scale: float = 1.10
+@export var tutorial_rise_jump_prompt_distance_tiles: int = 1
+@export var tutorial_attack_prompt_enemy_trigger_distance_tiles: int = 2
+@export var tutorial_attack_prompt_distance: float = 300.0
+@export var tutorial_attack_prompt_delay_sec: float = 1.2
+@export var tutorial_attack_prompt_enemy_trigger_distance_px: float = 380.0
+@export var tutorial_force_gameover_delay_sec: float = 3.0
+enum TutorialRunStep { NONE, WAIT_JUMP_PROMPT, WAIT_JUMP_DONE, WAIT_RISE_JUMP_PROMPT, WAIT_RISE_JUMP_DONE, WAIT_ATTACK_PROMPT, WAIT_ATTACK_DONE, FORCE_GAMEOVER }
+const _MAIN_TUTORIAL_SCENE_PATH: String = "res://scenes/MainTutorial.tscn"
+var tutorial_flow_active: bool = false
+var tutorial_run_step: TutorialRunStep = TutorialRunStep.NONE
+var tutorial_step_timer: float = 0.0
+var tutorial_attack_pattern_stage: int = 0
+var tutorial_jump_done: bool = false
+var tutorial_rise_jump_done: bool = false
+var tutorial_attack_done: bool = false
+var tutorial_forced_gameover_sent: bool = false
+var _tutorial_prompt_pulse_time: float = 0.0
+var _tutorial_ground_snapshot_valid: bool = false
+var _tutorial_original_enemy_spawn_chance: float = -1.0
+var _tutorial_original_gap_chance: float = -1.0
+var _tutorial_original_gap_min_len: int = -1
+var _tutorial_original_gap_max_len: int = -1
+var _tutorial_original_flat_start_length_tiles: int = -1
+var _tutorial_original_coin_spawn_chance: float = -1.0
+var _tutorial_original_diamond_spawn_chance: float = -1.0
+var _tutorial_original_enemy_allow_block: bool = true
+var _tutorial_original_enemy_allow_cone: bool = true
+var _tutorial_original_enemy_min_platform_len: int = -1
+var _tutorial_original_enemy_min_gap_between: int = -1
+var _tutorial_original_fixed_seed: int = 0
+var _tutorial_original_up_chance: float = -1.0
+var _tutorial_original_down_chance: float = -1.0
+var _tutorial_original_min_height_tiles: int = -1
+var _tutorial_original_max_height_tiles: int = -1
+var _tutorial_original_min_platform_len: int = -1
+var _tutorial_original_min_step_run_len: int = -1
+var _tutorial_original_max_step_run_len: int = -1
+var _tutorial_original_min_step_height: int = -1
+var _tutorial_original_max_step_height: int = -1
+var _tutorial_world_frozen: bool = false
+var _tutorial_parallax_prev_speed: float = 300.0
+var _tutorial_parallax_prev_speed_valid: bool = false
+var _tutorial_hud_prev_visibility: Dictionary = {}
 
 func _ready() -> void:
     AdManager.move_banner(true) # Banner di atas untuk ingame
@@ -533,6 +608,7 @@ func _ready() -> void:
 
     _connect_mobile_buttons()
     _connect_viewport_resize()
+    _setup_onboarding_ui()
 
 func register_game_nodes(nodes: Dictionary) -> void:
     if nodes.has("player"):
@@ -637,6 +713,7 @@ func _setup_ui_elements() -> void:
         var cb2 := Callable(self, "_on_mission_became_ready")
         if not missions_manager.is_connected("mission_became_ready", cb2):
             missions_manager.connect("mission_became_ready", cb2)
+    _setup_onboarding_ui()
 
 
 func _apply_ui_font(node: Node, font: Font) -> void:
@@ -1118,6 +1195,30 @@ func _update_mobile_button_tints() -> void:
     _attack_button_tint.add_theme_stylebox_override("panel", sa)
 
 
+func _should_show_mobile_action_buttons() -> bool:
+    return phase != Phase.GAME_OVER and not countdown_active
+
+
+func _sync_mobile_action_buttons_visibility() -> void:
+    var show_jump: bool = _should_show_mobile_action_buttons()
+    var show_attack: bool = _should_show_mobile_action_buttons()
+    if tutorial_flow_active:
+        show_jump = false
+        show_attack = false
+        if tutorial_run_step == TutorialRunStep.WAIT_JUMP_DONE or tutorial_run_step == TutorialRunStep.WAIT_RISE_JUMP_DONE or tutorial_run_step == TutorialRunStep.WAIT_ATTACK_PROMPT:
+            show_jump = true
+        elif tutorial_run_step == TutorialRunStep.WAIT_ATTACK_DONE:
+            show_attack = true
+    if _jump_button != null:
+        _jump_button.visible = show_jump
+    if _attack_button != null:
+        _attack_button.visible = show_attack
+    if _jump_button_tint != null:
+        _jump_button_tint.visible = show_jump
+    if _attack_button_tint != null:
+        _attack_button_tint.visible = show_attack
+
+
 func _connect_viewport_resize() -> void:
     var vp := get_viewport()
     if vp == null:
@@ -1221,8 +1322,7 @@ func _update_mobile_controls_layout(force: bool) -> void:
         _attack_button.position = attack_pos
 
         # Pastikan tombol terlihat di mobile dan z-index tinggi HANYA saat bermain
-        _jump_button.visible = (phase != Phase.GAME_OVER)
-        _attack_button.visible = (phase != Phase.GAME_OVER)
+        _sync_mobile_action_buttons_visibility()
         _jump_button.z_index = 100
         _attack_button.z_index = 100
 
@@ -1332,6 +1432,7 @@ func _update_safe_ui_layout(safe: Rect2, viewport_size: Vector2) -> void:
         speed_boost_icon.position = Vector2(icon_x, sy + 192.0)
     if speed_boost_timer_label:
         speed_boost_timer_label.position = Vector2(label_x, sy + 192.0)
+    _update_onboarding_layout(safe)
 
 func _debug_input(msg: String) -> void:
     if OS.is_debug_build() and debug_info_enabled:
@@ -1435,6 +1536,8 @@ func _ensure_default_difficulty_profiles() -> void:
 func _process(delta: float) -> void:
     if not is_inside_tree():
         return
+    _refresh_tutorial_mode_badge()
+    _sync_mobile_action_buttons_visibility()
     if countdown_active:
         countdown_timer = max(countdown_timer - delta, 0.0)
         if countdown_label:
@@ -1504,6 +1607,10 @@ func _process(delta: float) -> void:
                 var anim_factor: float = max(0.1, target_speed / max(base_speed, 0.1))
                 player.call("set_run_anim_factor", anim_factor)
         _update_speed_info_label(env_speed, target_speed)
+    _update_onboarding(delta)
+    _update_first_run_tutorial_flow(delta)
+    _update_tutorial_prompt_pulse(delta)
+    _sync_mobile_action_buttons_visibility()
     if game_active:
         if magnet_timer > 0.0:
             magnet_timer = max(magnet_timer - delta, 0.0)
@@ -2368,6 +2475,9 @@ func _on_player_health_decreased(_current: int, _maximum: int) -> void:
     call_deferred("_ensure_hearts_for_low_health")
 
 func _apply_enemy_ramp_if_needed() -> void:
+    if tutorial_flow_active:
+        _difficulty_speed_multiplier = 1.0
+        return
     if not enemy_ramp_enabled:
         _difficulty_speed_multiplier = 1.0
         return
@@ -2563,6 +2673,7 @@ func set_playing_phase() -> void:
         var gom2 := canvas.get_node_or_null("GameOverMenu")
         if gom2:
             gom2.visible = false
+    _start_onboarding_if_eligible()
 
 
 func _play_game_over_bgm() -> void:
@@ -3369,6 +3480,7 @@ func _load_progress() -> void:
         reward_grant_ledger = {}
         monetization_data = _normalize_monetization_data({})
         difficulty_version = _DIFFICULTY_VERSION_DEFAULT
+        onboarding_completed = false
         _apply_runtime_powerup_values()
         _save_progress()
         return
@@ -3438,6 +3550,7 @@ func _load_progress() -> void:
     if difficulty_version <= 0:
         difficulty_version = _DIFFICULTY_VERSION_DEFAULT
         should_resave = true
+    onboarding_completed = bool(cfg.get_value(_ONBOARDING_SAVE_SECTION, _ONBOARDING_SAVE_KEY_COMPLETED, false))
 
     var cosmetics: Dictionary = cfg.get_value("cosmetics", "data", {})
     var equipped_border = cosmetics.get("equipped_border", "")
@@ -3489,6 +3602,7 @@ func _save_progress() -> void:
     cfg.set_value("ledger", "data", reward_grant_ledger)
     cfg.set_value("monetization", "data", monetization_data)
     cfg.set_value("difficulty", "version", difficulty_version)
+    cfg.set_value(_ONBOARDING_SAVE_SECTION, _ONBOARDING_SAVE_KEY_COMPLETED, onboarding_completed)
     var ver = ProjectSettings.get_setting("application/config/version")
     if ver != null:
         cfg.set_value("meta", "version", String(ver))
@@ -3815,6 +3929,11 @@ func _start_play_phase() -> void:
     _continue_request_in_flight = false
     _continue_offer_request_serial = -1
     _continue_offer_granted_serial = -1
+    onboarding_active = false
+    onboarding_step = -1
+    onboarding_elapsed = 0.0
+    _set_onboarding_visible(false)
+    _restore_onboarding_time_scale()
     coin_collected_a = 0
     coin_collected_b = 0
     gem_collected_a = 0
@@ -3856,6 +3975,7 @@ func _start_play_phase() -> void:
     countdown_duration_sec = 3.0
     countdown_active = true
     countdown_timer = countdown_duration_sec
+    _sync_mobile_action_buttons_visibility()
     print("[GameManager] Starting play phase, countdown active: ", countdown_active, " timer: ", countdown_timer)
     if countdown_label:
         countdown_label.visible = true
@@ -3874,6 +3994,7 @@ func _start_play_phase() -> void:
     entry_finished = false
     _missions_completed_type_toasted.clear()
     _apply_powerups_for_new_run()
+    _start_first_run_tutorial_flow()
     if ground_a:
         if ground_a.has_method("restart_from_flat_start"):
             ground_a.restart_from_flat_start()
@@ -3897,6 +4018,8 @@ func _start_play_phase() -> void:
         terrain.set_movement_enabled(false)
     if ground_a and ground_a.has_method("set_movement_enabled"):
         ground_a.set_movement_enabled(false)
+    if parallax and parallax.has_method("set_speed"):
+        parallax.set_speed(0.0)
 
     # TransitionManager.stop_bgm() call removed to prevent BGM interruption during loading.
     # The BGM will be managed by the next scene (MainMenu) or manually if needed.
@@ -3985,6 +4108,9 @@ func on_player_game_over(_cause: String) -> void:
     _continue_offer_request_serial = -1
     _continue_offer_granted_serial = -1
     _continue_request_in_flight = false
+    _set_onboarding_visible(false)
+    _restore_onboarding_time_scale()
+    _stop_first_run_tutorial_flow(true)
     _end_anomaly_event()
     _anomaly_speed_multiplier_runtime = 1.0
     if _jump_button: _jump_button.visible = false
@@ -4069,6 +4195,804 @@ func _refresh_missions_label() -> void:
             txt = String(missions_manager.call("get_missions_text"))
         (label as Label).text = tr("MISSIONS") + ":\n" + txt
 
+
+func _setup_onboarding_ui() -> void:
+    if canvas == null:
+        return
+    if onboarding_overlay and is_instance_valid(onboarding_overlay) and onboarding_overlay.get_parent() == canvas:
+        return
+    if onboarding_overlay and is_instance_valid(onboarding_overlay):
+        onboarding_overlay.queue_free()
+    onboarding_overlay = Control.new()
+    onboarding_overlay.name = "OnboardingFirst20"
+    onboarding_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+    onboarding_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    onboarding_overlay.z_index = 320
+    canvas.add_child(onboarding_overlay)
+
+    onboarding_dim_layer = ColorRect.new()
+    onboarding_dim_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+    onboarding_dim_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    onboarding_dim_layer.color = Color(0, 0, 0, onboarding_overlay_alpha)
+    onboarding_overlay.add_child(onboarding_dim_layer)
+
+    onboarding_spotlight = Panel.new()
+    onboarding_spotlight.size = Vector2(180.0, 180.0)
+    onboarding_spotlight.pivot_offset = onboarding_spotlight.size * 0.5
+    onboarding_spotlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    onboarding_overlay.add_child(onboarding_spotlight)
+    var spotlight_style := StyleBoxFlat.new()
+    spotlight_style.bg_color = Color(1.0, 1.0, 1.0, 0.08)
+    spotlight_style.border_color = Color(1.0, 0.95, 0.55, 0.95)
+    spotlight_style.border_width_left = 4
+    spotlight_style.border_width_top = 4
+    spotlight_style.border_width_right = 4
+    spotlight_style.border_width_bottom = 4
+    spotlight_style.shadow_color = Color(0, 0, 0, 0.35)
+    spotlight_style.shadow_size = 8
+    spotlight_style.corner_radius_top_left = 90
+    spotlight_style.corner_radius_top_right = 90
+    spotlight_style.corner_radius_bottom_left = 90
+    spotlight_style.corner_radius_bottom_right = 90
+    onboarding_spotlight.add_theme_stylebox_override("panel", spotlight_style)
+
+    onboarding_indicator = Label.new()
+    onboarding_indicator.text = "👇"
+    onboarding_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    onboarding_indicator.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    onboarding_indicator.add_theme_font_size_override("font_size", 84)
+    onboarding_indicator.add_theme_constant_override("outline_size", 5)
+    onboarding_indicator.add_theme_color_override("font_color", Color(1.0, 0.95, 0.35, 1.0))
+    onboarding_indicator.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+    onboarding_indicator.size = Vector2(120.0, 120.0)
+    onboarding_indicator.pivot_offset = onboarding_indicator.size * 0.5
+    onboarding_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    onboarding_overlay.add_child(onboarding_indicator)
+
+    onboarding_hint_panel = Panel.new()
+    onboarding_hint_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    onboarding_hint_panel.size = Vector2(560.0, 84.0)
+    onboarding_overlay.add_child(onboarding_hint_panel)
+    var hint_style := StyleBoxFlat.new()
+    hint_style.bg_color = Color(0.08, 0.08, 0.12, 0.86)
+    hint_style.border_color = Color(1.0, 0.9, 0.35, 0.92)
+    hint_style.border_width_left = 3
+    hint_style.border_width_top = 3
+    hint_style.border_width_right = 3
+    hint_style.border_width_bottom = 6
+    hint_style.shadow_color = Color(0, 0, 0, 0.45)
+    hint_style.shadow_size = 9
+    hint_style.corner_radius_top_left = 14
+    hint_style.corner_radius_top_right = 14
+    hint_style.corner_radius_bottom_left = 14
+    hint_style.corner_radius_bottom_right = 14
+    onboarding_hint_panel.add_theme_stylebox_override("panel", hint_style)
+
+    onboarding_hint_label = Label.new()
+    onboarding_hint_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+    onboarding_hint_label.offset_left = 16.0
+    onboarding_hint_label.offset_top = 10.0
+    onboarding_hint_label.offset_right = -16.0
+    onboarding_hint_label.offset_bottom = -10.0
+    onboarding_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    onboarding_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    onboarding_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    onboarding_hint_label.add_theme_font_size_override("font_size", 34)
+    onboarding_hint_label.add_theme_constant_override("outline_size", 4)
+    onboarding_hint_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+    onboarding_hint_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+    onboarding_hint_panel.add_child(onboarding_hint_label)
+    tutorial_mode_badge = Panel.new()
+    tutorial_mode_badge.name = "TutorialModeBadge"
+    tutorial_mode_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    tutorial_mode_badge.position = Vector2(0.0, 12.0)
+    tutorial_mode_badge.size = Vector2(300.0, 44.0)
+    tutorial_mode_badge.z_index = 321
+    canvas.add_child(tutorial_mode_badge)
+    var badge_style := StyleBoxFlat.new()
+    badge_style.bg_color = Color(0.12, 0.08, 0.12, 0.88)
+    badge_style.border_color = Color(1.0, 0.9, 0.35, 0.92)
+    badge_style.border_width_left = 2
+    badge_style.border_width_top = 2
+    badge_style.border_width_right = 2
+    badge_style.border_width_bottom = 5
+    badge_style.shadow_color = Color(0, 0, 0, 0.45)
+    badge_style.shadow_size = 8
+    badge_style.corner_radius_top_left = 12
+    badge_style.corner_radius_top_right = 12
+    badge_style.corner_radius_bottom_left = 12
+    badge_style.corner_radius_bottom_right = 12
+    tutorial_mode_badge.add_theme_stylebox_override("panel", badge_style)
+    tutorial_mode_badge_label = Label.new()
+    tutorial_mode_badge_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+    tutorial_mode_badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    tutorial_mode_badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    tutorial_mode_badge_label.add_theme_font_size_override("font_size", 22)
+    tutorial_mode_badge_label.add_theme_constant_override("outline_size", 3)
+    tutorial_mode_badge_label.add_theme_color_override("font_color", Color(1.0, 0.97, 0.8, 1.0))
+    tutorial_mode_badge_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+    tutorial_mode_badge.add_child(tutorial_mode_badge_label)
+    _set_tutorial_mode_badge_visible(false)
+    _set_onboarding_visible(false)
+
+
+func _set_tutorial_mode_badge_visible(v: bool) -> void:
+    if tutorial_mode_badge and is_instance_valid(tutorial_mode_badge):
+        tutorial_mode_badge.visible = v
+    _refresh_tutorial_mode_badge()
+
+
+func _refresh_tutorial_mode_badge() -> void:
+    if tutorial_mode_badge == null or not is_instance_valid(tutorial_mode_badge):
+        return
+    _layout_tutorial_mode_badge(_compute_safe_area_rect())
+    if not OS.is_debug_build():
+        tutorial_mode_badge.visible = false
+        return
+    tutorial_mode_badge.visible = true
+    if tutorial_mode_badge_label == null or not is_instance_valid(tutorial_mode_badge_label):
+        return
+    if tutorial_flow_active:
+        var gap_info: String = ""
+        if ground_a and player and ground_a.has_method("get_next_gap_distance_tiles"):
+            var gap_tiles: float = float(ground_a.call("get_next_gap_distance_tiles", player.global_position.x, 160))
+            if gap_tiles >= 0.0:
+                gap_info = " | " + (tr("TUTORIAL_GAP_DIST") % int(round(gap_tiles)))
+        tutorial_mode_badge_label.text = tr("TUTORIAL_FLOW_ACTIVE") + gap_info
+        return
+    if _is_debug_tutorial_test_mode():
+        tutorial_mode_badge_label.text = tr("TUTORIAL_TEST_ON")
+    else:
+        tutorial_mode_badge_label.text = tr("TUTORIAL_TEST_OFF")
+
+
+func _layout_tutorial_mode_badge(safe: Rect2) -> void:
+    if tutorial_mode_badge == null or not is_instance_valid(tutorial_mode_badge):
+        return
+    var top_margin: float = safe.position.y + 12.0
+    tutorial_mode_badge.position = Vector2(
+        safe.position.x + (safe.size.x - tutorial_mode_badge.size.x) * 0.5,
+        top_margin
+    )
+
+
+func _update_onboarding_layout(safe: Rect2) -> void:
+    if onboarding_overlay == null or not is_instance_valid(onboarding_overlay):
+        return
+    _layout_tutorial_mode_badge(safe)
+    var hint_width: float = minf(maxf(safe.size.x * 0.6, 420.0), 760.0)
+    var hint_height: float = 90.0
+    onboarding_hint_panel.size = Vector2(hint_width, hint_height)
+    onboarding_hint_panel.position = Vector2(
+        safe.position.x + (safe.size.x - hint_width) * 0.5,
+        safe.position.y + 110.0
+    )
+
+    var target_size := Vector2(128.0, 128.0)
+    var target_pos := Vector2(
+        safe.position.x + safe.size.x - 220.0,
+        safe.position.y + safe.size.y - 210.0
+    )
+    var target_button: TouchScreenButton = _jump_button
+    if onboarding_target_mode == "attack":
+        target_button = _attack_button
+    if target_button != null:
+        target_size = Vector2(96.0, 96.0)
+        if target_button.texture_normal != null:
+            target_size = target_button.texture_normal.get_size()
+        target_size *= target_button.scale
+        target_pos = target_button.position
+    var spotlight_pad := Vector2(28.0, 28.0)
+    onboarding_spotlight.size = target_size + spotlight_pad
+    onboarding_spotlight.position = target_pos - spotlight_pad * 0.5
+    onboarding_spotlight.pivot_offset = onboarding_spotlight.size * 0.5
+    onboarding_indicator.position = Vector2(
+        onboarding_spotlight.position.x + onboarding_spotlight.size.x * 0.5 - onboarding_indicator.size.x * 0.5,
+        onboarding_spotlight.position.y - 70.0
+    )
+    onboarding_indicator.pivot_offset = onboarding_indicator.size * 0.5
+
+
+func _update_tutorial_prompt_pulse(delta: float) -> void:
+    var pulse_active: bool = false
+    if tutorial_flow_active and (tutorial_run_step == TutorialRunStep.WAIT_JUMP_DONE or tutorial_run_step == TutorialRunStep.WAIT_RISE_JUMP_DONE) and onboarding_target_mode == "jump":
+        if onboarding_overlay and is_instance_valid(onboarding_overlay) and onboarding_overlay.visible:
+            pulse_active = true
+    if not pulse_active:
+        _tutorial_prompt_pulse_time = 0.0
+        if onboarding_indicator and is_instance_valid(onboarding_indicator):
+            onboarding_indicator.scale = Vector2.ONE
+        if onboarding_spotlight and is_instance_valid(onboarding_spotlight):
+            onboarding_spotlight.scale = Vector2.ONE
+        return
+    _tutorial_prompt_pulse_time += delta
+    var wave: float = (sin(_tutorial_prompt_pulse_time * tutorial_prompt_pulse_speed) + 1.0) * 0.5
+    var indicator_scale: float = lerpf(tutorial_indicator_pulse_min_scale, tutorial_indicator_pulse_max_scale, wave)
+    var spotlight_scale: float = lerpf(tutorial_spotlight_pulse_min_scale, tutorial_spotlight_pulse_max_scale, wave)
+    if onboarding_indicator and is_instance_valid(onboarding_indicator):
+        onboarding_indicator.scale = Vector2(indicator_scale, indicator_scale)
+    if onboarding_spotlight and is_instance_valid(onboarding_spotlight):
+        onboarding_spotlight.scale = Vector2(spotlight_scale, spotlight_scale)
+
+
+func _has_tutorial_enemy_ahead(required_seq: int = 0, max_tiles: int = -1) -> bool:
+    if player == null or not is_instance_valid(player):
+        return false
+    if ground_a == null or not is_instance_valid(ground_a):
+        return false
+    var min_ahead: float = 24.0
+    var max_ahead: float = maxf(tutorial_attack_prompt_enemy_trigger_distance_px, 80.0)
+    if max_tiles >= 0 and ground_a.has_method("get_tile_width_px"):
+        var tile_w: float = _variant_to_float(ground_a.call("get_tile_width_px"), 0.0)
+        if tile_w > 0.0:
+            max_ahead = maxf(float(max_tiles) * tile_w, min_ahead)
+    var player_x: float = player.global_position.x
+    var roots: Array[Node] = []
+    var enemies_a: Node = ground_a.get_node_or_null("EnemiesA")
+    var enemies_b: Node = ground_a.get_node_or_null("EnemiesB")
+    if enemies_a != null:
+        roots.append(enemies_a)
+    if enemies_b != null:
+        roots.append(enemies_b)
+    for root_node: Node in roots:
+        for child: Node in root_node.get_children():
+            if child == null or not (child is Node2D):
+                continue
+            var enemy_node: Node2D = child as Node2D
+            if not enemy_node.visible:
+                continue
+            if required_seq > 0:
+                if not enemy_node.has_meta("tutorial_enemy_seq"):
+                    continue
+                var seq_val := int(enemy_node.get_meta("tutorial_enemy_seq"))
+                if seq_val != required_seq:
+                    continue
+            var dx: float = enemy_node.global_position.x - player_x
+            if dx >= min_ahead and dx <= max_ahead:
+                return true
+    return false
+
+
+func _start_onboarding_if_eligible() -> void:
+    if tutorial_flow_active:
+        onboarding_active = false
+        _set_onboarding_visible(false)
+        return
+    if not onboarding_enabled:
+        return
+    if onboarding_completed:
+        _set_onboarding_visible(false)
+        return
+    onboarding_active = true
+    onboarding_step = -1
+    onboarding_elapsed = 0.0
+    _set_onboarding_visible(true)
+    _enter_onboarding_slowmo()
+
+
+func _update_onboarding(delta: float) -> void:
+    if tutorial_flow_active:
+        onboarding_active = false
+        var tutorial_prompt_showing: bool = tutorial_run_step == TutorialRunStep.WAIT_JUMP_DONE or tutorial_run_step == TutorialRunStep.WAIT_RISE_JUMP_DONE or tutorial_run_step == TutorialRunStep.WAIT_ATTACK_DONE
+        if not tutorial_prompt_showing:
+            _set_onboarding_visible(false)
+        return
+    if not onboarding_active:
+        return
+    if _is_onboarding_blocked():
+        _set_onboarding_visible(false)
+        return
+    _set_onboarding_visible(true)
+    onboarding_elapsed += delta
+    if onboarding_slowmo_active and onboarding_elapsed >= onboarding_slowmo_duration_sec:
+        _restore_onboarding_time_scale()
+    var next_step := _resolve_onboarding_step(onboarding_elapsed)
+    if next_step != onboarding_step:
+        onboarding_step = next_step
+        _apply_onboarding_step()
+    _apply_onboarding_fade()
+    if onboarding_elapsed >= onboarding_duration_sec:
+        onboarding_active = false
+        onboarding_step = 4
+        _set_onboarding_visible(false)
+        _restore_onboarding_time_scale()
+        if not onboarding_completed:
+            onboarding_completed = true
+            _save_progress()
+
+
+func _resolve_onboarding_step(elapsed: float) -> int:
+    if elapsed < 4.0:
+        return 0
+    if elapsed < 9.0:
+        return 1
+    if elapsed < 15.0:
+        return 2
+    if elapsed < onboarding_duration_sec:
+        return 3
+    return 4
+
+
+func _apply_onboarding_step() -> void:
+    if onboarding_hint_label == null:
+        return
+    if onboarding_step == 0:
+        onboarding_hint_label.text = tr("ONBOARD_TAP_JUMP")
+    elif onboarding_step == 1:
+        onboarding_hint_label.text = tr("ONBOARD_AVOID_OBSTACLE")
+    elif onboarding_step == 2:
+        onboarding_hint_label.text = tr("ONBOARD_COINS_FOR_SHOP")
+
+
+func _apply_onboarding_fade() -> void:
+    if onboarding_dim_layer == null or onboarding_hint_panel == null:
+        return
+    if onboarding_step < 3:
+        onboarding_dim_layer.color.a = onboarding_overlay_alpha
+        onboarding_hint_panel.modulate.a = 1.0
+        if onboarding_spotlight:
+            onboarding_spotlight.modulate.a = 1.0
+        if onboarding_indicator:
+            onboarding_indicator.modulate.a = 1.0
+        return
+    var fade_t := clampf((onboarding_elapsed - 15.0) / maxf(onboarding_duration_sec - 15.0, 0.1), 0.0, 1.0)
+    onboarding_dim_layer.color.a = lerpf(onboarding_overlay_alpha, 0.0, fade_t)
+    onboarding_hint_panel.modulate.a = 1.0 - fade_t
+    if onboarding_spotlight:
+        onboarding_spotlight.modulate.a = 1.0 - fade_t
+    if onboarding_indicator:
+        onboarding_indicator.modulate.a = 1.0 - fade_t
+
+
+func _set_onboarding_visible(v: bool) -> void:
+    if onboarding_overlay and is_instance_valid(onboarding_overlay):
+        onboarding_overlay.visible = v
+
+
+func _is_onboarding_blocked() -> bool:
+    if phase != Phase.PLAYING:
+        return true
+    if not game_active:
+        return true
+    if get_tree().paused:
+        return true
+    if canvas:
+        var pause_menu := canvas.get_node_or_null("PauseMenu")
+        if pause_menu and pause_menu is CanvasItem and (pause_menu as CanvasItem).visible:
+            return true
+        var game_over_menu := canvas.get_node_or_null("GameOverMenu")
+        if game_over_menu and game_over_menu is CanvasItem and (game_over_menu as CanvasItem).visible:
+            return true
+    var settings_menu := get_node_or_null("SettingsMenu")
+    if settings_menu and settings_menu is CanvasItem and (settings_menu as CanvasItem).visible:
+        return true
+    var missions_menu := get_node_or_null("DailyMissionsMenu")
+    if missions_menu and missions_menu is CanvasItem and (missions_menu as CanvasItem).visible:
+        return true
+    return false
+
+
+func _is_tutorial_prompt_blocked() -> bool:
+    if phase != Phase.PLAYING:
+        return true
+    if get_tree().paused:
+        return true
+    if canvas:
+        var pause_menu := canvas.get_node_or_null("PauseMenu")
+        if pause_menu and pause_menu is CanvasItem and (pause_menu as CanvasItem).visible:
+            return true
+        var game_over_menu := canvas.get_node_or_null("GameOverMenu")
+        if game_over_menu and game_over_menu is CanvasItem and (game_over_menu as CanvasItem).visible:
+            return true
+    var settings_menu := get_node_or_null("SettingsMenu")
+    if settings_menu and settings_menu is CanvasItem and (settings_menu as CanvasItem).visible:
+        return true
+    var missions_menu := get_node_or_null("DailyMissionsMenu")
+    if missions_menu and missions_menu is CanvasItem and (missions_menu as CanvasItem).visible:
+        return true
+    return false
+
+
+func _enter_onboarding_slowmo() -> void:
+    if onboarding_slowmo_active:
+        return
+    onboarding_prev_time_scale = Engine.time_scale
+    Engine.time_scale = clampf(onboarding_slowmo_scale, 0.55, 1.0)
+    onboarding_slowmo_active = true
+
+
+func _restore_onboarding_time_scale() -> void:
+    if not onboarding_slowmo_active:
+        return
+    Engine.time_scale = onboarding_prev_time_scale
+    onboarding_slowmo_active = false
+
+
+func _is_debug_tutorial_test_mode() -> bool:
+    return OS.is_debug_build() and debug_force_first_install_tutorial
+
+
+func is_onboarding_first20_completed() -> bool:
+    if _is_debug_tutorial_test_mode():
+        return false
+    return onboarding_completed
+
+
+func complete_onboarding_first20(save_after: bool = true) -> void:
+    onboarding_completed = true
+    onboarding_active = false
+    onboarding_step = 4
+    onboarding_elapsed = onboarding_duration_sec
+    _set_onboarding_visible(false)
+    _restore_onboarding_time_scale()
+    if save_after:
+        _save_progress()
+
+
+func _show_tutorial_prompt(key: String, target_mode: String) -> void:
+    onboarding_target_mode = target_mode
+    if onboarding_hint_label:
+        onboarding_hint_label.text = tr(key)
+    if onboarding_dim_layer:
+        var dim_alpha: float = onboarding_overlay_alpha
+        if target_mode == "jump":
+            dim_alpha = maxf(onboarding_overlay_alpha, tutorial_jump_overlay_alpha)
+        onboarding_dim_layer.color.a = dim_alpha
+    if onboarding_hint_panel:
+        onboarding_hint_panel.modulate.a = 1.0
+    if onboarding_spotlight:
+        onboarding_spotlight.modulate.a = 1.0
+    if onboarding_indicator:
+        onboarding_indicator.modulate.a = 1.0
+    _set_onboarding_visible(true)
+    var safe := _compute_safe_area_rect()
+    _update_onboarding_layout(safe)
+
+
+func _hide_tutorial_prompt() -> void:
+    _set_onboarding_visible(false)
+
+
+func _set_tutorial_world_frozen(frozen: bool) -> void:
+    if _tutorial_world_frozen == frozen:
+        return
+    _tutorial_world_frozen = frozen
+    var enable_world: bool = not frozen
+    if terrain and terrain.has_method("set_movement_enabled"):
+        terrain.set_movement_enabled(enable_world)
+    if ground_a and ground_a.has_method("set_movement_enabled"):
+        ground_a.set_movement_enabled(enable_world)
+        if enable_world and ground_a.has_method("set_speed"):
+            ground_a.set_speed(base_speed)
+    if player and player.has_method("enable_environment_movement"):
+        player.enable_environment_movement(enable_world)
+    if player and player.has_method("set_tutorial_animation_frozen"):
+        player.set_tutorial_animation_frozen(frozen)
+    if parallax and parallax.has_method("set_speed"):
+        if frozen:
+            if parallax.has_method("get"):
+                var p_speed = parallax.get("speed")
+                if p_speed != null:
+                    _tutorial_parallax_prev_speed = float(p_speed)
+                    _tutorial_parallax_prev_speed_valid = true
+            parallax.set_speed(0.0)
+        else:
+            if _tutorial_parallax_prev_speed_valid:
+                parallax.set_speed(_tutorial_parallax_prev_speed)
+            else:
+                parallax.set_speed(300.0)
+
+
+func _set_tutorial_hud_hidden(should_hide: bool) -> void:
+    if should_hide and not _is_tutorial_gameplay_scene():
+        return
+    var targets: Array[CanvasItem] = []
+    if health_icon and health_icon is CanvasItem:
+        targets.append(health_icon as CanvasItem)
+    if health_bar and health_bar is CanvasItem:
+        targets.append(health_bar as CanvasItem)
+    if heart_spawn_label and heart_spawn_label is CanvasItem:
+        targets.append(heart_spawn_label as CanvasItem)
+    if coin_hud and coin_hud is CanvasItem:
+        targets.append(coin_hud as CanvasItem)
+    if coin_icon_anim and coin_icon_anim is CanvasItem:
+        targets.append(coin_icon_anim as CanvasItem)
+    if score_hud and score_hud is CanvasItem:
+        targets.append(score_hud as CanvasItem)
+    if gem_hud and gem_hud is CanvasItem:
+        targets.append(gem_hud as CanvasItem)
+    if settings_button and settings_button is CanvasItem:
+        targets.append(settings_button as CanvasItem)
+    if magnet_icon and magnet_icon is CanvasItem:
+        targets.append(magnet_icon as CanvasItem)
+    if magnet_timer_label and magnet_timer_label is CanvasItem:
+        targets.append(magnet_timer_label as CanvasItem)
+    if shield_icon and shield_icon is CanvasItem:
+        targets.append(shield_icon as CanvasItem)
+    if shield_timer_label and shield_timer_label is CanvasItem:
+        targets.append(shield_timer_label as CanvasItem)
+    if double_coins_icon and double_coins_icon is CanvasItem:
+        targets.append(double_coins_icon as CanvasItem)
+    if double_coins_timer_label and double_coins_timer_label is CanvasItem:
+        targets.append(double_coins_timer_label as CanvasItem)
+    if speed_boost_icon and speed_boost_icon is CanvasItem:
+        targets.append(speed_boost_icon as CanvasItem)
+    if speed_boost_timer_label and speed_boost_timer_label is CanvasItem:
+        targets.append(speed_boost_timer_label as CanvasItem)
+
+    if should_hide:
+        if _tutorial_hud_prev_visibility.is_empty():
+            for item: CanvasItem in targets:
+                _tutorial_hud_prev_visibility[item.get_instance_id()] = item.visible
+        for item: CanvasItem in targets:
+            item.visible = false
+        return
+
+    if _tutorial_hud_prev_visibility.is_empty():
+        return
+    for item: CanvasItem in targets:
+        var key: int = item.get_instance_id()
+        if _tutorial_hud_prev_visibility.has(key):
+            item.visible = bool(_tutorial_hud_prev_visibility[key])
+    _tutorial_hud_prev_visibility.clear()
+
+
+func _is_tutorial_gameplay_scene() -> bool:
+    var current := get_tree().current_scene
+    if current == null:
+        return false
+    var scene_path := String(current.scene_file_path)
+    return scene_path == _MAIN_TUTORIAL_SCENE_PATH
+
+
+func _variant_to_float(value: Variant, fallback: float = 0.0) -> float:
+    if value is float:
+        return value
+    if value is int:
+        return value * 1.0
+    if value is String:
+        var s := String(value)
+        if s.is_valid_float():
+            return s.to_float()
+    return fallback
+
+
+func _variant_to_int(value: Variant, fallback: int = 0) -> int:
+    if value is int:
+        return value
+    if value is float:
+        return int(round(value))
+    if value is String:
+        var s := String(value)
+        if s.is_valid_int():
+            return s.to_int()
+    return fallback
+
+
+func _start_first_run_tutorial_flow() -> void:
+    _stop_first_run_tutorial_flow(false)
+    if not _is_tutorial_gameplay_scene():
+        return
+    if onboarding_completed and not _is_debug_tutorial_test_mode():
+        return
+    tutorial_flow_active = true
+    tutorial_run_step = TutorialRunStep.WAIT_JUMP_PROMPT
+    tutorial_step_timer = 0.0
+    tutorial_attack_pattern_stage = 0
+    tutorial_jump_done = false
+    tutorial_rise_jump_done = false
+    tutorial_attack_done = false
+    tutorial_forced_gameover_sent = false
+    _set_tutorial_world_frozen(false)
+    _set_tutorial_hud_hidden(true)
+    _set_tutorial_mode_badge_visible(true)
+    if ground_a:
+        _tutorial_ground_snapshot_valid = true
+        if ground_a.has_method("set_tutorial_scripted_mode"):
+            ground_a.call("set_tutorial_scripted_mode", true)
+        _tutorial_original_enemy_spawn_chance = _variant_to_float(ground_a.get("enemy_spawn_chance"), -1.0)
+        _tutorial_original_gap_chance = _variant_to_float(ground_a.get("gap_chance"), -1.0)
+        _tutorial_original_gap_min_len = _variant_to_int(ground_a.get("gap_min_len"), -1)
+        _tutorial_original_gap_max_len = _variant_to_int(ground_a.get("gap_max_len"), -1)
+        _tutorial_original_flat_start_length_tiles = _variant_to_int(ground_a.get("flat_start_length_tiles"), -1)
+        _tutorial_original_coin_spawn_chance = _variant_to_float(ground_a.get("coin_spawn_chance"), -1.0)
+        _tutorial_original_diamond_spawn_chance = _variant_to_float(ground_a.get("diamond_spawn_chance"), -1.0)
+        _tutorial_original_enemy_allow_block = bool(ground_a.get("enemy_allow_block"))
+        _tutorial_original_enemy_allow_cone = bool(ground_a.get("enemy_allow_cone"))
+        _tutorial_original_enemy_min_platform_len = _variant_to_int(ground_a.get("enemy_min_platform_len"), -1)
+        _tutorial_original_enemy_min_gap_between = _variant_to_int(ground_a.get("enemy_min_gap_between"), -1)
+        _tutorial_original_fixed_seed = _variant_to_int(ground_a.get("fixed_seed"), 0)
+        _tutorial_original_up_chance = _variant_to_float(ground_a.get("up_chance"), -1.0)
+        _tutorial_original_down_chance = _variant_to_float(ground_a.get("down_chance"), -1.0)
+        _tutorial_original_min_height_tiles = _variant_to_int(ground_a.get("min_height_tiles"), -1)
+        _tutorial_original_max_height_tiles = _variant_to_int(ground_a.get("max_height_tiles"), -1)
+        _tutorial_original_min_platform_len = _variant_to_int(ground_a.get("min_platform_len"), -1)
+        _tutorial_original_min_step_run_len = _variant_to_int(ground_a.get("min_step_run_len"), -1)
+        _tutorial_original_max_step_run_len = _variant_to_int(ground_a.get("max_step_run_len"), -1)
+        _tutorial_original_min_step_height = _variant_to_int(ground_a.get("min_step_height"), -1)
+        _tutorial_original_max_step_height = _variant_to_int(ground_a.get("max_step_height"), -1)
+        ground_a.set("fixed_seed", 424242)
+        ground_a.set("enemy_spawn_chance", 0.0)
+        ground_a.set("enemy_allow_block", false)
+        ground_a.set("enemy_allow_cone", false)
+        ground_a.set("coin_spawn_chance", 0.0)
+        ground_a.set("diamond_spawn_chance", 0.0)
+        ground_a.set("gap_chance", 1.0)
+        ground_a.set("gap_min_len", 4)
+        ground_a.set("gap_max_len", 4)
+        ground_a.set("up_chance", 0.0)
+        ground_a.set("down_chance", 0.0)
+        ground_a.set("min_height_tiles", 0)
+        ground_a.set("max_height_tiles", 1)
+        ground_a.set("min_platform_len", 6)
+        ground_a.set("min_step_run_len", 1)
+        ground_a.set("max_step_run_len", 1)
+        ground_a.set("min_step_height", 1)
+        ground_a.set("max_step_height", 1)
+        ground_a.set("enemy_min_gap_between", 0)
+        if _tutorial_original_flat_start_length_tiles > 0:
+            ground_a.set("flat_start_length_tiles", _tutorial_original_flat_start_length_tiles)
+    _hide_tutorial_prompt()
+
+
+func _stop_first_run_tutorial_flow(restore_ground: bool) -> void:
+    _hide_tutorial_prompt()
+    _set_tutorial_world_frozen(false)
+    _set_tutorial_hud_hidden(false)
+    _set_tutorial_mode_badge_visible(false)
+    tutorial_flow_active = false
+    tutorial_run_step = TutorialRunStep.NONE
+    tutorial_step_timer = 0.0
+    tutorial_attack_pattern_stage = 0
+    tutorial_jump_done = false
+    tutorial_rise_jump_done = false
+    tutorial_attack_done = false
+    tutorial_forced_gameover_sent = false
+    if restore_ground and _tutorial_ground_snapshot_valid and ground_a:
+        if ground_a.has_method("set_tutorial_scripted_mode"):
+            ground_a.call("set_tutorial_scripted_mode", false)
+        if _tutorial_original_enemy_spawn_chance >= 0.0:
+            ground_a.set("enemy_spawn_chance", _tutorial_original_enemy_spawn_chance)
+        if _tutorial_original_gap_chance >= 0.0:
+            ground_a.set("gap_chance", _tutorial_original_gap_chance)
+        if _tutorial_original_gap_min_len > 0:
+            ground_a.set("gap_min_len", _tutorial_original_gap_min_len)
+        if _tutorial_original_gap_max_len > 0:
+            ground_a.set("gap_max_len", _tutorial_original_gap_max_len)
+        if _tutorial_original_flat_start_length_tiles > 0:
+            ground_a.set("flat_start_length_tiles", _tutorial_original_flat_start_length_tiles)
+        if _tutorial_original_coin_spawn_chance >= 0.0:
+            ground_a.set("coin_spawn_chance", _tutorial_original_coin_spawn_chance)
+        if _tutorial_original_diamond_spawn_chance >= 0.0:
+            ground_a.set("diamond_spawn_chance", _tutorial_original_diamond_spawn_chance)
+        ground_a.set("enemy_allow_block", _tutorial_original_enemy_allow_block)
+        ground_a.set("enemy_allow_cone", _tutorial_original_enemy_allow_cone)
+        if _tutorial_original_enemy_min_platform_len > 0:
+            ground_a.set("enemy_min_platform_len", _tutorial_original_enemy_min_platform_len)
+        if _tutorial_original_enemy_min_gap_between >= 0:
+            ground_a.set("enemy_min_gap_between", _tutorial_original_enemy_min_gap_between)
+        ground_a.set("fixed_seed", _tutorial_original_fixed_seed)
+        if _tutorial_original_up_chance >= 0.0:
+            ground_a.set("up_chance", _tutorial_original_up_chance)
+        if _tutorial_original_down_chance >= 0.0:
+            ground_a.set("down_chance", _tutorial_original_down_chance)
+        if _tutorial_original_min_height_tiles >= 0:
+            ground_a.set("min_height_tiles", _tutorial_original_min_height_tiles)
+        if _tutorial_original_max_height_tiles >= 0:
+            ground_a.set("max_height_tiles", _tutorial_original_max_height_tiles)
+        if _tutorial_original_min_platform_len > 0:
+            ground_a.set("min_platform_len", _tutorial_original_min_platform_len)
+        if _tutorial_original_min_step_run_len > 0:
+            ground_a.set("min_step_run_len", _tutorial_original_min_step_run_len)
+        if _tutorial_original_max_step_run_len > 0:
+            ground_a.set("max_step_run_len", _tutorial_original_max_step_run_len)
+        if _tutorial_original_min_step_height > 0:
+            ground_a.set("min_step_height", _tutorial_original_min_step_height)
+        if _tutorial_original_max_step_height > 0:
+            ground_a.set("max_step_height", _tutorial_original_max_step_height)
+    if restore_ground:
+        _tutorial_ground_snapshot_valid = false
+
+
+func _update_first_run_tutorial_flow(delta: float) -> void:
+    if not tutorial_flow_active:
+        return
+    if not _is_tutorial_gameplay_scene():
+        _stop_first_run_tutorial_flow(true)
+        return
+    if _is_tutorial_prompt_blocked():
+        _hide_tutorial_prompt()
+        return
+    match tutorial_run_step:
+        TutorialRunStep.WAIT_JUMP_PROMPT:
+            var should_show_jump_prompt: bool = false
+            if ground_a and player and ground_a.has_method("get_next_gap_distance_tiles"):
+                var gap_tiles: float = _variant_to_float(ground_a.call("get_next_gap_distance_tiles", player.global_position.x, 160), -1.0)
+                if gap_tiles >= 0.0 and gap_tiles <= float(max(tutorial_jump_prompt_gap_distance_tiles, 0)):
+                    should_show_jump_prompt = true
+            elif distance >= tutorial_jump_prompt_distance:
+                should_show_jump_prompt = true
+            if should_show_jump_prompt:
+                _show_tutorial_prompt("ONBOARD_TAP_JUMP", "jump")
+                _set_tutorial_world_frozen(true)
+                tutorial_run_step = TutorialRunStep.WAIT_JUMP_DONE
+        TutorialRunStep.WAIT_JUMP_DONE:
+            if tutorial_jump_done:
+                _set_tutorial_world_frozen(false)
+                _hide_tutorial_prompt()
+                tutorial_step_timer = 0.0
+                tutorial_attack_pattern_stage = 0
+                tutorial_rise_jump_done = false
+                if ground_a:
+                    ground_a.set("gap_chance", 0.0)
+                    ground_a.set("gap_min_len", 4)
+                    ground_a.set("gap_max_len", 4)
+                    ground_a.set("enemy_allow_block", false)
+                    ground_a.set("enemy_allow_cone", false)
+                    ground_a.set("coin_spawn_chance", 0.0)
+                    ground_a.set("enemy_min_platform_len", 1)
+                    ground_a.set("enemy_min_gap_between", 0)
+                    ground_a.set("min_platform_len", 1)
+                    ground_a.set("min_step_run_len", 1)
+                    ground_a.set("max_step_run_len", 1)
+                    ground_a.set("min_step_height", 1)
+                    ground_a.set("max_step_height", 1)
+                    ground_a.set("up_chance", 0.0)
+                    ground_a.set("down_chance", 0.0)
+                    ground_a.set("min_height_tiles", 0)
+                    ground_a.set("max_height_tiles", 1)
+                tutorial_run_step = TutorialRunStep.WAIT_RISE_JUMP_PROMPT
+        TutorialRunStep.WAIT_RISE_JUMP_PROMPT:
+            tutorial_step_timer += delta
+            var should_show_rise_jump_prompt: bool = false
+            if ground_a and player and ground_a.has_method("get_next_rise_distance_tiles"):
+                var rise_tiles: float = _variant_to_float(ground_a.call("get_next_rise_distance_tiles", player.global_position.x, 160), -1.0)
+                if rise_tiles >= 0.0 and rise_tiles <= float(max(tutorial_rise_jump_prompt_distance_tiles, 0)):
+                    should_show_rise_jump_prompt = true
+            if should_show_rise_jump_prompt:
+                _show_tutorial_prompt("ONBOARD_TAP_JUMP", "jump")
+                _set_tutorial_world_frozen(true)
+                tutorial_run_step = TutorialRunStep.WAIT_RISE_JUMP_DONE
+        TutorialRunStep.WAIT_RISE_JUMP_DONE:
+            if tutorial_rise_jump_done:
+                _set_tutorial_world_frozen(false)
+                _hide_tutorial_prompt()
+                tutorial_step_timer = 0.0
+                tutorial_run_step = TutorialRunStep.WAIT_ATTACK_PROMPT
+        TutorialRunStep.WAIT_ATTACK_PROMPT:
+            tutorial_step_timer += delta
+            var enemy_ready: bool = _has_tutorial_enemy_ahead(1, tutorial_attack_prompt_enemy_trigger_distance_tiles)
+            if enemy_ready:
+                _show_tutorial_prompt("ONBOARD_ATTACK_ENEMY", "attack")
+                _set_tutorial_world_frozen(true)
+                tutorial_run_step = TutorialRunStep.WAIT_ATTACK_DONE
+        TutorialRunStep.WAIT_ATTACK_DONE:
+            if tutorial_attack_done:
+                _set_tutorial_world_frozen(false)
+                _hide_tutorial_prompt()
+                tutorial_step_timer = tutorial_force_gameover_delay_sec
+                if ground_a:
+                    ground_a.set("enemy_spawn_chance", 0.0)
+                    ground_a.set("enemy_allow_block", false)
+                    ground_a.set("enemy_allow_cone", false)
+                    ground_a.set("coin_spawn_chance", 0.0)
+                    ground_a.set("gap_chance", 0.95)
+                    ground_a.set("gap_min_len", 6)
+                    ground_a.set("gap_max_len", 8)
+                tutorial_run_step = TutorialRunStep.FORCE_GAMEOVER
+        TutorialRunStep.FORCE_GAMEOVER:
+            if tutorial_forced_gameover_sent:
+                return
+            tutorial_step_timer = maxf(tutorial_step_timer - delta, 0.0)
+            if tutorial_step_timer <= 0.0 and phase == Phase.PLAYING:
+                tutorial_forced_gameover_sent = true
+                complete_onboarding_first20(true)
+                on_player_game_over("tutorial_long_gap")
+
+
+func on_player_attack() -> void:
+    pass
+
 func _trigger_coin_burst() -> void:
     var layers: Array[TileMapLayer] = []
     if _ga_layer != null:
@@ -4081,8 +5005,14 @@ func _trigger_coin_burst() -> void:
 func on_enemy_killed_by_player() -> void:
     if missions_manager and missions_manager.has_method("add_enemy_kill"):
         missions_manager.add_enemy_kill()
+    if tutorial_flow_active and tutorial_run_step == TutorialRunStep.WAIT_ATTACK_DONE:
+        tutorial_attack_done = true
 
 
 func on_player_jump() -> void:
     if missions_manager and missions_manager.has_method("add_jump"):
         missions_manager.add_jump()
+    if tutorial_flow_active and tutorial_run_step == TutorialRunStep.WAIT_JUMP_DONE:
+        tutorial_jump_done = true
+    if tutorial_flow_active and tutorial_run_step == TutorialRunStep.WAIT_RISE_JUMP_DONE:
+        tutorial_rise_jump_done = true

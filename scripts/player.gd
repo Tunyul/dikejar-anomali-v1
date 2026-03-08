@@ -122,6 +122,7 @@ var _anim_scales: Dictionary = {}
 var _anim_offsets: Dictionary = {}
 var _run_anim_factor: float = 1.0
 var _boost_safe_fall_pending: bool = false
+var _tutorial_animation_frozen: bool = false
 
 func request_jump() -> void:
     jump_buffer_timer = jump_buffer_time
@@ -131,6 +132,8 @@ func request_attack() -> void:
     if is_on_floor() and not attack_active:
         attack_active = true
         attack_timer = attack_duration
+        if GameManager.has_method("on_player_attack"):
+            GameManager.on_player_attack()
 
 func _left_bound_world() -> float:
     var lb: float = 0.0
@@ -255,7 +258,7 @@ func setup_collision_layers() -> void:
 func _resolve_main_node() -> Node:
     var parent_node: Node = get_parent()
     while parent_node:
-        if parent_node.name == "Main":
+        if parent_node.name == "Main" or parent_node.name == "MainTutorial":
             return parent_node
         parent_node = parent_node.get_parent()
 
@@ -265,15 +268,21 @@ func _resolve_main_node() -> Node:
 
     var scene_root: Node = tree.current_scene
     if scene_root:
-        if scene_root.name == "Main":
+        if scene_root.name == "Main" or scene_root.name == "MainTutorial":
             return scene_root
         var nested_main: Node = scene_root.get_node_or_null("Main")
         if nested_main:
             return nested_main
+        var nested_tutorial_main: Node = scene_root.get_node_or_null("MainTutorial")
+        if nested_tutorial_main:
+            return nested_tutorial_main
 
     var root: Node = tree.get_root()
     if root:
-        return root.get_node_or_null("Main")
+        var found_main: Node = root.get_node_or_null("Main")
+        if found_main:
+            return found_main
+        return root.get_node_or_null("MainTutorial")
 
     return null
 
@@ -624,6 +633,11 @@ func update_health_bar() -> void:
 func update_animation_state() -> void:
     if not animated_sprite:
         return
+    if _tutorial_animation_frozen:
+        animated_sprite.speed_scale = 0.0
+        if animated_sprite.is_playing():
+            animated_sprite.stop()
+        return
 
     # Force initialization check to prevent cropped frames on first load
     if animated_sprite.animation == "" or animated_sprite.scale == Vector2.ZERO:
@@ -657,6 +671,18 @@ func update_animation_state() -> void:
                 _apply_scale_for_anim("run")
                 _apply_offset_for_anim("run")
             animated_sprite.speed_scale = ((0.6 if countdown_active else 0.8) * _run_anim_factor)
+
+
+func set_tutorial_animation_frozen(frozen: bool) -> void:
+    _tutorial_animation_frozen = frozen
+    if not animated_sprite:
+        return
+    if frozen:
+        animated_sprite.speed_scale = 0.0
+        if animated_sprite.is_playing():
+            animated_sprite.stop()
+        return
+    update_animation_state()
 
 
 

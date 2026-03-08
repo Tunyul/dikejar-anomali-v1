@@ -183,7 +183,7 @@ func _should_wait_for_deferred() -> bool:
         return false
     if preloader_node.has_method("peek_next_scene"):
         var pending: String = String(preloader_node.peek_next_scene()).strip_edges()
-        if pending == "res://scenes/Main.tscn":
+        if pending == "res://scenes/Main.tscn" or pending == "res://scenes/MainTutorial.tscn":
             return true
     return false
 

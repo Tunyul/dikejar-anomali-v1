@@ -33,7 +33,7 @@ func _ready() -> void:
 
     # Penentuan behavior awal berdasarkan scene
     var scene_name = get_tree().current_scene.name
-    if scene_name == "Main":
+    if scene_name == "Main" or scene_name == "MainTutorial":
         current_speed = 0.0 # Berhenti saat countdown di scene Main
     else:
         current_speed = speed # Langsung jalan di Main Menu atau scene lain

@@ -63,6 +63,13 @@ extends Node2D
 @export var flat_start_length_tiles: int = 24
 ## Seed tetap untuk RNG; 0 berarti acak setiap init.
 @export var fixed_seed: int = 0
+@export var tutorial_scripted_flat_start_len: int = 12
+@export var tutorial_scripted_gap1_len: int = 4
+@export var tutorial_scripted_flat_mid_len: int = 8
+@export var tutorial_scripted_flat_up_len: int = 10
+@export var tutorial_scripted_enemy_offset_from_drop_tiles: int = 1
+@export var tutorial_scripted_flat_after_down_len: int = 6
+@export var tutorial_scripted_gap_gameover_len: int = 8
 
 # Pool variables for performance optimization (Object Pooling)
 var _coin_pool: Array[Node2D] = []
@@ -74,6 +81,7 @@ var _magnet_pool: Array[Node2D] = []
 var _shield_pool: Array[Node2D] = []
 var _double_pool: Array[Node2D] = []
 var _speed_pool: Array[Node2D] = []
+var _tutorial_scripted_mode: bool = false
 
 var _generate_now_internal: bool = false
 var _runtime_use_acceleration: bool = true
@@ -338,16 +346,17 @@ func _setup_rng() -> void:
             _rng.randomize()
         return
     if _runtime_seed == 0:
-        var base: int = fixed_seed
-        if base == 0:
-            base = 1
-        var t: int = int(Time.get_ticks_msec())
-        var path_hash: int = 0
-        var cs: Node = get_tree().current_scene
-        if cs != null:
-            var p: String = cs.scene_file_path
-            path_hash = hash(p)
-        _runtime_seed = base ^ t ^ path_hash
+        if fixed_seed != 0:
+            _runtime_seed = fixed_seed
+        else:
+            var base: int = 1
+            var t: int = int(Time.get_ticks_msec())
+            var path_hash: int = 0
+            var cs: Node = get_tree().current_scene
+            if cs != null:
+                var p: String = cs.scene_file_path
+                path_hash = hash(p)
+            _runtime_seed = base ^ t ^ path_hash
     _rng.seed = _runtime_seed
 
 func _ready() -> void:
@@ -654,6 +663,8 @@ func _handle_wrap() -> void:
 func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
     if tile == null:
         return start_height
+    if _tutorial_scripted_mode:
+        return _generate_segment_tutorial_scripted(tile, start_height)
     _clear_collision_for_tile(tile)
     _clear_coins_for_tile(tile)
     _clear_diamonds_for_tile(tile)
@@ -868,6 +879,52 @@ func _generate_segment(tile: TileMapLayer, start_height: int) -> int:
 
     return current_height
 
+
+func _generate_segment_tutorial_scripted(tile: TileMapLayer, start_height: int) -> int:
+    _clear_collision_for_tile(tile)
+    _clear_coins_for_tile(tile)
+    _clear_diamonds_for_tile(tile)
+    _clear_enemies_for_tile(tile)
+    _clear_hearts_for_tile(tile)
+    _clear_powerups_for_tile(tile)
+    tile.clear()
+    var base_height: int = clamp(start_height, min_height_tiles, max_height_tiles)
+    var low_height: int = clamp(base_height, min_height_tiles, max_height_tiles)
+    var high_height: int = clamp(low_height + 1, min_height_tiles, max_height_tiles)
+    var x: int = 0
+    var flat_start_len: int = max(tutorial_scripted_flat_start_len, 1)
+    var gap1_len: int = max(tutorial_scripted_gap1_len, 1)
+    var flat_mid_len: int = max(tutorial_scripted_flat_mid_len, 1)
+    var flat_up_len: int = max(tutorial_scripted_flat_up_len, 4)
+    var enemy_from_end: int = clamp(tutorial_scripted_enemy_offset_from_drop_tiles, 0, flat_up_len - 1)
+    var flat_after_down_len: int = max(tutorial_scripted_flat_after_down_len, 1)
+    var gap_gameover_len: int = max(tutorial_scripted_gap_gameover_len, 1)
+    var stage_end_flat_start: int = min(x + flat_start_len, segment_tile_count)
+    while x < stage_end_flat_start:
+        _place_ground_column(tile, x, low_height)
+        x += 1
+    x = min(x + gap1_len, segment_tile_count)
+    var stage_end_flat_mid: int = min(x + flat_mid_len, segment_tile_count)
+    while x < stage_end_flat_mid:
+        _place_ground_column(tile, x, low_height)
+        x += 1
+    var stage_end_flat_up: int = min(x + flat_up_len, segment_tile_count)
+    var enemy1_x: int = max(x, stage_end_flat_up - 1 - enemy_from_end)
+    while x < stage_end_flat_up:
+        _place_ground_column(tile, x, high_height)
+        if x == enemy1_x:
+            _spawn_enemy_for_column(tile, x, high_height, 1)
+        x += 1
+    var stage_end_flat_after_down: int = min(x + flat_after_down_len, segment_tile_count)
+    while x < stage_end_flat_after_down:
+        _place_ground_column(tile, x, low_height)
+        x += 1
+    x = min(x + gap_gameover_len, segment_tile_count)
+    while x < segment_tile_count:
+        _place_ground_column(tile, x, low_height)
+        x += 1
+    return low_height
+
 func _ensure_trailing_coins(tile: TileMapLayer) -> void:
     if tile == null:
         return
@@ -1038,6 +1095,80 @@ func get_powerup_distances(from_world_x: float) -> Dictionary:
 func get_tile_width_px() -> float:
     _ensure_initialized()
     return _tile_w_px
+
+func _has_ground_at_world_x(world_x: float) -> bool:
+    var tiles: Array[TileMapLayer] = []
+    if _tile_flat_start != null:
+        tiles.append(_tile_flat_start)
+    if _tile_a != null:
+        tiles.append(_tile_a)
+    if _tile_b != null:
+        tiles.append(_tile_b)
+    for tile: TileMapLayer in tiles:
+        if tile == null or not tile.is_inside_tree():
+            continue
+        var local_pos: Vector2 = tile.to_local(Vector2(world_x, tile.global_position.y))
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        if _get_ground_height_for_column(tile, cell.x) >= 0:
+            return true
+    return false
+
+
+func _get_ground_height_at_world_x(world_x: float) -> int:
+    var best_height: int = -1
+    var tiles: Array[TileMapLayer] = []
+    if _tile_flat_start != null:
+        tiles.append(_tile_flat_start)
+    if _tile_a != null:
+        tiles.append(_tile_a)
+    if _tile_b != null:
+        tiles.append(_tile_b)
+    for tile: TileMapLayer in tiles:
+        if tile == null or not tile.is_inside_tree():
+            continue
+        var local_pos: Vector2 = tile.to_local(Vector2(world_x, tile.global_position.y))
+        var cell: Vector2i = tile.local_to_map(local_pos)
+        var h: int = _get_ground_height_for_column(tile, cell.x)
+        if h > best_height:
+            best_height = h
+    return best_height
+
+
+func get_next_gap_distance_tiles(from_world_x: float, max_scan_tiles: int = 160) -> float:
+    _ensure_initialized()
+    if _tile_w_px <= 0.0:
+        return -1.0
+    var scan_limit: int = max(max_scan_tiles, 1)
+    var step: float = _tile_w_px
+    var start_world: float = from_world_x + step * 0.25
+    var i: int = 0
+    while i < scan_limit:
+        var wx: float = start_world + float(i) * step
+        if not _has_ground_at_world_x(wx):
+            return float(i)
+        i += 1
+    return -1.0
+
+
+func get_next_rise_distance_tiles(from_world_x: float, max_scan_tiles: int = 160) -> float:
+    _ensure_initialized()
+    if _tile_w_px <= 0.0:
+        return -1.0
+    var scan_limit: int = max(max_scan_tiles, 2)
+    var step: float = _tile_w_px
+    var start_world: float = from_world_x + step * 0.25
+    var prev_h: int = _get_ground_height_at_world_x(start_world)
+    var i: int = 1
+    while i < scan_limit:
+        var wx: float = start_world + float(i) * step
+        var h: int = _get_ground_height_at_world_x(wx)
+        if h >= 0 and prev_h >= 0 and h > prev_h:
+            return float(i)
+        if h >= 0:
+            prev_h = h
+        i += 1
+    return -1.0
+
 
 func _has_coin_near_x(tile: TileMapLayer, x: int, radius: int) -> bool:
     var root: Node2D = _get_coins_root_for_tile(tile)
@@ -1979,38 +2110,47 @@ func _spawn_heart_for_column(tile: TileMapLayer, x: int, height: int, ignore_lim
     if OS.is_debug_build():
         print("[InfiniteGround] Heart spawned at column %d. Scale: %.2f" % [x, heart.scale.x])
 
-func _spawn_enemy_for_column(tile: TileMapLayer, x: int, height: int) -> void:
+func _spawn_enemy_for_column(tile: TileMapLayer, x: int, height: int, tutorial_seq: int = 0) -> Node2D:
     var root: Node2D = _get_enemies_root_for_tile(tile)
     if root == null:
-        return
+        return null
     var max_enemies: int = _scale_max_children(enemy_max_children)
     if max_enemies > 0 and root.get_child_count() >= max_enemies:
-        return
-    var entries: Array[Dictionary] = []
-    if enemy_allow_block and enemy_block_scene != null and enemy_block_weight > 0.0:
-        entries.append({"scene": enemy_block_scene, "weight": enemy_block_weight})
-    if enemy_allow_cone and enemy_cone_scene != null and enemy_cone_weight > 0.0:
-        entries.append({"scene": enemy_cone_scene, "weight": enemy_cone_weight})
-    if entries.is_empty():
-        return
+        return null
     var enemy_scene: PackedScene = null
-    if entries.size() == 1:
-        enemy_scene = entries[0]["scene"] as PackedScene
+    var force_tutorial_enemy: bool = tutorial_seq > 0
+    if force_tutorial_enemy:
+        if enemy_block_scene != null:
+            enemy_scene = enemy_block_scene
+        elif enemy_cone_scene != null:
+            enemy_scene = enemy_cone_scene
+        else:
+            return null
     else:
-        var total_w: float = 0.0
-        for e: Dictionary in entries:
-            total_w += float(e["weight"])
-        if total_w <= 0.0:
-            return
-        var r: float = _rng.randf() * total_w
-        var acc: float = 0.0
-        for e2: Dictionary in entries:
-            acc += float(e2["weight"])
-            if r <= acc:
-                enemy_scene = e2["scene"] as PackedScene
-                break
+        var entries: Array[Dictionary] = []
+        if enemy_allow_block and enemy_block_scene != null and enemy_block_weight > 0.0:
+            entries.append({"scene": enemy_block_scene, "weight": enemy_block_weight})
+        if enemy_allow_cone and enemy_cone_scene != null and enemy_cone_weight > 0.0:
+            entries.append({"scene": enemy_cone_scene, "weight": enemy_cone_weight})
+        if entries.is_empty():
+            return null
+        if entries.size() == 1:
+            enemy_scene = entries[0]["scene"] as PackedScene
+        else:
+            var total_w: float = 0.0
+            for e: Dictionary in entries:
+                total_w += float(e["weight"])
+            if total_w <= 0.0:
+                return null
+            var r: float = _rng.randf() * total_w
+            var acc: float = 0.0
+            for e2: Dictionary in entries:
+                acc += float(e2["weight"])
+                if r <= acc:
+                    enemy_scene = e2["scene"] as PackedScene
+                    break
     if enemy_scene == null:
-        return
+        return null
     var top_y: int = -height
     var cell: Vector2i = Vector2i(x, top_y)
     var local_pos: Vector2 = tile.map_to_local(cell)
@@ -2022,13 +2162,17 @@ func _spawn_enemy_for_column(tile: TileMapLayer, x: int, height: int) -> void:
         enemy = _get_from_pool(_enemy_cone_pool, enemy_cone_scene)
 
     if enemy == null:
-        return
+        return null
 
     enemy.scale = _calc_scale(enemy_scale, tile)
     root.add_child(enemy)
 
     if enemy.has_method("reset"):
         enemy.call("reset")
+    if tutorial_seq > 0:
+        enemy.set_meta("tutorial_enemy_seq", tutorial_seq)
+    elif enemy.has_meta("tutorial_enemy_seq"):
+        enemy.remove_meta("tutorial_enemy_seq")
 
     var ground_top_y: float = local_pos.y
     if tile.tile_set != null:
@@ -2047,6 +2191,7 @@ func _spawn_enemy_for_column(tile: TileMapLayer, x: int, height: int) -> void:
             final_pos_local.y -= enemy_y_offset_tiles * float(tile.tile_set.tile_size.y)
 
     enemy.position = final_pos_local
+    return enemy
 
 func _calc_scale(base: float, tile: TileMapLayer) -> Vector2:
     var s: float = base
@@ -2159,6 +2304,10 @@ func _run_generate_now(reset_flat: bool = false, reset_height: bool = false) -> 
 
 func restart_from_flat_start() -> void:
     _run_generate_now(true, true)
+
+
+func set_tutorial_scripted_mode(enabled: bool) -> void:
+    _tutorial_scripted_mode = enabled
 
 func set_speed(new_speed: float) -> void:
     var v: float = clamp(new_speed, min_scroll_speed, max_scroll_speed)

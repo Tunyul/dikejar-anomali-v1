@@ -101,6 +101,8 @@ var _season_rewards_menu: Node = null
 @onready var _close_profile_button: Button = %CloseProfileButton
 @onready var _change_avatar_button: Button = %ChangeAvatarButton
 @onready var _change_border_button: Button = %ChangeBorderButton
+var _tutorial_status_badge: Panel = null
+var _tutorial_status_label: Label = null
 var _profile_banner_lock_active: bool = false
 var _reward_banner_lock_active: bool = false
 var _profile_panel_target_scale: Vector2 = Vector2.ONE
@@ -257,6 +259,8 @@ func _ready() -> void:
 
     if _version_label:
         _version_label.text = ProjectSettings.get_setting("application/config/version", "v0.1.0")
+    _setup_tutorial_status_badge()
+    _refresh_tutorial_status_badge()
 
     if _ground:
         if _ground.has_method("set_title_mode"):
@@ -364,6 +368,7 @@ func _on_language_changed(locale: String) -> void:
     _refresh_language_popup_items(locale)
     _refresh_player_hud_locale_texts()
     _refresh_profile_panel() # Update teks Profile Panel jika sedang terbuka
+    _refresh_tutorial_status_badge()
 
 
 func _on_language_button_pressed() -> void:
@@ -877,8 +882,12 @@ func _on_play_pressed() -> void:
         _ui_layer.visible = false
     visible = false
     process_mode = Node.PROCESS_MODE_DISABLED
+    var target_scene := "res://scenes/Main.tscn"
+    if GameManager and GameManager.has_method("is_onboarding_first20_completed"):
+        if not bool(GameManager.call("is_onboarding_first20_completed")):
+            target_scene = "res://scenes/MainTutorial.tscn"
     if Preloader and Preloader.has_method("set_next_scene"):
-        Preloader.set_next_scene("res://scenes/Main.tscn")
+        Preloader.set_next_scene(target_scene)
     await TransitionManager.play_transition_to_scene("res://scenes/LoadingScreen.tscn")
 
 func _on_shop_pressed() -> void:
@@ -1330,9 +1339,70 @@ func _apply_mainmenu_responsive_layout(vp_size: Vector2) -> void:
     if _version_label:
         _version_label.offset_top = -32.0 - inset_bottom
         _version_label.offset_bottom = -8.0 - inset_bottom
+    _layout_tutorial_status_badge(safe)
 
     _apply_reward_panel_layout(safe.size)
     _apply_profile_panel_layout(safe.size)
+
+
+func _setup_tutorial_status_badge() -> void:
+    if _tutorial_status_badge != null and is_instance_valid(_tutorial_status_badge):
+        return
+    _tutorial_status_badge = Panel.new()
+    _tutorial_status_badge.name = "TutorialStatusBadgeMenu"
+    _tutorial_status_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _tutorial_status_badge.size = Vector2(340.0, 42.0)
+    _tutorial_status_badge.z_index = 500
+    var badge_style := StyleBoxFlat.new()
+    badge_style.bg_color = Color(0.12, 0.08, 0.12, 0.88)
+    badge_style.border_color = Color(1.0, 0.9, 0.35, 0.92)
+    badge_style.border_width_left = 2
+    badge_style.border_width_top = 2
+    badge_style.border_width_right = 2
+    badge_style.border_width_bottom = 5
+    badge_style.shadow_color = Color(0, 0, 0, 0.45)
+    badge_style.shadow_size = 8
+    badge_style.corner_radius_top_left = 12
+    badge_style.corner_radius_top_right = 12
+    badge_style.corner_radius_bottom_left = 12
+    badge_style.corner_radius_bottom_right = 12
+    _tutorial_status_badge.add_theme_stylebox_override("panel", badge_style)
+    _tutorial_status_label = Label.new()
+    _tutorial_status_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _tutorial_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    _tutorial_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    _tutorial_status_label.add_theme_font_size_override("font_size", 20)
+    _tutorial_status_label.add_theme_constant_override("outline_size", 3)
+    _tutorial_status_label.add_theme_color_override("font_color", Color(1.0, 0.97, 0.8, 1.0))
+    _tutorial_status_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+    _tutorial_status_badge.add_child(_tutorial_status_label)
+    add_child(_tutorial_status_badge)
+
+
+func _refresh_tutorial_status_badge() -> void:
+    if _tutorial_status_badge == null or not is_instance_valid(_tutorial_status_badge):
+        return
+    _tutorial_status_badge.visible = OS.is_debug_build()
+    if not _tutorial_status_badge.visible:
+        return
+    if _tutorial_status_label == null or not is_instance_valid(_tutorial_status_label):
+        return
+    var tutorial_next: bool = true
+    if GameManager and GameManager.has_method("is_onboarding_first20_completed"):
+        tutorial_next = not bool(GameManager.call("is_onboarding_first20_completed"))
+    if tutorial_next:
+        _tutorial_status_label.text = tr("MENU_TUTORIAL_NEXT_ON")
+    else:
+        _tutorial_status_label.text = tr("MENU_TUTORIAL_NEXT_OFF")
+
+
+func _layout_tutorial_status_badge(safe: Rect2) -> void:
+    if _tutorial_status_badge == null or not is_instance_valid(_tutorial_status_badge):
+        return
+    _tutorial_status_badge.position = Vector2(
+        safe.position.x + (safe.size.x - _tutorial_status_badge.size.x) * 0.5,
+        safe.position.y + 12.0
+    )
 
 
 func _set_hud_row_layout(bg: Control, row: Control, left: float, top: float, scale_factor: float) -> void:

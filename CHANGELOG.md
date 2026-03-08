@@ -7,6 +7,20 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 - Belum ada perubahan.
 
+## [1.3.56-beta] - 2026-03-08
+
+- Tutorial First Run: alur onboarding gameplay dipindah ke scene khusus `MainTutorial` dengan routing first-run yang lebih stabil.
+- Tutorial Controls: tombol mobile jump/attack kini tampil kontekstual per step, disembunyikan saat countdown, dan sinkron dengan prompt aktif.
+- Tutorial Prompt UX: overlay hint jump/attack diperkuat (spotlight + finger pulse) dan transisi prompt dibersihkan agar tidak dobel/nyangkut.
+- Tutorial Ground Pattern: generator tutorial diubah ke scripted deterministic dengan urutan tetap (flat, gap jump, flat, rise, enemy, turun, flat, gap game over).
+- Tutorial Enemy Timing: enemy tutorial dikunci jadi satu spawn di ujung platform naik (dekat titik turun) agar pacing step attack konsisten.
+- Tutorial Jump Step 2: ditambahkan prompt jump kedua sebelum tiles naik dengan trigger jarak 1 tile dari player.
+- Tutorial Attack Step: prompt attack kini trigger saat enemy berada dalam jarak 2 tile dan dunia dipause sementara sampai attack dilakukan.
+- Tutorial Stability: perbaikan freeze/unfreeze world + animasi player pada step tutorial agar sinkron dan bebas race condition.
+- Spawn Safety: hardening spawn enemy scripted agar tetap muncul pada step tutorial meski flag spawn acak dinonaktifkan.
+- Version Sync: sinkronisasi `project.godot`, `export_presets.cfg`, dan `VERSION` ke `1.3.56-beta`.
+- Naik versi proyek ke `1.3.56-beta`.
+
 ## [1.3.55-beta] - 2026-03-07
 
 - Missions Claim Fix: memperbaiki claim misi yang macet setelah reset periodik dengan `grant_id` periodik untuk tipe `daily/week/month` di `MissionsManager`, sehingga tidak bentrok dengan `reward_grant_ledger` lama.

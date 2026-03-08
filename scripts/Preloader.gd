@@ -26,6 +26,8 @@ var _last_deferred_progress_emit: float = -1.0
 const _BOOT_ASSETS := [
     "res://scenes/LoadingScreen.tscn",
     "res://scenes/MainMenu.tscn",
+    "res://scenes/TutorialFirstRun.tscn",
+    "res://scenes/MainTutorial.tscn",
     "res://scenes/Main.tscn",
     "res://scenes/ShopMenu.tscn",
     "res://scenes/DailyMissionsMenu.tscn",
@@ -354,6 +356,8 @@ func _run_smoke_check() -> void:
     var paths: Array[String] = [
         "res://scenes/LoadingScreen.tscn",
         "res://scenes/MainMenu.tscn",
+        "res://scenes/TutorialFirstRun.tscn",
+        "res://scenes/MainTutorial.tscn",
         "res://scenes/ShopMenu.tscn",
         "res://scenes/Main.tscn",
         "res://scenes/DailyMissionsMenu.tscn"
