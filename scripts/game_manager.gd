@@ -432,7 +432,7 @@ var onboarding_hint_label: Label = null
 var tutorial_mode_badge: Panel = null
 var tutorial_mode_badge_label: Label = null
 var onboarding_target_mode: String = "jump"
-@export var debug_force_first_install_tutorial: bool = true
+@export var debug_force_first_install_tutorial: bool = false
 @export var tutorial_jump_prompt_distance: float = 120.0
 @export var tutorial_jump_prompt_gap_distance_tiles: int = 0
 @export var tutorial_jump_overlay_alpha: float = 0.22
@@ -1536,7 +1536,6 @@ func _ensure_default_difficulty_profiles() -> void:
 func _process(delta: float) -> void:
     if not is_inside_tree():
         return
-    _refresh_tutorial_mode_badge()
     _sync_mobile_action_buttons_visibility()
     if countdown_active:
         countdown_timer = max(countdown_timer - delta, 0.0)
@@ -4316,50 +4315,24 @@ func _setup_onboarding_ui() -> void:
     _set_onboarding_visible(false)
 
 
-func _set_tutorial_mode_badge_visible(v: bool) -> void:
+func _set_tutorial_mode_badge_visible(_v: bool) -> void:
     if tutorial_mode_badge and is_instance_valid(tutorial_mode_badge):
-        tutorial_mode_badge.visible = v
-    _refresh_tutorial_mode_badge()
+        tutorial_mode_badge.visible = false
 
 
 func _refresh_tutorial_mode_badge() -> void:
-    if tutorial_mode_badge == null or not is_instance_valid(tutorial_mode_badge):
-        return
-    _layout_tutorial_mode_badge(_compute_safe_area_rect())
-    if not OS.is_debug_build():
+    if tutorial_mode_badge and is_instance_valid(tutorial_mode_badge):
         tutorial_mode_badge.visible = false
-        return
-    tutorial_mode_badge.visible = true
-    if tutorial_mode_badge_label == null or not is_instance_valid(tutorial_mode_badge_label):
-        return
-    if tutorial_flow_active:
-        var gap_info: String = ""
-        if ground_a and player and ground_a.has_method("get_next_gap_distance_tiles"):
-            var gap_tiles: float = float(ground_a.call("get_next_gap_distance_tiles", player.global_position.x, 160))
-            if gap_tiles >= 0.0:
-                gap_info = " | " + (tr("TUTORIAL_GAP_DIST") % int(round(gap_tiles)))
-        tutorial_mode_badge_label.text = tr("TUTORIAL_FLOW_ACTIVE") + gap_info
-        return
-    if _is_debug_tutorial_test_mode():
-        tutorial_mode_badge_label.text = tr("TUTORIAL_TEST_ON")
-    else:
-        tutorial_mode_badge_label.text = tr("TUTORIAL_TEST_OFF")
 
 
-func _layout_tutorial_mode_badge(safe: Rect2) -> void:
-    if tutorial_mode_badge == null or not is_instance_valid(tutorial_mode_badge):
-        return
-    var top_margin: float = safe.position.y + 12.0
-    tutorial_mode_badge.position = Vector2(
-        safe.position.x + (safe.size.x - tutorial_mode_badge.size.x) * 0.5,
-        top_margin
-    )
+func _layout_tutorial_mode_badge(_safe: Rect2) -> void:
+    if tutorial_mode_badge and is_instance_valid(tutorial_mode_badge):
+        tutorial_mode_badge.visible = false
 
 
 func _update_onboarding_layout(safe: Rect2) -> void:
     if onboarding_overlay == null or not is_instance_valid(onboarding_overlay):
         return
-    _layout_tutorial_mode_badge(safe)
     var hint_width: float = minf(maxf(safe.size.x * 0.6, 420.0), 760.0)
     var hint_height: float = 90.0
     onboarding_hint_panel.size = Vector2(hint_width, hint_height)
@@ -4968,6 +4941,8 @@ func _update_first_run_tutorial_flow(delta: float) -> void:
                 tutorial_run_step = TutorialRunStep.WAIT_ATTACK_DONE
         TutorialRunStep.WAIT_ATTACK_DONE:
             if tutorial_attack_done:
+                if not onboarding_completed:
+                    complete_onboarding_first20(true)
                 _set_tutorial_world_frozen(false)
                 _hide_tutorial_prompt()
                 tutorial_step_timer = tutorial_force_gameover_delay_sec

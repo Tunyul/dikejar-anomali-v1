@@ -7,6 +7,15 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 - Belum ada perubahan.
 
+## [1.3.57-beta] - 2026-03-09
+
+- Tutorial One-Time Fix: status onboarding first install kini disimpan lebih awal tepat setelah step attack selesai, sehingga Play berikutnya tidak kembali ke `MainTutorial`.
+- Tutorial Routing Fix: alur tombol `Play` tetap menghormati flag onboarding selesai (`first20_completed`) agar user lama selalu masuk `Main`.
+- Debug Badge Cleanup: menghapus tampilan label/status mode tutorial di in-game dan Main Menu agar UI rilis bersih.
+- GDScript Warning Cleanup: merapikan parameter/variabel yang tidak dipakai (`_v`, `_safe`, dan field badge menu) agar tidak memunculkan warning `UNUSED_*`.
+- Version Sync: sinkronisasi `project.godot`, `export_presets.cfg`, dan `VERSION` ke `1.3.57-beta`.
+- Naik versi proyek ke `1.3.57-beta`.
+
 ## [1.3.56-beta] - 2026-03-08
 
 - Tutorial First Run: alur onboarding gameplay dipindah ke scene khusus `MainTutorial` dengan routing first-run yang lebih stabil.
