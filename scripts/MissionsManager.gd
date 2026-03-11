@@ -128,6 +128,7 @@ func _ready() -> void:
     else:
         _ensure_missions_upgraded()
     _apply_time_resets_if_needed()
+    _refresh_all_mission_progress()
     refresh_ready_to_claim_state(false)
 
 
@@ -219,6 +220,7 @@ func has_ready_to_claim_missions_in_save(save_path: String = "user://save.cfg") 
 
 
 func refresh_ready_to_claim_state(emit_on_change: bool = true) -> bool:
+    _refresh_all_mission_progress()
     var can_claim := _has_ready_to_claim_missions_in_memory()
     if emit_on_change and can_claim != _last_ready_to_claim:
         _last_ready_to_claim = can_claim
@@ -1125,6 +1127,7 @@ func _grant_currency_via_game_manager(coins: int, gems: int, grant_id: String = 
     return {"ok": false, "error": "game_manager_unavailable", "currencies": {"coins": 0, "gems": 0}}
 
 func get_missions_snapshot(tab: String = "") -> Array:
+    _refresh_all_mission_progress()
     var out: Array = []
     var tab_norm := tab.strip_edges()
     for m_any in missions:
@@ -1200,6 +1203,8 @@ func claim_mission(mission_id: String) -> Dictionary:
         return {"ok": false, "error": "mission_not_found", "mission_id": id_norm}
 
     var m: Dictionary = missions[found]
+    _update_mission_progress_from_counters(m)
+    missions[found] = m
     var mt: String = String(m.get("type", "daily"))
     var target: float = float(m.get("target", 0))
     var prog: float = float(m.get("progress", 0))
@@ -1311,6 +1316,8 @@ func can_reset_daily_with_ad() -> bool:
     return is_type_fully_completed("daily")
 
 func apply_daily_reset() -> Dictionary:
+    if not is_type_fully_completed("daily"):
+        return {"ok": false, "error": "daily_not_completed"}
     _reset_missions_of_type("daily", false)
     _refresh_all_mission_progress()
     _save()
@@ -1367,6 +1374,7 @@ func get_type_title(t: String) -> String:
 func is_type_fully_completed(t: String) -> bool:
     if t.is_empty():
         return false
+    _refresh_all_mission_progress()
     var any: bool = false
     for m_any in missions:
         if not (m_any is Dictionary):

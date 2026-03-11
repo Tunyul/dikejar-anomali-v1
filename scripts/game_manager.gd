@@ -379,10 +379,13 @@ var speed_boost_timer_label: Label = null
 @export var anomaly_speed_shift_multiplier: float = 1.15
 @export var anomaly_gravity_shift_multiplier: float = 1.2
 @export var countdown_duration_sec: float = 3.0
+@export var entry_phase_timeout_sec: float = 8.0
 
 var countdown_active: bool = false
 var countdown_timer: float = 0.0
 var entry_finished: bool = false
+var _entry_phase_elapsed: float = 0.0
+var _start_play_phase_request_id: int = 0
 
 var _missions_toast_shown: bool = false
 var _missions_toast_queue: Array[String] = []
@@ -1504,6 +1507,7 @@ func _on_monetization_rewarded_result(result: Dictionary) -> void:
             _on_reward_granted("continue")
         "cancelled", "failed", "not_available", "cooldown", "load_failed":
             _continue_request_in_flight = false
+            _continue_offer_request_serial = -1
             if status == "not_available":
                 _enqueue_missions_toast(tr("Iklan belum siap. Coba lagi sebentar."))
 
@@ -1551,12 +1555,19 @@ func _process(delta: float) -> void:
         if countdown_timer <= 0.0:
             countdown_active = false
             print("[GameManager] Countdown timer hit 0. entry_finished: ", entry_finished)
-            if phase == Phase.ENTRY:
-                if entry_finished:
-                    print("[GameManager] Both countdown and entry finished, starting play phase")
-                    set_playing_phase()
-                else:
-                    print("[GameManager] Countdown finished but waiting for entry...")
+            _try_start_playing_from_entry(false)
+
+    if phase == Phase.ENTRY and game_active:
+        _entry_phase_elapsed += delta
+        var timeout_sec := maxf(entry_phase_timeout_sec, countdown_duration_sec + 1.0)
+        if _entry_phase_elapsed >= timeout_sec:
+            if not entry_finished:
+                entry_finished = true
+            if countdown_active:
+                countdown_active = false
+                if countdown_label:
+                    countdown_label.visible = false
+            _try_start_playing_from_entry(true)
 
     var magnet_was_enabled: bool = magnet_enabled
     var shield_was_enabled: bool = shield_enabled
@@ -1997,6 +2008,7 @@ func try_rewarded_continue() -> void:
         var res_any: Variant = MonetizationService.call("show_rewarded", "continue")
         if res_any is Dictionary and not bool((res_any as Dictionary).get("ok", false)):
             _continue_request_in_flight = false
+            _continue_offer_request_serial = -1
             _enqueue_missions_toast(tr("Iklan belum siap. Coba lagi sebentar."))
         return
 
@@ -2004,6 +2016,7 @@ func try_rewarded_continue() -> void:
     if adm and adm.has_method("show_rewarded"):
         if adm.has_method("is_rewarded_available") and not adm.is_rewarded_available():
             _continue_request_in_flight = false
+            _continue_offer_request_serial = -1
             print("[GameManager] Rewarded ad not available.")
             if adm.has_method("load_rewarded"):
                 adm.call("load_rewarded")
@@ -2018,6 +2031,7 @@ func try_rewarded_continue() -> void:
         return
 
     _continue_request_in_flight = false
+    _continue_offer_request_serial = -1
     print("[GameManager] AdManager not found or missing method.")
     _enqueue_missions_toast(tr("AdManager tidak tersedia."))
 
@@ -2066,6 +2080,7 @@ func grant_continue() -> void:
     _save_progress()
 
     # Restart game from beginning
+    _continue_offer_request_serial = -1
     restart_game()
 
 func set_bgm_volume(v: float) -> void:
@@ -2612,6 +2627,10 @@ func set_playing_phase() -> void:
     print("[GameManager] Switching to PLAYING phase")
     phase = Phase.PLAYING
     game_active = true
+    countdown_active = false
+    _entry_phase_elapsed = 0.0
+    if countdown_label:
+        countdown_label.visible = false
     _continue_request_in_flight = false
     _bgm_mode = BgmMode.RUN
     _bgm_duck_db = 0.0
@@ -3896,11 +3915,15 @@ func set_player_health(current: int, maximum: int) -> void:
     if now_full and not prev_full:
         call_deferred("_clear_existing_hearts")
 func _start_play_phase() -> void:
+    _start_play_phase_request_id += 1
+    var request_id: int = _start_play_phase_request_id
     if not is_inside_tree():
         return
 
     # Wait for a frame to ensure all nodes in the new scene are fully ready and rendered
     await get_tree().process_frame
+    if request_id != _start_play_phase_request_id:
+        return
 
     get_tree().paused = false
 
@@ -3974,6 +3997,7 @@ func _start_play_phase() -> void:
     countdown_duration_sec = 3.0
     countdown_active = true
     countdown_timer = countdown_duration_sec
+    _entry_phase_elapsed = 0.0
     _sync_mobile_action_buttons_visibility()
     print("[GameManager] Starting play phase, countdown active: ", countdown_active, " timer: ", countdown_timer)
     if countdown_label:
@@ -4091,11 +4115,20 @@ func on_player_entry_finished() -> void:
     if phase != Phase.ENTRY:
         return
     entry_finished = true
-    if not countdown_active:
-        print("[GameManager] Entry finished and countdown done, starting play phase")
-        set_playing_phase()
-    else:
-        print("[GameManager] Entry finished but countdown still active, waiting for countdown...")
+    _try_start_playing_from_entry(false)
+
+
+func _try_start_playing_from_entry(force_start: bool = false) -> void:
+    if phase != Phase.ENTRY:
+        return
+    if not force_start:
+        if countdown_active or not entry_finished:
+            return
+    countdown_active = false
+    if countdown_label:
+        countdown_label.visible = false
+    print("[GameManager] ENTRY complete, switching to PLAYING. force_start=", force_start)
+    set_playing_phase()
 
 
 func on_player_game_over(_cause: String) -> void:

@@ -1105,6 +1105,8 @@ func _connect_claim_buttons(panel: Node) -> void:
 func _on_claim_button_pressed(button: BaseButton) -> void:
     if button == null:
         return
+    if button.disabled:
+        return
     var mission_id := ""
     if button.has_meta("mission_id"):
         mission_id = String(button.get_meta("mission_id"))

@@ -7,6 +7,16 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 - Belum ada perubahan.
 
+## [1.3.58-beta] - 2026-03-11
+
+- Core Loop Stability: menambahkan fail-safe timeout fase `ENTRY` (`entry_phase_timeout_sec`) dan helper transisi terpusat agar flow `countdown/entry -> PLAYING` tidak nyangkut saat event entry terlambat.
+- Core Loop Race Guard: menambahkan request token `_start_play_phase_request_id` untuk membatalkan request `start play` lama setelah `await`, mencegah tumpang tindih state saat restart/continue cepat.
+- Rewarded Continue Integrity: memperketat reset serial request continue pada jalur gagal (`not_available/cooldown/failed`) dan setelah grant dieksekusi agar event ad terlambat tidak bisa memicu grant yang tidak valid.
+- Missions Claim Gate: sinkronisasi progres misi realtime sebelum snapshot/claim/check claimable, sehingga misi daily tidak bisa di-claim sebelum benar-benar selesai.
+- Daily Reset Gate: `apply_daily_reset()` kini ditolak jika seluruh misi daily belum selesai, menjaga reset tetap sesuai rule gameplay.
+- Daily UI Safety: handler tombol claim di `DailyMissionsMenu` kini menolak eksekusi saat tombol disabled untuk menutup edge-case input spam.
+- QA: validasi headless `sanity_check.gd` dan `smoke_check_runner.gd` lulus setelah perbaikan.
+
 ## [1.3.57-beta] - 2026-03-09
 
 - Tutorial One-Time Fix: status onboarding first install kini disimpan lebih awal tepat setelah step attack selesai, sehingga Play berikutnya tidak kembali ke `MainTutorial`.
