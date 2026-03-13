@@ -4,12 +4,43 @@
     "home": "Beranda",
     "news": "Berita",
     "topup": "Top Up",
-    "login": "Masuk"
+    "login": "Masuk",
+    "dashboard": "Dashboard"
   },
   "hero": {
     "title": "ANOMALY RUSH",
     "subtitle": "Bertahan Hidup di Dunia Penuh Anomali!",
     "cta": "TOP UP SEKARANG"
+  },
+  "news": {
+    "title": "Berita & Event Terbaru",
+    "event": "EVENT",
+    "event_title": "Festival Musim Panas Dimulai!",
+    "event_desc": "Dapatkan skin eksklusif dan item langka selama periode event.",
+    "maint": "MAINTENANCE",
+    "maint_title": "Jadwal Maintenance Server",
+    "maint_desc": "Server akan mengalami pemeliharaan pada tanggal 15 Maret.",
+    "update": "UPDATE",
+    "update_title": "Patch Note v1.2.0",
+    "update_desc": "Penambahan karakter baru dan perbaikan bug sistem."
+  },
+  "feature": {
+    "char_title": "Karakter Unik",
+    "char_desc": "Pilih dan kustomisasi karaktermu dengan ratusan kombinasi.",
+    "map_title": "Dunia Luas",
+    "map_desc": "Jelajahi berbagai zona penuh misteri dan bahaya.",
+    "battle_title": "Pertarungan Epik",
+    "battle_desc": "Hadapi boss raksasa dan buktikan kekuatanmu."
+  },
+  "login": {
+    "title": "Anomaly Rush",
+    "subtitle": "Portal Top-Up & Profil",
+    "label_id": "Player ID / Email",
+    "placeholder_id": "Contoh: player123",
+    "label_pass": "Password",
+    "btn": "MASUK",
+    "footer": "Belum punya akun?",
+    "register": "Daftar Petualangan Baru"
   },
   "error": {
     "internal": "Kesalahan Server Internal",

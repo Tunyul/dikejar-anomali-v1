@@ -1,6 +1,6 @@
 {
   "name": "web-anomaly-rush",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Secure game profile and web top-up platform",
   "main": "src/server.js",
   "scripts": {

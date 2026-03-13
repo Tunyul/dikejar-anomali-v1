@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // For now, let's just change Login to "Dashboard"
             loginLink.href = 'dashboard.html';
             loginLink.textContent = 'Dashboard';
-            loginLink.setAttribute('data-i18n', 'nav_dashboard'); 
+            loginLink.setAttribute('data-i18n', 'nav.dashboard'); 
         }
     }
 

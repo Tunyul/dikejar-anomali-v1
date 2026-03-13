@@ -4,12 +4,43 @@
     "home": "Home",
     "news": "News",
     "topup": "Top Up",
-    "login": "Login"
+    "login": "Login",
+    "dashboard": "Dashboard"
   },
   "hero": {
     "title": "ANOMALY RUSH",
     "subtitle": "Survive in a World Full of Anomalies!",
     "cta": "TOP UP NOW"
+  },
+  "news": {
+    "title": "Latest News & Events",
+    "event": "EVENT",
+    "event_title": "Summer Festival Started!",
+    "event_desc": "Get exclusive skins and rare items during the event period.",
+    "maint": "MAINTENANCE",
+    "maint_title": "Server Maintenance Schedule",
+    "maint_desc": "Server will undergo maintenance on March 15th.",
+    "update": "UPDATE",
+    "update_title": "Patch Note v1.2.0",
+    "update_desc": "New character addition and system bug fixes."
+  },
+  "feature": {
+    "char_title": "Unique Characters",
+    "char_desc": "Choose and customize your character with hundreds of combinations.",
+    "map_title": "Vast World",
+    "map_desc": "Explore various zones full of mystery and danger.",
+    "battle_title": "Epic Battles",
+    "battle_desc": "Face giant bosses and prove your strength."
+  },
+  "login": {
+    "title": "Anomaly Rush",
+    "subtitle": "Top-Up & Profile Portal",
+    "label_id": "Player ID / Email",
+    "placeholder_id": "Ex: player123",
+    "label_pass": "Password",
+    "btn": "LOGIN",
+    "footer": "Don't have an account?",
+    "register": "Start New Adventure"
   },
   "error": {
     "internal": "Internal Server Error",
