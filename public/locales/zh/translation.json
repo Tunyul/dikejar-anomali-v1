@@ -1,0 +1,21 @@
+{
+  "welcome": "欢迎来到 Web Anomaly Rush",
+  "nav": {
+    "home": "首页",
+    "news": "新闻",
+    "topup": "充值",
+    "login": "登录"
+  },
+  "hero": {
+    "title": "ANOMALY RUSH",
+    "subtitle": "在充满异常的世界中生存！",
+    "cta": "立即充值"
+  },
+  "error": {
+    "internal": "内部服务器错误",
+    "not_found": "未找到资源"
+  },
+  "success": {
+    "login": "登录成功"
+  }
+}

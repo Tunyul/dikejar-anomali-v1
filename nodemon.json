@@ -1,0 +1,4 @@
+{
+  "ignore": ["database.sqlite", "database.sqlite-journal", "public/*"],
+  "ext": "js,json"
+}

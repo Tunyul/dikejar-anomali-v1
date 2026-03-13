@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: web-anomaly-rush-app
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - ./database.sqlite:/app/database.sqlite
+    networks:
+      - app-network
+
+  apache:
+    image: httpd:2.4
+    container_name: web-anomaly-rush-apache
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./apache-docker.conf:/usr/local/apache2/conf/httpd.conf
+      - ./public:/usr/local/apache2/htdocs/public
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

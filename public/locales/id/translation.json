@@ -1,0 +1,21 @@
+{
+  "welcome": "Selamat datang di Web Anomaly Rush",
+  "nav": {
+    "home": "Beranda",
+    "news": "Berita",
+    "topup": "Top Up",
+    "login": "Masuk"
+  },
+  "hero": {
+    "title": "ANOMALY RUSH",
+    "subtitle": "Bertahan Hidup di Dunia Penuh Anomali!",
+    "cta": "TOP UP SEKARANG"
+  },
+  "error": {
+    "internal": "Kesalahan Server Internal",
+    "not_found": "Sumber daya tidak ditemukan"
+  },
+  "success": {
+    "login": "Login berhasil"
+  }
+}

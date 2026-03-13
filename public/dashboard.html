@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Anomaly Rush</title>
+    <link rel="icon" type="image/x-icon" href="assets/logo.svg">
+    <meta name="theme-color" content="#FFCC00">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/landing.css">
+    <script src="https://unpkg.com/i18next@21.6.10/i18next.min.js"></script>
+    <script src="https://unpkg.com/i18next-http-backend@1.3.2/i18nextHttpBackend.min.js"></script>
+    <script src="https://unpkg.com/i18next-browser-languagedetector@6.1.3/i18nextBrowserLanguageDetector.min.js"></script>
+    <style>
+        .dashboard-content {
+            padding-top: 120px; /* Space for fixed navbar */
+            flex: 1;
+            padding-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 3px solid #000;
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #eee;
+            font-size: 1.2rem;
+            border: 2px solid #000;
+        }
+
+        .transaction-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #000;
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.5);
+        }
+
+        .transaction-item {
+            border-bottom: 2px dashed #ddd;
+            padding: 1rem 0;
+            transition: background 0.2s;
+        }
+        
+        .transaction-item:hover {
+            background: rgba(0,0,0,0.02);
+        }
+
+        .btn-logout {
+            background: #ff4757;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-logout:hover {
+            background: #ff6b81;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar landing-nav">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">ANOMALY RUSH</a>
+            <div class="nav-links">
+                <a href="index.html" data-i18n="nav_home">Beranda</a>
+                <a href="index.html#news" data-i18n="nav_news">Berita</a>
+                <a href="topup.html" class="highlight" data-i18n="nav_topup">Top Up</a>
+                
+                <!-- Language Selector -->
+                <div class="language-selector">
+                    <button class="lang-btn">
+                        <span class="fi fi-id" id="currentLangFlag"></span> 
+                        <span id="currentLangText">ID</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="lang-dropdown">
+                        <div class="lang-option" data-lang="id">
+                            <span class="fi fi-id"></span> Bahasa Indonesia
+                        </div>
+                        <div class="lang-option" data-lang="en">
+                            <span class="fi fi-us"></span> English
+                        </div>
+                    </div>
+                </div>
+
+                <div class="user-menu" style="display: flex; align-items: center; gap: 15px; margin-left: 20px;">
+        <div style="text-align: right; color: white;">
+            <div id="usernameDisplay" style="font-weight: 700; font-family: 'Fredoka', sans-serif;">PLAYER</div>
+            <small style="color: #FFCC00;">Level 1</small>
+        </div>
+        <div class="avatar-container" style="width: 40px; height: 40px; border-width: 2px;">
+            <img src="assets/placeholder.svg" alt="Avatar" style="width: 100%; height: 100%;">
+        </div>
+        <button onclick="logout()" class="btn btn-logout" style="padding: 5px 15px; font-size: 0.8rem;">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mobile-menu-btn"><i class="fa-solid fa-bars"></i></div>
+        </div>
+    </nav>
+
+    <div class="container dashboard-content">
+        <!-- Welcome Banner -->
+        <div style="margin-bottom: 2rem; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+            <h1 style="color: white; font-size: 2.5rem;">Selamat Datang, <span id="welcomeName" style="color: #FFCC00;">Petualang</span>!</h1>
+            <p>Siap untuk menjelajahi anomali hari ini?</p>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-grid">
+            <!-- Coin Balance -->
+            <div class="card stat-card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: #FFF8E1; color: #FFCC00;">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <h3 style="margin: 0; color: #666;">Koin Emas</h3>
+                </div>
+                <div class="balance-amount" id="coinBalanceDisplay" style="color: #FFCC00; -webkit-text-stroke: 1px black; text-shadow: 2px 2px 0 #000;">0</div>
+                <p style="color: #999; font-size: 0.9rem;">Mata Uang Utama</p>
+            </div>
+            
+            <!-- Gem Balance -->
+            <div class="card stat-card" style="background-color: #E0F7FA;">
+                <div class="card-header">
+                    <div class="card-icon" style="background: #E1F5FE; color: #00AEEF;">
+                        <i class="fa-solid fa-gem"></i>
+                    </div>
+                    <h3 style="margin: 0; color: #666;">Permata</h3>
+                </div>
+                <div class="balance-amount" id="gemBalanceDisplay" style="color: #00AEEF; -webkit-text-stroke: 1px black; text-shadow: 2px 2px 0 #000;">0</div>
+                <p style="color: #999; font-size: 0.9rem;">Mata Uang Premium</p>
+            </div>
+
+            <!-- Top Up CTA -->
+            <div class="card stat-card" style="background: linear-gradient(135deg, #FFCC00, #FF5722); border: 3px solid white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <h3 style="color: white; text-shadow: 1px 1px 0 #000;">Butuh Lebih Banyak?</h3>
+                <a href="topup.html" class="btn btn-primary" style="margin-top: 1rem; background: white; color: #FF5722; border-color: #FF5722;">
+                    <i class="fa-solid fa-cart-plus"></i> Top Up Sekarang
+                </a>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="card transaction-card" style="margin-top: 2rem; padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 1rem;">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Petualangan</h3>
+                <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.9rem;" onclick="loadTransactions()">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+            </div>
+            <ul class="transaction-list" id="transactionList">
+                <li style="text-align: center; color: #999; padding: 2rem;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Memuat catatan perjalanan...
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">ANOMALY RUSH</div>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Support</a>
+                </div>
+                <div class="social-links">
+                    <a href="#">Facebook</a>
+                    <a href="#">Twitter</a>
+                    <a href="#">Instagram</a>
+                    <a href="#">Discord</a>
+                </div>
+                <p class="copyright">&copy; 2026 Anomaly Rush Studio. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/landing.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/language.js"></script>
+    <script>
+        // Update welcome name
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user && user.username) {
+                document.getElementById('welcomeName').innerText = user.username;
+            }
+        });
+    </script>
+</body>
+</html>

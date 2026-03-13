@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="assets/logo.svg">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/topup.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .navbar {
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-bottom: none;
+        }
+        .navbar .logo {
+            color: #333;
+            text-shadow: none;
+            -webkit-text-stroke: 0;
+        }
+        .btn-primary {
+            background-color: #e63946;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 6px rgba(230, 57, 70, 0.3);
+        }
+        .btn-primary:hover {
+            background-color: #d62828;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">Anomaly Rush <span style="font-size: 0.8rem; color: #666; margin-left: 10px;">OFFICIAL STORE</span></a>
+            <div id="navAuthSection">
+                <a href="index.html" class="btn btn-secondary" style="font-size: 0.9rem; border-radius: 4px; margin-right: 10px; background: #e63946; color: white; border: none;">HOME</a>
+                <!-- Will be populated by JS -->
+                <a href="login.html" class="btn btn-primary" style="font-size: 0.9rem; border-radius: 4px;">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="topup-section">
+            <!-- STEP 1: Input ID (Inspired by Mobile Legends) -->
+            <div class="user-validation-card" style="background: white; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h3 style="color: #333; border-left: 4px solid #e63946; padding-left: 10px;">1. Masukkan ID Pengguna</h3>
+                <div class="form-group">
+                    <label style="color: #666;">User ID</label>
+                    <input type="text" id="targetUserId" placeholder="Contoh: 12345678" onblur="validateUser()" style="background: #f9f9f9; border: 1px solid #ddd; color: #333;">
+                </div>
+                <!-- Zone ID is optional for our MVP but good for 'feel' -->
+                <div class="form-group">
+                    <label style="color: #666;">Zone ID</label>
+                    <input type="text" placeholder="Contoh: 2024" style="background: #f9f9f9; border: 1px solid #ddd; color: #333;">
+                </div>
+                
+                <div id="validationResult" class="validation-status hidden">
+                    <!-- Status will appear here -->
+                </div>
+                
+                <div style="margin-top: 1.5rem; font-size: 0.8rem; color: #888;">
+                    <p>💡 Tips: User ID dapat ditemukan di menu profil di pojok kiri atas layar permainan.</p>
+                </div>
+            </div>
+
+            <!-- STEP 2: Select Item -->
+            <div>
+                <h3 style="margin-bottom: 1.5rem; color: #333; border-left: 4px solid #e63946; padding-left: 10px;">2. Pilih Nominal Top Up</h3>
+                <div class="topup-container" id="productsGrid">
+                    <!-- Products will be loaded here -->
+                    <div style="grid-column: 1/-1; text-align: center; padding: 2rem;">
+                        <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #ccc;"></i>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Payment -->
+                <h3 style="margin-top: 2.5rem; margin-bottom: 1.5rem; color: #333; border-left: 4px solid #e63946; padding-left: 10px;">3. Pilih Pembayaran</h3>
+                <div class="payment-methods">
+                    <div class="payment-option selected" onclick="selectPayment(this, 'qris')">
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">QRIS</div>
+                        <small style="color: #666;">Instan</small>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment(this, 'gopay')">
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">GoPay</div>
+                        <small style="color: #666;">Instan</small>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment(this, 'ovo')">
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">OVO</div>
+                        <small style="color: #666;">Instan</small>
+                    </div>
+                    <div class="payment-option" onclick="selectPayment(this, 'va')">
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Virtual Account</div>
+                        <small style="color: #666;">Cek Biaya</small>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button id="btnPay" class="btn btn-primary" style="width: 100%; margin-top: 2rem; padding: 1.2rem; font-size: 1.2rem; border-radius: 8px; font-weight: bold; letter-spacing: 1px;" onclick="processTopup()">
+                    BAYAR SEKARANG
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/topup.js"></script>
+</body>
+</html>

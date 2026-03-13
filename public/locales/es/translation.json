@@ -1,0 +1,21 @@
+{
+  "welcome": "Bienvenido a Web Anomaly Rush",
+  "nav": {
+    "home": "Inicio",
+    "news": "Noticias",
+    "topup": "Recargar",
+    "login": "Acceso"
+  },
+  "hero": {
+    "title": "ANOMALY RUSH",
+    "subtitle": "¡Sobrevive en un mundo lleno de anomalías!",
+    "cta": "RECARGAR AHORA"
+  },
+  "error": {
+    "internal": "Error Interno del Servidor",
+    "not_found": "Recurso no encontrado"
+  },
+  "success": {
+    "login": "Inicio de sesión exitoso"
+  }
+}

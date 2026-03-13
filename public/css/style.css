@@ -1,0 +1,291 @@
+:root {
+    /* Fantasy & Adventure Palette */
+    --primary: #FFCC00;       /* Yellow (Action) */
+    --primary-hover: #E6B800;
+    --secondary: #00AEEF;     /* Sky Blue (Background/Header) */
+    --accent: #FF5722;        /* Orange (Badge/Promo) */
+    --text-main: #333333;     /* Dark Gray */
+    --text-muted: #666666;    /* Lighter Gray */
+    --border-color: #000000;  /* Black Border */
+    --bg-light: #F0F8FF;      /* Light Blue-ish Background */
+    --bg-card: #FFFFFF;       /* White Card Background */
+    
+    /* Spacing & Borders */
+    --radius: 16px;           /* Large Rounded Corners */
+    --border-width: 3px;      /* Thick Outline */
+    --shadow-3d: 0 6px 0 #000000; /* 3D Shadow Effect */
+    --shadow-card: 4px 4px 0 #000000; /* Card Shadow */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Nunito', sans-serif; /* Body Font */
+    background-color: #1a1a2e;
+    background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('../assets/landing1.png');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    color: var(--text-main);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fredoka', sans-serif; /* Heading Font */
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 1rem;
+}
+
+/* Utilities */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Base Components (Used across Dashboard & Auth) */
+.card {
+    background-color: var(--bg-card);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s ease;
+    position: relative;
+    /* Default is static */
+}
+
+/* Ensure navbar logo in topup page has correct spacing/font */
+.navbar .logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo span {
+    font-family: 'Nunito', sans-serif;
+    letter-spacing: 1px;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    border: var(--border-width) solid var(--border-color);
+    cursor: pointer;
+    font-weight: 700;
+    font-family: 'Fredoka', sans-serif;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.1s ease;
+    background-color: var(--primary);
+    color: var(--text-main);
+    box-shadow: var(--shadow-3d);
+    position: relative;
+    top: 0;
+}
+
+.btn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 #000000;
+}
+
+.btn:active {
+    top: 6px;
+    box-shadow: 0 0 0 #000000;
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+}
+
+.btn-secondary {
+    background-color: var(--secondary);
+    color: white;
+}
+
+.btn-accent {
+    background-color: var(--accent);
+    color: white;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+    font-weight: 700;
+    font-family: 'Fredoka', sans-serif;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    background-color: #F9F9F9;
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-main);
+    font-size: 1rem;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.2s;
+}
+
+input:focus {
+    outline: none;
+    background-color: #FFFFFF;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+}
+
+/* Removed .landing-nav conflict to let landing.css handle it */
+/* Navbar */
+.navbar:not(.landing-nav) {
+    background-color: var(--bg-card);
+    padding: 1rem 0;
+    border-bottom: var(--border-width) solid var(--border-color);
+    margin-bottom: 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+    text-shadow: 2px 2px 0 #000000;
+    -webkit-text-stroke: 1px black;
+}
+
+/* Removed redundant styles that are now in landing.css or topup.css */
+/* Dashboard Specifics - Only kept what's used in dashboard.html */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background-color: #FFF8E1; /* Light Yellow tint */
+}
+
+.balance-amount {
+    font-size: 2.5rem;
+    color: var(--accent);
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+}
+
+.transaction-list {
+    list-style: none;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: var(--border-width) dashed var(--border-color);
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+/* Auth Page */
+.auth-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.auth-box {
+    width: 100%;
+    max-width: 400px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid #FFCC00;
+    color: #fff;
+}
+
+.auth-box h1 {
+    color: #FFCC00;
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+}
+
+.auth-box p {
+    color: #ccc;
+}
+
+.auth-box label {
+    color: #FFCC00;
+}
+
+.auth-box input {
+    background: #333;
+    border-color: #555;
+    color: #fff;
+}
+
+.auth-box input:focus {
+    background: #444;
+    border-color: #FFCC00;
+    box-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+}
+
+.auth-box .btn-primary {
+    background: #FFCC00;
+    color: #000;
+    border: none;
+    box-shadow: none;
+}
+
+.auth-box .btn-primary:hover {
+    background: #ffe066;
+    transform: translateY(-2px);
+}
+
+/* Topup Grid removed from here as it's now in topup.css */
+
+/* Avatar Frame Placeholder */
+.avatar-container {
+    width: 80px;
+    height: 80px;
+    border: 3px solid black;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

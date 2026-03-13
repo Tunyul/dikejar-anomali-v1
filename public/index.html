@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="assets/logo.svg">
+    <meta name="description" content="Anomaly Rush - Survival Game in a World of Anomalies. Top up now for exclusive items!">
+    <meta name="theme-color" content="#FFCC00">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/landing.css">
+    <script src="https://unpkg.com/i18next@21.6.10/i18next.min.js"></script>
+    <script src="https://unpkg.com/i18next-http-backend@1.3.2/i18nextHttpBackend.min.js"></script>
+    <script src="https://unpkg.com/i18next-browser-languagedetector@6.1.3/i18nextBrowserLanguageDetector.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar landing-nav">
+        <div class="container nav-content">
+            <a href="index.html" class="logo">ANOMALY RUSH</a>
+            <div class="nav-links">
+                <a href="index.html" class="active" data-i18n="nav_home">Beranda</a>
+                <a href="#news" data-i18n="nav_news">Berita</a>
+                <a href="topup.html" class="highlight" data-i18n="nav_topup">Top Up</a>
+                <a href="login.html" data-i18n="nav_login">Login</a>
+                
+                <!-- Language Selector -->
+                <div class="language-selector">
+                    <button class="lang-btn">
+                        <span class="fi fi-id" id="currentLangFlag"></span> 
+                        <span id="currentLangText">ID</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="lang-dropdown">
+                        <div class="lang-option" data-lang="id">
+                            <span class="fi fi-id"></span> Bahasa Indonesia
+                        </div>
+                        <div class="lang-option" data-lang="en">
+                            <span class="fi fi-us"></span> English
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mobile-menu-btn"><i class="fa-solid fa-bars"></i></div>
+        </div>
+    </nav>
+
+    <!-- Floating Social Sidebar -->
+    <div class="social-sidebar">
+        <a href="#" class="social-sidebar-item" title="Discord">
+            <i class="fa-brands fa-discord"></i>
+        </a>
+        <a href="#" class="social-sidebar-item" title="Facebook">
+            <i class="fa-brands fa-facebook-f"></i>
+        </a>
+        <a href="#" class="social-sidebar-item" title="Instagram">
+            <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="#" class="social-sidebar-item" title="YouTube">
+            <i class="fa-brands fa-youtube"></i>
+        </a>
+        <a href="topup.html" class="social-sidebar-item" style="background: #e63946; border-color: #e63946;" title="Top Up">
+            <i class="fa-solid fa-gem"></i>
+        </a>
+    </div>
+
+    <!-- Hero Section -->
+    <header class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">ANOMALY RUSH</h1>
+            <p class="hero-subtitle" data-i18n="hero_subtitle">Bertahan Hidup di Dunia Penuh Anomali!</p>
+            <div class="hero-buttons">
+                <a href="#" class="btn-store google-play" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: black; border: 1px solid white; border-radius: 8px; padding: 10px 20px; color: white; text-decoration: none;">
+                    <i class="fa-brands fa-google-play" style="font-size: 1.5rem;"></i>
+                    <div style="text-align: left; line-height: 1.2;">
+                        <small style="font-size: 0.7rem;">GET IT ON</small><br>
+                        <span style="font-weight: bold;">Google Play</span>
+                    </div>
+                </a>
+                <a href="#" class="btn-store app-store" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: black; border: 1px solid white; border-radius: 8px; padding: 10px 20px; color: white; text-decoration: none;">
+                    <i class="fa-brands fa-apple" style="font-size: 1.5rem;"></i>
+                    <div style="text-align: left; line-height: 1.2;">
+                        <small style="font-size: 0.7rem;">Download on the</small><br>
+                        <span style="font-weight: bold;">App Store</span>
+                    </div>
+                </a>
+                <a href="#" class="btn-store pc-version" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: black; border: 1px solid white; border-radius: 8px; padding: 10px 20px; color: white; text-decoration: none;">
+                    <i class="fa-brands fa-windows" style="font-size: 1.5rem;"></i>
+                    <div style="text-align: left; line-height: 1.2;">
+                        <small style="font-size: 0.7rem;">Get it for</small><br>
+                        <span style="font-weight: bold;">Windows</span>
+                    </div>
+                </a>
+            </div>
+            <div style="margin-top: 2rem;">
+                <a href="topup.html" class="btn btn-primary hero-cta" data-i18n="hero_cta" style="font-size: 1.2rem; padding: 15px 40px; box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);">TOP UP SEKARANG</a>
+            </div>
+        </div>
+        <div class="hero-overlay"></div>
+    </header>
+
+    <!-- News & Events -->
+    <section id="news" class="news-section">
+        <h2 class="section-title animate-on-scroll" data-i18n="news_title">Berita & Event Terbaru</h2>
+        <div class="news-grid">
+            <div class="news-card animate-on-scroll">
+                <div class="news-tag event" data-i18n="news_event">EVENT</div>
+                <h3 data-i18n="news_event_title">Festival Musim Panas Dimulai!</h3>
+                <p data-i18n="news_event_desc">Dapatkan skin eksklusif dan item langka selama periode event.</p>
+                <span class="news-date">12 Maret 2026</span>
+            </div>
+            <div class="news-card animate-on-scroll">
+                <div class="news-tag maintenance" data-i18n="news_maint">MAINTENANCE</div>
+                <h3 data-i18n="news_maint_title">Jadwal Maintenance Server</h3>
+                <p data-i18n="news_maint_desc">Server akan mengalami pemeliharaan pada tanggal 15 Maret.</p>
+                <span class="news-date">10 Maret 2026</span>
+            </div>
+            <div class="news-card animate-on-scroll">
+                <div class="news-tag update" data-i18n="news_update">UPDATE</div>
+                <h3 data-i18n="news_update_title">Patch Note v1.2.0</h3>
+                <p data-i18n="news_update_desc">Penambahan karakter baru dan perbaikan bug sistem.</p>
+                <span class="news-date">01 Maret 2026</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Game Features -->
+    <section class="features-section">
+        <div class="container">
+            <div class="feature-item animate-on-scroll">
+                <img src="assets/placeholder.svg" alt="Character" style="width: 150px; height: 150px; object-fit: contain;">
+                <h3 data-i18n="feature_char_title">Karakter Unik</h3>
+                <p data-i18n="feature_char_desc">Pilih dan kustomisasi karaktermu dengan ratusan kombinasi.</p>
+            </div>
+            <div class="feature-item animate-on-scroll">
+                <img src="assets/landing1.png" alt="Map" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
+                <h3 data-i18n="feature_map_title">Dunia Luas</h3>
+                <p data-i18n="feature_map_desc">Jelajahi berbagai zona penuh misteri dan bahaya.</p>
+            </div>
+            <div class="feature-item animate-on-scroll">
+                <img src="assets/landing2.png" alt="Battle" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
+                <h3 data-i18n="feature_battle_title">Pertarungan Epik</h3>
+                <p data-i18n="feature_battle_desc">Hadapi boss raksasa dan buktikan kekuatanmu.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">ANOMALY RUSH</div>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Support</a>
+                </div>
+                <div class="social-links">
+                    <a href="#">Facebook</a>
+                    <a href="#">Twitter</a>
+                    <a href="#">Instagram</a>
+                    <a href="#">Discord</a>
+                </div>
+                <p class="copyright">&copy; 2026 Anomaly Rush Studio. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/landing.js"></script>
+    <script src="js/language.js"></script>
+</body>
+</html>
