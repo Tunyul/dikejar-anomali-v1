@@ -35,7 +35,7 @@
 [ext_resource type="PackedScene" uid="uid://bdwwn7sxcph1g" path="res://scenes/Ground.tscn" id="56"]
 [ext_resource type="PackedScene" uid="uid://bj0vpeb24e585" path="res://scenes/MobileControls.tscn" id="57_mobile_controls"]
 [ext_resource type="PackedScene" path="res://scenes/HealthBar.tscn" id="58_healthbar"]
-[ext_resource type="PackedScene" path="res://scenes/CollectibleHeart.tscn" id="59_heart_hud"]
+[ext_resource type="PackedScene" uid="uid://bn41r4o0ms33d" path="res://scenes/CollectibleHeart.tscn" id="59_heart_hud"]
 [ext_resource type="Texture2D" uid="uid://t4hnmclvw5tg" path="res://assets/icon/icon_magnet_v1_96x96.png" id="60_magnet_icon"]
 [ext_resource type="Texture2D" uid="uid://sgqo0atm3wrv" path="res://assets/icon/icon_setting.png" id="61_setting_icon"]
 [ext_resource type="Texture2D" uid="uid://cgqcf0k0g66wp" path="res://assets/icon/icon_shield.png" id="62_shield_icon"]
@@ -978,7 +978,7 @@ offset_x = 62.0
 scale = Vector2(0.4, 0.4)
 sprite_frames = SubResource("SpriteFrames_0owt5")
 animation = &"run"
-frame_progress = 0.32089794
+frame_progress = 0.009699836
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AnomalyChaser" unique_id=638828194]
 shape = SubResource("RectangleShape2D_oa6sj")

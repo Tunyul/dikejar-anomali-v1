@@ -1,0 +1,9 @@
+{
+  "project": "Anomaly Rush",
+  "visual_style": "Playful, energetic, cartoonish 3D, glossy effects, thick outlines, high saturation",
+  "color_palette": ["#76D629", "#42A5F5", "#FFCA28", "#FFFFFF", "#000000"],
+  "prompts": {
+    "logo": "Text 'Anomaly Rush' centered. 3D cartoon style, glossy letters with thick outlines and depth. Colors: bright grass green, sky blue, gold/yellow. Background: comic burst or explosion effect. Energetic mobile game title rendering, clean.",
+    "app_icon": "Mobile game app icon, square with rounded corners. A stylized cartoon character running forward, looking back at a dark shadowy anomaly creature chasing them. Background: bright blue sky, round white clouds, vibrant green grass. Glossy 3D style, thick outlines, high contrast. No text."
+  }
+}

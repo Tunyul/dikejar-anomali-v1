@@ -1,0 +1,30 @@
+#!/bin/sh
+
+ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null)
+POWERSHELL_SCRIPT="$ROOT_DIR/scripts/tools/sync_latest_commit_to_sheet.ps1"
+SCRIPT_PATH="$ROOT_DIR/scripts/tools/sync_latest_commit_to_sheet.py"
+
+if [ -f "$POWERSHELL_SCRIPT" ] && command -v powershell.exe >/dev/null 2>&1; then
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$POWERSHELL_SCRIPT" >/dev/null 2>&1 || true
+  exit 0
+fi
+
+if [ ! -f "$SCRIPT_PATH" ]; then
+  exit 0
+fi
+
+if command -v python3 >/dev/null 2>&1; then
+  python3 "$SCRIPT_PATH" >/dev/null 2>&1 || true
+  exit 0
+fi
+
+if command -v python >/dev/null 2>&1; then
+  python "$SCRIPT_PATH" >/dev/null 2>&1 || true
+  exit 0
+fi
+
+if command -v py >/dev/null 2>&1; then
+  py -3 "$SCRIPT_PATH" >/dev/null 2>&1 || true
+fi
+
+exit 0

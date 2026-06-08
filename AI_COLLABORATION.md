@@ -40,6 +40,14 @@ Setelah melakukan tugas, AI harus:
 3. Melakukan sinkronisasi antar branch (dev -> beta -> main) jika diminta.
 4. Membuat Git Tag jika mencapai versi stabil.
 
+### Sinkronisasi Commit ke Google Sheets
+- Setiap commit terbaru harus bisa dikirim ke Google Sheets melalui hook `.githooks/post-commit`.
+- Hook harus membaca URL webhook dari environment variable `GOOGLE_SHEETS_WEBHOOK_URL`.
+- Hook tidak boleh mengubah `CHANGELOG.md` setelah commit.
+- Jika hook belum aktif di repo lokal, jalankan `powershell -ExecutionPolicy Bypass -File scripts/tools/install_git_hooks.ps1`.
+- Gunakan marker opsional `[DONE]`, `[WIP]`, atau `[PENDING]` di pesan commit bila status sheet perlu dibedakan.
+- Lihat panduan teknis di `docs/COMMIT_TO_GOOGLE_SHEETS.md`.
+
 ---
 
 ## 📜 Instruksi Khusus untuk AI

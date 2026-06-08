@@ -5,6 +5,8 @@ The format is based on Keep a Changelog and this project adheres to Semantic Ver
 
 ## [Unreleased]
 
+- **2026-03-13**: Docs: Add web design specs and style guide
+
 - Belum ada perubahan.
 
 ## [1.3.58-beta] - 2026-03-11

@@ -58,6 +58,8 @@ Dokumentasi teknis lengkap tersedia di folder [docs/](docs/):
 - 📜 [**Changelog**](CHANGELOG.md) - Riwayat perubahan versi.
 - 🚀 [**Panduan Deployment**](DEPLOYMENT_GUIDE_ID.md) - Persiapan rilis ke Google Play Store (QA/Beta).
 - 🤖 [**AI Collaboration**](AI_COLLABORATION.md) - Panduan bekerja dengan AI.
+- [**Commit ke Google Sheets**](docs/COMMIT_TO_GOOGLE_SHEETS.md) - Setup hook agar setiap commit bisa sinkron ke Google Sheets.
+- [**Daftar Produk Topup**](docs/TOPUP_PRODUCT_LIST.md) - Katalog item yang bisa dijual lewat topup web atau Google Play.
 - 🗺️ [**Roadmap**](ROADMAP.md) - Rencana pengembangan fitur.
 - 🏗️ [**Arsitektur Pemain**](docs/GAME_CONCEPT_AND_PLAYER_IMPLEMENTATION.md) - Detail teknis kontrol dan state machine.
 - 💰 [**Sistem Ekonomi**](docs/PLAYER_XP_AND_REWARD_SYSTEM.md) - XP, Level, dan Reward.
